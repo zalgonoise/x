@@ -9,4 +9,5 @@ var (
 	DoesNotExist  error = errors.New("target does not exist")
 	InvalidType   error = errors.New("invalid input type")
 	IDMismatch    error = errors.New("input IDs do not match")
+	CyclicalEdge  error = errors.New("cyclical edges not allowed for this type of graph")
 )

@@ -9,12 +9,13 @@ const (
 	NonCyclical
 )
 
-func IsList(code Code) bool {
-	return code&AdjList != 0
-}
-func IsNonDirectional(code Code) bool {
-	return code&NonDirectional != 0
-}
-func IsNonCyclical(code Code) bool {
-	return code&NonCyclical != 0
+func Parse(opts Code) (isList, isNonDir, isNonCyc bool) {
+	if opts == Default {
+		return false, false, false
+	}
+
+	return opts&AdjList != 0,
+		opts&NonDirectional != 0,
+		opts&NonCyclical != 0
+
 }

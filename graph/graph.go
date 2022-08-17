@@ -10,13 +10,10 @@ import (
 )
 
 func New[T model.ID, I model.Int](id T, opt options.Code) model.Graph[T, I] {
-	listOpt := options.IsList(opt)
-	dirOpt := options.IsNonDirectional(opt)
-	cycOpt := options.IsNonCyclical(opt)
-
-	if !listOpt {
+	isList, isNonDir, isNonCyc := options.Parse(opt)
+	if !isList {
 		// build adjacency matrix
-		return matrix.NewGraph[T, I](id, dirOpt, cycOpt)
+		return matrix.NewGraph[T, I](id, isNonDir, isNonCyc)
 	} else {
 		// build adjacency list
 		return nil

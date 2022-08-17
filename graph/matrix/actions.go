@@ -8,7 +8,7 @@ import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func AddNodesToMap[T model.ID, I model.Int](g Graph[T, I], nodes ...model.Node[T]) error {
+func AddNodesToMap[T model.ID, I model.Int](g Graph[T, I], nodes ...model.Node[T, I]) error {
 	m := g.Map()
 	n := *m
 
@@ -21,7 +21,7 @@ func AddNodesToMap[T model.ID, I model.Int](g Graph[T, I], nodes ...model.Node[T
 			return errs.AlreadyExists
 		}
 
-		n[node] = map[model.Node[T]]I{
+		n[node] = map[model.Node[T, I]]I{
 			node: 0,
 		}
 
@@ -33,6 +33,10 @@ func AddNodesToMap[T model.ID, I model.Int](g Graph[T, I], nodes ...model.Node[T
 			n[node][k] = 0
 		}
 
+		// link node to graph
+		node.Link(g)
+
+		// node appended to added keys
 		curKeys[node.ID()] = node
 	}
 
@@ -45,7 +49,7 @@ func RemoveNodesFromMap[T model.ID, I model.Int](g Graph[T, I], ids ...T) error 
 	m := g.Map()
 	n := *m
 
-	curKeys := make([]model.Node[T], len(n))
+	curKeys := []model.Node[T, I]{}
 	for k := range n {
 		curKeys = append(curKeys, k)
 	}
@@ -69,13 +73,16 @@ func RemoveNodesFromMap[T model.ID, I model.Int](g Graph[T, I], ids ...T) error 
 
 		delete(n[node], node)
 		delete(n, node)
+
+		// unlink node from graph
+		node.Link(nil)
 	}
 
 	m = &n
 	return nil
 }
 
-func GetNodeFromMap[T model.ID, I model.Int](g Graph[T, I], node T) (model.Node[T], error) {
+func GetNodeFromMap[T model.ID, I model.Int](g Graph[T, I], node T) (model.Node[T, I], error) {
 	k := *g.Keys()
 
 	n, ok := k[node]
@@ -86,10 +93,10 @@ func GetNodeFromMap[T model.ID, I model.Int](g Graph[T, I], node T) (model.Node[
 	return n, nil
 }
 
-func GetKeysFromMap[T model.ID, I model.Int](g Graph[T, I]) ([]model.Node[T], error) {
+func GetKeysFromMap[T model.ID, I model.Int](g Graph[T, I]) ([]model.Node[T, I], error) {
 	m := *g.Map()
 
-	out := make([]model.Node[T], len(m))
+	out := []model.Node[T, I]{}
 
 	for k := range m {
 		out = append(out, k)
@@ -98,7 +105,10 @@ func GetKeysFromMap[T model.ID, I model.Int](g Graph[T, I]) ([]model.Node[T], er
 	return out, nil
 }
 
-func AddEdgeInMapUni[T model.ID, I model.Int](g Graph[T, I], from, to T, weight I) error {
+func AddEdgeInMap[T model.ID, I model.Int](g Graph[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
+	if g == nil {
+		return fmt.Errorf("unable to read graph (nil): %w", errs.DoesNotExist)
+	}
 	m := g.Map()
 	n := *m
 
@@ -113,28 +123,37 @@ func AddEdgeInMapUni[T model.ID, I model.Int](g Graph[T, I], from, to T, weight 
 		return fmt.Errorf("to node: %w", errs.DoesNotExist)
 	}
 
-	n[fromNode][toNode] = weight
+	if isNonCyc {
+		ok, err := DepthFirstSearch(g, VerifyCycles(fromNode, toNode), toNode)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errs.CyclicalEdge
+		}
+	}
+
+	if isNonDir {
+		AddEdgeInMapBi(n, fromNode, toNode, weight)
+	} else {
+		AddEdgeInMapUni(n, fromNode, toNode, weight)
+	}
 
 	m = &n
 	return nil
 }
 
-func AddEdgeInMapBi[T model.ID, I model.Int](g Graph[T, I], from, to T, weight I) error {
-	err := AddEdgeInMapUni(g, from, to, weight)
-	if err != nil {
-		return fmt.Errorf("creating from-to edge: %w", err)
-	}
-
-	err = AddEdgeInMapUni(g, to, from, weight)
-	if err != nil {
-		return fmt.Errorf("creating to-from edge: %w", err)
-	}
-
-	return nil
+func AddEdgeInMapUni[T model.ID, I model.Int](m map[model.Node[T, I]]map[model.Node[T, I]]I, from, to model.Node[T, I], weight I) {
+	m[from][to] = weight
 }
 
-func GetEdgesFromMapNode[T model.ID, I model.Int](g Graph[T, I], node T) ([]model.Node[T], error) {
-	var out []model.Node[T]
+func AddEdgeInMapBi[T model.ID, I model.Int](m map[model.Node[T, I]]map[model.Node[T, I]]I, from, to model.Node[T, I], weight I) {
+	m[from][to] = weight
+	m[to][from] = weight
+}
+
+func GetEdgesFromMapNode[T model.ID, I model.Int](g Graph[T, I], node T) ([]model.Node[T, I], error) {
+	var out []model.Node[T, I]
 
 	m := *g.Map()
 	k := *g.Keys()
@@ -157,7 +176,31 @@ func GetEdgesFromMapNode[T model.ID, I model.Int](g Graph[T, I], node T) ([]mode
 	}
 
 	return out, nil
+}
 
+func GetWeightFromEdgesInMap[T model.ID, I model.Int](g Graph[T, I], from, to T) (I, error) {
+	fromNode, err := g.GetNode(from)
+	if err != nil {
+		return 0, err
+	}
+
+	toNode, err := g.GetNode(to)
+	if err != nil {
+		return 0, err
+	}
+
+	m := *g.Map()
+
+	return m[fromNode][toNode], nil
+}
+
+func GetParentFromNode[T model.ID, I model.Int](g Graph[T, I], node T) (model.Graph[T, I], error) {
+	n, err := g.GetNode(node)
+	if err != nil {
+		return nil, err
+	}
+
+	return n.Parent(), nil
 }
 
 type output[T model.ID, I model.Int] struct {
