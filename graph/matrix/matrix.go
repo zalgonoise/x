@@ -1,53 +1,17 @@
 package matrix
 
 import (
-	"fmt"
-
-	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 )
 
 type Graph[T model.ID, I model.Int] interface {
 	model.Graph[T, I]
 	Map() *map[model.Node[T, I]]map[model.Node[T, I]]I
-	Keys() *map[T]model.Node[T, I]
-}
-
-type mapNode[T model.ID, I model.Int] struct {
-	id     T
-	parent Graph[T, I]
-}
-
-func (n *mapNode[T, I]) ID() T {
-	return n.id
-}
-func (n *mapNode[T, I]) Parent() model.Graph[T, I] {
-	return n.parent
-}
-func (n *mapNode[T, I]) Link(gr model.Graph[T, I]) error {
-	if gr == nil {
-		n.parent = nil
-		return nil
-	}
-
-	mapGraph, ok := gr.(Graph[T, I])
-
-	if !ok {
-		return fmt.Errorf("not a map graph: %w", errs.InvalidType)
-	}
-
-	n.parent = mapGraph
-	return nil
-}
-
-func NewNode[T model.ID, I model.Int](id T) model.Node[T, I] {
-	return &mapNode[T, I]{id: id}
 }
 
 type mapGraph[T model.ID, I model.Int] struct {
-	id   T
-	n    map[model.Node[T, I]]map[model.Node[T, I]]I
-	keys map[T]model.Node[T, I]
+	id T
+	n  map[model.Node[T, I]]map[model.Node[T, I]]I
 
 	isNonDirectional bool
 	isNonCyclical    bool
@@ -55,9 +19,8 @@ type mapGraph[T model.ID, I model.Int] struct {
 
 func NewGraph[T model.ID, I model.Int](id T, isNonDir, isNonCyc bool) model.Graph[T, I] {
 	return &mapGraph[T, I]{
-		id:   id,
-		n:    map[model.Node[T, I]]map[model.Node[T, I]]I{},
-		keys: map[T]model.Node[T, I]{},
+		id: id,
+		n:  map[model.Node[T, I]]map[model.Node[T, I]]I{},
 
 		isNonDirectional: isNonDir,
 		isNonCyclical:    isNonCyc,
@@ -66,9 +29,6 @@ func NewGraph[T model.ID, I model.Int](id T, isNonDir, isNonCyc bool) model.Grap
 
 func (g *mapGraph[T, I]) Map() *map[model.Node[T, I]]map[model.Node[T, I]]I {
 	return &g.n
-}
-func (g *mapGraph[T, I]) Keys() *map[T]model.Node[T, I] {
-	return &g.keys
 }
 func (g *mapGraph[T, I]) ID() T {
 	return g.id
