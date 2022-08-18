@@ -2,60 +2,63 @@ package matrix
 
 import (
 	"github.com/zalgonoise/x/graph/model"
+	"github.com/zalgonoise/x/graph/options"
 )
 
-type Graph[T model.ID, I model.Int] interface {
-	model.Graph[T, I]
-	Map() *map[model.Node[T, I]]map[model.Node[T, I]]I
+type Graph[T model.ID, I model.Int, V any] interface {
+	model.Graph[T, I, V]
+	Map() *map[model.Node[T, I, V]]map[model.Node[T, I, V]]I
 }
 
-type mapGraph[T model.ID, I model.Int] struct {
+type mapGraph[T model.ID, I model.Int, V any] struct {
 	id T
-	n  map[model.Node[T, I]]map[model.Node[T, I]]I
+	v  V
+	n  map[model.Node[T, I, V]]map[model.Node[T, I, V]]I
 
-	isNonDirectional bool
-	isNonCyclical    bool
+	conf *options.GraphConfig
 }
 
-func NewGraph[T model.ID, I model.Int](id T, isNonDir, isNonCyc bool) model.Graph[T, I] {
-	return &mapGraph[T, I]{
+func NewGraph[T model.ID, I model.Int, V any](id T, v V, conf *options.GraphConfig) model.Graph[T, I, V] {
+	return &mapGraph[T, I, V]{
 		id: id,
-		n:  map[model.Node[T, I]]map[model.Node[T, I]]I{},
+		v:  v,
+		n:  map[model.Node[T, I, V]]map[model.Node[T, I, V]]I{},
 
-		isNonDirectional: isNonDir,
-		isNonCyclical:    isNonCyc,
+		conf: conf,
 	}
 }
 
-func (g *mapGraph[T, I]) Map() *map[model.Node[T, I]]map[model.Node[T, I]]I {
+func (g *mapGraph[T, I, V]) Map() *map[model.Node[T, I, V]]map[model.Node[T, I, V]]I {
 	return &g.n
 }
-func (g *mapGraph[T, I]) ID() T {
+func (g *mapGraph[T, I, V]) ID() T {
 	return g.id
 }
-func (g *mapGraph[T, I]) AddNode(nodes ...model.Node[T, I]) error {
-	return AddNodesToMap[T, I](g, nodes...)
+func (g *mapGraph[T, I, V]) Value() V {
+	return g.v
 }
-func (g *mapGraph[T, I]) RemoveNode(nodes ...T) error {
-	return RemoveNodesFromMap[T, I](g, nodes...)
+func (g *mapGraph[T, I, V]) AddNode(nodes ...model.Node[T, I, V]) error {
+	return AddNodesToMap[T, I, V](g, nodes...)
 }
-func (g *mapGraph[T, I]) GetNode(node T) (model.Node[T, I], error) {
-	return GetNodeFromMap[T, I](g, node)
+func (g *mapGraph[T, I, V]) RemoveNode(nodes ...T) error {
+	return RemoveNodesFromMap[T, I, V](g, nodes...)
 }
-func (g *mapGraph[T, I]) Get() ([]model.Node[T, I], error) {
-	return GetKeysFromMap[T, I](g)
+func (g *mapGraph[T, I, V]) GetNode(node T) (model.Node[T, I, V], error) {
+	return GetNodeFromMap[T, I, V](g, node)
 }
-func (g *mapGraph[T, I]) AddEdge(from, to T, weight I) error {
-	isNonDir := g.isNonDirectional
-	isNonCyc := g.isNonCyclical
-	return AddEdgeInMap[T, I](g, from, to, weight, isNonDir, isNonCyc)
+func (g *mapGraph[T, I, V]) Get() ([]model.Node[T, I, V], error) {
+	return GetKeysFromMap[T, I, V](g)
 }
-func (g *mapGraph[T, I]) RemoveEdge(from, to T) error {
-	return AddEdgeInMap[T, I](g, from, to, 0, g.isNonCyclical, g.isNonCyclical)
+func (g *mapGraph[T, I, V]) AddEdge(from, to T, weight I) error {
+
+	return AddEdgeInMap[T, I, V](g, from, to, weight, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
-func (g *mapGraph[T, I]) GetEdges(node T) ([]model.Node[T, I], error) {
-	return GetEdgesFromMapNode[T, I](g, node)
+func (g *mapGraph[T, I, V]) RemoveEdge(from, to T) error {
+	return AddEdgeInMap[T, I, V](g, from, to, 0, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
-func (g *mapGraph[T, I]) GetWeight(from, to T) (I, error) {
-	return GetWeightFromEdgesInMap[T, I](g, from, to)
+func (g *mapGraph[T, I, V]) GetEdges(node T) ([]model.Node[T, I, V], error) {
+	return GetEdgesFromMapNode[T, I, V](g, node)
+}
+func (g *mapGraph[T, I, V]) GetWeight(from, to T) (I, error) {
+	return GetWeightFromEdgesInMap[T, I, V](g, from, to)
 }

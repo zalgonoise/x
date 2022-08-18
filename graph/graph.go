@@ -4,18 +4,51 @@ package graph
 // in graph data structures. Please take it with a grain of salt.
 
 import (
+	"github.com/zalgonoise/x/graph/hub"
 	"github.com/zalgonoise/x/graph/matrix"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
 )
 
-func New[T model.ID, I model.Int](id T, opt options.Code) model.Graph[T, I] {
-	isList, isNonDir, isNonCyc := options.Parse(opt)
-	if !isList {
-		// build adjacency matrix
-		return matrix.NewGraph[T, I](id, isNonDir, isNonCyc)
-	} else {
-		// build adjacency list
+func NewGraph[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Graph[T, I, V] {
+	config, err := options.New(opts...)
+	if err != nil {
 		return nil
 	}
+
+	switch config.GraphType {
+	case options.GraphList:
+		// unimplemented
+		return nil
+	case options.GraphMatrix:
+		return matrix.NewGraph[T, I, V](id, value, config)
+	case options.GraphHub, options.GraphNode:
+		return nil
+	default:
+		return matrix.NewGraph[T, I, V](id, value, config)
+	}
+}
+
+func NewHub[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Hub[T, I, V] {
+	config, err := options.New(opts...)
+	if err != nil {
+		return nil
+	}
+
+	if config.GraphType != options.GraphHub && config.GraphType != options.UnsetType {
+		return nil
+	}
+	return hub.New[T, I, V](id, value, config)
+}
+
+func NewNode[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Node[T, I, V] {
+	config, err := options.New(opts...)
+	if err != nil {
+		return nil
+	}
+
+	if config.GraphType != options.GraphNode && config.GraphType != options.UnsetType {
+		return nil
+	}
+	return matrix.NewNode[T, I, V](id, value)
 }

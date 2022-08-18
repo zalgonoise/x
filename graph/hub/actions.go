@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/zalgonoise/x/graph/errs"
@@ -202,4 +203,29 @@ func GetParentFromNode[T model.ID, I model.Int, V any](g model.Hub[T, I, V], nod
 	}
 
 	return n.Parent(), nil
+}
+
+type output[T model.ID, I model.Int, V any] struct {
+	ID    T             `json:"id"`
+	Data  V             `json:"data,omitempty"`
+	Nodes map[T]map[T]I `json:"nodes,omitempty"`
+}
+
+func (g *hubGraph[T, I, V]) String() string {
+	var out = output[T, I, V]{
+		ID:    g.ID(),
+		Data:  g.Value(),
+		Nodes: map[T]map[T]I{},
+	}
+
+	for ko, vo := range g.n {
+		innerMap := map[T]I{}
+		for ki, vi := range vo {
+			innerMap[ki.ID()] = vi
+		}
+		out.Nodes[ko.ID()] = innerMap
+	}
+
+	b, _ := json.Marshal(out)
+	return string(b)
 }

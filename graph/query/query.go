@@ -1,10 +1,10 @@
-package matrix
+package query
 
 import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func BreadthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn func(from, to model.Node[T, I, V], weight I) bool, targets ...model.Node[T, I, V]) (bool, error) {
+func BreadthFirstSearch[T model.ID, I model.Int, V any](g model.Graph[T, I, V], fn func(from, to model.Node[T, I, V], weight I) bool, targets ...model.Node[T, I, V]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
@@ -41,7 +41,7 @@ func BreadthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn fun
 	return true, nil
 }
 
-func DepthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn func(from, to model.Node[T, I, V], weight I) bool, targets ...model.Node[T, I, V]) (bool, error) {
+func DepthFirstSearch[T model.ID, I model.Int, V any](g model.Graph[T, I, V], fn func(from, to model.Node[T, I, V], weight I) bool, targets ...model.Node[T, I, V]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
