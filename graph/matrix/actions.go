@@ -8,12 +8,21 @@ import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
+func getKeysFromMap[T model.ID, I model.Int](g Graph[T, I]) map[T]model.Node[T, I] {
+	m := *g.Map()
+	keyMap := map[T]model.Node[T, I]{}
+
+	for k := range m {
+		keyMap[k.ID()] = k
+	}
+	return keyMap
+}
+
 func AddNodesToMap[T model.ID, I model.Int](g Graph[T, I], nodes ...model.Node[T, I]) error {
 	m := g.Map()
 	n := *m
 
-	c := g.Keys()
-	curKeys := *c
+	curKeys := getKeysFromMap(g)
 
 	for _, node := range nodes {
 
@@ -41,7 +50,6 @@ func AddNodesToMap[T model.ID, I model.Int](g Graph[T, I], nodes ...model.Node[T
 	}
 
 	m = &n
-	c = &curKeys
 	return nil
 }
 
@@ -49,10 +57,7 @@ func RemoveNodesFromMap[T model.ID, I model.Int](g Graph[T, I], ids ...T) error 
 	m := g.Map()
 	n := *m
 
-	curKeys := []model.Node[T, I]{}
-	for k := range n {
-		curKeys = append(curKeys, k)
-	}
+	curKeys := getKeysFromMap(g)
 
 	for _, id := range ids {
 		node, err := g.GetNode(id)
@@ -83,7 +88,7 @@ func RemoveNodesFromMap[T model.ID, I model.Int](g Graph[T, I], ids ...T) error 
 }
 
 func GetNodeFromMap[T model.ID, I model.Int](g Graph[T, I], node T) (model.Node[T, I], error) {
-	k := *g.Keys()
+	k := getKeysFromMap(g)
 
 	n, ok := k[node]
 	if !ok {
@@ -112,7 +117,7 @@ func AddEdgeInMap[T model.ID, I model.Int](g Graph[T, I], from, to T, weight I, 
 	m := g.Map()
 	n := *m
 
-	k := *g.Keys()
+	k := getKeysFromMap(g)
 
 	fromNode, ok := k[from]
 	if !ok {
@@ -156,7 +161,7 @@ func GetEdgesFromMapNode[T model.ID, I model.Int](g Graph[T, I], node T) ([]mode
 	var out []model.Node[T, I]
 
 	m := *g.Map()
-	k := *g.Keys()
+	k := getKeysFromMap(g)
 
 	target, ok := k[node]
 	if !ok {
