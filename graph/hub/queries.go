@@ -4,13 +4,13 @@ import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func BreadthFirstSearch[T model.ID, I model.Int, V any](g model.Hub[T, I, V], fn func(from, to model.Hub[T, I, V], weight I) bool, targets ...model.Hub[T, I, V]) (bool, error) {
+func BreadthFirstSearch[T model.ID, I model.Int](g model.Hub[T, I], fn func(from, to model.Hub[T, I], weight I) bool, targets ...model.Hub[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
 		}
 
-		for linkedNodes := []model.Hub[T, I, V]{node}; len(linkedNodes) > 0; {
+		for linkedNodes := []model.Hub[T, I]{node}; len(linkedNodes) > 0; {
 			target := linkedNodes[0]
 			linkedNodes = linkedNodes[1:]
 			visited := map[T]struct{}{}
@@ -41,13 +41,13 @@ func BreadthFirstSearch[T model.ID, I model.Int, V any](g model.Hub[T, I, V], fn
 	return true, nil
 }
 
-func DepthFirstSearch[T model.ID, I model.Int, V any](g model.Hub[T, I, V], fn func(from, to model.Hub[T, I, V], weight I) bool, targets ...model.Hub[T, I, V]) (bool, error) {
+func DepthFirstSearch[T model.ID, I model.Int](g model.Hub[T, I], fn func(from, to model.Hub[T, I], weight I) bool, targets ...model.Hub[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
 		}
 
-		for linkedNodes := []model.Hub[T, I, V]{node}; len(linkedNodes) > 0; {
+		for linkedNodes := []model.Hub[T, I]{node}; len(linkedNodes) > 0; {
 			target := linkedNodes[len(linkedNodes)-1]
 			linkedNodes = linkedNodes[:len(linkedNodes)-1]
 			visited := map[T]struct{}{}
@@ -78,8 +78,8 @@ func DepthFirstSearch[T model.ID, I model.Int, V any](g model.Hub[T, I, V], fn f
 	return true, nil
 }
 
-func VerifyCycles[T model.ID, I model.Int, V any](from, to model.Hub[T, I, V]) func(target, edge model.Hub[T, I, V], weight I) bool {
-	return func(target, edge model.Hub[T, I, V], weight I) bool {
+func VerifyCycles[T model.ID, I model.Int](from, to model.Hub[T, I]) func(target, edge model.Hub[T, I], weight I) bool {
+	return func(target, edge model.Hub[T, I], weight I) bool {
 		return to.ID() != target.ID() // fails verification
 	}
 }

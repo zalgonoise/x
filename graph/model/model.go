@@ -48,28 +48,28 @@ type Node[T ID, I Int, V any] interface {
 }
 
 // Hub defines a multigraph, a graph that hosts other nested graphs
-type Hub[T ID, I Int, V any] interface {
+type Hub[T ID, I Int] interface {
 	// AddNode takes in any number of nodes and adds it to the graph
-	AddNode(...Hub[T, I, V]) error
+	AddNode(...Hub[T, I]) error
 	// RemoveNode removes any of input nodes from the graph
 	RemoveNode(...T) error
 	// GetNode takes in an input ID to a node, and returns it or an error
-	GetNode(T) (Hub[T, I, V], error)
+	GetNode(T) (Hub[T, I], error)
 	// Get returns all nodes in a graph, and an error
-	Get() ([]Hub[T, I, V], error)
+	Get() ([]Hub[T, I], error)
 
 	// AddEdge links `from` to `to`, with a set weight
 	AddEdge(from, to T, weight I) error
 	// RemoveEdge unlinks `target` and `edge` nodes
 	RemoveEdge(from, to T) error
 	// GetEdges takes in a node to return a list of nodes linked to it, and and error
-	GetEdges(T) ([]Hub[T, I, V], error)
+	GetEdges(T) ([]Hub[T, I], error)
 	// GetWeight gets the weight value of two nodes, if they are connected
 	GetWeight(from, to T) (I, error)
 
 	ID() T
-	Parent() Hub[T, I, V]
-	Link(Hub[T, I, V]) error
-	Value() V
-	Map() *map[Hub[T, I, V]]map[Hub[T, I, V]]I
+	Parent() Hub[T, I]
+	Link(Hub[T, I]) error
+	Value() any
+	Map() *map[Hub[T, I]]map[Hub[T, I]]I
 }

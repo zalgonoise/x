@@ -29,7 +29,7 @@ func NewGraph[T model.ID, I model.Int, V any](id T, value V, opts ...options.Set
 	}
 }
 
-func NewHub[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Hub[T, I, V] {
+func NewHub[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Hub[T, I] {
 	config, err := options.New(opts...)
 	if err != nil {
 		return nil
@@ -38,7 +38,7 @@ func NewHub[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setti
 	if config.GraphType != options.GraphHub && config.GraphType != options.UnsetType {
 		return nil
 	}
-	return hub.New[T, I, V](id, value, config)
+	return hub.New[T, I](id, value, config)
 }
 
 func NewNode[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Node[T, I, V] {
