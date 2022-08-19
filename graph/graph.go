@@ -4,6 +4,8 @@ package graph
 // in graph data structures. Please take it with a grain of salt.
 
 import (
+	"reflect"
+
 	"github.com/zalgonoise/x/graph/hub"
 	"github.com/zalgonoise/x/graph/matrix"
 	"github.com/zalgonoise/x/graph/model"
@@ -13,6 +15,10 @@ import (
 func NewGraph[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Graph[T, I, V] {
 	config, err := options.New(opts...)
 	if err != nil {
+		return nil
+	}
+
+	if config.IDConstraint != reflect.TypeOf(id) {
 		return nil
 	}
 
@@ -29,7 +35,7 @@ func NewGraph[T model.ID, I model.Int, V any](id T, value V, opts ...options.Set
 	}
 }
 
-func NewHub[T model.ID, I model.Int, V any](id T, value V, opts ...options.Setting) model.Hub[T, I] {
+func NewHub[T model.ID, I model.Int](id T, value any, opts ...options.Setting) model.Hub[T, I] {
 	config, err := options.New(opts...)
 	if err != nil {
 		return nil

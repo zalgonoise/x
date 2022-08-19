@@ -11,4 +11,6 @@ var (
 	IDMismatch     error = errors.New("input IDs do not match")
 	CyclicalEdge   error = errors.New("cyclical edges not allowed for this type of graph")
 	InvalidAdjList error = errors.New("invalid adjancy list config")
+	Immutable      error = errors.New("cannot update or delete an immutable graph")
+	ReadOnly       error = errors.New("cannot write / add nodes to a read-only graph")
 )

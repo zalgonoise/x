@@ -1,16 +1,63 @@
 package options
 
-type Setting interface {
-	Apply(*GraphConfig)
-}
+import "reflect"
 
-type GraphConfig struct {
-	GraphType        TypeSetting
-	IsNonDirectional bool
-	IsNonCyclical    bool
-	IsUnweighted     bool
-	Value            any
-	IDConstraint     any
+type (
+	Setting interface {
+		Apply(*GraphConfig)
+	}
+
+	GraphConfig struct {
+		GraphType        TypeSetting
+		IsNonDirectional bool
+		IsNonCyclical    bool
+		IsUnweighted     bool
+		Immutable        bool
+		ReadOnly         bool
+		IDConstraint     reflect.Type
+	}
+
+	TypeSetting      int
+	DirectionSetting int
+	CycleSetting     int
+	WeightedEdges    int
+	Mutability       int
+	WritePrivilege   int
+	IDConstraint     struct {
+		v reflect.Type
+	}
+)
+
+const (
+	UnsetType   TypeSetting = iota
+	GraphMatrix TypeSetting = iota
+	GraphList   TypeSetting = iota
+	GraphNode   TypeSetting = iota
+	GraphHub    TypeSetting = iota
+)
+const (
+	Directional    DirectionSetting = iota
+	NonDirectional DirectionSetting = iota
+)
+const (
+	Cyclical    CycleSetting = iota
+	NonCyclical CycleSetting = iota
+)
+const (
+	Weighted   WeightedEdges = iota
+	Unweighted WeightedEdges = iota
+)
+const (
+	Mutable   Mutability = iota
+	Immutable Mutability = iota
+)
+const (
+	ReadWrite WritePrivilege = iota
+	ReadOnly  WritePrivilege = iota
+)
+
+func IDType(v any) Setting {
+	return &IDConstraint{v: reflect.TypeOf(v)}
 }
 
 func New(s ...Setting) (*GraphConfig, error) {
@@ -28,16 +75,6 @@ func New(s ...Setting) (*GraphConfig, error) {
 	return conf, nil
 }
 
-type TypeSetting int
-
-const (
-	UnsetType   TypeSetting = iota
-	GraphMatrix TypeSetting = iota
-	GraphList   TypeSetting = iota
-	GraphNode   TypeSetting = iota
-	GraphHub    TypeSetting = iota
-)
-
 func (s TypeSetting) Apply(c *GraphConfig) {
 	switch c.GraphType {
 	case UnsetType:
@@ -47,25 +84,11 @@ func (s TypeSetting) Apply(c *GraphConfig) {
 	}
 }
 
-type DirectionSetting int
-
-const (
-	Directional    DirectionSetting = iota
-	NonDirectional DirectionSetting = iota
-)
-
 func (s DirectionSetting) Apply(c *GraphConfig) {
 	if s == NonDirectional {
 		c.IsNonDirectional = true
 	}
 }
-
-type CycleSetting int
-
-const (
-	Cyclical    CycleSetting = iota
-	NonCyclical CycleSetting = iota
-)
 
 func (s CycleSetting) Apply(c *GraphConfig) {
 	if s == NonCyclical {
@@ -73,45 +96,27 @@ func (s CycleSetting) Apply(c *GraphConfig) {
 	}
 }
 
-type WeightedEdges int
-
-const (
-	Weighted   WeightedEdges = iota
-	Unweighted WeightedEdges = iota
-)
-
 func (s WeightedEdges) Apply(c *GraphConfig) {
 	if s == Unweighted {
 		c.IsUnweighted = true
 	}
 }
 
-type ValueGraph struct {
-	v any
-}
-
-func (s *ValueGraph) Apply(c *GraphConfig) {
-	if s.v == nil {
-		return
-	}
-	c.Value = s.v
-}
-
-func WithValue(v any) Setting {
-	return &ValueGraph{v: v}
-}
-
-type IDConstraint struct {
-	v any
-}
-
 func (s *IDConstraint) Apply(c *GraphConfig) {
 	if s.v == nil {
 		return
 	}
-	c.Value = s.v
+	c.IDConstraint = s.v
 }
 
-func IDType(v any) Setting {
-	return &IDConstraint{v: v}
+func (s Mutability) Apply(c *GraphConfig) {
+	if s == Immutable {
+		c.Immutable = true
+	}
+}
+
+func (s WritePrivilege) Apply(c *GraphConfig) {
+	if s == ReadOnly {
+		c.ReadOnly = true
+	}
 }

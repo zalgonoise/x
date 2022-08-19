@@ -1,11 +1,13 @@
 package hub
 
 import (
+	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
 )
 
 type hubGraph[T model.ID, I model.Int] struct {
+	locked bool
 	id     T
 	v      any
 	n      map[model.Hub[T, I]]map[model.Hub[T, I]]I
@@ -33,6 +35,9 @@ func (g *hubGraph[T, I]) Parent() model.Hub[T, I] {
 }
 func (g *hubGraph[T, I]) Link(parent model.Hub[T, I]) error {
 	g.parent = parent
+	if g.conf.ReadOnly {
+		g.locked = true
+	}
 	return nil
 }
 func (g *hubGraph[T, I]) Value() any {
@@ -42,9 +47,18 @@ func (g *hubGraph[T, I]) Map() *map[model.Hub[T, I]]map[model.Hub[T, I]]I {
 	return &g.n
 }
 func (g *hubGraph[T, I]) AddNode(nodes ...model.Hub[T, I]) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
 	return AddNodesToMap[T, I](g, nodes...)
 }
 func (g *hubGraph[T, I]) RemoveNode(nodes ...T) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
+	if g.conf.Immutable {
+		return errs.Immutable
+	}
 	return RemoveNodesFromMap[T, I](g, nodes...)
 }
 func (g *hubGraph[T, I]) GetNode(node T) (model.Hub[T, I], error) {
@@ -54,9 +68,21 @@ func (g *hubGraph[T, I]) Get() ([]model.Hub[T, I], error) {
 	return GetKeysFromMap[T, I](g)
 }
 func (g *hubGraph[T, I]) AddEdge(from, to T, weight I) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
+	if g.conf.IsUnweighted {
+		return AddEdgeInMap[T, I](g, from, to, 1, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
+	}
 	return AddEdgeInMap[T, I](g, from, to, weight, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
 func (g *hubGraph[T, I]) RemoveEdge(from, to T) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
+	if g.conf.Immutable {
+		return errs.Immutable
+	}
 	return AddEdgeInMap[T, I](g, from, to, 0, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
 func (g *hubGraph[T, I]) GetEdges(node T) ([]model.Hub[T, I], error) {

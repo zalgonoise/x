@@ -1,6 +1,10 @@
 package options
 
-import "github.com/zalgonoise/x/graph/errs"
+import (
+	"reflect"
+
+	"github.com/zalgonoise/x/graph/errs"
+)
 
 // adjancy lists will not hold edge weights
 func (c *GraphConfig) validateAdjancyListConfig() bool {
@@ -8,6 +12,9 @@ func (c *GraphConfig) validateAdjancyListConfig() bool {
 		return true
 	}
 	if !c.IsUnweighted {
+		return false
+	}
+	if c.IDConstraint == nil || c.IDConstraint != reflect.TypeOf(int(0)) {
 		return false
 	}
 	return true
