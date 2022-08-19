@@ -8,9 +8,9 @@ import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func getKeysFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V]) map[T]model.Hub[T, I, V] {
+func getKeysFromMap[T model.ID, I model.Int](g model.Hub[T, I]) map[T]model.Hub[T, I] {
 	m := *g.Map()
-	keyMap := map[T]model.Hub[T, I, V]{}
+	keyMap := map[T]model.Hub[T, I]{}
 
 	for k := range m {
 		keyMap[k.ID()] = k
@@ -18,7 +18,7 @@ func getKeysFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V]) map[T]
 	return keyMap
 }
 
-func AddNodesToMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], nodes ...model.Hub[T, I, V]) error {
+func AddNodesToMap[T model.ID, I model.Int](g model.Hub[T, I], nodes ...model.Hub[T, I]) error {
 	m := g.Map()
 	n := *m
 
@@ -30,7 +30,7 @@ func AddNodesToMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], nodes .
 			return errs.AlreadyExists
 		}
 
-		n[node] = map[model.Hub[T, I, V]]I{
+		n[node] = map[model.Hub[T, I]]I{
 			node: 0,
 		}
 
@@ -53,7 +53,7 @@ func AddNodesToMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], nodes .
 	return nil
 }
 
-func RemoveNodesFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], ids ...T) error {
+func RemoveNodesFromMap[T model.ID, I model.Int](g model.Hub[T, I], ids ...T) error {
 	m := g.Map()
 	n := *m
 
@@ -87,7 +87,7 @@ func RemoveNodesFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], id
 	return nil
 }
 
-func GetNodeFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], node T) (model.Hub[T, I, V], error) {
+func GetNodeFromMap[T model.ID, I model.Int](g model.Hub[T, I], node T) (model.Hub[T, I], error) {
 	k := getKeysFromMap(g)
 
 	n, ok := k[node]
@@ -98,10 +98,10 @@ func GetNodeFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], node T
 	return n, nil
 }
 
-func GetKeysFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V]) ([]model.Hub[T, I, V], error) {
+func GetKeysFromMap[T model.ID, I model.Int](g model.Hub[T, I]) ([]model.Hub[T, I], error) {
 	m := *g.Map()
 
-	out := []model.Hub[T, I, V]{}
+	out := []model.Hub[T, I]{}
 
 	for k := range m {
 		out = append(out, k)
@@ -110,7 +110,7 @@ func GetKeysFromMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V]) ([]mod
 	return out, nil
 }
 
-func AddEdgeInMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], from, to T, weight I, isNonDir, isNonCyc bool) error {
+func AddEdgeInMap[T model.ID, I model.Int](g model.Hub[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
 	m := g.Map()
 	n := *m
 
@@ -145,17 +145,17 @@ func AddEdgeInMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], from, to
 	return nil
 }
 
-func AddEdgeInMapUni[T model.ID, I model.Int, V any](m map[model.Hub[T, I, V]]map[model.Hub[T, I, V]]I, from, to model.Hub[T, I, V], weight I) {
+func AddEdgeInMapUni[T model.ID, I model.Int](m map[model.Hub[T, I]]map[model.Hub[T, I]]I, from, to model.Hub[T, I], weight I) {
 	m[from][to] = weight
 }
 
-func AddEdgeInMapBi[T model.ID, I model.Int, V any](m map[model.Hub[T, I, V]]map[model.Hub[T, I, V]]I, from, to model.Hub[T, I, V], weight I) {
+func AddEdgeInMapBi[T model.ID, I model.Int](m map[model.Hub[T, I]]map[model.Hub[T, I]]I, from, to model.Hub[T, I], weight I) {
 	m[from][to] = weight
 	m[to][from] = weight
 }
 
-func GetEdgesFromMapNode[T model.ID, I model.Int, V any](g model.Hub[T, I, V], node T) ([]model.Hub[T, I, V], error) {
-	var out []model.Hub[T, I, V]
+func GetEdgesFromMapNode[T model.ID, I model.Int](g model.Hub[T, I], node T) ([]model.Hub[T, I], error) {
+	var out []model.Hub[T, I]
 
 	m := *g.Map()
 	k := getKeysFromMap(g)
@@ -180,7 +180,7 @@ func GetEdgesFromMapNode[T model.ID, I model.Int, V any](g model.Hub[T, I, V], n
 	return out, nil
 }
 
-func GetWeightFromEdgesInMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V], from, to T) (I, error) {
+func GetWeightFromEdgesInMap[T model.ID, I model.Int](g model.Hub[T, I], from, to T) (I, error) {
 	fromNode, err := g.GetNode(from)
 	if err != nil {
 		return 0, err
@@ -196,7 +196,7 @@ func GetWeightFromEdgesInMap[T model.ID, I model.Int, V any](g model.Hub[T, I, V
 	return m[fromNode][toNode], nil
 }
 
-func GetParentFromNode[T model.ID, I model.Int, V any](g model.Hub[T, I, V], node T) (model.Hub[T, I, V], error) {
+func GetParentFromNode[T model.ID, I model.Int](g model.Hub[T, I], node T) (model.Hub[T, I], error) {
 	n, err := g.GetNode(node)
 	if err != nil {
 		return nil, err
@@ -205,14 +205,14 @@ func GetParentFromNode[T model.ID, I model.Int, V any](g model.Hub[T, I, V], nod
 	return n.Parent(), nil
 }
 
-type output[T model.ID, I model.Int, V any] struct {
+type output[T model.ID, I model.Int] struct {
 	ID    T             `json:"id"`
-	Data  V             `json:"data,omitempty"`
+	Data  any           `json:"data,omitempty"`
 	Nodes map[T]map[T]I `json:"nodes,omitempty"`
 }
 
-func (g *hubGraph[T, I, V]) String() string {
-	var out = output[T, I, V]{
+func (g *hubGraph[T, I]) String() string {
+	var out = output[T, I]{
 		ID:    g.ID(),
 		Data:  g.Value(),
 		Nodes: map[T]map[T]I{},
