@@ -46,13 +46,13 @@ func (g *hubGraph[T, I]) Value() any {
 func (g *hubGraph[T, I]) Map() *map[model.Hub[T, I]]map[model.Hub[T, I]]I {
 	return &g.n
 }
-func (g *hubGraph[T, I]) AddNode(nodes ...model.Hub[T, I]) error {
+func (g *hubGraph[T, I]) Add(nodes ...model.Hub[T, I]) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
 	return AddNodesToMap[T, I](g, nodes...)
 }
-func (g *hubGraph[T, I]) RemoveNode(nodes ...T) error {
+func (g *hubGraph[T, I]) Remove(nodes ...T) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
@@ -61,13 +61,13 @@ func (g *hubGraph[T, I]) RemoveNode(nodes ...T) error {
 	}
 	return RemoveNodesFromMap[T, I](g, nodes...)
 }
-func (g *hubGraph[T, I]) GetNode(node T) (model.Hub[T, I], error) {
+func (g *hubGraph[T, I]) Get(node T) (model.Hub[T, I], error) {
 	return GetNodeFromMap[T, I](g, node)
 }
-func (g *hubGraph[T, I]) Get() ([]model.Hub[T, I], error) {
+func (g *hubGraph[T, I]) List() ([]model.Hub[T, I], error) {
 	return GetKeysFromMap[T, I](g)
 }
-func (g *hubGraph[T, I]) AddEdge(from, to T, weight I) error {
+func (g *hubGraph[T, I]) Connect(from, to T, weight I) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
@@ -76,7 +76,7 @@ func (g *hubGraph[T, I]) AddEdge(from, to T, weight I) error {
 	}
 	return AddEdgeInMap[T, I](g, from, to, weight, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
-func (g *hubGraph[T, I]) RemoveEdge(from, to T) error {
+func (g *hubGraph[T, I]) Disconnect(from, to T) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
@@ -85,9 +85,9 @@ func (g *hubGraph[T, I]) RemoveEdge(from, to T) error {
 	}
 	return AddEdgeInMap[T, I](g, from, to, 0, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
-func (g *hubGraph[T, I]) GetEdges(node T) ([]model.Hub[T, I], error) {
+func (g *hubGraph[T, I]) Edges(node T) ([]model.Hub[T, I], error) {
 	return GetEdgesFromMapNode[T, I](g, node)
 }
-func (g *hubGraph[T, I]) GetWeight(from, to T) (I, error) {
+func (g *hubGraph[T, I]) Weight(from, to T) (I, error) {
 	return GetWeightFromEdgesInMap[T, I](g, from, to)
 }

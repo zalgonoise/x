@@ -17,22 +17,22 @@ type Int interface {
 // CRUD operations towards its nodes, their edges, and its ID
 type Graph[T ID, I Int, V any] interface {
 	// AddNode takes in any number of nodes and adds it to the graph
-	AddNode(...Node[T, I, V]) error
+	Add(...Node[T, I, V]) error
 	// RemoveNode removes any of input nodes from the graph
-	RemoveNode(...T) error
+	Remove(...T) error
 	// GetNode takes in an input ID to a node, and returns it or an error
-	GetNode(T) (Node[T, I, V], error)
+	Get(T) (Node[T, I, V], error)
 	// Get returns all nodes in a graph, and an error
-	Get() ([]Node[T, I, V], error)
+	List() ([]Node[T, I, V], error)
 
 	// AddEdge links `from` to `to`, with a set weight
-	AddEdge(from, to T, weight I) error
+	Connect(from, to T, weight I) error
 	// RemoveEdge unlinks `target` and `edge` nodes
-	RemoveEdge(from, to T) error
+	Disconnect(from, to T) error
 	// GetEdges takes in a node to return a list of nodes linked to it, and and error
-	GetEdges(T) ([]Node[T, I, V], error)
+	Edges(T) ([]Node[T, I, V], error)
 	// GetWeight gets the weight value of two nodes, if they are connected
-	GetWeight(from, to T) (I, error)
+	Weight(from, to T) (I, error)
 
 	ID() T
 	Value() V
@@ -50,22 +50,22 @@ type Node[T ID, I Int, V any] interface {
 // Hub defines a multigraph, a graph that hosts other nested graphs
 type Hub[T ID, I Int] interface {
 	// AddNode takes in any number of nodes and adds it to the graph
-	AddNode(...Hub[T, I]) error
+	Add(...Hub[T, I]) error
 	// RemoveNode removes any of input nodes from the graph
-	RemoveNode(...T) error
+	Remove(...T) error
 	// GetNode takes in an input ID to a node, and returns it or an error
-	GetNode(T) (Hub[T, I], error)
+	Get(T) (Hub[T, I], error)
 	// Get returns all nodes in a graph, and an error
-	Get() ([]Hub[T, I], error)
+	List() ([]Hub[T, I], error)
 
 	// AddEdge links `from` to `to`, with a set weight
-	AddEdge(from, to T, weight I) error
+	Connect(from, to T, weight I) error
 	// RemoveEdge unlinks `target` and `edge` nodes
-	RemoveEdge(from, to T) error
+	Disconnect(from, to T) error
 	// GetEdges takes in a node to return a list of nodes linked to it, and and error
-	GetEdges(T) ([]Hub[T, I], error)
+	Edges(T) ([]Hub[T, I], error)
 	// GetWeight gets the weight value of two nodes, if they are connected
-	GetWeight(from, to T) (I, error)
+	Weight(from, to T) (I, error)
 
 	ID() T
 	Parent() Hub[T, I]

@@ -15,7 +15,7 @@ func BreadthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn fun
 			linkedNodes = linkedNodes[1:]
 			visited := map[T]struct{}{}
 
-			edges, err := g.GetEdges(target.ID())
+			edges, err := g.Edges(target.ID())
 			if err != nil {
 				return false, err
 			}
@@ -25,7 +25,7 @@ func BreadthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn fun
 					continue
 				}
 
-				w, err := g.GetWeight(target.ID(), edge.ID())
+				w, err := g.Weight(target.ID(), edge.ID())
 				if err != nil {
 					return false, err
 				}
@@ -52,7 +52,7 @@ func DepthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn func(
 			linkedNodes = linkedNodes[:len(linkedNodes)-1]
 			visited := map[T]struct{}{}
 
-			edges, err := g.GetEdges(target.ID())
+			edges, err := g.Edges(target.ID())
 			if err != nil {
 				return false, err
 			}
@@ -62,7 +62,7 @@ func DepthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn func(
 					continue
 				}
 
-				w, err := g.GetWeight(target.ID(), edge.ID())
+				w, err := g.Weight(target.ID(), edge.ID())
 				if err != nil {
 					return false, err
 				}

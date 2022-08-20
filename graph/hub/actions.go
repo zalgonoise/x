@@ -60,7 +60,7 @@ func RemoveNodesFromMap[T model.ID, I model.Int](g model.Hub[T, I], ids ...T) er
 	curKeys := getKeysFromMap(g)
 
 	for _, id := range ids {
-		node, err := g.GetNode(id)
+		node, err := g.Get(id)
 		if err != nil {
 			return err
 		}
@@ -181,12 +181,12 @@ func GetEdgesFromMapNode[T model.ID, I model.Int](g model.Hub[T, I], node T) ([]
 }
 
 func GetWeightFromEdgesInMap[T model.ID, I model.Int](g model.Hub[T, I], from, to T) (I, error) {
-	fromNode, err := g.GetNode(from)
+	fromNode, err := g.Get(from)
 	if err != nil {
 		return 0, err
 	}
 
-	toNode, err := g.GetNode(to)
+	toNode, err := g.Get(to)
 	if err != nil {
 		return 0, err
 	}
@@ -197,7 +197,7 @@ func GetWeightFromEdgesInMap[T model.ID, I model.Int](g model.Hub[T, I], from, t
 }
 
 func GetParentFromNode[T model.ID, I model.Int](g model.Hub[T, I], node T) (model.Hub[T, I], error) {
-	n, err := g.GetNode(node)
+	n, err := g.Get(node)
 	if err != nil {
 		return nil, err
 	}
