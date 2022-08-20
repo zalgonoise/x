@@ -33,11 +33,19 @@ func (g *hubGraph[T, I]) ID() T {
 func (g *hubGraph[T, I]) Parent() model.Hub[T, I] {
 	return g.parent
 }
-func (g *hubGraph[T, I]) Link(parent model.Hub[T, I]) error {
+func (g *hubGraph[T, I]) Link(parent model.Hub[T, I], conf ...options.Setting) error {
 	g.parent = parent
 	if g.conf.ReadOnly {
 		g.locked = true
 	}
+
+	n := len(conf)
+	if n == 1 {
+		conf[0].Apply(g.conf)
+	} else if n > 1 {
+		options.MultiOption(conf...).Apply(g.conf)
+	}
+
 	return nil
 }
 func (g *hubGraph[T, I]) Value() any {
@@ -50,7 +58,7 @@ func (g *hubGraph[T, I]) Add(nodes ...model.Hub[T, I]) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
-	return AddNodesToMap[T, I](g, nodes...)
+	return AddNodesToMap[T, I](g, g.conf, nodes...)
 }
 func (g *hubGraph[T, I]) Remove(nodes ...T) error {
 	if g.locked {

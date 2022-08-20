@@ -38,7 +38,8 @@ func NewGraph[T model.ID, I model.Int, V any](id T, value V, opts ...options.Set
 func NewHub[T model.ID, I model.Int](id T, value any, opts ...options.Setting) model.Hub[T, I] {
 	config, err := options.New(opts...)
 	if err != nil {
-		return nil
+		panic(err)
+		// return nil
 	}
 
 	if config.GraphType != options.GraphHub && config.GraphType != options.UnsetType {

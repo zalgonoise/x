@@ -5,26 +5,14 @@ import (
 )
 
 type (
-	Setting interface {
-		Apply(*GraphConfig)
-	}
-
-	GraphConfig struct {
-		GraphType        TypeSetting
-		IsNonDirectional bool
-		IsNonCyclical    bool
-		IsUnweighted     bool
-		Immutable        bool
-		ReadOnly         bool
-		IDConstraint     reflect.Type
-	}
-
 	TypeSetting      int
 	DirectionSetting int
 	CycleSetting     int
 	WeightedEdges    int
 	Mutability       int
 	WritePrivilege   int
+	NodeLimit        int
+	DepthLimit       int
 	IDConstraint     struct {
 		v reflect.Type
 	}
@@ -58,23 +46,18 @@ const (
 	ReadOnly  WritePrivilege = iota
 )
 
-func IDType(v any) Setting {
-	return &IDConstraint{v: reflect.TypeOf(v)}
+func MaxNodes(v int) Setting {
+	s := NodeLimit(v)
+	return &s
 }
 
-func New(s ...Setting) (*GraphConfig, error) {
-	conf := new(GraphConfig)
+func MaxDepth(v int) Setting {
+	s := DepthLimit(v)
+	return &s
+}
 
-	input := MultiOption(s...)
-
-	input.Apply(conf)
-
-	_, err := conf.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	return conf, nil
+func IDType(v any) Setting {
+	return &IDConstraint{v: reflect.TypeOf(v)}
 }
 
 func (s TypeSetting) Apply(c *GraphConfig) {
@@ -121,4 +104,20 @@ func (s WritePrivilege) Apply(c *GraphConfig) {
 	if s == ReadOnly {
 		c.ReadOnly = true
 	}
+}
+
+func (s NodeLimit) Apply(c *GraphConfig) {
+	if s <= 0 {
+		c.MaxNodes = 0
+		return
+	}
+	c.MaxNodes = int(s)
+}
+
+func (s DepthLimit) Apply(c *GraphConfig) {
+	if s <= 0 {
+		c.MaxDepth = 0
+		return
+	}
+	c.MaxDepth = int(s)
 }

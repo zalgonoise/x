@@ -1,6 +1,9 @@
 package model
 
-import "golang.org/x/exp/constraints"
+import (
+	"github.com/zalgonoise/x/graph/options"
+	"golang.org/x/exp/constraints"
+)
 
 // ID defines the types that can be set as identifiers to a Node
 //
@@ -69,7 +72,7 @@ type Hub[T ID, I Int] interface {
 
 	ID() T
 	Parent() Hub[T, I]
-	Link(Hub[T, I]) error
+	Link(Hub[T, I], ...options.Setting) error
 	Value() any
 	Map() *map[Hub[T, I]]map[Hub[T, I]]I
 }

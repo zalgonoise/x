@@ -6,6 +6,7 @@ import (
 
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
+	"github.com/zalgonoise/x/graph/options"
 )
 
 func getKeysFromMap[T model.ID, I model.Int](g model.Hub[T, I]) map[T]model.Hub[T, I] {
@@ -18,13 +19,30 @@ func getKeysFromMap[T model.ID, I model.Int](g model.Hub[T, I]) map[T]model.Hub[
 	return keyMap
 }
 
-func AddNodesToMap[T model.ID, I model.Int](g model.Hub[T, I], nodes ...model.Hub[T, I]) error {
+func getGraphDepth[T model.ID, I model.Int](g model.Hub[T, I]) int {
+	counter := 0
+	for g.Parent() != nil {
+		counter += 1
+		g = g.Parent()
+	}
+	return counter
+}
+
+func AddNodesToMap[T model.ID, I model.Int](g model.Hub[T, I], conf *options.GraphConfig, nodes ...model.Hub[T, I]) error {
+	if conf.MaxDepth > 0 && getGraphDepth(g) >= conf.MaxDepth {
+		return errs.MaxDepthReached
+	}
+
 	m := g.Map()
 	n := *m
 
 	curKeys := getKeysFromMap(g)
+	count := len(curKeys)
 
-	for _, node := range nodes {
+	for idx, node := range nodes {
+		if conf.MaxNodes > 0 && count+idx >= conf.MaxNodes {
+			return errs.MaxNodesReached
+		}
 
 		if _, ok := n[node]; ok {
 			return errs.AlreadyExists
@@ -43,7 +61,7 @@ func AddNodesToMap[T model.ID, I model.Int](g model.Hub[T, I], nodes ...model.Hu
 		}
 
 		// link node to graph
-		node.Link(g)
+		node.Link(g, conf)
 
 		// node appended to added keys
 		curKeys[node.ID()] = node
