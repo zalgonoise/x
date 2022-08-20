@@ -65,7 +65,7 @@ func (g *hubGraph[T, I]) Get(node T) (model.Hub[T, I], error) {
 	return GetNodeFromMap[T, I](g, node)
 }
 func (g *hubGraph[T, I]) List() ([]model.Hub[T, I], error) {
-	return GetKeysFromMap[T, I](g)
+	return ListNodesFromMap[T, I](g)
 }
 func (g *hubGraph[T, I]) Connect(from, to T, weight I) error {
 	if g.locked {

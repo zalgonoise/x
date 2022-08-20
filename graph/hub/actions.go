@@ -98,7 +98,7 @@ func GetNodeFromMap[T model.ID, I model.Int](g model.Hub[T, I], node T) (model.H
 	return n, nil
 }
 
-func GetKeysFromMap[T model.ID, I model.Int](g model.Hub[T, I]) ([]model.Hub[T, I], error) {
+func ListNodesFromMap[T model.ID, I model.Int](g model.Hub[T, I]) ([]model.Hub[T, I], error) {
 	m := *g.Map()
 
 	out := []model.Hub[T, I]{}
@@ -194,15 +194,6 @@ func GetWeightFromEdgesInMap[T model.ID, I model.Int](g model.Hub[T, I], from, t
 	m := *g.Map()
 
 	return m[fromNode][toNode], nil
-}
-
-func GetParentFromNode[T model.ID, I model.Int](g model.Hub[T, I], node T) (model.Hub[T, I], error) {
-	n, err := g.Get(node)
-	if err != nil {
-		return nil, err
-	}
-
-	return n.Parent(), nil
 }
 
 type output[T model.ID, I model.Int] struct {

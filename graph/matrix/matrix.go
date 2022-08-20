@@ -51,7 +51,7 @@ func (g *mapGraph[T, I, V]) Get(node T) (model.Node[T, I, V], error) {
 	return GetNodeFromMap[T, I, V](g, node)
 }
 func (g *mapGraph[T, I, V]) List() ([]model.Node[T, I, V], error) {
-	return GetKeysFromMap[T, I, V](g)
+	return ListNodesFromMap[T, I, V](g)
 }
 func (g *mapGraph[T, I, V]) Connect(from, to T, weight I) error {
 	if g.conf.IsUnweighted {

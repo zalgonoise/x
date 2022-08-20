@@ -98,7 +98,7 @@ func GetNodeFromMap[T model.ID, I model.Int, V any](g Graph[T, I, V], node T) (m
 	return n, nil
 }
 
-func GetKeysFromMap[T model.ID, I model.Int, V any](g Graph[T, I, V]) ([]model.Node[T, I, V], error) {
+func ListNodesFromMap[T model.ID, I model.Int, V any](g Graph[T, I, V]) ([]model.Node[T, I, V], error) {
 	m := *g.Map()
 
 	out := []model.Node[T, I, V]{}
@@ -197,15 +197,6 @@ func GetWeightFromEdgesInMap[T model.ID, I model.Int, V any](g Graph[T, I, V], f
 	m := *g.Map()
 
 	return m[fromNode][toNode], nil
-}
-
-func GetParentFromNode[T model.ID, I model.Int, V any](g Graph[T, I, V], node T) (model.Graph[T, I, V], error) {
-	n, err := g.Get(node)
-	if err != nil {
-		return nil, err
-	}
-
-	return n.Parent(), nil
 }
 
 type output[T model.ID, I model.Int, V any] struct {

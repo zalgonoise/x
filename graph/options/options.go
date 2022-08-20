@@ -1,6 +1,8 @@
 package options
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type (
 	Setting interface {
@@ -76,7 +78,7 @@ func New(s ...Setting) (*GraphConfig, error) {
 }
 
 func (s TypeSetting) Apply(c *GraphConfig) {
-	switch c.GraphType {
+	switch s {
 	case UnsetType:
 		c.GraphType = GraphMatrix
 	default:
