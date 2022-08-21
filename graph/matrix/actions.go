@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/zalgonoise/x/graph/actions"
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
@@ -19,17 +20,8 @@ func getKeysFromMap[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T,
 	return keyMap
 }
 
-func getGraphDepth[T model.ID, I model.Num](g model.Graph[T, I]) int {
-	counter := 0
-	for g.Parent() != nil {
-		counter += 1
-		g = g.Parent()
-	}
-	return counter
-}
-
 func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphConfig, nodes ...model.Graph[T, I]) error {
-	if conf.MaxDepth > 0 && getGraphDepth[T, I](g) >= conf.MaxDepth {
+	if conf.MaxDepth > 0 && actions.GraphDepth[T, I](g) >= conf.MaxDepth {
 		return errs.MaxDepthReached
 	}
 
@@ -136,7 +128,7 @@ func AddEdgeInMap[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, 
 	}
 
 	if isNonCyc {
-		ok, err := DepthFirstSearch(g, VerifyCycles(fromNode, toNode), toNode)
+		ok, err := actions.DepthFirstSearch[T, I](g, actions.VerifyCycles(fromNode, toNode), toNode)
 		if err != nil {
 			return err
 		}

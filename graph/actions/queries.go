@@ -1,10 +1,19 @@
-package matrix
+package actions
 
 import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func BreadthFirstSearch[T model.ID, I model.Num](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
+func GraphDepth[T model.ID, I model.Num](g model.Graph[T, I]) int {
+	counter := 0
+	for g.Parent() != nil {
+		counter += 1
+		g = g.Parent()
+	}
+	return counter
+}
+
+func BreadthFirstSearch[T model.ID, I model.Num](g model.Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
@@ -41,7 +50,7 @@ func BreadthFirstSearch[T model.ID, I model.Num](g Graph[T, I], fn func(from, to
 	return true, nil
 }
 
-func DepthFirstSearch[T model.ID, I model.Num](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
+func DepthFirstSearch[T model.ID, I model.Num](g model.Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
