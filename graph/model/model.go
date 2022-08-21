@@ -12,9 +12,9 @@ type ID interface {
 	constraints.Ordered
 }
 
-// Int defines the types that can be set as weights of an Edge
+// Num defines the types that can be set as weights of an Edge
 //
-// Ints must be integers, floating-point or complex numbers
+// Nums must be integers, floating-point or complex numbers
 type Num interface {
 	constraints.Integer | constraints.Float | constraints.Complex
 }
