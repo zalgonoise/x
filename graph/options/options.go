@@ -19,31 +19,28 @@ type (
 )
 
 const (
-	UnsetType   TypeSetting = iota
 	GraphMatrix TypeSetting = iota
-	GraphList   TypeSetting = iota
-	GraphNode   TypeSetting = iota
-	GraphHub    TypeSetting = iota
+	GraphList
 )
 const (
-	Directional    DirectionSetting = iota
-	NonDirectional DirectionSetting = iota
+	Directional DirectionSetting = iota
+	NonDirectional
 )
 const (
-	Cyclical    CycleSetting = iota
-	NonCyclical CycleSetting = iota
+	Cyclical CycleSetting = iota
+	NonCyclical
 )
 const (
-	Weighted   WeightedEdges = iota
-	Unweighted WeightedEdges = iota
+	Weighted WeightedEdges = iota
+	Unweighted
 )
 const (
-	Mutable   Mutability = iota
-	Immutable Mutability = iota
+	Mutable Mutability = iota
+	Immutable
 )
 const (
 	ReadWrite WritePrivilege = iota
-	ReadOnly  WritePrivilege = iota
+	ReadOnly
 )
 
 func MaxNodes(v int) Setting {
@@ -61,12 +58,7 @@ func IDType(v any) Setting {
 }
 
 func (s TypeSetting) Apply(c *GraphConfig) {
-	switch s {
-	case UnsetType:
-		c.GraphType = GraphMatrix
-	default:
-		c.GraphType = s
-	}
+	c.GraphType = s
 }
 
 func (s DirectionSetting) Apply(c *GraphConfig) {

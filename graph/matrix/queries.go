@@ -4,13 +4,13 @@ import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func BreadthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn func(from, to model.Node[T, I, V], weight I) bool, targets ...model.Node[T, I, V]) (bool, error) {
+func BreadthFirstSearch[T model.ID, I model.Int](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
 		}
 
-		for linkedNodes := []model.Node[T, I, V]{node}; len(linkedNodes) > 0; {
+		for linkedNodes := []model.Graph[T, I]{node}; len(linkedNodes) > 0; {
 			target := linkedNodes[0]
 			linkedNodes = linkedNodes[1:]
 			visited := map[T]struct{}{}
@@ -41,13 +41,13 @@ func BreadthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn fun
 	return true, nil
 }
 
-func DepthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn func(from, to model.Node[T, I, V], weight I) bool, targets ...model.Node[T, I, V]) (bool, error) {
+func DepthFirstSearch[T model.ID, I model.Int](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
 		}
 
-		for linkedNodes := []model.Node[T, I, V]{node}; len(linkedNodes) > 0; {
+		for linkedNodes := []model.Graph[T, I]{node}; len(linkedNodes) > 0; {
 			target := linkedNodes[len(linkedNodes)-1]
 			linkedNodes = linkedNodes[:len(linkedNodes)-1]
 			visited := map[T]struct{}{}
@@ -78,8 +78,8 @@ func DepthFirstSearch[T model.ID, I model.Int, V any](g Graph[T, I, V], fn func(
 	return true, nil
 }
 
-func VerifyCycles[T model.ID, I model.Int, V any](from, to model.Node[T, I, V]) func(target, edge model.Node[T, I, V], weight I) bool {
-	return func(target, edge model.Node[T, I, V], weight I) bool {
+func VerifyCycles[T model.ID, I model.Int](from, to model.Graph[T, I]) func(target, edge model.Graph[T, I], weight I) bool {
+	return func(target, edge model.Graph[T, I], weight I) bool {
 		return to.ID() != target.ID() // fails verification
 	}
 }

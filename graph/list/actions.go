@@ -8,9 +8,9 @@ import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func getKeysFromList[T model.ID, I model.Int, V any](g Graph[T, I, V]) map[T]model.Node[T, I, V] {
-	m := *g.Map()
-	keyMap := map[T]model.Node[T, I, V]{}
+func getKeysFromList[T model.ID, I model.Int](g Graph[T, I]) map[T]model.Graph[T, I] {
+	m := *g.adjancy()
+	keyMap := map[T]model.Graph[T, I]{}
 
 	for k := range m {
 		keyMap[k.ID()] = k
@@ -18,8 +18,8 @@ func getKeysFromList[T model.ID, I model.Int, V any](g Graph[T, I, V]) map[T]mod
 	return keyMap
 }
 
-func AddNodesToList[T model.ID, I model.Int, V any](g Graph[T, I, V], nodes ...model.Node[T, I, V]) error {
-	m := g.Map()
+func AddNodesToList[T model.ID, I model.Int](g Graph[T, I], nodes ...model.Graph[T, I]) error {
+	m := g.adjancy()
 	n := *m
 
 	for _, node := range nodes {
@@ -28,7 +28,7 @@ func AddNodesToList[T model.ID, I model.Int, V any](g Graph[T, I, V], nodes ...m
 			return errs.AlreadyExists
 		}
 
-		n[node] = []model.Node[T, I, V]{}
+		n[node] = []model.Graph[T, I]{}
 
 		// link node to graph
 		node.Link(g)
@@ -38,8 +38,8 @@ func AddNodesToList[T model.ID, I model.Int, V any](g Graph[T, I, V], nodes ...m
 	return nil
 }
 
-func RemoveNodesFromList[T model.ID, I model.Int, V any](g Graph[T, I, V], ids ...T) error {
-	m := g.Map()
+func RemoveNodesFromList[T model.ID, I model.Int](g Graph[T, I], ids ...T) error {
+	m := g.adjancy()
 	n := *m
 
 	for _, id := range ids {
@@ -78,7 +78,7 @@ func RemoveNodesFromList[T model.ID, I model.Int, V any](g Graph[T, I, V], ids .
 	return nil
 }
 
-func GetNodeFromList[T model.ID, I model.Int, V any](g Graph[T, I, V], node T) (model.Node[T, I, V], error) {
+func GetNodeFromList[T model.ID, I model.Int](g Graph[T, I], node T) (model.Graph[T, I], error) {
 	k := getKeysFromList(g)
 
 	n, ok := k[node]
@@ -89,10 +89,10 @@ func GetNodeFromList[T model.ID, I model.Int, V any](g Graph[T, I, V], node T) (
 	return n, nil
 }
 
-func ListNodesFromList[T model.ID, I model.Int, V any](g Graph[T, I, V]) ([]model.Node[T, I, V], error) {
-	m := *g.Map()
+func ListNodesFromList[T model.ID, I model.Int](g Graph[T, I]) ([]model.Graph[T, I], error) {
+	m := *g.adjancy()
 
-	out := []model.Node[T, I, V]{}
+	out := []model.Graph[T, I]{}
 
 	for k := range m {
 		out = append(out, k)
@@ -101,11 +101,11 @@ func ListNodesFromList[T model.ID, I model.Int, V any](g Graph[T, I, V]) ([]mode
 	return out, nil
 }
 
-func AddEdgeInList[T model.ID, I model.Int, V any](g Graph[T, I, V], from, to T, weight I, isNonDir, isNonCyc bool) error {
+func AddEdgeInList[T model.ID, I model.Int](g Graph[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
 	if g == nil {
 		return fmt.Errorf("unable to read graph (nil): %w", errs.DoesNotExist)
 	}
-	m := g.Map()
+	m := g.adjancy()
 	n := *m
 
 	k := getKeysFromList(g)
@@ -139,17 +139,17 @@ func AddEdgeInList[T model.ID, I model.Int, V any](g Graph[T, I, V], from, to T,
 	return nil
 }
 
-func AddEdgeInListUni[T model.ID, I model.Int, V any](m map[model.Node[T, I, V]][]model.Node[T, I, V], from, to model.Node[T, I, V], weight I) {
+func AddEdgeInListUni[T model.ID, I model.Int](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) {
 	m[from] = append(m[from], to)
 }
 
-func AddEdgeInListBi[T model.ID, I model.Int, V any](m map[model.Node[T, I, V]][]model.Node[T, I, V], from, to model.Node[T, I, V], weight I) {
+func AddEdgeInListBi[T model.ID, I model.Int](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) {
 	m[from] = append(m[from], to)
 	m[to] = append(m[to], from)
 }
 
-func GetEdgesFromListNode[T model.ID, I model.Int, V any](g Graph[T, I, V], node T) ([]model.Node[T, I, V], error) {
-	m := *g.Map()
+func GetEdgesFromListNode[T model.ID, I model.Int](g Graph[T, I], node T) ([]model.Graph[T, I], error) {
+	m := *g.adjancy()
 	k := getKeysFromList(g)
 
 	target, ok := k[node]
@@ -160,7 +160,7 @@ func GetEdgesFromListNode[T model.ID, I model.Int, V any](g Graph[T, I, V], node
 	return m[target], nil
 }
 
-func GetWeightFromEdgesInList[T model.ID, I model.Int, V any](g Graph[T, I, V], from, to T) (I, error) {
+func GetWeightFromEdgesInList[T model.ID, I model.Int](g Graph[T, I], from, to T) (I, error) {
 	fromNode, err := g.Get(from)
 	if err != nil {
 		return 0, err
@@ -171,7 +171,7 @@ func GetWeightFromEdgesInList[T model.ID, I model.Int, V any](g Graph[T, I, V], 
 		return 0, err
 	}
 
-	m := *g.Map()
+	m := *g.adjancy()
 
 	for _, v := range m[fromNode] {
 		if v == toNode {
@@ -182,13 +182,13 @@ func GetWeightFromEdgesInList[T model.ID, I model.Int, V any](g Graph[T, I, V], 
 	return 0, nil
 }
 
-type output[T model.ID, I model.Int, V any] struct {
+type output[T model.ID, I model.Int] struct {
 	ID    T         `json:"id"`
 	Nodes map[T][]T `json:"nodes,omitempty"`
 }
 
-func (g *listGraph[T, I, V]) String() string {
-	var out = output[T, I, V]{
+func (g *listGraph[T, I]) String() string {
+	var out = output[T, I]{
 		ID:    g.ID(),
 		Nodes: map[T][]T{},
 	}
