@@ -21,14 +21,17 @@ type listGraph[T model.ID, I model.Num] struct {
 	conf *options.GraphConfig
 }
 
-func New[T model.ID, I model.Num](id T, v any, conf *options.GraphConfig) model.Graph[T, I] {
+func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph[T, I] {
+	c := &options.GraphConfig{}
+	conf.Apply(c)
+
 	return &listGraph[T, I]{
 		id:     id,
 		v:      v,
 		n:      map[model.Graph[T, I]][]model.Graph[T, I]{},
 		parent: nil,
 
-		conf: conf,
+		conf: c,
 	}
 }
 
