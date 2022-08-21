@@ -9,7 +9,7 @@ import (
 )
 
 func GetGraphMap[T model.ID, I model.Num](g Graph[T, I]) (map[int]Graph[T, I], error) {
-	node, ok := GetFirstNode[T, I](g).(Graph[T, I])
+	node, ok := GetFirstNode(g).(Graph[T, I])
 	if !ok {
 		return nil, errs.InvalidType
 	}
@@ -49,7 +49,7 @@ func GetFirstNode[T model.ID, I model.Num](g Graph[T, I]) model.Graph[T, I] {
 }
 
 func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphConfig, nodes ...model.Graph[T, I]) error {
-	last, ok := GetLastNode[T, I](g).(Graph[T, I])
+	last, ok := GetLastNode(g).(Graph[T, I])
 	if !ok {
 		return errs.InvalidType
 	}
@@ -68,7 +68,7 @@ func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphC
 }
 
 func RemoveNodesFromList[T model.ID, I model.Num](g Graph[T, I], ids ...T) error {
-	all, err := GetGraphMap[T, I](g)
+	all, err := GetGraphMap(g)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func RemoveNodesFromList[T model.ID, I model.Num](g Graph[T, I], ids ...T) error
 }
 
 func GetNodeFromList[T model.ID, I model.Num](g Graph[T, I], node T) (model.Graph[T, I], error) {
-	all, err := GetGraphMap[T, I](g)
+	all, err := GetGraphMap(g)
 	if err != nil {
 		return nil, err
 	}
