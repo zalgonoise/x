@@ -14,9 +14,9 @@ type (
 		IsUnweighted     bool
 		Immutable        bool
 		ReadOnly         bool
-		IDConstraint     reflect.Type
 		MaxNodes         int
 		MaxDepth         int
+		IDConstraint     reflect.Type
 	}
 )
 

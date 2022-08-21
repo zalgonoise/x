@@ -6,70 +6,98 @@ import (
 	"github.com/zalgonoise/x/graph/options"
 )
 
-type Graph[T model.ID, I model.Int, V any] interface {
-	model.Graph[T, I, V]
-	Map() *map[model.Node[T, I, V]][]model.Node[T, I, V]
+type Graph[T model.ID, I model.Int] interface {
+	model.Graph[T, I]
+	adjancy() *map[model.Graph[T, I]][]model.Graph[T, I]
 }
 
-type listGraph[T model.ID, I model.Int, V any] struct {
-	id T
-	v  V
-	n  map[model.Node[T, I, V]][]model.Node[T, I, V]
+type listGraph[T model.ID, I model.Int] struct {
+	locked bool
+	id     T
+	v      any
+	n      map[model.Graph[T, I]][]model.Graph[T, I]
+	parent model.Graph[T, I]
 
 	conf *options.GraphConfig
 }
 
-func NewGraph[T model.ID, I model.Int, V any](id T, v V, conf *options.GraphConfig) model.Graph[T, I, V] {
-	return &listGraph[T, I, V]{
-		id: id,
-		v:  v,
-		n:  map[model.Node[T, I, V]][]model.Node[T, I, V]{},
+func New[T model.ID, I model.Int](id T, v any, conf *options.GraphConfig) model.Graph[T, I] {
+	return &listGraph[T, I]{
+		id:     id,
+		v:      v,
+		n:      map[model.Graph[T, I]][]model.Graph[T, I]{},
+		parent: nil,
 
 		conf: conf,
 	}
 }
 
-func (g *listGraph[T, I, V]) Map() *map[model.Node[T, I, V]][]model.Node[T, I, V] {
+func (g *listGraph[T, I]) adjancy() *map[model.Graph[T, I]][]model.Graph[T, I] {
 	return &g.n
 }
-func (g *listGraph[T, I, V]) ID() T {
+func (g *listGraph[T, I]) ID() T {
 	return g.id
 }
-func (g *listGraph[T, I, V]) Value() V {
+func (g *listGraph[T, I]) Value() any {
 	return g.v
 }
-func (g *listGraph[T, I, V]) Add(nodes ...model.Node[T, I, V]) error {
-	ids := []T{}
-	for _, k := range nodes {
-		ids = append(ids, k.ID())
+func (g *listGraph[T, I]) Parent() model.Graph[T, I] {
+	return g.parent
+}
+func (g *listGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting) error {
+	g.parent = parent
+	if g.conf.ReadOnly {
+		g.locked = true
 	}
 
-	return AddNodesToList[T, I, V](g, nodes...)
+	n := len(conf)
+	if n == 1 {
+		conf[0].Apply(g.conf)
+	} else if n > 1 {
+		options.MultiOption(conf...).Apply(g.conf)
+	}
+
+	return nil
 }
-func (g *listGraph[T, I, V]) Remove(nodes ...T) error {
+func (g *listGraph[T, I]) Add(nodes ...model.Graph[T, I]) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
+	return AddNodesToList[T, I](g, nodes...)
+}
+func (g *listGraph[T, I]) Remove(nodes ...T) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
 	if g.conf.Immutable {
 		return errs.Immutable
 	}
-	return RemoveNodesFromList[T, I, V](g, nodes...)
+	return RemoveNodesFromList[T, I](g, nodes...)
 }
-func (g *listGraph[T, I, V]) Get(node T) (model.Node[T, I, V], error) {
-	return GetNodeFromList[T, I, V](g, node)
+func (g *listGraph[T, I]) Get(node T) (model.Graph[T, I], error) {
+	return GetNodeFromList[T, I](g, node)
 }
-func (g *listGraph[T, I, V]) List() ([]model.Node[T, I, V], error) {
-	return ListNodesFromList[T, I, V](g)
+func (g *listGraph[T, I]) List() ([]model.Graph[T, I], error) {
+	return ListNodesFromList[T, I](g)
 }
-func (g *listGraph[T, I, V]) Connect(from, to T, weight I) error {
-	return AddEdgeInList[T, I, V](g, from, to, 1, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
+func (g *listGraph[T, I]) Connect(from, to T, weight I) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
+	return AddEdgeInList[T, I](g, from, to, 1, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
-func (g *listGraph[T, I, V]) Disconnect(from, to T) error {
+func (g *listGraph[T, I]) Disconnect(from, to T) error {
+	if g.locked {
+		return errs.ReadOnly
+	}
 	if g.conf.Immutable {
 		return errs.Immutable
 	}
-	return AddEdgeInList[T, I, V](g, from, to, 0, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
+	return AddEdgeInList[T, I](g, from, to, 0, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
-func (g *listGraph[T, I, V]) Edges(node T) ([]model.Node[T, I, V], error) {
-	return GetEdgesFromListNode[T, I, V](g, node)
+func (g *listGraph[T, I]) Edges(node T) ([]model.Graph[T, I], error) {
+	return GetEdgesFromListNode[T, I](g, node)
 }
-func (g *listGraph[T, I, V]) Weight(from, to T) (I, error) {
-	return GetWeightFromEdgesInList[T, I, V](g, from, to)
+func (g *listGraph[T, I]) Weight(from, to T) (I, error) {
+	return GetWeightFromEdgesInList[T, I](g, from, to)
 }

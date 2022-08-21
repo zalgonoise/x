@@ -3,7 +3,7 @@ package options
 type intID int
 
 var (
-	ConfAdjList Setting = MultiOption(
+	CfgAdjencyList Setting = MultiOption(
 		GraphList,  // init type
 		Unweighted, // adjancy lists do not hold weights
 	)
