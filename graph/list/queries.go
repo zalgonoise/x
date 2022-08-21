@@ -4,7 +4,7 @@ import (
 	"github.com/zalgonoise/x/graph/model"
 )
 
-func BreadthFirstSearch[T model.ID, I model.Int](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
+func BreadthFirstSearch[T model.ID, I model.Num](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
@@ -41,7 +41,7 @@ func BreadthFirstSearch[T model.ID, I model.Int](g Graph[T, I], fn func(from, to
 	return true, nil
 }
 
-func DepthFirstSearch[T model.ID, I model.Int](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
+func DepthFirstSearch[T model.ID, I model.Num](g Graph[T, I], fn func(from, to model.Graph[T, I], weight I) bool, targets ...model.Graph[T, I]) (bool, error) {
 	for _, node := range targets {
 		if node == nil {
 			continue
@@ -78,7 +78,7 @@ func DepthFirstSearch[T model.ID, I model.Int](g Graph[T, I], fn func(from, to m
 	return true, nil
 }
 
-func VerifyCycles[T model.ID, I model.Int](from, to model.Graph[T, I]) func(target, edge model.Graph[T, I], weight I) bool {
+func VerifyCycles[T model.ID, I model.Num](from, to model.Graph[T, I]) func(target, edge model.Graph[T, I], weight I) bool {
 	return func(target, edge model.Graph[T, I], weight I) bool {
 		return to.ID() != target.ID() // fails verification
 	}

@@ -6,12 +6,12 @@ import (
 	"github.com/zalgonoise/x/graph/options"
 )
 
-type Graph[T model.ID, I model.Int] interface {
+type Graph[T model.ID, I model.Num] interface {
 	model.Graph[T, I]
 	adjancy() *map[model.Graph[T, I]][]model.Graph[T, I]
 }
 
-type listGraph[T model.ID, I model.Int] struct {
+type listGraph[T model.ID, I model.Num] struct {
 	locked bool
 	id     T
 	v      any
@@ -21,7 +21,7 @@ type listGraph[T model.ID, I model.Int] struct {
 	conf *options.GraphConfig
 }
 
-func New[T model.ID, I model.Int](id T, v any, conf *options.GraphConfig) model.Graph[T, I] {
+func New[T model.ID, I model.Num](id T, v any, conf *options.GraphConfig) model.Graph[T, I] {
 	return &listGraph[T, I]{
 		id:     id,
 		v:      v,

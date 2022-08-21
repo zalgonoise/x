@@ -5,53 +5,25 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// ID defines the types that can be set as identifiers to a Node
+// ID defines the types that can be set as identifiers of a Graph
 //
 // IDs must be comparable and unique
 type ID interface {
 	constraints.Ordered
 }
 
-type Int interface {
-	constraints.Integer | constraints.Float
+// Int defines the types that can be set as weights of an Edge
+//
+// Ints must be integers, floating-point or complex numbers
+type Num interface {
+	constraints.Integer | constraints.Float | constraints.Complex
 }
 
-// // Graph defines the behavior of a graph data structure, with open
-// // CRUD operations towards its nodes, their edges, and its ID
-// type Graph[T ID, I Int, V any] interface {
-// 	// AddNode takes in any number of nodes and adds it to the graph
-// 	Add(...Node[T, I, V]) error
-// 	// RemoveNode removes any of input nodes from the graph
-// 	Remove(...T) error
-// 	// GetNode takes in an input ID to a node, and returns it or an error
-// 	Get(T) (Node[T, I, V], error)
-// 	// Get returns all nodes in a graph, and an error
-// 	List() ([]Node[T, I, V], error)
-
-// 	// AddEdge links `from` to `to`, with a set weight
-// 	Connect(from, to T, weight I) error
-// 	// RemoveEdge unlinks `target` and `edge` nodes
-// 	Disconnect(from, to T) error
-// 	// GetEdges takes in a node to return a list of nodes linked to it, and and error
-// 	Edges(T) ([]Node[T, I, V], error)
-// 	// GetWeight gets the weight value of two nodes, if they are connected
-// 	Weight(from, to T) (I, error)
-
-// 	ID() T
-// 	Value() V
-// }
-
-// // Node defines the basic behavior a graph node must have, being able to return an
-// // ID
-// type Node[T ID, I Int, V any] interface {
-// 	ID() T
-// 	Parent() Graph[T, I, V]
-// 	Link(Graph[T, I, V]) error
-// 	Value() V
-// }
-
-// Hub defines a multigraph, a graph that hosts other nested graphs
-type Graph[T ID, I Int] interface {
+// Graph defines the behavior of a graph data structure, with open
+// CRUD operations towards its nodes and their edges, and also operations
+// against the graph itself -- retrieve its ID, its parent, link it to a parent
+// and retrieve its underlying value
+type Graph[T ID, I Num] interface {
 	// AddNode takes in any number of nodes and adds it to the graph
 	Add(...Graph[T, I]) error
 	// RemoveNode removes any of input nodes from the graph
@@ -74,5 +46,4 @@ type Graph[T ID, I Int] interface {
 	Parent() Graph[T, I]
 	Link(Graph[T, I], ...options.Setting) error
 	Value() any
-	// Map() *map[Graph[T, I]]map[Graph[T, I]]I
 }

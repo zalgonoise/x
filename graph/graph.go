@@ -12,7 +12,7 @@ import (
 	"github.com/zalgonoise/x/graph/options"
 )
 
-func New[T model.ID, I model.Int](id T, value any, opts ...options.Setting) model.Graph[T, I] {
+func New[T model.ID, I model.Num](id T, value any, opts ...options.Setting) model.Graph[T, I] {
 	config, err := options.New(opts...)
 	if err != nil {
 		return nil
