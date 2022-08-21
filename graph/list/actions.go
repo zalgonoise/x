@@ -6,6 +6,7 @@ import (
 
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
+	"github.com/zalgonoise/x/graph/options"
 )
 
 func getKeysFromList[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T, I] {
@@ -18,11 +19,29 @@ func getKeysFromList[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T
 	return keyMap
 }
 
-func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], nodes ...model.Graph[T, I]) error {
+func getGraphDepth[T model.ID, I model.Num](g model.Graph[T, I]) int {
+	counter := 0
+	for g.Parent() != nil {
+		counter += 1
+		g = g.Parent()
+	}
+	return counter
+}
+
+func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphConfig, nodes ...model.Graph[T, I]) error {
+	if conf.MaxDepth > 0 && getGraphDepth[T, I](g) >= conf.MaxDepth {
+		return errs.MaxDepthReached
+	}
+
 	m := g.adjancy()
 	n := *m
 
-	for _, node := range nodes {
+	count := len(n)
+
+	for idx, node := range nodes {
+		if conf.MaxNodes > 0 && count+idx >= conf.MaxNodes {
+			return errs.MaxNodesReached
+		}
 
 		if _, ok := n[node]; ok {
 			return errs.AlreadyExists

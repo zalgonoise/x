@@ -6,6 +6,7 @@ import (
 
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
+	"github.com/zalgonoise/x/graph/options"
 )
 
 func getKeysFromMap[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T, I] {
@@ -18,23 +19,37 @@ func getKeysFromMap[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T,
 	return keyMap
 }
 
-func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], nodes ...model.Graph[T, I]) error {
+func getGraphDepth[T model.ID, I model.Num](g model.Graph[T, I]) int {
+	counter := 0
+	for g.Parent() != nil {
+		counter += 1
+		g = g.Parent()
+	}
+	return counter
+}
+
+func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphConfig, nodes ...model.Graph[T, I]) error {
+	if conf.MaxDepth > 0 && getGraphDepth[T, I](g) >= conf.MaxDepth {
+		return errs.MaxDepthReached
+	}
+
 	m := g.adjancy()
 	n := *m
 
-	curKeys := getKeysFromMap(g)
+	count := len(n)
 
-	for _, node := range nodes {
+	for idx, node := range nodes {
+		if conf.MaxNodes > 0 && count+idx >= conf.MaxNodes {
+			return errs.MaxNodesReached
+		}
 
 		if _, ok := n[node]; ok {
 			return errs.AlreadyExists
 		}
 
-		n[node] = map[model.Graph[T, I]]I{
-			node: 0,
-		}
+		n[node] = map[model.Graph[T, I]]I{}
 
-		for _, k := range curKeys {
+		for k := range n {
 			// map this node to existing ones
 			n[k][node] = 0
 
@@ -44,9 +59,6 @@ func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], nodes ...model.Graph[
 
 		// link node to graph
 		node.Link(g)
-
-		// node appended to added keys
-		curKeys[node.ID()] = node
 	}
 
 	m = &n
@@ -56,8 +68,6 @@ func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], nodes ...model.Graph[
 func RemoveNodesFromMap[T model.ID, I model.Num](g Graph[T, I], ids ...T) error {
 	m := g.adjancy()
 	n := *m
-
-	curKeys := getKeysFromMap(g)
 
 	for _, id := range ids {
 		node, err := g.Get(id)
@@ -69,7 +79,7 @@ func RemoveNodesFromMap[T model.ID, I model.Num](g Graph[T, I], ids ...T) error 
 			return err
 		}
 
-		for _, k := range curKeys {
+		for k := range n {
 			if k != node {
 				delete(n[k], node)
 				delete(n[node], k)
@@ -111,9 +121,6 @@ func ListNodesFromMap[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T, 
 }
 
 func AddEdgeInMap[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
-	if g == nil {
-		return fmt.Errorf("unable to read graph (nil): %w", errs.DoesNotExist)
-	}
 	m := g.adjancy()
 	n := *m
 

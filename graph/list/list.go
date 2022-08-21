@@ -63,7 +63,7 @@ func (g *listGraph[T, I]) Add(nodes ...model.Graph[T, I]) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
-	return AddNodesToList[T, I](g, nodes...)
+	return AddNodesToList[T, I](g, g.conf, nodes...)
 }
 func (g *listGraph[T, I]) Remove(nodes ...T) error {
 	if g.locked {

@@ -63,7 +63,7 @@ func (g *mapGraph[T, I]) Add(nodes ...model.Graph[T, I]) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
-	return AddNodesToMap[T, I](g, nodes...)
+	return AddNodesToMap[T, I](g, g.conf, nodes...)
 }
 func (g *mapGraph[T, I]) Remove(nodes ...T) error {
 	if g.locked {
