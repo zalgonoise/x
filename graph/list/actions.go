@@ -1,10 +1,10 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/zalgonoise/x/graph/actions"
+	"github.com/zalgonoise/x/graph/dot"
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
@@ -199,19 +199,36 @@ type output[T model.ID, I model.Num] struct {
 }
 
 func (g *listGraph[T, I]) String() string {
-	var out = output[T, I]{
-		ID:    g.ID(),
-		Nodes: map[T][]T{},
+	var dirSetting dot.Direction
+
+	if g.conf.IsNonDirectional {
+		dirSetting = dot.Undirected
+	} else {
+		dirSetting = dot.Directed
 	}
 
-	for ko, vo := range g.n {
-		innerEdges := []T{}
-		for _, ie := range vo {
-			innerEdges = append(innerEdges, ie.ID())
+	dotGraph := dot.New[T, I](dirSetting)
+
+	for k, v := range g.n {
+		for _, ie := range v {
+			dotGraph.Add(k.ID(), ie.ID(), 1)
 		}
-		out.Nodes[ko.ID()] = innerEdges
 	}
+	return dotGraph.String()
 
-	b, _ := json.Marshal(out)
-	return string(b)
+	// var out = output[T, I]{
+	// 	ID:    g.ID(),
+	// 	Nodes: map[T][]T{},
+	// }
+
+	// for ko, vo := range g.n {
+	// 	innerEdges := []T{}
+	// 	for _, ie := range vo {
+	// 		innerEdges = append(innerEdges, ie.ID())
+	// 	}
+	// 	out.Nodes[ko.ID()] = innerEdges
+	// }
+
+	// b, _ := json.Marshal(out)
+	// return string(b)
 }

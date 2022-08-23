@@ -1,5 +1,9 @@
 package options
 
+var (
+	NoType = struct{}{}
+)
+
 type intID int
 
 var (

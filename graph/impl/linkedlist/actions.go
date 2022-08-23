@@ -1,8 +1,7 @@
 package linkedlist
 
 import (
-	"encoding/json"
-
+	"github.com/zalgonoise/x/graph/dot"
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
@@ -142,16 +141,32 @@ type output[T model.ID, I model.Num] struct {
 }
 
 func (g *linkedList[T, I]) String() string {
-	var out = output[T, I]{
-		ID:    g.ID(),
-		Nodes: map[int]T{},
+	var dirSetting dot.Direction
+
+	if g.conf.IsNonDirectional {
+		dirSetting = dot.Undirected
+	} else {
+		dirSetting = dot.Directed
 	}
+
+	dotGraph := dot.New[T, I](dirSetting)
 
 	all, _ := GetGraphMap[T, I](g)
-	for k, v := range all {
-		out.Nodes[k] = v.ID()
+	for i := 1; i < len(all); i++ {
+		dotGraph.Add(all[i-1].ID(), all[i].ID(), 1)
 	}
+	return dotGraph.String()
 
-	b, _ := json.Marshal(out)
-	return string(b)
+	// var out = output[T, I]{
+	// 	ID:    g.ID(),
+	// 	Nodes: map[int]T{},
+	// }
+
+	// all, _ := GetGraphMap[T, I](g)
+	// for k, v := range all {
+	// 	out.Nodes[k] = v.ID()
+	// }
+
+	// b, _ := json.Marshal(out)
+	// return string(b)
 }

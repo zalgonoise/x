@@ -1,10 +1,10 @@
 package matrix
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/zalgonoise/x/graph/actions"
+	"github.com/zalgonoise/x/graph/dot"
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
@@ -204,19 +204,20 @@ type output[T model.ID, I model.Num] struct {
 }
 
 func (g *mapGraph[T, I]) String() string {
-	var out = output[T, I]{
-		ID:    g.ID(),
-		Nodes: map[T]map[T]I{},
+	var dirSetting dot.Direction
+
+	if g.conf.IsNonDirectional {
+		dirSetting = dot.Undirected
+	} else {
+		dirSetting = dot.Directed
 	}
 
-	for ko, vo := range g.n {
-		innerMap := map[T]I{}
-		for ki, vi := range vo {
-			innerMap[ki.ID()] = vi
+	dotGraph := dot.New[T, I](dirSetting)
+
+	for k, v := range g.n {
+		for ki, vi := range v {
+			dotGraph.Add(k.ID(), ki.ID(), vi)
 		}
-		out.Nodes[ko.ID()] = innerMap
 	}
-
-	b, _ := json.Marshal(out)
-	return string(b)
+	return dotGraph.String()
 }

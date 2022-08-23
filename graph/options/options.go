@@ -13,6 +13,7 @@ type (
 	WritePrivilege   int
 	NodeLimit        int
 	DepthLimit       int
+	WeightAsDistance int
 	IDConstraint     struct {
 		v reflect.Type
 	}
@@ -41,6 +42,11 @@ const (
 const (
 	ReadWrite WritePrivilege = iota
 	ReadOnly
+)
+
+const (
+	LabelWeight WeightAsDistance = iota
+	DistanceWeight
 )
 
 func MaxNodes(v int) Setting {
@@ -112,4 +118,11 @@ func (s DepthLimit) Apply(c *GraphConfig) {
 		return
 	}
 	c.MaxDepth = int(s)
+}
+
+func (s WeightAsDistance) Apply(c *GraphConfig) {
+	if s == DistanceWeight {
+		c.WeightAsDistance = true
+		return
+	}
 }
