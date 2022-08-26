@@ -151,12 +151,12 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 }
 
 func AddEdgeInListUni[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) {
-	m[from] = append(m[from], to)
+	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
 }
 
 func AddEdgeInListBi[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) {
-	m[from] = append(m[from], to)
-	m[to] = append(m[to], from)
+	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
+	m[to] = append(m[to], &listEdge[T, I]{Graph: from, weight: weight})
 }
 
 func GetEdgesFromListNode[T model.ID, I model.Num](g Graph[T, I], node T) ([]model.Graph[T, I], error) {
@@ -186,7 +186,11 @@ func GetWeightFromEdgesInList[T model.ID, I model.Num](g Graph[T, I], from, to T
 
 	for _, v := range m[fromNode] {
 		if v == toNode {
-			return 1, nil
+			lnode, ok := v.(*listEdge[T, I])
+			if !ok {
+				return 1, nil
+			}
+			return lnode.weight, nil
 		}
 	}
 

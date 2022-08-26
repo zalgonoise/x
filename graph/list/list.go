@@ -11,6 +11,11 @@ type Graph[T model.ID, I model.Num] interface {
 	adjancy() *map[model.Graph[T, I]][]model.Graph[T, I]
 }
 
+type listEdge[T model.ID, I model.Num] struct {
+	model.Graph[T, I]
+	weight I
+}
+
 type listGraph[T model.ID, I model.Num] struct {
 	locked bool
 	id     T
@@ -87,7 +92,7 @@ func (g *listGraph[T, I]) Connect(from, to T, weight I) error {
 	if g.locked {
 		return errs.ReadOnly
 	}
-	return AddEdgeInList[T, I](g, from, to, 1, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
+	return AddEdgeInList[T, I](g, from, to, weight, g.conf.IsNonDirectional, g.conf.IsNonCyclical)
 }
 func (g *listGraph[T, I]) Disconnect(from, to T) error {
 	if g.locked {

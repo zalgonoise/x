@@ -8,8 +8,7 @@ type intID int
 
 var (
 	CfgAdjacencyList Setting = MultiOption(
-		GraphList,  // init type
-		Unweighted, // adjancy lists do not hold weights
+		GraphList, // init type
 	)
 	CfgLinkedList Setting = MultiOption(
 		GraphList,      // init type
