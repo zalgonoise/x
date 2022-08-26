@@ -11,7 +11,7 @@ import (
 )
 
 func getKeysFromMap[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T, I] {
-	m := *g.adjancy()
+	m := *g.adjacency()
 	keyMap := map[T]model.Graph[T, I]{}
 
 	for k := range m {
@@ -25,7 +25,7 @@ func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphCo
 		return errs.MaxDepthReached
 	}
 
-	m := g.adjancy()
+	m := g.adjacency()
 	n := *m
 
 	count := len(n)
@@ -58,7 +58,7 @@ func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphCo
 }
 
 func RemoveNodesFromMap[T model.ID, I model.Num](g Graph[T, I], ids ...T) error {
-	m := g.adjancy()
+	m := g.adjacency()
 	n := *m
 
 	for _, id := range ids {
@@ -101,7 +101,7 @@ func GetNodeFromMap[T model.ID, I model.Num](g Graph[T, I], node T) (model.Graph
 }
 
 func ListNodesFromMap[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T, I], error) {
-	m := *g.adjancy()
+	m := *g.adjacency()
 
 	out := []model.Graph[T, I]{}
 
@@ -113,7 +113,7 @@ func ListNodesFromMap[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T, 
 }
 
 func AddEdgeInMap[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
-	m := g.adjancy()
+	m := g.adjacency()
 	n := *m
 
 	k := getKeysFromMap(g)
@@ -159,7 +159,7 @@ func AddEdgeInMapBi[T model.ID, I model.Num](m map[model.Graph[T, I]]map[model.G
 func GetEdgesFromMapNode[T model.ID, I model.Num](g Graph[T, I], node T) ([]model.Graph[T, I], error) {
 	var out []model.Graph[T, I]
 
-	m := *g.adjancy()
+	m := *g.adjacency()
 	k := getKeysFromMap(g)
 
 	target, ok := k[node]
@@ -193,7 +193,7 @@ func GetWeightFromEdgesInMap[T model.ID, I model.Num](g Graph[T, I], from, to T)
 		return 0, err
 	}
 
-	m := *g.adjancy()
+	m := *g.adjacency()
 
 	return m[fromNode][toNode], nil
 }

@@ -8,7 +8,7 @@ import (
 
 type Graph[T model.ID, I model.Num] interface {
 	model.Graph[T, I]
-	adjancy() *map[model.Graph[T, I]][]model.Graph[T, I]
+	adjacency() *map[model.Graph[T, I]][]model.Graph[T, I]
 }
 
 type listEdge[T model.ID, I model.Num] struct {
@@ -40,7 +40,7 @@ func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph
 	}
 }
 
-func (g *listGraph[T, I]) adjancy() *map[model.Graph[T, I]][]model.Graph[T, I] {
+func (g *listGraph[T, I]) adjacency() *map[model.Graph[T, I]][]model.Graph[T, I] {
 	return &g.n
 }
 func (g *listGraph[T, I]) ID() T {

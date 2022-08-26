@@ -11,7 +11,7 @@ import (
 )
 
 func getKeysFromList[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T, I] {
-	m := *g.adjancy()
+	m := *g.adjacency()
 	keyMap := map[T]model.Graph[T, I]{}
 
 	for k := range m {
@@ -25,7 +25,7 @@ func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphC
 		return errs.MaxDepthReached
 	}
 
-	m := g.adjancy()
+	m := g.adjacency()
 	n := *m
 
 	count := len(n)
@@ -50,7 +50,7 @@ func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphC
 }
 
 func RemoveNodesFromList[T model.ID, I model.Num](g Graph[T, I], ids ...T) error {
-	m := g.adjancy()
+	m := g.adjacency()
 	n := *m
 
 	for _, id := range ids {
@@ -101,7 +101,7 @@ func GetNodeFromList[T model.ID, I model.Num](g Graph[T, I], node T) (model.Grap
 }
 
 func ListNodesFromList[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T, I], error) {
-	m := *g.adjancy()
+	m := *g.adjacency()
 
 	out := []model.Graph[T, I]{}
 
@@ -116,7 +116,7 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 	if g == nil {
 		return fmt.Errorf("unable to read graph (nil): %w", errs.DoesNotExist)
 	}
-	m := g.adjancy()
+	m := g.adjacency()
 	n := *m
 
 	k := getKeysFromList(g)
@@ -160,7 +160,7 @@ func AddEdgeInListBi[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Gr
 }
 
 func GetEdgesFromListNode[T model.ID, I model.Num](g Graph[T, I], node T) ([]model.Graph[T, I], error) {
-	m := *g.adjancy()
+	m := *g.adjacency()
 	k := getKeysFromList(g)
 
 	target, ok := k[node]
@@ -182,7 +182,7 @@ func GetWeightFromEdgesInList[T model.ID, I model.Num](g Graph[T, I], from, to T
 		return 0, err
 	}
 
-	m := *g.adjancy()
+	m := *g.adjacency()
 
 	for _, v := range m[fromNode] {
 		if v == toNode {

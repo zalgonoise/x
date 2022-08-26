@@ -8,7 +8,7 @@ import (
 
 type Graph[T model.ID, I model.Num] interface {
 	model.Graph[T, I]
-	adjancy() *map[model.Graph[T, I]]map[model.Graph[T, I]]I
+	adjacency() *map[model.Graph[T, I]]map[model.Graph[T, I]]I
 }
 
 type mapGraph[T model.ID, I model.Num] struct {
@@ -35,7 +35,7 @@ func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph
 	}
 }
 
-func (g *mapGraph[T, I]) adjancy() *map[model.Graph[T, I]]map[model.Graph[T, I]]I {
+func (g *mapGraph[T, I]) adjacency() *map[model.Graph[T, I]]map[model.Graph[T, I]]I {
 	return &g.n
 }
 func (g *mapGraph[T, I]) ID() T {
