@@ -53,7 +53,15 @@ func (g *listGraph[T, I]) Parent() model.Graph[T, I] {
 	return g.parent
 }
 func (g *listGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting) error {
-	g.parent = parent
+	var opt = &options.GraphConfig{}
+
+	settings := options.MultiOption(conf...)
+	settings.Apply(opt)
+
+	if opt.IsNonDirectional {
+		g.parent = parent
+	}
+
 	if g.conf.ReadOnly {
 		g.locked = true
 	}

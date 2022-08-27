@@ -41,8 +41,8 @@ func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphC
 
 		n[node] = []model.Graph[T, I]{}
 
-		// link node to graph
-		node.Link(g)
+		// link node to parent
+		node.Link(g, conf)
 	}
 
 	m = &n
