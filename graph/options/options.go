@@ -20,8 +20,8 @@ type (
 )
 
 const (
-	GraphMatrix TypeSetting = iota
-	GraphList
+	GraphList TypeSetting = iota
+	GraphMatrix
 )
 const (
 	Directional DirectionSetting = iota
