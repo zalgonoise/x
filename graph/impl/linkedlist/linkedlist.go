@@ -23,8 +23,10 @@ type linkedList[T model.ID, I model.Num] struct {
 }
 
 func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph[T, I] {
-	c := &options.GraphConfig{}
-	conf.Apply(c)
+	c, err := options.New(conf)
+	if err != nil {
+		return nil
+	}
 
 	list := &linkedList[T, I]{
 		id:     id,
@@ -77,6 +79,10 @@ func (g *linkedList[T, I]) Link(parent model.Graph[T, I], conf ...options.Settin
 	}
 
 	return nil
+}
+func (g *linkedList[T, I]) Config() options.Setting {
+	conf, _ := options.New(g.conf)
+	return conf
 }
 func (g *linkedList[T, I]) Add(nodes ...model.Graph[T, I]) error {
 	if g.locked {

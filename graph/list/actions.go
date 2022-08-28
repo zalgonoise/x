@@ -20,8 +20,13 @@ func getKeysFromList[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T
 	return keyMap
 }
 
-func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphConfig, nodes ...model.Graph[T, I]) error {
-	if conf.MaxDepth > 0 && actions.GraphDepth[T, I](g) >= conf.MaxDepth {
+func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf options.Setting, nodes ...model.Graph[T, I]) error {
+	config, err := options.New(conf)
+	if err != nil {
+		return err
+	}
+
+	if config.MaxDepth > 0 && actions.GraphDepth[T, I](g) >= config.MaxDepth {
 		return errs.MaxDepthReached
 	}
 
@@ -31,7 +36,7 @@ func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphC
 	count := len(n)
 
 	for idx, node := range nodes {
-		if conf.MaxNodes > 0 && count+idx >= conf.MaxNodes {
+		if config.MaxNodes > 0 && count+idx >= config.MaxNodes {
 			return errs.MaxNodesReached
 		}
 

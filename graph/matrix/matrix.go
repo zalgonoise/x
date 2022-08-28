@@ -22,8 +22,10 @@ type mapGraph[T model.ID, I model.Num] struct {
 }
 
 func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph[T, I] {
-	c := &options.GraphConfig{}
-	conf.Apply(c)
+	c, err := options.New(conf)
+	if err != nil {
+		return nil
+	}
 
 	return &mapGraph[T, I]{
 		id:     id,
@@ -61,6 +63,10 @@ func (g *mapGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting)
 	}
 
 	return nil
+}
+func (g *mapGraph[T, I]) Config() options.Setting {
+	conf, _ := options.New(g.conf)
+	return conf
 }
 func (g *mapGraph[T, I]) Add(nodes ...model.Graph[T, I]) error {
 	if g.locked {

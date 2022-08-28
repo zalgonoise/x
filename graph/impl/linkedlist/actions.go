@@ -47,7 +47,7 @@ func GetFirstNode[T model.ID, I model.Num](g Graph[T, I]) model.Graph[T, I] {
 	return graph
 }
 
-func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf *options.GraphConfig, nodes ...model.Graph[T, I]) error {
+func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf options.Setting, nodes ...model.Graph[T, I]) error {
 	last, ok := GetLastNode(g).(Graph[T, I])
 	if !ok {
 		return errs.InvalidType

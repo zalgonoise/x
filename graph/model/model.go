@@ -46,4 +46,5 @@ type Graph[T ID, I Num] interface {
 	Parent() Graph[T, I]
 	Link(Graph[T, I], ...options.Setting) error
 	Value() any
+	Config() options.Setting
 }
