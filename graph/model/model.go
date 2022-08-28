@@ -12,6 +12,11 @@ type ID interface {
 	constraints.Ordered
 }
 
+// IDer is any type that implements the ID getter method
+type IDer[T ID] interface {
+	ID() T
+}
+
 // Num defines the types that can be set as weights of an Edge
 //
 // Nums must be integers, floating-point or complex numbers
