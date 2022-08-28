@@ -122,24 +122,3 @@ func NOT[T model.ID, I model.Num](from, with model.Graph[T, I], node, edge T) bo
 	}
 	return true
 }
-
-func getIDs[T model.ID, I model.Num](g []model.Graph[T, I]) []T {
-	out := []T{}
-
-	for _, graph := range g {
-		out = append(out, graph.ID())
-	}
-
-	return out
-}
-
-func doesNotExist[T model.ID, I model.Num](g model.Graph[T, I], node T, edge []T) bool {
-	var err error
-
-	if edge == nil {
-		_, err = g.Get(node)
-	} else {
-		_, err = g.Weight(node, edge[0])
-	}
-	return errors.Is(err, errs.DoesNotExist)
-}
