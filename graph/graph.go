@@ -48,3 +48,21 @@ func Make[T model.ID, I model.Num](opts options.Setting, nodes ...model.IDer[T])
 
 	return graphList
 }
+
+func Gen[T model.ID, I model.Num](opts options.Setting, nodes ...T) []model.Graph[T, I] {
+	config, err := options.New(opts)
+	if err != nil {
+		return nil
+	}
+
+	graphList := []model.Graph[T, I]{}
+
+	for _, node := range nodes {
+		g := New[T, I](node, node, config)
+		if g != nil {
+			graphList = append(graphList, g)
+		}
+	}
+
+	return graphList
+}
