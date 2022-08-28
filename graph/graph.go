@@ -30,3 +30,21 @@ func New[T model.ID, I model.Num](id T, value any, opts ...options.Setting) mode
 		return matrix.New[T, I](id, value, config)
 	}
 }
+
+func Make[T model.ID, I model.Num](opts options.Setting, nodes ...model.IDer[T]) []model.Graph[T, I] {
+	config, err := options.New(opts)
+	if err != nil {
+		return nil
+	}
+
+	graphList := []model.Graph[T, I]{}
+
+	for _, node := range nodes {
+		g := New[T, I](node.ID(), node, config)
+		if g != nil {
+			graphList = append(graphList, g)
+		}
+	}
+
+	return graphList
+}
