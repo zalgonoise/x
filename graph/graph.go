@@ -13,10 +13,7 @@ import (
 )
 
 func New[T model.ID, I model.Num](id T, value any, opts ...options.Setting) model.Graph[T, I] {
-	config, err := options.New(opts...)
-	if err != nil {
-		return nil
-	}
+	config := options.New(opts...)
 	if config.IDConstraint != nil && config.IDConstraint != reflect.TypeOf(id) {
 		return nil
 	}
@@ -32,10 +29,7 @@ func New[T model.ID, I model.Num](id T, value any, opts ...options.Setting) mode
 }
 
 func Make[T model.ID, I model.Num](opts options.Setting, nodes ...model.IDer[T]) []model.Graph[T, I] {
-	config, err := options.New(opts)
-	if err != nil {
-		return nil
-	}
+	config := options.New(opts)
 
 	graphList := []model.Graph[T, I]{}
 
@@ -50,10 +44,7 @@ func Make[T model.ID, I model.Num](opts options.Setting, nodes ...model.IDer[T])
 }
 
 func Gen[T model.ID, I model.Num](opts options.Setting, nodes ...T) []model.Graph[T, I] {
-	config, err := options.New(opts)
-	if err != nil {
-		return nil
-	}
+	config := options.New(opts)
 
 	graphList := []model.Graph[T, I]{}
 

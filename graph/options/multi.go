@@ -15,6 +15,9 @@ func MultiOption(opts ...Setting) Setting {
 		return nil
 	}
 	if len(opts) == 1 {
+		if opts[0] == nil {
+			return nil
+		}
 		return opts[0]
 	}
 
@@ -30,6 +33,11 @@ func MultiOption(opts ...Setting) Setting {
 		}
 		multi = append(multi, opt)
 	}
+
+	if len(multi) == 0 {
+		return nil
+	}
+
 	return &multiOption{
 		opts: multi,
 	}

@@ -9,10 +9,7 @@ import (
 )
 
 func From[T model.ID, I model.Num](g model.Graph[T, I]) (model.Graph[T, I], error) {
-	conf, err := options.New(g.Config())
-	if err != nil {
-		return nil, err
-	}
+	conf := options.New(g.Config())
 
 	// graph type inverter
 	switch g.(type) {

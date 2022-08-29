@@ -27,10 +27,7 @@ type listGraph[T model.ID, I model.Num] struct {
 }
 
 func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph[T, I] {
-	c, err := options.New(conf)
-	if err != nil {
-		return nil
-	}
+	c := options.New(conf)
 
 	return &listGraph[T, I]{
 		id:     id,
@@ -55,10 +52,7 @@ func (g *listGraph[T, I]) Parent() model.Graph[T, I] {
 	return g.parent
 }
 func (g *listGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting) error {
-	opt, err := options.New(conf...)
-	if err != nil {
-		return err
-	}
+	opt := options.New(conf...)
 
 	if opt.IsNonDirectional {
 		g.parent = parent
@@ -78,7 +72,7 @@ func (g *listGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting
 	return nil
 }
 func (g *listGraph[T, I]) Config() options.Setting {
-	conf, _ := options.New(g.conf)
+	conf := options.New(g.conf)
 	return conf
 }
 func (g *listGraph[T, I]) Add(nodes ...model.Graph[T, I]) error {

@@ -10,6 +10,9 @@ var (
 	CfgAdjacencyList Setting = MultiOption(
 		GraphList, // init type
 	)
+	CfgAdjacencyMatrix Setting = MultiOption(
+		GraphMatrix, // init type
+	)
 	CfgLinkedList Setting = MultiOption(
 		GraphList,   // init type
 		Unweighted,  // adjancy lists do not hold weights

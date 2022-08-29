@@ -1,6 +1,8 @@
 package options
 
-import "reflect"
+import (
+	"reflect"
+)
 
 type (
 	Setting interface {
@@ -21,23 +23,21 @@ type (
 	}
 )
 
-func New(s ...Setting) (*GraphConfig, error) {
+func New(s ...Setting) *GraphConfig {
 	if len(s) == 0 {
-		return &GraphConfig{}, nil
+		return &GraphConfig{}
 	}
 
 	conf := new(GraphConfig)
 
 	input := MultiOption(s...)
+	if input == nil {
+		return &GraphConfig{}
+	}
 
 	input.Apply(conf)
 
-	_, err := conf.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	return conf, nil
+	return conf
 }
 
 func (c *GraphConfig) Apply(t *GraphConfig) {
