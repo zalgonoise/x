@@ -1,9 +1,5 @@
 package options
 
-import (
-	"reflect"
-)
-
 type (
 	TypeSetting      int
 	DirectionSetting int
@@ -14,9 +10,6 @@ type (
 	NodeLimit        int
 	DepthLimit       int
 	WeightAsDistance int
-	IDConstraint     struct {
-		v reflect.Type
-	}
 )
 
 const (
@@ -50,17 +43,21 @@ const (
 )
 
 func MaxNodes(v int) Setting {
+	if v < 0 {
+		v = 0
+	}
+
 	s := NodeLimit(v)
 	return &s
 }
 
 func MaxDepth(v int) Setting {
+	if v < 0 {
+		v = 0
+	}
+
 	s := DepthLimit(v)
 	return &s
-}
-
-func IDType(v any) Setting {
-	return &IDConstraint{v: reflect.TypeOf(v)}
 }
 
 func (s TypeSetting) Apply(c *GraphConfig) {
@@ -83,13 +80,6 @@ func (s WeightedEdges) Apply(c *GraphConfig) {
 	if s == Unweighted {
 		c.IsUnweighted = true
 	}
-}
-
-func (s *IDConstraint) Apply(c *GraphConfig) {
-	if s.v == nil {
-		return
-	}
-	c.IDConstraint = s.v
 }
 
 func (s Mutability) Apply(c *GraphConfig) {
