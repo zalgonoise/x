@@ -21,11 +21,7 @@ func getKeysFromMap[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T,
 }
 
 func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], config options.Setting, nodes ...model.Graph[T, I]) error {
-	conf, err := options.New(config)
-	if err != nil {
-		return err
-	}
-
+	conf := options.New(config)
 	if conf.MaxDepth > 0 && actions.GraphDepth[T, I](g) >= conf.MaxDepth {
 		return errs.MaxDepthReached
 	}
