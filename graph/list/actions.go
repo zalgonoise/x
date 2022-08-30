@@ -115,6 +115,11 @@ func ListNodesFromList[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T,
 }
 
 func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
+	var (
+		err   error
+		graph model.Graph[T, I] = g
+	)
+
 	if g == nil {
 		return fmt.Errorf("unable to read graph (nil): %w", errs.DoesNotExist)
 	}
@@ -127,9 +132,40 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 	if !ok {
 		return fmt.Errorf("from node: %w", errs.DoesNotExist)
 	}
+
 	toNode, ok := k[to]
+	// TODO: replace with BFS going up the parent tree
+	//
+	// look up nested nodes above this one
+	// in case it's added as a node
 	if !ok {
-		return fmt.Errorf("to node: %w", errs.DoesNotExist)
+		for graph.Parent() != nil {
+			graph = graph.Parent()
+
+			// try lookup in the parent graph
+			toNode, err = graph.Get(to)
+			if err == nil {
+				break
+			}
+
+			// otherwise lookup in that graph's nodes
+			nodes, err := graph.List()
+			if err != nil {
+				return err
+			}
+
+			// currently not traversing the graph
+			// anymore than this; needs BFS in this loop
+			for _, node := range nodes {
+				toNode, err = node.Get(to)
+				if err == nil {
+					break
+				}
+			}
+		}
+		if err != nil || toNode == nil {
+			return fmt.Errorf("to node: %w", errs.DoesNotExist)
+		}
 	}
 
 	if isNonCyc {
@@ -199,11 +235,6 @@ func GetWeightFromEdgesInList[T model.ID, I model.Num](g Graph[T, I], from, to T
 	return 0, nil
 }
 
-type output[T model.ID, I model.Num] struct {
-	ID    T         `json:"id"`
-	Nodes map[T][]T `json:"nodes,omitempty"`
-}
-
 func (g *listGraph[T, I]) String() string {
 	var dirSetting dot.Direction
 
@@ -221,20 +252,4 @@ func (g *listGraph[T, I]) String() string {
 		}
 	}
 	return dotGraph.String()
-
-	// var out = output[T, I]{
-	// 	ID:    g.ID(),
-	// 	Nodes: map[T][]T{},
-	// }
-
-	// for ko, vo := range g.n {
-	// 	innerEdges := []T{}
-	// 	for _, ie := range vo {
-	// 		innerEdges = append(innerEdges, ie.ID())
-	// 	}
-	// 	out.Nodes[ko.ID()] = innerEdges
-	// }
-
-	// b, _ := json.Marshal(out)
-	// return string(b)
 }

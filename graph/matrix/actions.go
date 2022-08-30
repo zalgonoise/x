@@ -114,6 +114,11 @@ func ListNodesFromMap[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T, 
 }
 
 func AddEdgeInMap[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
+	var (
+		err   error
+		graph model.Graph[T, I] = g
+	)
+
 	m := g.adjacency()
 	n := *m
 
@@ -124,8 +129,36 @@ func AddEdgeInMap[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, 
 		return fmt.Errorf("from node: %w", errs.DoesNotExist)
 	}
 	toNode, ok := k[to]
+	// TODO: replace with BFS going up the parent tree
+	//
+	// look up nested nodes above this one
+	// in case it's added as a node
 	if !ok {
-		return fmt.Errorf("to node: %w", errs.DoesNotExist)
+		for graph.Parent() != nil {
+			graph = graph.Parent()
+
+			// try lookup in the parent graph
+			toNode, err = graph.Get(to)
+			if err == nil {
+				break
+			}
+
+			// otherwise lookup in that graph's nodes
+			nodes, err := graph.List()
+			if err != nil {
+				return err
+			}
+
+			for _, node := range nodes {
+				toNode, err = node.Get(to)
+				if err == nil {
+					break
+				}
+			}
+		}
+		if err != nil || toNode == nil {
+			return fmt.Errorf("to node: %w", errs.DoesNotExist)
+		}
 	}
 
 	if isNonCyc {
@@ -197,11 +230,6 @@ func GetWeightFromEdgesInMap[T model.ID, I model.Num](g Graph[T, I], from, to T)
 	m := *g.adjacency()
 
 	return m[fromNode][toNode], nil
-}
-
-type output[T model.ID, I model.Num] struct {
-	ID    T             `json:"id"`
-	Nodes map[T]map[T]I `json:"nodes,omitempty"`
 }
 
 func (g *mapGraph[T, I]) String() string {
