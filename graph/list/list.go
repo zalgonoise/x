@@ -28,6 +28,9 @@ type listGraph[T model.ID, I model.Num] struct {
 
 func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph[T, I] {
 	c := options.New(conf)
+	if c.GraphType != options.GraphList {
+		c.GraphType = options.GraphList
+	}
 
 	return &listGraph[T, I]{
 		id:     id,
