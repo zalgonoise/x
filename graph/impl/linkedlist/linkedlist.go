@@ -68,13 +68,7 @@ func (g *linkedList[T, I]) Link(parent model.Graph[T, I], conf ...options.Settin
 		g.locked = true
 	}
 
-	n := len(conf)
-	if n == 1 {
-		conf[0].Apply(g.conf)
-	} else if n > 1 {
-		options.MultiOption(conf...).Apply(g.conf)
-	}
-
+	options.MultiOption(conf...).Apply(g.conf)
 	return nil
 }
 func (g *linkedList[T, I]) Config() options.Setting {

@@ -1,20 +1,20 @@
 package linkedlist
 
 import (
+	"fmt"
+
 	"github.com/zalgonoise/x/graph/dot"
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
 )
 
-func GetGraphMap[T model.ID, I model.Num](g Graph[T, I]) (map[int]Graph[T, I], error) {
+func GetGraphMap[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T, I], error) {
 	node, ok := GetFirstNode(g).(Graph[T, I])
 	if !ok {
 		return nil, errs.InvalidType
 	}
-	nodes := map[int]Graph[T, I]{
-		0: node,
-	}
+	nodes := []model.Graph[T, I]{0: node}
 	idx := 1
 
 	for node.nextGraph(nil) != nil {
@@ -94,8 +94,14 @@ func RemoveNodesFromList[T model.ID, I model.Num](g Graph[T, I], ids ...T) error
 					continue
 				}
 
-				parent := all[k-1]
-				next := all[k+1]
+				parent, ok := all[k-1].(*linkedList[T, I])
+				if !ok {
+					return fmt.Errorf("failed to get parent: %w", errs.InvalidType)
+				}
+				next, ok := all[k+1].(*linkedList[T, I])
+				if !ok {
+					return fmt.Errorf("failed to get next: %w", errs.InvalidType)
+				}
 				parent.nextGraph(next)
 				next.parentGraph(parent)
 			}
@@ -126,13 +132,7 @@ func ListNodesFromList[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T,
 	if err != nil {
 		return nil, err
 	}
-	nodes := []model.Graph[T, I]{}
-
-	for _, n := range all {
-		nodes = append(nodes, n)
-	}
-
-	return nodes, nil
+	return all, nil
 }
 
 type output[T model.ID, I model.Num] struct {
