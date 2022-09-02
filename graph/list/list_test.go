@@ -1,6 +1,7 @@
 package list
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/zalgonoise/x/graph/model"
@@ -12,6 +13,19 @@ const (
 	testIDInt    int     = 0
 	testIDFloat  float32 = 0
 )
+
+type testObject struct {
+	id       int
+	name     string
+	isActive bool
+}
+type ider interface {
+	ID() int
+}
+
+func (o *testObject) ID() int {
+	return o.id
+}
 
 func TestNew(t *testing.T) {
 	t.Run("StringID", func(t *testing.T) {
@@ -382,6 +396,175 @@ func TestAdjacency(t *testing.T) {
 					t.Errorf("unable to find edge from %s to %s in the adjacency list %v", k.ID(), e.ID(), nodeIDs != nil)
 				}
 			}
+		}
+	})
+}
+
+func TestID(t *testing.T) {
+	t.Run("StringID", func(t *testing.T) {
+		g := New[string, int](testIDString, options.NoType, nil)
+
+		if g.ID() != testIDString {
+			t.Errorf("unexpected ID value: wanted %s ; got %s", testIDString, g.ID())
+		}
+	})
+	t.Run("IntID", func(t *testing.T) {
+		g := New[int, int](testIDInt, options.NoType, nil)
+
+		if g.ID() != testIDInt {
+			t.Errorf("unexpected ID value: wanted %v ; got %v", testIDInt, g.ID())
+		}
+	})
+	t.Run("FloatID", func(t *testing.T) {
+		g := New[float32, int](testIDFloat, options.NoType, nil)
+
+		if g.ID() != testIDFloat {
+			t.Errorf("unexpected ID value: wanted %v ; got %v", testIDFloat, g.ID())
+		}
+	})
+}
+
+func TestValue(t *testing.T) {
+	t.Run("StringValue", func(t *testing.T) {
+		g := New[int, int](0, testIDString, nil)
+
+		v, ok := g.Value().(string)
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDString, g.Value())
+		}
+
+		if v != testIDString {
+			t.Errorf("unexpected value: wanted %s ; got %s", testIDString, v)
+		}
+	})
+	t.Run("IntValue", func(t *testing.T) {
+		g := New[int, int](0, testIDInt, nil)
+
+		v, ok := g.Value().(int)
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDInt, g.Value())
+		}
+
+		if v != testIDInt {
+			t.Errorf("unexpected value: wanted %v ; got %v", testIDInt, v)
+		}
+	})
+	t.Run("FloatValue", func(t *testing.T) {
+		g := New[int, int](0, testIDFloat, nil)
+
+		v, ok := g.Value().(float32)
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDFloat, g.Value())
+		}
+
+		if v != testIDFloat {
+			t.Errorf("unexpected value: wanted %v ; got %v", testIDFloat, v)
+		}
+	})
+	t.Run("StructValue", func(t *testing.T) {
+		type custom struct {
+			id       int
+			name     string
+			isActive bool
+		}
+
+		c := custom{
+			id:       5,
+			name:     "yes",
+			isActive: true,
+		}
+
+		g := New[int, int](0, c, nil)
+
+		v, ok := g.Value().(custom)
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDFloat, g.Value())
+		}
+
+		if !reflect.DeepEqual(c, v) {
+			t.Errorf("unexpected value: wanted %v ; got %v", c, v)
+		}
+	})
+	t.Run("AnonStructValue", func(t *testing.T) {
+		g := New[int, int](0, struct {
+			id       int
+			name     string
+			isActive bool
+		}{
+			id:       5,
+			name:     "yes",
+			isActive: true,
+		}, nil)
+
+		v, ok := g.Value().(struct {
+			id       int
+			name     string
+			isActive bool
+		})
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDFloat, g.Value())
+		}
+
+		wants := struct {
+			id       int
+			name     string
+			isActive bool
+		}{
+			id:       5,
+			name:     "yes",
+			isActive: true,
+		}
+		if !reflect.DeepEqual(wants, v) {
+			t.Errorf("unexpected value: wanted %v ; got %v", wants, v)
+		}
+	})
+	t.Run("StructPointerValue", func(t *testing.T) {
+		type custom struct {
+			id       int
+			name     string
+			isActive bool
+		}
+
+		c := &custom{
+			id:       5,
+			name:     "yes",
+			isActive: true,
+		}
+
+		g := New[int, int](0, c, nil)
+
+		v, ok := g.Value().(*custom)
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDFloat, g.Value())
+		}
+
+		if !reflect.DeepEqual(*c, *v) {
+			t.Errorf("unexpected value: wanted %v ; got %v", *c, *v)
+		}
+	})
+	t.Run("InterfaceValue", func(t *testing.T) {
+		c := &testObject{
+			id:       5,
+			name:     "yes",
+			isActive: true,
+		}
+
+		i := ider(c)
+
+		g := New[int, int](0, i, nil)
+
+		itf, ok := g.Value().(ider)
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDFloat, g.Value())
+		}
+
+		v, ok := itf.(*testObject)
+		if !ok {
+			t.Errorf("unexpected value type: wanted %T ; got %T", testIDFloat, g.Value())
+		}
+
+		if !reflect.DeepEqual(*c, *v) {
+			t.Errorf("unexpected value: wanted %v ; got %v", *c, *v)
 		}
 	})
 }
