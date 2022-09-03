@@ -1,6 +1,8 @@
 package list
 
 import (
+	"fmt"
+
 	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
@@ -55,6 +57,9 @@ func (g *listGraph[T, I]) Parent() model.Graph[T, I] {
 	return g.parent
 }
 func (g *listGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting) error {
+	if parent.ID() == g.ID() {
+		return fmt.Errorf("cannot set graph's parent to self: %w", errs.InvalidOperation)
+	}
 	g.parent = parent
 	if g.conf.ReadOnly {
 		g.locked = true

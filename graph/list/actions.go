@@ -41,10 +41,14 @@ func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf options.Setting
 			return errs.AlreadyExists
 		}
 
+		// link node to parent before adding it to graph
+		err := node.Link(g, conf)
+		if err != nil {
+			return err
+		}
+
 		n[node] = []model.Graph[T, I]{}
 
-		// link node to parent
-		node.Link(g, conf)
 	}
 
 	m = &n

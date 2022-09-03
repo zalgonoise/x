@@ -40,6 +40,12 @@ func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], config options.Settin
 			return errs.AlreadyExists
 		}
 
+		// link node to parent before adding it to graph
+		err := node.Link(g, conf)
+		if err != nil {
+			return err
+		}
+
 		n[node] = map[model.Graph[T, I]]I{}
 
 		for k := range n {
@@ -50,8 +56,6 @@ func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], config options.Settin
 			n[node][k] = 0
 		}
 
-		// link node to graph
-		node.Link(g)
 	}
 
 	m = &n
