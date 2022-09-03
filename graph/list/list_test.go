@@ -1,9 +1,11 @@
 package list
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
+	"github.com/zalgonoise/x/graph/errs"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
 )
@@ -566,5 +568,190 @@ func TestValue(t *testing.T) {
 		if !reflect.DeepEqual(*c, *v) {
 			t.Errorf("unexpected value: wanted %v ; got %v", *c, *v)
 		}
+	})
+}
+
+func TestAdd(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		t.Run("NestOneGraph", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			node := New[string, int]("alpha", options.NoType, nil)
+
+			err := root.Add(node)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s: %v", node.ID(), err)
+			}
+			t.Run("VerifyNodeParent", func(t *testing.T) {
+				g := node.Parent()
+				if !reflect.DeepEqual(root, g) {
+					t.Errorf("output mismatch error: wanted %v ; got %v", root, g)
+				}
+			})
+			t.Run("VerifyRootNodes", func(t *testing.T) {
+				nodes, err := root.List()
+				if err != nil {
+					t.Errorf("unexpected error listing nodes from %s: %v", root.ID(), err)
+				}
+				if len(nodes) != 1 {
+					t.Errorf("unexpected length of nodes in graph %s: wanted %v ; got %v", root.ID(), 1, len(nodes))
+				}
+				if !reflect.DeepEqual(node, nodes[0]) {
+					t.Errorf("output mismatch error: wanted %v ; got %v", node, nodes[0])
+				}
+			})
+		})
+		t.Run("NestThreeGraphs", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+			t.Run("AddFirstToRoot", func(t *testing.T) {
+				err := root.Add(nodeA)
+				if err != nil {
+					t.Errorf("unexpected error adding node %s to %s: %v", nodeA.ID(), root.ID(), err)
+				}
+				t.Run("VerifyNodeParent", func(t *testing.T) {
+					g := nodeA.Parent()
+					if !reflect.DeepEqual(root, g) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", root, g)
+					}
+				})
+				t.Run("VerifyRootNodes", func(t *testing.T) {
+					nodes, err := root.List()
+					if err != nil {
+						t.Errorf("unexpected error listing nodes from %s: %v", root.ID(), err)
+					}
+					if len(nodes) != 1 {
+						t.Errorf("unexpected length of nodes in graph %s: wanted %v ; got %v", root.ID(), 1, len(nodes))
+					}
+					if !reflect.DeepEqual(nodeA, nodes[0]) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, nodes[0])
+					}
+				})
+			})
+
+			t.Run("AddSecondToFirst", func(t *testing.T) {
+				err := nodeA.Add(nodeB)
+				if err != nil {
+					t.Errorf("unexpected error adding node %s to %s: %v", nodeB.ID(), nodeA.ID(), err)
+				}
+				t.Run("VerifyNodeParent", func(t *testing.T) {
+					gA := nodeB.Parent()
+					if !reflect.DeepEqual(nodeA, gA) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, gA)
+					}
+					gR := gA.Parent()
+					if !reflect.DeepEqual(root, gR) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", root, gR)
+					}
+				})
+				t.Run("VerifyRootNodes", func(t *testing.T) {
+					nodesR, err := root.List()
+					if err != nil {
+						t.Errorf("unexpected error listing nodes from %s: %v", root.ID(), err)
+					}
+					if len(nodesR) != 1 {
+						t.Errorf("unexpected length of nodes in graph %s: wanted %v ; got %v", root.ID(), 1, len(nodesR))
+					}
+					if !reflect.DeepEqual(nodeA, nodesR[0]) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, nodesR[0])
+					}
+					nodesA, err := nodesR[0].List()
+					if err != nil {
+						t.Errorf("unexpected error listing nodes from %s: %v", nodesR[0].ID(), err)
+					}
+					if len(nodesA) != 1 {
+						t.Errorf("unexpected length of nodes in graph %s: wanted %v ; got %v", nodesR[0].ID(), 1, len(nodesA))
+					}
+					if !reflect.DeepEqual(nodeB, nodesA[0]) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeB, nodesA[0])
+					}
+				})
+			})
+
+			t.Run("AddThirdToSecond", func(t *testing.T) {
+				err := nodeB.Add(nodeC)
+				if err != nil {
+					t.Errorf("unexpected error adding node %s to %s: %v", nodeC.ID(), nodeB.ID(), err)
+				}
+				t.Run("VerifyNodeParent", func(t *testing.T) {
+					gB := nodeC.Parent()
+					if !reflect.DeepEqual(nodeB, gB) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeB, gB)
+					}
+					gA := gB.Parent()
+					if !reflect.DeepEqual(nodeA, gA) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, gA)
+					}
+					gR := gA.Parent()
+					if !reflect.DeepEqual(root, gR) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", root, gR)
+					}
+				})
+				t.Run("VerifyRootNodes", func(t *testing.T) {
+					nodesR, err := root.List()
+					if err != nil {
+						t.Errorf("unexpected error listing nodes from %s: %v", root.ID(), err)
+					}
+					if len(nodesR) != 1 {
+						t.Errorf("unexpected length of nodes in graph %s: wanted %v ; got %v", root.ID(), 1, len(nodesR))
+					}
+					if !reflect.DeepEqual(nodeA, nodesR[0]) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, nodesR[0])
+					}
+					nodesA, err := nodesR[0].List()
+					if err != nil {
+						t.Errorf("unexpected error listing nodes from %s: %v", nodesR[0].ID(), err)
+					}
+					if len(nodesA) != 1 {
+						t.Errorf("unexpected length of nodes in graph %s: wanted %v ; got %v", nodesR[0].ID(), 1, len(nodesA))
+					}
+					if !reflect.DeepEqual(nodeB, nodesA[0]) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeB, nodesA[0])
+					}
+					nodesB, err := nodesA[0].List()
+					if err != nil {
+						t.Errorf("unexpected error listing nodes from %s: %v", nodesA[0].ID(), err)
+					}
+					if len(nodesB) != 1 {
+						t.Errorf("unexpected length of nodes in graph %s: wanted %v ; got %v", nodesA[0].ID(), 1, len(nodesB))
+					}
+					if !reflect.DeepEqual(nodeC, nodesB[0]) {
+						t.Errorf("output mismatch error: wanted %v ; got %v", nodeC, nodesB[0])
+					}
+				})
+			})
+		})
+	})
+
+	t.Run("Fail", func(t *testing.T) {
+		t.Run("AddingSelfAsNode", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+
+			err := root.Add(root)
+			if err == nil {
+				t.Errorf("error expected when adding self as a node")
+			}
+			if !errors.Is(err, errs.InvalidOperation) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.InvalidOperation)
+			}
+		})
+		t.Run("AddingToALockedGraph", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, options.ReadOnly)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = nodeA.Add(nodeB)
+			if err == nil {
+				t.Errorf("error expected when adding to a read-only graph")
+			}
+			if !errors.Is(err, errs.ReadOnly) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
+			}
+		})
 	})
 }
