@@ -57,6 +57,11 @@ func (g *listGraph[T, I]) Parent() model.Graph[T, I] {
 	return g.parent
 }
 func (g *listGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting) error {
+	if parent == nil {
+		g.parent = nil
+		return nil
+	}
+
 	if parent.ID() == g.ID() {
 		return fmt.Errorf("cannot set graph's parent to self: %w", errs.InvalidOperation)
 	}
