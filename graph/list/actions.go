@@ -65,17 +65,13 @@ func RemoveNodesFromList[T model.ID, I model.Num](g Graph[T, I], ids ...T) error
 			return err
 		}
 
-		if _, ok := n[node]; !ok {
-			return err
-		}
-
 		// disconnect any edges
 		for innerNode, innerEdges := range n {
 			if innerNode == node {
 				continue
 			}
 			for _, e := range innerEdges {
-				if e == node {
+				if e.ID() == node.ID() {
 					err := g.Disconnect(innerNode.ID(), node.ID())
 					if err != nil {
 						return err
