@@ -753,5 +753,188 @@ func TestAdd(t *testing.T) {
 				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
 			}
 		})
+		t.Run("AddingNodesWithLimit", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.MaxNodes(1))
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = root.Add(nodeB)
+			if err == nil {
+				t.Errorf("unexpected an error when adding the second node")
+			}
+			if !errors.Is(err, errs.MaxNodesReached) {
+				t.Errorf("unexpected error: wanted %v ; got %v", errs.MaxNodesReached, err)
+			}
+		})
+		t.Run("AddingWithDepthLimit", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.MaxDepth(1))
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = nodeA.Add(nodeB)
+			if err == nil {
+				t.Errorf("unexpected an error when adding the second node")
+			}
+			if !errors.Is(err, errs.MaxDepthReached) {
+				t.Errorf("unexpected error: wanted %v ; got %v", errs.MaxDepthReached, err)
+			}
+		})
+		t.Run("NodeAlreadyExists", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.MaxDepth(1))
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = root.Add(nodeA)
+			if err == nil {
+				t.Errorf("unexpected an error when adding the second node")
+			}
+			if !errors.Is(err, errs.AlreadyExists) {
+				t.Errorf("unexpected error: wanted %v ; got %v", errs.AlreadyExists, err)
+			}
+		})
+	})
+}
+
+func TestRemove(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		t.Run("RemoveOneOfThree", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
+			}
+			err = root.Remove(nodeB.ID())
+			if err != nil {
+				t.Errorf("unexpected erorr removing node %s: %v", nodeB.ID(), err)
+			}
+			t.Run("VerifyGraphLength", func(t *testing.T) {
+				nodes, err := root.List()
+				if err != nil {
+					t.Errorf("unexpected erorr listing nodes from %s: %v", root.ID(), err)
+				}
+				if len(nodes) != 2 {
+					t.Errorf("unexpected graph nodes length: wanted %v ; got %v", 2, len(nodes))
+				}
+			})
+		})
+		t.Run("RemoveThreeOfThree", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
+			}
+			err = root.Remove(nodeA.ID(), nodeB.ID(), nodeC.ID())
+			if err != nil {
+				t.Errorf("unexpected erorr removing nodes %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
+			}
+			t.Run("VerifyGraphLength", func(t *testing.T) {
+				nodes, err := root.List()
+				if err != nil {
+					t.Errorf("unexpected erorr listing nodes from %s: %v", root.ID(), err)
+				}
+				if len(nodes) != 0 {
+					t.Errorf("unexpected graph nodes length: wanted %v ; got %v", 0, len(nodes))
+				}
+			})
+		})
+		t.Run("RemovingANodeWithEdges", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes: %v", err)
+			}
+			err = root.Connect(nodeB.ID(), nodeA.ID(), 1)
+			if err != nil {
+				t.Errorf("unexpected error connecting edges: %v", err)
+			}
+
+			err = root.Remove(nodeA.ID())
+			if err != nil {
+				t.Errorf("unexpected error when removing a node with edges")
+			}
+		})
+	})
+
+	t.Run("Fail", func(t *testing.T) {
+		t.Run("RemovingFromALockedGraph", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, options.ReadOnly)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := nodeA.Add(nodeB)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			err = nodeA.Remove(nodeB.ID())
+			if err == nil {
+				t.Errorf("error expected when removing from a read-only graph")
+			}
+			if !errors.Is(err, errs.ReadOnly) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
+			}
+		})
+		t.Run("RemovingFromAnImmutableGraph", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.Immutable)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			err = root.Remove(nodeA.ID())
+			if err == nil {
+				t.Errorf("error expected when removing from an immutable graph")
+			}
+			if !errors.Is(err, errs.Immutable) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.Immutable)
+			}
+		})
+		t.Run("RemovingFromANonExistingNode", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			err = root.Remove(nodeB.ID())
+			if err == nil {
+				t.Errorf("error expected when removing a node not belonging to the graph")
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.DoesNotExist)
+			}
+		})
+
 	})
 }
