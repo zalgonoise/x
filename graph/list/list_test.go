@@ -935,6 +935,69 @@ func TestRemove(t *testing.T) {
 				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.DoesNotExist)
 			}
 		})
+	})
+}
 
+func TestGet(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		t.Run("GetOneOfOne", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %s: %v", nodeA.ID(), err)
+			}
+			node, err := root.Get(nodeA.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting node %s: %v", nodeA.ID(), err)
+			}
+			if !reflect.DeepEqual(node, nodeA) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, node)
+			}
+		})
+
+		t.Run("GetOneOfThree", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("a", options.NoType, nil)
+			nodeC := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
+			}
+			node, err := root.Get(nodeB.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting node %s: %v", nodeB.ID(), err)
+			}
+			if !reflect.DeepEqual(node, nodeB) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeB, node)
+			}
+		})
+	})
+
+	t.Run("Fail", func(t *testing.T) {
+		t.Run("GettingANonExistingNode", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			node, err := root.Get(nodeB.ID())
+			if err == nil {
+				t.Errorf("error expected when removing a node not belonging to the graph")
+			}
+			if node != nil {
+				t.Errorf("expected returned node to be nil; is %v", node)
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.DoesNotExist)
+			}
+		})
 	})
 }
