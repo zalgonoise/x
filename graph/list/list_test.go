@@ -820,12 +820,12 @@ func TestRemove(t *testing.T) {
 			}
 			err = root.Remove(nodeB.ID())
 			if err != nil {
-				t.Errorf("unexpected erorr removing node %s: %v", nodeB.ID(), err)
+				t.Errorf("unexpected error removing node %s: %v", nodeB.ID(), err)
 			}
 			t.Run("VerifyGraphLength", func(t *testing.T) {
 				nodes, err := root.List()
 				if err != nil {
-					t.Errorf("unexpected erorr listing nodes from %s: %v", root.ID(), err)
+					t.Errorf("unexpected error listing nodes from %s: %v", root.ID(), err)
 				}
 				if len(nodes) != 2 {
 					t.Errorf("unexpected graph nodes length: wanted %v ; got %v", 2, len(nodes))
@@ -844,12 +844,12 @@ func TestRemove(t *testing.T) {
 			}
 			err = root.Remove(nodeA.ID(), nodeB.ID(), nodeC.ID())
 			if err != nil {
-				t.Errorf("unexpected erorr removing nodes %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
+				t.Errorf("unexpected error removing nodes %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
 			}
 			t.Run("VerifyGraphLength", func(t *testing.T) {
 				nodes, err := root.List()
 				if err != nil {
-					t.Errorf("unexpected erorr listing nodes from %s: %v", root.ID(), err)
+					t.Errorf("unexpected error listing nodes from %s: %v", root.ID(), err)
 				}
 				if len(nodes) != 0 {
 					t.Errorf("unexpected graph nodes length: wanted %v ; got %v", 0, len(nodes))
