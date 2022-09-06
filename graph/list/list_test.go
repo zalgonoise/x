@@ -1001,3 +1001,55 @@ func TestGet(t *testing.T) {
 		})
 	})
 }
+
+func TestList(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		t.Run("ListOne", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %s: %v", nodeA.ID(), err)
+			}
+			nodes, err := root.List()
+			if err != nil {
+				t.Errorf("unexpected error getting node %s: %v", nodeA.ID(), err)
+			}
+			if len(nodes) != 1 {
+				t.Errorf("unexpected nodes list length: wanted %v ; got %v", 1, len(nodes))
+			}
+			if !reflect.DeepEqual(nodes[0], nodeA) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, nodes[0])
+			}
+		})
+
+		t.Run("ListThree", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("a", options.NoType, nil)
+			nodeC := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
+			}
+			nodes, err := root.List()
+			if err != nil {
+				t.Errorf("unexpected error getting node %s: %v", nodeB.ID(), err)
+			}
+			if len(nodes) != 3 {
+				t.Errorf("unexpected nodes list length: wanted %v ; got %v", 1, len(nodes))
+			}
+			if !reflect.DeepEqual(nodes[0], nodeA) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, nodes[0])
+			}
+			if !reflect.DeepEqual(nodes[1], nodeB) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeB, nodes[1])
+			}
+			if !reflect.DeepEqual(nodes[2], nodeC) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeC, nodes[2])
+			}
+		})
+	})
+}
