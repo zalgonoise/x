@@ -1,6 +1,7 @@
 package list
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/zalgonoise/x/graph/actions"
@@ -84,7 +85,10 @@ func RemoveNodesFromList[T model.ID, I model.Num](g Graph[T, I], ids ...T) error
 		delete(n, node)
 
 		// unlink node from graph
-		node.Link(nil)
+		err = node.Link(nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	m = &n
@@ -116,8 +120,8 @@ func ListNodesFromList[T model.ID, I model.Num](g Graph[T, I]) ([]model.Graph[T,
 
 func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, isNonDir, isNonCyc bool) error {
 	var (
-		err   error
-		graph model.Graph[T, I] = g
+		graph  model.Graph[T, I] = g
+		toNode model.Graph[T, I]
 	)
 
 	if g == nil {
@@ -133,38 +137,15 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		return fmt.Errorf("from node: %w", errs.DoesNotExist)
 	}
 
-	toNode, ok := k[to]
-	// TODO: replace with BFS going up the parent tree
-	//
-	// look up nested nodes above this one
-	// in case it's added as a node
+	toNode, ok = k[to]
 	if !ok {
-		for graph.Parent() != nil {
-			graph = graph.Parent()
-
-			// try lookup in the parent graph
-			toNode, err = graph.Get(to)
-			if err == nil {
-				break
-			}
-
-			// otherwise lookup in that graph's nodes
-			nodes, err := graph.List()
-			if err != nil {
-				return err
-			}
-
-			// currently not traversing the graph
-			// anymore than this; needs BFS in this loop
-			for _, node := range nodes {
-				toNode, err = node.Get(to)
-				if err == nil {
-					break
-				}
-			}
+		parent, err := actions.LeafLookup(graph, to)
+		if err != nil && errors.Is(err, errs.DoesNotExist) {
+			return fmt.Errorf("to node: %w", err)
 		}
-		if err != nil || toNode == nil {
-			return fmt.Errorf("to node: %w", errs.DoesNotExist)
+		toNode, err = parent.Get(to)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -178,23 +159,43 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		}
 	}
 
+	var err error
 	if isNonDir {
-		AddEdgeInListBi(n, fromNode, toNode, weight)
+		err = AddEdgeInListBi(n, fromNode, toNode, weight)
 	} else {
-		AddEdgeInListUni(n, fromNode, toNode, weight)
+		err = AddEdgeInListUni(n, fromNode, toNode, weight)
 	}
 
 	m = &n
+	return err
+}
+
+func AddEdgeInListUni[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) error {
+	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
 	return nil
 }
 
-func AddEdgeInListUni[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) {
+func AddEdgeInListBi[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) error {
 	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
-}
 
-func AddEdgeInListBi[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) {
-	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
+	g := to.Parent()
+	if g != from.Parent() {
+		g, ok := g.(Graph[T, I])
+		if !ok {
+			err := g.Connect(to.ID(), from.ID(), weight)
+			if err != nil {
+				return err
+			}
+		}
+
+		pm := g.adjacency()
+		pmap := *pm
+		pmap[to] = append(m[to], &listEdge[T, I]{Graph: from, weight: weight})
+		return nil
+	}
+
 	m[to] = append(m[to], &listEdge[T, I]{Graph: from, weight: weight})
+	return nil
 }
 
 func GetEdgesFromListNode[T model.ID, I model.Num](g Graph[T, I], node T) ([]model.Graph[T, I], error) {
@@ -214,16 +215,10 @@ func GetWeightFromEdgesInList[T model.ID, I model.Num](g Graph[T, I], from, to T
 	if err != nil {
 		return 0, err
 	}
-
-	toNode, err := g.Get(to)
-	if err != nil {
-		return 0, err
-	}
-
 	m := *g.adjacency()
 
 	for _, v := range m[fromNode] {
-		if v == toNode {
+		if v.ID() == to {
 			lnode, ok := v.(*listEdge[T, I])
 			if !ok {
 				return 1, nil
