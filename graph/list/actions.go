@@ -178,13 +178,12 @@ func AddEdgeInListUni[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.G
 func AddEdgeInListBi[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) error {
 	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
 
-	g := to.Parent()
-	if g != from.Parent() {
-		g, ok := g.(Graph[T, I])
+	if to.Parent() != from.Parent() {
+		g, ok := to.Parent().(Graph[T, I])
 		if !ok {
 			err := g.Connect(to.ID(), from.ID(), weight)
 			if err != nil {
-				return err
+				return fmt.Errorf("node %v's parent graph %v does not support cross-graph connections: %w", to.ID(), g.ID(), err)
 			}
 		}
 
