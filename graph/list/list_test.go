@@ -230,8 +230,12 @@ func TestAdjacency(t *testing.T) {
 			nodeIDs = append(nodeIDs, n.ID())
 		}
 
-		root.Add(nodes...)
-		defer root.Remove(nodeIDs...)
+		err := root.Add(nodes...)
+		if err != nil {
+			t.Errorf("unexpected error adding nodes: %v", err)
+		}
+
+		defer func() { _ = root.Remove(nodeIDs...) }()
 		m := root.adjacency()
 
 		if len(*m) != len(nodes) {
@@ -261,8 +265,11 @@ func TestAdjacency(t *testing.T) {
 			nodeIDs = append(nodeIDs, n.ID())
 		}
 
-		root.Add(nodes...)
-		defer root.Remove(nodeIDs...)
+		err := root.Add(nodes...)
+		if err != nil {
+			t.Errorf("unexpected error adding nodes: %v", err)
+		}
+		defer func() { _ = root.Remove(nodeIDs...) }()
 		m := root.adjacency()
 
 		if len(*m) != len(nodes) {
@@ -295,13 +302,19 @@ func TestAdjacency(t *testing.T) {
 			"alpha": {"beta"},
 		}
 
-		root.Add(nodes...)
+		err := root.Add(nodes...)
+		if err != nil {
+			t.Errorf("unexpected error adding nodes: %v", err)
+		}
 		for from, tos := range edges {
 			for _, to := range tos {
-				root.Connect(from, to, 1)
+				err = root.Connect(from, to, 1)
+				if err != nil {
+					t.Errorf("unexpected error joining nodes %s to %s: %v", from, to, err)
+				}
 			}
 		}
-		defer root.Remove(nodeIDs...)
+		defer func() { _ = root.Remove(nodeIDs...) }()
 
 		m := root.adjacency()
 
@@ -356,10 +369,16 @@ func TestAdjacency(t *testing.T) {
 			"gamma": {"alpha"},
 		}
 
-		root.Add(nodes...)
+		err := root.Add(nodes...)
+		if err != nil {
+			t.Errorf("unexpected error adding nodes: %v", err)
+		}
 		for from, tos := range edges {
 			for _, to := range tos {
-				root.Connect(from, to, 1)
+				err = root.Connect(from, to, 1)
+				if err != nil {
+					t.Errorf("unexpected error connecting nodes %s to %s: %v", from, to, err)
+				}
 			}
 		}
 		defer root.Remove(nodeIDs...)
