@@ -381,7 +381,7 @@ func TestAdjacency(t *testing.T) {
 				}
 			}
 		}
-		defer root.Remove(nodeIDs...)
+		defer func() { _ = root.Remove(nodeIDs...) }()
 
 		m := root.adjacency()
 
