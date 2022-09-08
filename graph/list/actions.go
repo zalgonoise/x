@@ -52,7 +52,7 @@ func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf options.Setting
 
 	}
 
-	m = &n
+	*m = n
 	return nil
 }
 
@@ -91,7 +91,7 @@ func RemoveNodesFromList[T model.ID, I model.Num](g Graph[T, I], ids ...T) error
 		}
 	}
 
-	m = &n
+	*m = n
 	return nil
 }
 
@@ -166,7 +166,7 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		err = AddEdgeInListUni(n, fromNode, toNode, weight)
 	}
 
-	m = &n
+	*m = n
 	return err
 }
 
