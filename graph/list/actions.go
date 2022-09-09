@@ -127,9 +127,6 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 	if g == nil {
 		return fmt.Errorf("unable to read graph (nil): %w", errs.DoesNotExist)
 	}
-	m := g.adjacency()
-	n := *m
-
 	k := getKeysFromList(g)
 
 	fromNode, ok := k[from]
@@ -159,41 +156,66 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		}
 	}
 
-	var err error
-	if isNonDir {
-		err = AddEdgeInListBi(n, fromNode, toNode, weight)
-	} else {
-		err = AddEdgeInListUni(n, fromNode, toNode, weight)
-	}
-
-	*m = n
-	return err
-}
-
-func AddEdgeInListUni[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) error {
-	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
-	return nil
-}
-
-func AddEdgeInListBi[T model.ID, I model.Num](m map[model.Graph[T, I]][]model.Graph[T, I], from, to model.Graph[T, I], weight I) error {
-	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
-
-	if to.Parent() != from.Parent() {
-		g, ok := to.Parent().(Graph[T, I])
-		if !ok {
-			err := g.Connect(to.ID(), from.ID(), weight)
+	if weight == 0 {
+		if isNonDir {
+			return RemoveEdgeFromList(fromNode, toNode)
+		} else {
+			err := RemoveEdgeFromList(fromNode, toNode)
 			if err != nil {
-				return fmt.Errorf("node %v's parent graph %v does not support cross-graph connections: %w", to.ID(), g.ID(), err)
+				return fmt.Errorf("Error removing edge %v from node %v: %v", toNode.ID(), fromNode.ID(), err)
 			}
+			return RemoveEdgeFromList(toNode, fromNode)
 		}
+	}
+	if isNonDir {
+		err := AddEdgeInListUni(fromNode, toNode, weight)
+		if err != nil {
+			return fmt.Errorf("Error adding edge %v from node %v with weight %v: %v", toNode.ID(), fromNode.ID(), weight, err)
+		}
+		return AddEdgeInListUni(toNode, fromNode, weight)
+	}
+	return AddEdgeInListUni(fromNode, toNode, weight)
 
-		pm := g.adjacency()
-		pmap := *pm
-		pmap[to] = append(m[to], &listEdge[T, I]{Graph: from, weight: weight})
+}
+
+func RemoveEdgeFromList[T model.ID, I model.Num](from, to model.Graph[T, I]) error {
+	g, ok := from.Parent().(Graph[T, I])
+	if !ok {
+		err := g.Disconnect(from.ID(), to.ID())
+		if err != nil {
+			return fmt.Errorf("node %v's parent graph %v does not support cross-graph connections: %w", to.ID(), g.ID(), err)
+		}
 		return nil
 	}
 
-	m[to] = append(m[to], &listEdge[T, I]{Graph: from, weight: weight})
+	m := *g.adjacency()
+	list := m[from]
+	for idx, e := range list {
+		if e.ID() == to.ID() {
+			list[idx] = list[len(list)-1]
+			m[from] = list[:len(list)-1]
+		}
+	}
+	return nil
+}
+
+func AddEdgeInListUni[T model.ID, I model.Num](from, to model.Graph[T, I], weight I) error {
+	g, ok := from.Parent().(Graph[T, I])
+	if !ok {
+		err := g.Connect(from.ID(), to.ID(), weight)
+		if err != nil {
+			return fmt.Errorf("node %v's parent graph %v does not support cross-graph connections: %w", to.ID(), g.ID(), err)
+		}
+		return nil
+	}
+
+	m := *g.adjacency()
+	if weight == 1 {
+		m[from] = append(m[from], to)
+		return nil
+	}
+
+	m[from] = append(m[from], &listEdge[T, I]{Graph: to, weight: weight})
 	return nil
 }
 
