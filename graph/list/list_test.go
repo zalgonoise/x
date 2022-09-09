@@ -1276,3 +1276,182 @@ func TestConnect(t *testing.T) {
 		})
 	})
 }
+
+func TestDisconnect(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		t.Run("DisconnectOne", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), err)
+			}
+
+			err = root.Connect(nodeA.ID(), nodeB.ID(), 2)
+			if err != nil {
+				t.Errorf("unexpected error linking nodes %s to %s with weight %v: %v", nodeA.ID(), nodeB.ID(), 2, err)
+			}
+
+			err = root.Disconnect(nodeA.ID(), nodeB.ID())
+			if err != nil {
+				t.Errorf("unexpected error unlinking nodes %s to %s: %v", nodeA.ID(), nodeB.ID(), err)
+			}
+
+			e, err := root.Edges(nodeA.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting edges from node %s: %v", nodeA.ID(), err)
+			}
+
+			if len(e) != 0 {
+				t.Errorf("unexpected edge length: wanted %v ; got %v -- %v %v", 0, len(e), e[0], e[1])
+			}
+		})
+		t.Run("DisconnectTwoOfThree", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+			nodeD := New[string, int]("d", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB, nodeC, nodeD)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s %s %s and %s: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), nodeD.ID(), err)
+			}
+
+			err = root.Connect(nodeA.ID(), nodeB.ID(), 2)
+			if err != nil {
+				t.Errorf("unexpected error linking nodes %s to %s with weight %v: %v", nodeA.ID(), nodeB.ID(), 2, err)
+			}
+			err = root.Connect(nodeA.ID(), nodeC.ID(), 3)
+			if err != nil {
+				t.Errorf("unexpected error linking nodes %s to %s with weight %v: %v", nodeA.ID(), nodeC.ID(), 3, err)
+			}
+			err = root.Connect(nodeA.ID(), nodeD.ID(), 4)
+			if err != nil {
+				t.Errorf("unexpected error linking nodes %s to %s with weight %v: %v", nodeA.ID(), nodeD.ID(), 4, err)
+			}
+
+			err = root.Disconnect(nodeA.ID(), nodeC.ID())
+			if err != nil {
+				t.Errorf("unexpected error unlinking nodes %s to %s: %v", nodeA.ID(), nodeC.ID(), err)
+			}
+			err = root.Disconnect(nodeA.ID(), nodeB.ID())
+			if err != nil {
+				t.Errorf("unexpected error unlinking nodes %s to %s: %v", nodeA.ID(), nodeB.ID(), err)
+			}
+
+			e, err := root.Edges(nodeA.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting edges from node %s: %v", nodeA.ID(), err)
+			}
+
+			if len(e) != 1 {
+				t.Errorf("unexpected edge length: wanted %v ; got %v", 1, len(e))
+			}
+
+			if nodeD.ID() != e[0].ID() {
+				t.Errorf("output mismatch error: wanted %s ; got %s", nodeD.ID(), e[0].ID())
+			}
+
+			w, err := root.Weight(nodeA.ID(), nodeD.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting weight from node link %s to %s: %v", nodeA.ID(), nodeD.ID(), err)
+			}
+
+			if w != 4 {
+				t.Errorf("unexpected weight from connected edges: wanted %v ; got %v", 4, w)
+			}
+		})
+		t.Run("DisconnectAcrossGraphs", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			hubA := New[string, int]("hub-a", options.NoType, nil)
+			hubB := New[string, int]("hub-b", options.NoType, nil)
+			hubC := New[string, int]("hub-c", options.NoType, nil)
+
+			subhubA1 := New[string, int]("sub-hub-a1", options.NoType, nil)
+			subhubA2 := New[string, int]("sub-hub-a2", options.NoType, nil)
+			subhubB1 := New[string, int]("sub-hub-b1", options.NoType, nil)
+			subhubB2 := New[string, int]("sub-hub-b2", options.NoType, nil)
+			subhubC1 := New[string, int]("sub-hub-c1", options.NoType, nil)
+			subhubC2 := New[string, int]("sub-hub-c2", options.NoType, nil)
+
+			nodeA11 := New[string, int]("a11", options.NoType, nil)
+			nodeA12 := New[string, int]("a12", options.NoType, nil)
+			nodeA21 := New[string, int]("a21", options.NoType, nil)
+			nodeA22 := New[string, int]("a22", options.NoType, nil)
+			nodeB11 := New[string, int]("b11", options.NoType, nil)
+			nodeB12 := New[string, int]("b12", options.NoType, nil)
+			nodeB21 := New[string, int]("b21", options.NoType, nil)
+			nodeB22 := New[string, int]("b22", options.NoType, nil)
+			nodeC11 := New[string, int]("c11", options.NoType, nil)
+			nodeC12 := New[string, int]("c12", options.NoType, nil)
+			nodeC21 := New[string, int]("c21", options.NoType, nil)
+			nodeC22 := New[string, int]("c22", options.NoType, nil)
+
+			err := root.Add(hubA, hubB, hubC)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s %s and %s to %s: %v", hubA.ID(), hubB.ID(), hubC.ID(), root.ID(), err)
+			}
+
+			err = hubA.Add(subhubA1, subhubA2)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", subhubA1.ID(), subhubA2.ID(), hubA.ID(), err)
+			}
+			err = hubB.Add(subhubB1, subhubB2)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", subhubB1.ID(), subhubB2.ID(), hubB.ID(), err)
+			}
+			err = hubC.Add(subhubC1, subhubC2)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", subhubC1.ID(), subhubC2.ID(), hubC.ID(), err)
+			}
+
+			err = subhubA1.Add(nodeA11, nodeA12)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", nodeA11.ID(), nodeA12.ID(), subhubA1.ID(), err)
+			}
+			err = subhubA2.Add(nodeA21, nodeA22)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", nodeA21.ID(), nodeA22.ID(), subhubA2.ID(), err)
+			}
+			err = subhubB1.Add(nodeB11, nodeB12)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", nodeB11.ID(), nodeB12.ID(), subhubB1.ID(), err)
+			}
+			err = subhubB2.Add(nodeB21, nodeB22)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", nodeB21.ID(), nodeB22.ID(), subhubB2.ID(), err)
+			}
+			err = subhubC1.Add(nodeC11, nodeC12)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", nodeC11.ID(), nodeC12.ID(), subhubC1.ID(), err)
+			}
+			err = subhubC2.Add(nodeC21, nodeC22)
+			if err != nil {
+				t.Errorf("unexpected error adding node %s and %s to %s: %v", nodeC21.ID(), nodeC22.ID(), subhubC2.ID(), err)
+			}
+
+			err = subhubA1.Connect(nodeA11.ID(), nodeC22.ID(), 2)
+			if err != nil {
+				t.Errorf("unexpected error linking nodes %s to %s with weight %v: %v", nodeA11.ID(), nodeC22.ID(), 2, err)
+			}
+
+			err = subhubA1.Disconnect(nodeA11.ID(), nodeC22.ID())
+			if err != nil {
+				t.Errorf("unexpected error unlinking nodes %s to %s: %v", nodeA11.ID(), nodeC22.ID(), err)
+			}
+
+			e, err := subhubA1.Edges(nodeA11.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting edges from node %s: %v", nodeA11.ID(), err)
+			}
+
+			if len(e) != 0 {
+				t.Errorf("unexpected edge length: wanted %v ; got %v", 0, len(e))
+			}
+		})
+	})
+}
