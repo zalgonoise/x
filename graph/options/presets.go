@@ -8,7 +8,8 @@ type intID int
 
 var (
 	CfgAdjacencyList Setting = MultiOption(
-		GraphList, // init type
+		GraphList,           // init type
+		WithCrossGraphEdges, // override graph matrix settings
 	)
 	CfgAdjacencyMatrix Setting = MultiOption(
 		GraphMatrix, // init type

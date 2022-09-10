@@ -10,16 +10,17 @@ type (
 	}
 
 	GraphConfig struct {
-		GraphType        TypeSetting
-		IsNonDirectional bool
-		IsNonCyclical    bool
-		IsUnweighted     bool
-		Immutable        bool
-		ReadOnly         bool
-		WeightAsDistance bool
-		MaxNodes         int
-		MaxDepth         int
-		IDConstraint     reflect.Type
+		GraphType         TypeSetting
+		IsNonDirectional  bool
+		IsNonCyclical     bool
+		IsUnweighted      bool
+		Immutable         bool
+		ReadOnly          bool
+		WeightAsDistance  bool
+		NoCrossGraphEdges bool
+		MaxNodes          int
+		MaxDepth          int
+		IDConstraint      reflect.Type
 	}
 )
 

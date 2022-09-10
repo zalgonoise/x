@@ -10,6 +10,7 @@ type (
 	NodeLimit        int
 	DepthLimit       int
 	WeightAsDistance int
+	CrossGraphEdges  int
 )
 
 const (
@@ -42,6 +43,11 @@ const (
 	DistanceWeight
 )
 
+const (
+	WithCrossGraphEdges CrossGraphEdges = iota
+	NoCrossGraphEdges
+)
+
 func MaxNodes(v int) Setting {
 	if v < 0 {
 		v = 0
@@ -62,36 +68,51 @@ func MaxDepth(v int) Setting {
 
 func (s TypeSetting) Apply(c *GraphConfig) {
 	c.GraphType = s
+	if s == GraphMatrix {
+		NoCrossGraphEdges.Apply(c)
+		return
+	}
+	WithCrossGraphEdges.Apply(c)
 }
 
 func (s DirectionSetting) Apply(c *GraphConfig) {
 	if s == NonDirectional {
 		c.IsNonDirectional = true
+		return
 	}
+	c.IsNonDirectional = false
 }
 
 func (s CycleSetting) Apply(c *GraphConfig) {
 	if s == NonCyclical {
 		c.IsNonCyclical = true
+		return
 	}
+	c.IsNonCyclical = false
 }
 
 func (s WeightedEdges) Apply(c *GraphConfig) {
 	if s == Unweighted {
 		c.IsUnweighted = true
+		return
 	}
+	c.IsUnweighted = false
 }
 
 func (s Mutability) Apply(c *GraphConfig) {
 	if s == Immutable {
 		c.Immutable = true
+		return
 	}
+	c.Immutable = false
 }
 
 func (s WritePrivilege) Apply(c *GraphConfig) {
 	if s == ReadOnly {
 		c.ReadOnly = true
+		return
 	}
+	c.ReadOnly = false
 }
 
 func (s NodeLimit) Apply(c *GraphConfig) {
@@ -115,4 +136,13 @@ func (s WeightAsDistance) Apply(c *GraphConfig) {
 		c.WeightAsDistance = true
 		return
 	}
+	c.WeightAsDistance = false
+}
+
+func (s CrossGraphEdges) Apply(c *GraphConfig) {
+	if s == NoCrossGraphEdges {
+		c.NoCrossGraphEdges = true
+		return
+	}
+	c.NoCrossGraphEdges = false
 }
