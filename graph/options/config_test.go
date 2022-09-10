@@ -14,7 +14,7 @@ func TestNew(t *testing.T) {
 		if conf == nil {
 			t.Errorf("output config cannot be nil")
 		}
-		if !reflect.DeepEqual(*defaultConf, *conf) {
+		if !reflect.DeepEqual(defaultConf, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})
@@ -24,7 +24,7 @@ func TestNew(t *testing.T) {
 		if conf == nil {
 			t.Errorf("output config cannot be nil")
 		}
-		if !reflect.DeepEqual(*defaultConf, *conf) {
+		if !reflect.DeepEqual(defaultConf, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})
@@ -34,28 +34,35 @@ func TestNew(t *testing.T) {
 		if conf == nil {
 			t.Errorf("output config cannot be nil")
 		}
-		if !reflect.DeepEqual(*defaultConf, *conf) {
+		if !reflect.DeepEqual(defaultConf, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})
 	t.Run("WithPreset", func(t *testing.T) {
+		wants := &GraphConfig{
+			GraphType: GraphList,
+		}
 		conf := New(CfgAdjacencyList)
 
 		if conf == nil {
 			t.Errorf("output config cannot be nil")
 		}
-		if !reflect.DeepEqual(GraphConfig{GraphType: GraphList}, *conf) {
+		if !reflect.DeepEqual(wants, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})
 	t.Run("WithPresetAndOverride", func(t *testing.T) {
+		wants := &GraphConfig{
+			GraphType:         GraphMatrix,
+			NoCrossGraphEdges: true,
+		}
 		conf := New(CfgAdjacencyList, GraphMatrix)
 
 		if conf == nil {
 			t.Errorf("output config cannot be nil")
 		}
-		if !reflect.DeepEqual(GraphConfig{GraphType: GraphMatrix}, *conf) {
-			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
+		if !reflect.DeepEqual(wants, conf) {
+			t.Errorf("mismatch error -- wanted %v ; got %v", *wants, *conf)
 		}
 	})
 }
@@ -67,38 +74,49 @@ func TestGraphConfigApply(t *testing.T) {
 		var conf = new(GraphConfig)
 		defaultConf.Apply(conf)
 
-		if !reflect.DeepEqual(*defaultConf, *conf) {
+		if !reflect.DeepEqual(defaultConf, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})
 
 	t.Run("EmptyToPreset", func(t *testing.T) {
+		wants := &GraphConfig{
+			GraphType: GraphList,
+		}
 		var conf = new(GraphConfig)
 		CfgAdjacencyList.Apply(conf)
 
-		if !reflect.DeepEqual(GraphConfig{GraphType: GraphList}, *conf) {
+		if !reflect.DeepEqual(wants, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})
 
 	t.Run("UpdateWithPreset", func(t *testing.T) {
+		wants := &GraphConfig{
+			GraphType: GraphList,
+			MaxNodes:  2,
+		}
 		var conf = &GraphConfig{
 			MaxNodes: 2,
 		}
 		CfgAdjacencyList.Apply(conf)
 
-		if !reflect.DeepEqual(GraphConfig{GraphType: GraphList, MaxNodes: 2}, *conf) {
+		if !reflect.DeepEqual(wants, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})
 
 	t.Run("OverwriteWithPreset", func(t *testing.T) {
+		wants := &GraphConfig{
+			GraphType: GraphList,
+		}
 		var conf = &GraphConfig{
-			GraphType: GraphMatrix,
+			GraphType:         GraphMatrix,
+			NoCrossGraphEdges: true,
 		}
 		CfgAdjacencyList.Apply(conf)
 
-		if !reflect.DeepEqual(GraphConfig{GraphType: GraphList}, *conf) {
+		if !reflect.DeepEqual(wants, conf) {
 			t.Errorf("mismatch error -- wanted %v ; got %v", *defaultConf, *conf)
 		}
 	})

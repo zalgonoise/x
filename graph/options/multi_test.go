@@ -11,7 +11,8 @@ func TestMultiOption(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("SingleParam", func(t *testing.T) {
 			wants := &GraphConfig{
-				GraphType: GraphMatrix,
+				GraphType:         GraphMatrix,
+				NoCrossGraphEdges: true,
 			}
 
 			s := MultiOption(GraphMatrix)
@@ -23,14 +24,15 @@ func TestMultiOption(t *testing.T) {
 			if conf == nil {
 				t.Errorf("output config cannot be nil")
 			}
-			if !reflect.DeepEqual(*wants, *conf) {
+			if !reflect.DeepEqual(wants, conf) {
 				t.Errorf("mismatch error -- wanted %v ; got %v", *wants, *conf)
 			}
 		})
 		t.Run("MultipleParams", func(t *testing.T) {
 			wants := &GraphConfig{
-				GraphType: GraphMatrix,
-				MaxDepth:  2,
+				GraphType:         GraphMatrix,
+				NoCrossGraphEdges: true,
+				MaxDepth:          2,
 			}
 
 			s := MultiOption(GraphMatrix, MaxDepth(2))
@@ -42,13 +44,14 @@ func TestMultiOption(t *testing.T) {
 			if conf == nil {
 				t.Errorf("output config cannot be nil")
 			}
-			if !reflect.DeepEqual(*wants, *conf) {
+			if !reflect.DeepEqual(wants, conf) {
 				t.Errorf("mismatch error -- wanted %v ; got %v", *wants, *conf)
 			}
 		})
 		t.Run("OverwrittingParams", func(t *testing.T) {
 			wants := &GraphConfig{
-				GraphType: GraphMatrix,
+				GraphType:         GraphMatrix,
+				NoCrossGraphEdges: true,
 			}
 
 			s := MultiOption(GraphList, GraphMatrix)
@@ -66,10 +69,11 @@ func TestMultiOption(t *testing.T) {
 		})
 		t.Run("NestedMultiOption", func(t *testing.T) {
 			wants := &GraphConfig{
-				GraphType: GraphMatrix,
-				Immutable: true,
-				MaxNodes:  2,
-				MaxDepth:  2,
+				GraphType:         GraphMatrix,
+				NoCrossGraphEdges: true,
+				Immutable:         true,
+				MaxNodes:          2,
+				MaxDepth:          2,
 			}
 
 			s1 := MultiOption(MaxNodes(2), MaxDepth(2))

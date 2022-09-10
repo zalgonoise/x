@@ -1,6 +1,7 @@
 package options
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -63,149 +64,145 @@ func TestOptions(t *testing.T) {
 	})
 	t.Run("Type", func(t *testing.T) {
 		t.Run("List", func(t *testing.T) {
-			wants := GraphList
-			s := wants
+			wants := &GraphConfig{
+				GraphType: GraphList,
+			}
 
-			conf := New(s)
-			if conf.GraphType != wants {
-				t.Errorf("output mismatch error for graph type -- wanted %v ; got %v", wants, conf.GraphType)
+			conf := New(GraphList)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
 		t.Run("Matrix", func(t *testing.T) {
-			wants := GraphMatrix
-			s := wants
+			wants := &GraphConfig{
+				GraphType:         GraphMatrix,
+				NoCrossGraphEdges: true,
+			}
 
-			conf := New(s)
-			if conf.GraphType != wants {
-				t.Errorf("output mismatch error for graph type -- wanted %v ; got %v", wants, conf.GraphType)
+			conf := New(GraphMatrix)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
-
 	})
 	t.Run("Direction", func(t *testing.T) {
 		t.Run("Directed", func(t *testing.T) {
-			wants := Directional
-			s := wants
+			wants := &GraphConfig{}
 
-			conf := New(s)
-			if conf.IsNonDirectional {
-				t.Errorf("output mismatch error for direction -- wanted %v ; got %v", wants, conf.IsNonDirectional)
+			conf := New(Directional)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
 		t.Run("Undirected", func(t *testing.T) {
-			wants := NonDirectional
-			s := wants
+			wants := &GraphConfig{
+				IsNonDirectional: true,
+			}
 
-			conf := New(s)
-			if !conf.IsNonDirectional {
-				t.Errorf("output mismatch error for direction -- wanted %v ; got %v", wants, conf.IsNonDirectional)
+			conf := New(NonDirectional)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
-
 	})
 	t.Run("Cycles", func(t *testing.T) {
 		t.Run("Cyclical", func(t *testing.T) {
-			wants := Cyclical
-			s := wants
+			wants := &GraphConfig{}
 
-			conf := New(s)
-			if conf.IsNonCyclical {
-				t.Errorf("output mismatch error for cycles -- wanted %v ; got %v", wants, conf.IsNonCyclical)
+			conf := New(Cyclical)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
 		t.Run("NonCyclical", func(t *testing.T) {
-			wants := NonCyclical
-			s := wants
+			wants := &GraphConfig{
+				IsNonCyclical: true,
+			}
 
-			conf := New(s)
-			if !conf.IsNonCyclical {
-				t.Errorf("output mismatch error for cycles -- wanted %v ; got %v", wants, conf.IsNonCyclical)
+			conf := New(NonCyclical)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
-
 	})
 	t.Run("Weights", func(t *testing.T) {
 		t.Run("Weighted", func(t *testing.T) {
-			wants := Weighted
-			s := wants
+			wants := &GraphConfig{}
 
-			conf := New(s)
-			if conf.IsUnweighted {
-				t.Errorf("output mismatch error for weighted edges -- wanted %v ; got %v", wants, conf.IsUnweighted)
+			conf := New(Weighted)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
 		t.Run("Unweighted", func(t *testing.T) {
-			wants := Unweighted
-			s := wants
+			wants := &GraphConfig{
+				IsUnweighted: true,
+			}
 
-			conf := New(s)
-			if !conf.IsUnweighted {
-				t.Errorf("output mismatch error for weighted edges -- wanted %v ; got %v", wants, conf.IsUnweighted)
+			conf := New(Unweighted)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
-
 	})
 	t.Run("Mutability", func(t *testing.T) {
 		t.Run("Mutable", func(t *testing.T) {
-			wants := Mutable
-			s := wants
+			wants := &GraphConfig{}
 
-			conf := New(s)
-			if conf.Immutable {
-				t.Errorf("output mismatch error for mutability -- wanted %v ; got %v", wants, conf.Immutable)
+			conf := New(Mutable)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
 		t.Run("Immutable", func(t *testing.T) {
-			wants := Immutable
-			s := wants
+			wants := &GraphConfig{
+				Immutable: true,
+			}
 
-			conf := New(s)
-			if !conf.Immutable {
-				t.Errorf("output mismatch error for mutability -- wanted %v ; got %v", wants, conf.Immutable)
+			conf := New(Immutable)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
-
 	})
 	t.Run("WritePrivilege", func(t *testing.T) {
 		t.Run("ReadWrite", func(t *testing.T) {
-			wants := ReadWrite
-			s := wants
+			wants := &GraphConfig{}
 
-			conf := New(s)
-			if conf.ReadOnly {
-				t.Errorf("output mismatch error for write privilege -- wanted %v ; got %v", wants, conf.ReadOnly)
+			conf := New(ReadWrite)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
 		t.Run("ReadOnly", func(t *testing.T) {
-			wants := ReadOnly
-			s := wants
+			wants := &GraphConfig{
+				ReadOnly: true,
+			}
 
-			conf := New(s)
-			if !conf.ReadOnly {
-				t.Errorf("output mismatch error for write privilege -- wanted %v ; got %v", wants, conf.ReadOnly)
+			conf := New(ReadOnly)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
-
 	})
 	t.Run("WeightAsDistance", func(t *testing.T) {
-		t.Run("AsDistance", func(t *testing.T) {
-			wants := DistanceWeight
-			s := wants
-
-			conf := New(s)
-			if !conf.WeightAsDistance {
-				t.Errorf("output mismatch error for weight label -- wanted %v ; got %v", wants, conf.WeightAsDistance)
-			}
-		})
 		t.Run("AsLabel", func(t *testing.T) {
-			wants := LabelWeight
-			s := wants
+			wants := &GraphConfig{}
 
-			conf := New(s)
-			if conf.ReadOnly {
-				t.Errorf("output mismatch error for weight label -- wanted %v ; got %v", wants, conf.WeightAsDistance)
+			conf := New(LabelWeight)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
 			}
 		})
+		t.Run("AsDistance", func(t *testing.T) {
+			wants := &GraphConfig{
+				WeightAsDistance: true,
+			}
 
+			conf := New(DistanceWeight)
+			if !reflect.DeepEqual(wants, conf) {
+				t.Errorf("output mismatch error for config -- wanted %v ; got %v", wants, conf)
+			}
+		})
 	})
 }
