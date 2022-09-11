@@ -6,6 +6,7 @@ package graph
 import (
 	"reflect"
 
+	"github.com/zalgonoise/x/graph/knowledge"
 	"github.com/zalgonoise/x/graph/list"
 	"github.com/zalgonoise/x/graph/matrix"
 	"github.com/zalgonoise/x/graph/model"
@@ -23,6 +24,8 @@ func New[T model.ID, I model.Num](id T, value any, opts ...options.Setting) mode
 		return list.New[T, I](id, value, config)
 	case options.GraphMatrix:
 		return matrix.New[T, I](id, value, config)
+	case options.GraphKnowledge:
+		return knowledge.New[T, I](id, value, config)
 	default:
 		return matrix.New[T, I](id, value, config)
 	}
