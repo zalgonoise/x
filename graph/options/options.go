@@ -16,6 +16,7 @@ type (
 const (
 	GraphList TypeSetting = iota
 	GraphMatrix
+	GraphKnowledge
 )
 const (
 	Directional DirectionSetting = iota
