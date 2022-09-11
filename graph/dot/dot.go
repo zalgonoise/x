@@ -29,15 +29,29 @@ func (g *DotGraph[T, I]) Add(from, to T, weight I) {
 	if weight == 0 {
 		return
 	}
+
+	// fmt operations for ease of use
+	fromStr := fmt.Sprint(from)
+	toStr := fmt.Sprint(to)
+	var weightStr string
+
+	if str, ok := (interface{})(weight).(interface {
+		String() string
+	}); ok {
+		weightStr = str.String()
+	} else {
+		weightStr = fmt.Sprint(weight)
+	}
+
 	g.buf.WriteString(`    `)
-	g.buf.WriteString(fmt.Sprint(from))
+	g.buf.WriteString(fromStr)
 	g.buf.WriteString(` -> `)
-	g.buf.WriteString(fmt.Sprint(to))
+	g.buf.WriteString(toStr)
 	if (weight != 0 && weight != 1) || g.cfg.WeightKey == string(LabelWeight) {
 		g.buf.WriteString(` [`)
 		g.buf.WriteString(g.cfg.WeightKey)
 		g.buf.WriteString(`=`)
-		g.buf.WriteString(fmt.Sprint(weight))
+		g.buf.WriteString(weightStr)
 		g.buf.WriteString(`]`)
 	}
 	g.buf.WriteString(`
