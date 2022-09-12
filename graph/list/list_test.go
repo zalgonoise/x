@@ -1275,6 +1275,62 @@ func TestConnect(t *testing.T) {
 			}
 		})
 	})
+	t.Run("Fail", func(t *testing.T) {
+		t.Run("ConnectingInALockedGraph", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, options.ReadOnly)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+
+			err := nodeA.Add(nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = nodeA.Connect(nodeB.ID(), nodeC.ID(), 1)
+			if err == nil {
+				t.Errorf("expected an error when connecting nodes in a read-only graph")
+			}
+			if !errors.Is(err, errs.ReadOnly) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
+			}
+		})
+		t.Run("ConnectingFromANonExistantNode", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = root.Connect("b", nodeA.ID(), 1)
+			if err == nil {
+				t.Errorf("expected an error when connecting nodes in a read-only graph")
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
+			}
+		})
+		t.Run("ConnectingToANonExistantNode", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			err = root.Connect(nodeA.ID(), "b", 1)
+			if err == nil {
+				t.Errorf("expected an error when connecting nodes in a read-only graph")
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
+			}
+		})
+	})
 }
 
 func TestDisconnect(t *testing.T) {
