@@ -29,6 +29,29 @@ func (o *testObject) ID() int {
 	return o.id
 }
 
+func verify(node model.Graph[string, int], wants ...model.Graph[string, int]) bool {
+	for _, n := range wants {
+		if reflect.DeepEqual(n, node) {
+			return true
+		}
+	}
+	return false
+}
+
+func verifyBatch(nodes []model.Graph[string, int], wants ...model.Graph[string, int]) bool {
+	oks := make([]bool, len(wants))
+	for idx, n := range nodes {
+		oks[idx] = verify(n, wants...)
+	}
+
+	for _, ok := range oks {
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
 func TestNew(t *testing.T) {
 	t.Run("StringID", func(t *testing.T) {
 		t.Run("IntWeight", func(t *testing.T) {
@@ -417,6 +440,30 @@ func TestAdjacency(t *testing.T) {
 					t.Errorf("unable to find edge from %s to %s in the adjacency list %v", k.ID(), e.ID(), nodeIDs != nil)
 				}
 			}
+		}
+	})
+}
+
+func TestConfig(t *testing.T) {
+	t.Run("Default", func(t *testing.T) {
+		wants := options.New(options.CfgAdjacencyList)
+
+		g := New[string, int](testIDString, options.NoType, nil)
+		conf := g.Config()
+
+		if !reflect.DeepEqual(wants, conf) {
+			t.Errorf("output mismatch error: wanted %v ; got %v", wants, conf)
+		}
+	})
+
+	t.Run("WithConfig", func(t *testing.T) {
+		wants := options.New(options.CfgAdjacencyList, options.ReadOnly)
+
+		g := New[string, int](testIDString, options.NoType, options.ReadOnly)
+		conf := g.Config()
+
+		if !reflect.DeepEqual(wants, conf) {
+			t.Errorf("output mismatch error: wanted %v ; got %v", wants, conf)
 		}
 	})
 }
@@ -1060,14 +1107,9 @@ func TestList(t *testing.T) {
 			if len(nodes) != 3 {
 				t.Errorf("unexpected nodes list length: wanted %v ; got %v", 1, len(nodes))
 			}
-			if !reflect.DeepEqual(nodes[0], nodeA) {
-				t.Errorf("output mismatch error: wanted %v ; got %v", nodeA, nodes[0])
-			}
-			if !reflect.DeepEqual(nodes[1], nodeB) {
-				t.Errorf("output mismatch error: wanted %v ; got %v", nodeB, nodes[1])
-			}
-			if !reflect.DeepEqual(nodes[2], nodeC) {
-				t.Errorf("output mismatch error: wanted %v ; got %v", nodeC, nodes[2])
+
+			if !verifyBatch(nodes, nodeA, nodeB, nodeC) {
+				t.Errorf("failed to match retrieved nodes to input nodes")
 			}
 		})
 	})
@@ -1330,6 +1372,33 @@ func TestConnect(t *testing.T) {
 				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
 			}
 		})
+		t.Run("CyclesInANonCyclicalGraph", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.NonCyclical)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v %v and %v to %v: %v", nodeA.ID(), nodeB.ID(), nodeC.ID(), root.ID(), err)
+			}
+			err = root.Connect(nodeA.ID(), nodeB.ID(), 1)
+			if err != nil {
+				t.Errorf("unexpected error connecting nodes %v to %v: %v", nodeA.ID(), nodeB.ID(), err)
+			}
+			err = root.Connect(nodeB.ID(), nodeC.ID(), 1)
+			if err != nil {
+				t.Errorf("unexpected error connecting nodes %v to %v: %v", nodeA.ID(), nodeB.ID(), err)
+			}
+			err = root.Connect(nodeC.ID(), nodeA.ID(), 1)
+			if err == nil {
+				t.Errorf("error expected when connecting nodes %v to %v, for finding a cycle in the edges", nodeC.ID(), nodeA.ID())
+			}
+			if !errors.Is(err, errs.CyclicalEdge) {
+				t.Errorf("unexpected output error: wanted %v ; got %v", errs.CyclicalEdge, err)
+			}
+
+		})
 	})
 }
 
@@ -1507,6 +1576,53 @@ func TestDisconnect(t *testing.T) {
 
 			if len(e) != 0 {
 				t.Errorf("unexpected edge length: wanted %v ; got %v", 0, len(e))
+			}
+		})
+		t.Run("DisconnectingFromALockedGraph", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, options.ReadOnly)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+
+			err := nodeA.Add(nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v and %v to %v: %v", nodeB.ID(), nodeC.ID(), nodeA.ID(), err)
+			}
+			err = nodeA.Connect(nodeB.ID(), nodeC.ID(), 1)
+			if err != nil {
+				t.Errorf("unexpected error connecting nodes %v to %v: %v", nodeB.ID(), nodeC.ID(), err)
+			}
+			err = root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error adding node %v to %v: %v", nodeA.ID(), root.ID(), err)
+			}
+			err = nodeA.Disconnect(nodeB.ID(), nodeC.ID())
+			if err == nil {
+				t.Errorf("error expected when disconnecting nodes in a read-only graph")
+			}
+			if !errors.Is(err, errs.ReadOnly) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.ReadOnly)
+			}
+		})
+		t.Run("DisconnectingFromAnImmutableGraph", func(t *testing.T) {
+			nodeA := New[string, int]("a", options.NoType, options.Immutable)
+			nodeB := New[string, int]("b", options.NoType, nil)
+			nodeC := New[string, int]("c", options.NoType, nil)
+
+			err := nodeA.Add(nodeB, nodeC)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v and %v to %v: %v", nodeB.ID(), nodeC.ID(), nodeA.ID(), err)
+			}
+			err = nodeA.Connect(nodeB.ID(), nodeC.ID(), 1)
+			if err != nil {
+				t.Errorf("unexpected error connecting nodes %v to %v: %v", nodeB.ID(), nodeC.ID(), err)
+			}
+			err = nodeA.Disconnect(nodeB.ID(), nodeC.ID())
+			if err == nil {
+				t.Errorf("error expected when disconnecting nodes in an immutable graph")
+			}
+			if !errors.Is(err, errs.Immutable) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.Immutable)
 			}
 		})
 	})
