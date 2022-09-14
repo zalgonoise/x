@@ -146,6 +146,16 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		}
 	}
 
+	if weight == 0 {
+		if isNonDir {
+			err := RemoveEdgeFromList(fromNode, toNode)
+			if err != nil {
+				return fmt.Errorf("Error removing edge %v from node %v: %v", toNode.ID(), fromNode.ID(), err)
+			}
+			return RemoveEdgeFromList(toNode, fromNode)
+		}
+		return RemoveEdgeFromList(fromNode, toNode)
+	}
 	if isNonCyc {
 		ok, err := actions.DepthFirstSearch[T, I](g, actions.VerifyCycles(fromNode, toNode), toNode)
 		if err != nil {
@@ -153,18 +163,6 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		}
 		if !ok {
 			return errs.CyclicalEdge
-		}
-	}
-
-	if weight == 0 {
-		if isNonDir {
-			return RemoveEdgeFromList(fromNode, toNode)
-		} else {
-			err := RemoveEdgeFromList(fromNode, toNode)
-			if err != nil {
-				return fmt.Errorf("Error removing edge %v from node %v: %v", toNode.ID(), fromNode.ID(), err)
-			}
-			return RemoveEdgeFromList(toNode, fromNode)
 		}
 	}
 	if isNonDir {
@@ -175,7 +173,6 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		return AddEdgeInListUni(toNode, fromNode, weight)
 	}
 	return AddEdgeInListUni(fromNode, toNode, weight)
-
 }
 
 func RemoveEdgeFromList[T model.ID, I model.Num](from, to model.Graph[T, I]) error {
@@ -202,9 +199,9 @@ func RemoveEdgeFromList[T model.ID, I model.Num](from, to model.Graph[T, I]) err
 func AddEdgeInListUni[T model.ID, I model.Num](from, to model.Graph[T, I], weight I) error {
 	g, ok := from.Parent().(Graph[T, I])
 	if !ok {
-		err := g.Connect(from.ID(), to.ID(), weight)
+		err := from.Parent().Connect(from.ID(), to.ID(), weight)
 		if err != nil {
-			return fmt.Errorf("node %v's parent graph %v does not support cross-graph connections: %w", to.ID(), g.ID(), err)
+			return fmt.Errorf("node %v's parent graph %v does not support cross-graph connections: %w", to.ID(), from.Parent().ID(), err)
 		}
 		return nil
 	}
