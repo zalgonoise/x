@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zalgonoise/x/graph/errs"
+	"github.com/zalgonoise/x/graph/matrix"
 	"github.com/zalgonoise/x/graph/model"
 	"github.com/zalgonoise/x/graph/options"
 )
@@ -1316,6 +1317,40 @@ func TestConnect(t *testing.T) {
 				t.Errorf("unexpected weight from connected edges: wanted %v ; got %v", 2, w)
 			}
 		})
+		t.Run("AddNonDirectional", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.NonDirectional)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v and %v to %v: %v", nodeA.ID(), nodeB.ID(), root.ID(), err)
+			}
+			err = root.Connect(nodeA.ID(), nodeB.ID(), 1)
+			if err != nil {
+				t.Errorf("unexpected error connecting nodes %v and %v: %v", nodeA.ID(), nodeB.ID(), err)
+			}
+			e, err := root.Edges(nodeA.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting edges from node %s: %v", nodeA.ID(), err)
+			}
+			if len(e) != 1 {
+				t.Errorf("unexpected number of edges in node %v: wanted %v ; got %v", nodeA.ID(), 1, len(e))
+			}
+			if !reflect.DeepEqual(nodeB, e[0]) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeB.ID(), e[0].ID())
+			}
+			e, err = root.Edges(nodeB.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting edges from node %s: %v", nodeB.ID(), err)
+			}
+			if len(e) != 1 {
+				t.Errorf("unexpected number of edges in node %v: wanted %v ; got %v", nodeB.ID(), 1, len(e))
+			}
+			if !reflect.DeepEqual(nodeA, e[0]) {
+				t.Errorf("output mismatch error: wanted %v ; got %v", nodeA.ID(), e[0].ID())
+			}
+		})
 	})
 	t.Run("Fail", func(t *testing.T) {
 		t.Run("ConnectingInALockedGraph", func(t *testing.T) {
@@ -1397,7 +1432,35 @@ func TestConnect(t *testing.T) {
 			if !errors.Is(err, errs.CyclicalEdge) {
 				t.Errorf("unexpected output error: wanted %v ; got %v", errs.CyclicalEdge, err)
 			}
+		})
+		t.Run("ConnectingCrossGraphWhenUnsupported", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.NonDirectional)
+			matrixG := matrix.New[string, int]("matrix", options.NoType, nil)
+			matrixNode := matrix.New[string, int]("m-a", options.NoType, nil)
+			listG := New[string, int]("list", options.NoType, nil)
+			listNode := New[string, int]("l-a", options.NoType, nil)
 
+			err := matrixG.Add(matrixNode)
+			if err != nil {
+				t.Errorf("unexpected error adding node %v to %v: %v", matrixNode.ID(), matrixG.ID(), err)
+			}
+			err = listG.Add(listNode)
+			if err != nil {
+				t.Errorf("unexpected error adding node %v to %v: %v", listNode.ID(), listG.ID(), err)
+			}
+
+			err = root.Add(listG, matrixG)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v and %v to %v: %v", listG.ID(), matrixG.ID(), root.ID(), err)
+			}
+
+			err = listG.Connect(listNode.ID(), matrixNode.ID(), 1)
+			if err == nil {
+				t.Errorf("error expected when connecting nodes %v and %v: %v", listNode.ID(), matrixNode.ID(), err)
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error: wanted %v ; got %v", errs.DoesNotExist, err)
+			}
 		})
 	})
 }
@@ -1578,6 +1641,40 @@ func TestDisconnect(t *testing.T) {
 				t.Errorf("unexpected edge length: wanted %v ; got %v", 0, len(e))
 			}
 		})
+		t.Run("DisconnectNonDirectional", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, options.NonDirectional)
+			nodeA := New[string, int]("a", options.NoType, nil)
+			nodeB := New[string, int]("b", options.NoType, nil)
+
+			err := root.Add(nodeA, nodeB)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v and %v to %v: %v", nodeA.ID(), nodeB.ID(), root.ID(), err)
+			}
+			err = root.Connect(nodeA.ID(), nodeB.ID(), 1)
+			if err != nil {
+				t.Errorf("unexpected error connecting nodes %v and %v: %v", nodeA.ID(), nodeB.ID(), err)
+			}
+			err = root.Disconnect(nodeA.ID(), nodeB.ID())
+			if err != nil {
+				t.Errorf("unexpected error disconnecting nodes %v and %v: %v", nodeA.ID(), nodeB.ID(), err)
+			}
+			e, err := root.Edges(nodeA.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting edges from node %s: %v", nodeA.ID(), err)
+			}
+			if len(e) != 0 {
+				t.Errorf("unexpected number of edges in node %v: wanted %v ; got %v", nodeA.ID(), 0, len(e))
+			}
+			e, err = root.Edges(nodeB.ID())
+			if err != nil {
+				t.Errorf("unexpected error getting edges from node %s: %v", nodeB.ID(), err)
+			}
+			if len(e) != 0 {
+				t.Errorf("unexpected number of edges in node %v: wanted %v ; got %v", nodeB.ID(), 0, len(e))
+			}
+		})
+	})
+	t.Run("Fail", func(t *testing.T) {
 		t.Run("DisconnectingFromALockedGraph", func(t *testing.T) {
 			root := New[string, int](testIDString, options.NoType, nil)
 			nodeA := New[string, int]("a", options.NoType, options.ReadOnly)
@@ -1623,6 +1720,82 @@ func TestDisconnect(t *testing.T) {
 			}
 			if !errors.Is(err, errs.Immutable) {
 				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.Immutable)
+			}
+		})
+	})
+}
+
+func TestEdges(t *testing.T) {
+	t.Run("Fail", func(t *testing.T) {
+		t.Run("FromNodeDoesNotExist", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v to %v: %v", nodeA.ID(), root.ID(), err)
+			}
+			err = root.Connect("b", nodeA.ID(), 1)
+			if err == nil {
+				t.Errorf("error expected when connecting a node which doesn't exist to another node")
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.DoesNotExist)
+			}
+		})
+		t.Run("ToNodeDoesNotExist", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v to %v: %v", nodeA.ID(), root.ID(), err)
+			}
+			err = root.Connect(nodeA.ID(), "b", 1)
+			if err == nil {
+				t.Errorf("error expected when connecting a node to one which doesn't exist")
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", err, errs.DoesNotExist)
+			}
+		})
+	})
+}
+
+func TestWeight(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		t.Run("ToNodeDoesNotExist", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v to %v: %v", nodeA.ID(), root.ID(), err)
+			}
+			w, err := root.Weight(nodeA.ID(), "b")
+			if err != nil {
+				t.Errorf("unexpected error when getting the weight of a connection: %v", err)
+			}
+			if w != 0 {
+				t.Errorf("unexpected weight returned; wanted %v ; got %v", 0, w)
+			}
+		})
+	})
+	t.Run("Fail", func(t *testing.T) {
+		t.Run("FromNodeDoesNotExist", func(t *testing.T) {
+			root := New[string, int](testIDString, options.NoType, nil)
+			nodeA := New[string, int]("a", options.NoType, nil)
+
+			err := root.Add(nodeA)
+			if err != nil {
+				t.Errorf("unexpected error adding nodes %v to %v: %v", nodeA.ID(), root.ID(), err)
+			}
+			_, err = root.Weight("b", nodeA.ID())
+			if err == nil {
+				t.Errorf("error expected when getting the weight of a connection where the to node doesn't exist")
+			}
+			if !errors.Is(err, errs.DoesNotExist) {
+				t.Errorf("unexpected error returned; wanted %v ; got %v", errs.DoesNotExist, err)
 			}
 		})
 	})
