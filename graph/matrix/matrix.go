@@ -25,6 +25,13 @@ type mapGraph[T model.ID, I model.Num] struct {
 
 func New[T model.ID, I model.Num](id T, v any, conf options.Setting) model.Graph[T, I] {
 	c := options.New(conf)
+	if c.GraphType != options.GraphMatrix {
+		options.GraphMatrix.Apply(c)
+	}
+	if !c.NoCrossGraphEdges {
+		options.NoCrossGraphEdges.Apply(c)
+	}
+
 	return &mapGraph[T, I]{
 		id:     id,
 		v:      v,
@@ -61,12 +68,7 @@ func (g *mapGraph[T, I]) Link(parent model.Graph[T, I], conf ...options.Setting)
 		g.locked = true
 	}
 
-	n := len(conf)
-	if n == 1 {
-		conf[0].Apply(g.conf)
-	} else if n > 1 {
-		options.MultiOption(conf...).Apply(g.conf)
-	}
+	options.MultiOption(conf...).Apply(g.conf)
 
 	return nil
 }
