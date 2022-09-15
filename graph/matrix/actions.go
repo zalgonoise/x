@@ -58,7 +58,7 @@ func AddNodesToMap[T model.ID, I model.Num](g Graph[T, I], config options.Settin
 
 	}
 
-	m = &n
+	*m = n
 	return nil
 }
 
@@ -73,7 +73,7 @@ func RemoveNodesFromMap[T model.ID, I model.Num](g Graph[T, I], ids ...T) error 
 		}
 
 		if _, ok := n[node]; !ok {
-			return err
+			return errs.DoesNotExist
 		}
 
 		for k := range n {
@@ -87,10 +87,13 @@ func RemoveNodesFromMap[T model.ID, I model.Num](g Graph[T, I], ids ...T) error 
 		delete(n, node)
 
 		// unlink node from graph
-		node.Link(nil)
+		err = node.Link(nil)
+		if err != nil {
+			return err
+		}
 	}
 
-	m = &n
+	*m = n
 	return nil
 }
 
@@ -143,22 +146,18 @@ func AddEdgeInMap[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I, 
 	}
 
 	if isNonDir {
-		AddEdgeInMapBi(n, fromNode, toNode, weight)
+		setEdgeInMap(n, fromNode, toNode, weight)
+		setEdgeInMap(n, toNode, fromNode, weight)
 	} else {
-		AddEdgeInMapUni(n, fromNode, toNode, weight)
+		setEdgeInMap(n, fromNode, toNode, weight)
 	}
 
-	m = &n
+	*m = n
 	return nil
 }
 
-func AddEdgeInMapUni[T model.ID, I model.Num](m map[model.Graph[T, I]]map[model.Graph[T, I]]I, from, to model.Graph[T, I], weight I) {
+func setEdgeInMap[T model.ID, I model.Num](m map[model.Graph[T, I]]map[model.Graph[T, I]]I, from, to model.Graph[T, I], weight I) {
 	m[from][to] = weight
-}
-
-func AddEdgeInMapBi[T model.ID, I model.Num](m map[model.Graph[T, I]]map[model.Graph[T, I]]I, from, to model.Graph[T, I], weight I) {
-	m[from][to] = weight
-	m[to][from] = weight
 }
 
 func GetEdgesFromMapNode[T model.ID, I model.Num](g Graph[T, I], node T) ([]model.Graph[T, I], error) {
