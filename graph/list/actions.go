@@ -23,7 +23,6 @@ func getKeysFromList[T model.ID, I model.Num](g Graph[T, I]) map[T]model.Graph[T
 
 func AddNodesToList[T model.ID, I model.Num](g Graph[T, I], conf options.Setting, nodes ...model.Graph[T, I]) error {
 	config := options.New(conf)
-
 	if config.MaxDepth > 0 && actions.GraphDepth[T, I](g) >= config.MaxDepth {
 		return errs.MaxDepthReached
 	}
@@ -148,13 +147,13 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 
 	if weight == 0 {
 		if isNonDir {
-			err := RemoveEdgeFromList(fromNode, toNode)
+			err := removeEdgeFromList(fromNode, toNode)
 			if err != nil {
 				return fmt.Errorf("Error removing edge %v from node %v: %v", toNode.ID(), fromNode.ID(), err)
 			}
-			return RemoveEdgeFromList(toNode, fromNode)
+			return removeEdgeFromList(toNode, fromNode)
 		}
-		return RemoveEdgeFromList(fromNode, toNode)
+		return removeEdgeFromList(fromNode, toNode)
 	}
 	if isNonCyc {
 		ok, err := actions.DepthFirstSearch[T, I](g, actions.VerifyCycles(fromNode, toNode), toNode)
@@ -166,19 +165,19 @@ func AddEdgeInList[T model.ID, I model.Num](g Graph[T, I], from, to T, weight I,
 		}
 	}
 	if isNonDir {
-		err := AddEdgeInListUni(fromNode, toNode, weight)
+		err := addEdgeInList(fromNode, toNode, weight)
 		if err != nil {
 			return fmt.Errorf("Error adding edge %v from node %v with weight %v: %v", toNode.ID(), fromNode.ID(), weight, err)
 		}
-		return AddEdgeInListUni(toNode, fromNode, weight)
+		return addEdgeInList(toNode, fromNode, weight)
 	}
-	return AddEdgeInListUni(fromNode, toNode, weight)
+	return addEdgeInList(fromNode, toNode, weight)
 }
 
-func RemoveEdgeFromList[T model.ID, I model.Num](from, to model.Graph[T, I]) error {
+func removeEdgeFromList[T model.ID, I model.Num](from, to model.Graph[T, I]) error {
 	g, ok := from.Parent().(Graph[T, I])
 	if !ok {
-		err := g.Disconnect(from.ID(), to.ID())
+		err := from.Parent().Disconnect(from.ID(), to.ID())
 		if err != nil {
 			return fmt.Errorf("node %v's parent graph %v does not support cross-graph connections: %w", to.ID(), g.ID(), err)
 		}
@@ -196,7 +195,7 @@ func RemoveEdgeFromList[T model.ID, I model.Num](from, to model.Graph[T, I]) err
 	return nil
 }
 
-func AddEdgeInListUni[T model.ID, I model.Num](from, to model.Graph[T, I], weight I) error {
+func addEdgeInList[T model.ID, I model.Num](from, to model.Graph[T, I], weight I) error {
 	g, ok := from.Parent().(Graph[T, I])
 	if !ok {
 		err := from.Parent().Connect(from.ID(), to.ID(), weight)
