@@ -12,7 +12,8 @@ var (
 		WithCrossGraphEdges, // override graph matrix settings
 	)
 	CfgAdjacencyMatrix Setting = MultiOption(
-		GraphMatrix, // init type
+		GraphMatrix,       // init type
+		NoCrossGraphEdges, // graph matrix doesn't support cross-graph edges
 	)
 	CfgLinkedList Setting = MultiOption(
 		GraphList,   // init type
