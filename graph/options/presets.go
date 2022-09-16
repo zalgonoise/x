@@ -15,6 +15,10 @@ var (
 		GraphMatrix,       // init type
 		NoCrossGraphEdges, // graph matrix doesn't support cross-graph edges
 	)
+	CfgKnowledgeGraph Setting = MultiOption(
+		GraphKnowledge,      // init type
+		WithCrossGraphEdges, // override graph matrix settings
+	)
 	CfgLinkedList Setting = MultiOption(
 		GraphList,   // init type
 		Unweighted,  // adjancy lists do not hold weights
