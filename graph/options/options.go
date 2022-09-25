@@ -1,16 +1,29 @@
 package options
 
 type (
-	TypeSetting      int
+	// TypeSetting defines the graph type (adjacency list, adjacency matrix and knowledge graph)
+	TypeSetting int
+	// DirectionSetting defines whether the graph is directed or undirected
 	DirectionSetting int
-	CycleSetting     int
-	WeightedEdges    int
-	Mutability       int
-	WritePrivilege   int
-	NodeLimit        int
-	DepthLimit       int
+	// CycleSetting defines whether the graph allows cycles or not
+	CycleSetting int
+	// WeightedEdges defines whether the graph allows edge weights or not
+	WeightedEdges int
+	// Mutability defines whether the graph can be altered (update / delete actions) or not
+	Mutability int
+	// WritePrivilege defines whether the graph can be written to (create / update / delete)
+	// once connected to a parent, or not
+	WritePrivilege int
+	// NodeLimit defines the number of nodes the graph can hold
+	NodeLimit int
+	// DepthLimit defines the maximum depth a graph can have (depth 3: root->a->b->c)
+	DepthLimit int
+	// WeightAsDistance defines whether the dot output sets the weight as a
+	// weight property (as distance) or a label property
 	WeightAsDistance int
-	CrossGraphEdges  int
+	// CrossGraphEdges defines whether the graph allows edges across graphs (edges connecting nodes
+	// that do not share the same parent graph)
+	CrossGraphEdges int
 )
 
 const (

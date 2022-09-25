@@ -4,12 +4,15 @@ type multiOption struct {
 	opts []Setting
 }
 
+// Apply sets the slice of options in the input pointer to a GraphConfig
 func (o *multiOption) Apply(c *GraphConfig) {
 	for _, opt := range o.opts {
 		opt.Apply(c)
 	}
 }
 
+// MultiOption function will return a single Setting wrapping the input
+// Setting provided
 func MultiOption(opts ...Setting) Setting {
 	if len(opts) == 0 {
 		return nil

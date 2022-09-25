@@ -47,9 +47,14 @@ type Graph[T ID, I Num] interface {
 	// GetWeight gets the weight value of two nodes, if they are connected
 	Weight(from, to T) (I, error)
 
+	// ID returns a unique identifier to the node, which must be comparable
 	ID() T
+	// Parent returns the parent graph storing this node
 	Parent() Graph[T, I]
+	// Link connects this graph to another, as a child of the input graph
 	Link(Graph[T, I], ...options.Setting) error
+	// Value returns the value stored when creating this graph or node
 	Value() any
+	// Config returns the graph's configuration as an options.Setting object
 	Config() options.Setting
 }
