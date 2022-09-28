@@ -22,6 +22,7 @@ type GoFile struct {
 	LogicBlocks []*LogicBlock `json:"logicBlocks,omitempty"`
 	Path        string        `json:"path,omitempty"`
 	bytes       []byte
+	typeCount   int
 }
 
 type Import struct {
@@ -70,6 +71,6 @@ func (f *GoFile) String() string {
 }
 
 type Extractor interface {
-	Do(tok token.Token, lit string) Extractor
+	Do(pos token.Pos, tok token.Token, lit string) Extractor
 	Done() bool
 }

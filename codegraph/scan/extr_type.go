@@ -1,6 +1,8 @@
 package scan
 
-import "go/token"
+import (
+	"go/token"
+)
 
 type TypeExtractor struct {
 	f    *GoFile
@@ -9,8 +11,8 @@ type TypeExtractor struct {
 	lvl  int
 }
 
-func (e *TypeExtractor) Do(tok token.Token, lit string) Extractor {
-	if len(e.f.LogicBlocks) == (e.idx) {
+func (e *TypeExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
+	if len(e.f.LogicBlocks) == e.idx {
 		e.f.LogicBlocks = append(e.f.LogicBlocks, &LogicBlock{
 			Generics:     []*Param{},
 			InputParams:  []*Param{},
@@ -18,24 +20,31 @@ func (e *TypeExtractor) Do(tok token.Token, lit string) Extractor {
 			BlockParams:  []*Param{},
 		})
 	}
-	// temp exit out
-	// if e.extDone {
-	// 	e.done = true
-	// 	f.LogicBlocks = append(f.LogicBlocks, e.lb)
-	// 	return e
-	// }
+
 	switch tok {
 	case token.IDENT:
-		e.f.LogicBlocks[e.idx].Name = lit
+		if e.f.LogicBlocks[e.idx].Name == "" {
+			e.f.LogicBlocks[e.idx].Name = lit
+		}
 	case token.LBRACK:
-		return e.f.Generics()
+		return e.f.Generics(e.idx)
 	case token.INTERFACE:
-		e.f.LogicBlocks[e.idx].Type = TypeInterface
+		if e.f.LogicBlocks[e.idx].Type == 0 {
+			e.f.LogicBlocks[e.idx].Type = TypeInterface
+		}
 	case token.STRUCT:
-		e.f.LogicBlocks[e.idx].Type = TypeStruct
+		if e.f.LogicBlocks[e.idx].Type == 0 {
+			e.f.LogicBlocks[e.idx].Type = TypeStruct
+		}
 	case token.LBRACE:
 		e.lvl += 1
-		return e.f.Element()
+		return e.f.Element(e.idx, e.lvl)
+	case token.RBRACE:
+		if e.lvl > 0 {
+			e.lvl -= 1
+			return e
+		}
+		e.done = true
 	}
 	return e
 }

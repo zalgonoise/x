@@ -32,21 +32,25 @@ func (f *GoFile) Import() *ImportExtractor {
 	}
 }
 
-func (f *GoFile) Type() *TypeExtractor {
+func (f *GoFile) Type(idx int) *TypeExtractor {
 	return &TypeExtractor{
-		f: f,
+		f:   f,
+		idx: idx,
 	}
 }
 
-func (f *GoFile) Element() *ElementsExtractor {
+func (f *GoFile) Element(idx, depth int) *ElementsExtractor {
 	return &ElementsExtractor{
-		f: f,
+		f:   f,
+		idx: idx,
+		lvl: depth,
 	}
 }
 
-func (f *GoFile) Generics() *GenericsExtractor {
+func (f *GoFile) Generics(idx int) *GenericsExtractor {
 	return &GenericsExtractor{
-		f: f,
+		f:   f,
+		idx: idx,
 	}
 }
 
@@ -67,7 +71,9 @@ func new(path string, b []byte) *GoFile {
 	}
 }
 
-func (f *GoFile) Parse() error {
+type ParseFunc func(pos token.Pos, tok token.Token, lit string)
+
+func (f *GoFile) Parse(fns ...ParseFunc) error {
 	var (
 		fs   = token.NewFileSet()
 		sc   = scanner.Scanner{}
@@ -90,7 +96,7 @@ func (f *GoFile) Parse() error {
 	}
 
 	for {
-		_, tok, lit := sc.Scan()
+		pos, tok, lit := sc.Scan()
 		if tok == token.EOF {
 			break // end of GoFile
 		}
@@ -98,8 +104,12 @@ func (f *GoFile) Parse() error {
 		if extr.Done() {
 			extr = f.match(tok)
 		}
-		extr.Do(tok, lit)
+		extr = extr.Do(pos, tok, lit)
 
+		// execute optional functions
+		for _, fn := range fns {
+			fn(pos, tok, lit)
+		}
 	}
 	return nil
 }
@@ -111,7 +121,10 @@ func (f *GoFile) match(tok token.Token) Extractor {
 	case token.IMPORT:
 		return f.Import()
 	case token.TYPE:
-		return f.Type()
+		f.typeCount += 1
+		return f.Type(f.typeCount - 1)
+	case token.SEMICOLON:
+		return f.Skip()
 	default:
 		return f.Skip()
 	}

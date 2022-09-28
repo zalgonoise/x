@@ -10,7 +10,7 @@ type ImportExtractor struct {
 	done bool
 }
 
-func (e *ImportExtractor) Do(tok token.Token, lit string) Extractor {
+func (e *ImportExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
 	switch tok {
 	case token.LPAREN:
 		e.done = false

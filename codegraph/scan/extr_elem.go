@@ -1,43 +1,60 @@
 package scan
 
-import "go/token"
+import (
+	"go/token"
+)
 
 type ElementsExtractor struct {
-	f    *GoFile
-	done bool
-	// extDone bool
-	lb       *LogicBlock
+	f        *GoFile
+	done     bool
 	idx      int
+	iidx     int
 	identIdx int
+	lvl      int
+	parenLvl int
+	braceLvl int
 }
 
-func (e *ElementsExtractor) Do(tok token.Token, lit string) Extractor {
-	if e.lb.BlockParams == nil {
-		e.lb.BlockParams = []*Param{}
-	}
-	if e.lb.BlockParams[e.idx] == nil {
-		e.lb.BlockParams[e.idx] = &Param{}
+func (e *ElementsExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
+	if len(e.f.LogicBlocks[e.idx].BlockParams) == 0 {
+		e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &Param{})
 	}
 
 	switch tok {
 	case token.IDENT:
-		switch e.identIdx {
-		case 0:
-			e.lb.BlockParams[e.idx].Name = lit
-			e.identIdx += 1
-		case 1:
-			e.lb.BlockParams[e.idx].Type = lit
+		if len(e.f.LogicBlocks[e.idx].BlockParams) == e.iidx {
+			e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &Param{})
+		}
+		if e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Name == "" {
+			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Name = lit
 		}
 
 	case token.LPAREN:
-		if e.lb.Type == TypeInterface {
-			e.lb.BlockParams[e.idx].Type = "METHOD"
+		if e.f.LogicBlocks[e.idx].Type == TypeInterface {
+			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Type = "METHOD"
+		}
+		e.parenLvl += 1
+	case token.RPAREN:
+		if e.parenLvl > 0 {
+			e.parenLvl -= 1
+			return e
 		}
 	case token.SEMICOLON:
+		if e.parenLvl > 0 || e.braceLvl > 0 {
+			return e
+		}
+
 		e.identIdx = 0
-		e.idx += 1
+		e.iidx += 1
+	case token.LBRACE:
+		e.braceLvl += 1
 	case token.RBRACE:
+		if e.braceLvl > 0 {
+			e.braceLvl -= 1
+			return e
+		}
 		e.done = true
+		return e
 	}
 	return e
 }

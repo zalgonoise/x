@@ -11,9 +11,11 @@ type GenericsExtractor struct {
 	typeIsPkg bool
 	lb        *LogicBlock
 	paramIdx  int
+	idx       int
 }
 
-func (e *GenericsExtractor) Do(tok token.Token, lit string) Extractor {
+// TODO: needs to be redone with the new design
+func (e *GenericsExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
 	if e.lb.Generics == nil {
 		e.lb.Generics = []*Param{{}}
 	}
@@ -41,7 +43,7 @@ func (e *GenericsExtractor) Do(tok token.Token, lit string) Extractor {
 		e.paramIdx += 1
 		e.lb.Generics = append(e.lb.Generics, &Param{})
 	case token.RBRACK:
-		return e.f.Type()
+		return e.f.Type(e.idx)
 	}
 	return e
 }
