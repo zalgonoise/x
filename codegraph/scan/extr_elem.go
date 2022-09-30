@@ -17,21 +17,21 @@ type ElementsExtractor struct {
 
 func (e *ElementsExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
 	if len(e.f.LogicBlocks[e.idx].BlockParams) == 0 {
-		e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &Param{})
+		e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &LogicBlock{})
 	}
 
 	switch tok {
 	case token.IDENT:
 		if len(e.f.LogicBlocks[e.idx].BlockParams) == e.iidx {
-			e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &Param{})
+			e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &LogicBlock{})
 		}
 		if e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Name == "" {
 			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Name = lit
 		}
 
 	case token.LPAREN:
-		if e.f.LogicBlocks[e.idx].Type == TypeInterface {
-			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Type = "METHOD"
+		if e.f.LogicBlocks[e.idx].Kind == TypeInterface {
+			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Kind = TypeInterface
 		}
 		e.parenLvl += 1
 	case token.RPAREN:
