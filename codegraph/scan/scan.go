@@ -40,17 +40,9 @@ type LogicBlock struct {
 	BlockParams  []*LogicBlock `json:"elements,omitempty"`
 	Calls        []string      `json:"calls,omitempty"`
 	Package      string        `json:"pacakage,omitempty"`
-	// level        int
-}
-
-type Param struct {
-	Name    string `json:"name,omitempty"`
-	Type    string `json:"type,omitempty"`
-	Package string `json:"package,omitempty"`
 }
 
 type BlockType uint
-type ParamType uint
 
 const (
 	TypeUndefined BlockType = iota
