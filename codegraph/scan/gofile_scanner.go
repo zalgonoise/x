@@ -47,6 +47,22 @@ func (f *GoFile) Element(idx, depth int) *ElementsExtractor {
 	}
 }
 
+func (f *GoFile) Struct(idx, depth int) *StructExtractor {
+	return &StructExtractor{
+		f:   f,
+		idx: idx,
+		lvl: depth,
+	}
+}
+
+func (f *GoFile) Interface(idx, depth int) *InterfaceExtractor {
+	return &InterfaceExtractor{
+		f:   f,
+		idx: idx,
+		lvl: depth,
+	}
+}
+
 func (f *GoFile) Generics(idx int) *GenericsExtractor {
 	return &GenericsExtractor{
 		f:   f,
