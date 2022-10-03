@@ -10,7 +10,7 @@ type PackageExtractor struct {
 func (e *PackageExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
 	switch tok {
 	case token.IDENT:
-		e.f.PackageName = lit
+		e.f.SetPkgName(lit)
 	case token.SEMICOLON:
 		e.done = true
 	}

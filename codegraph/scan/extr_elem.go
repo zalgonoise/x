@@ -53,16 +53,8 @@ func (e *StructExtractor) Done() bool {
 func (e *InterfaceExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
 	switch tok {
 	case token.IDENT:
-		if len(e.f.LogicBlocks[e.idx].BlockParams) == e.iidx {
-			e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &LogicBlock{})
-		}
-		if e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Type == "" {
-			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Type = "func"
-		}
-		if e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Name == "" {
-			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Name = lit
-			return e
-		}
+		e.f.SetITFType(e.idx, e.iidx)
+		e.f.SetITFName(e.idx, e.iidx, lit)
 
 		if !e.inputsDone && e.onInputs {
 			if len(e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams) == e.paramIdx {

@@ -12,30 +12,16 @@ type TypeExtractor struct {
 }
 
 func (e *TypeExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
-	if len(e.f.LogicBlocks) == e.idx {
-		e.f.LogicBlocks = append(e.f.LogicBlocks, &LogicBlock{
-			Generics:     []*LogicBlock{},
-			InputParams:  []*LogicBlock{},
-			ReturnParams: []*LogicBlock{},
-			BlockParams:  []*LogicBlock{},
-		})
-	}
 
 	switch tok {
 	case token.IDENT:
-		if e.f.LogicBlocks[e.idx].Name == "" {
-			e.f.LogicBlocks[e.idx].Name = lit
-		}
+		e.f.SetLBName(e.idx, lit)
 	case token.LBRACK:
 		return e.f.Generics(e.idx)
 	case token.INTERFACE:
-		if e.f.LogicBlocks[e.idx].Kind == 0 {
-			e.f.LogicBlocks[e.idx].Kind = TypeInterface
-		}
+		e.f.SetLBKind(e.idx, TypeInterface)
 	case token.STRUCT:
-		if e.f.LogicBlocks[e.idx].Kind == 0 {
-			e.f.LogicBlocks[e.idx].Kind = TypeStruct
-		}
+		e.f.SetLBKind(e.idx, TypeStruct)
 	case token.LBRACE:
 		e.lvl += 1
 		return e.f.Element(e.idx, e.lvl)

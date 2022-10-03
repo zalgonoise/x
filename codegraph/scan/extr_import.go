@@ -16,7 +16,7 @@ func (e *ImportExtractor) Do(pos token.Pos, tok token.Token, lit string) Extract
 		e.done = false
 	case token.STRING:
 		imp := e.proc(lit)
-		e.f.Imports = append(e.f.Imports, imp)
+		e.f.AddImport(imp)
 	case token.RPAREN:
 		e.done = true
 	}
@@ -29,8 +29,5 @@ func (e *ImportExtractor) Done() bool {
 func (e *ImportExtractor) proc(lit string) *Import {
 	repl := strings.ReplaceAll(lit, `"`, "")
 	s := strings.Split(repl, "/")
-	return &Import{
-		Package: s[len(s)-1],
-		URI:     repl,
-	}
+	return NewImport(s[len(s)-1], repl)
 }
