@@ -15,7 +15,7 @@ var (
 
 func TestReadFile(t *testing.T) {
 	var testPrinterFunc ParseFunc = func(pos token.Pos, tok token.Token, lit string) {
-		t.Logf("%v: '%s' -> %s\n", pos, tok, lit)
+		// t.Logf("%v: '%s' -> %s\n", pos, tok, lit)
 	}
 
 	procF, err := New(filePath)
