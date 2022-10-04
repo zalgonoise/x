@@ -38,8 +38,11 @@ type LogicBlock struct {
 	InputParams  []*LogicBlock `json:"inputs,omitempty"`
 	ReturnParams []*LogicBlock `json:"returns,omitempty"`
 	BlockParams  []*LogicBlock `json:"elements,omitempty"`
+	Receivers    *LogicBlock   `json:"receiver,omitempty"`
 	Calls        []string      `json:"calls,omitempty"`
 	Package      string        `json:"pacakage,omitempty"`
+	isFunc       bool
+	parent       *GoFile
 }
 
 type BlockType uint

@@ -70,6 +70,57 @@ func (f *GoFile) Generics(idx int) *GenericsExtractor {
 	}
 }
 
+type Filter struct {
+	key string
+	idx int
+}
+
+func NewFilter(key string, idx int) Filter {
+	switch key {
+	case "logicBlock":
+		return Filter{key: key, idx: idx}
+	case "input":
+		return Filter{key: key, idx: idx}
+	case "return":
+		return Filter{key: key, idx: idx}
+	case "block":
+		return Filter{key: key, idx: idx}
+	case "receiver":
+		return Filter{key: key, idx: idx}
+	default:
+		return Filter{}
+	}
+}
+
+func applyFilters(f *GoFile, filters ...Filter) *LogicBlock {
+	var lb *LogicBlock
+	for _, filter := range filters {
+		filter := filter
+		switch filter.key {
+		case "logicBlock":
+			lb = f.GetLogicBlock(filter.idx)
+
+		case "input":
+			lb = lb.InputParam(filter.idx)
+		case "return":
+			lb = lb.ReturnParam(filter.idx)
+		case "block":
+			lb = lb.BlockParam(filter.idx)
+		case "receiver":
+			lb = lb.Receiver()
+		}
+	}
+	return lb
+}
+
+func (f *GoFile) LBlock(e Extractor, filters ...Filter) *LogicBlockExtractor {
+	lb := applyFilters(f, filters...)
+	return &LogicBlockExtractor{
+		parent: e,
+		lb:     lb,
+	}
+}
+
 func New(path string) (*GoFile, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {

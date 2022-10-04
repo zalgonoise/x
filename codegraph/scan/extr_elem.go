@@ -57,26 +57,16 @@ func (e *InterfaceExtractor) Do(pos token.Pos, tok token.Token, lit string) Extr
 		e.f.SetITFName(e.idx, e.iidx, lit)
 
 		if !e.inputsDone && e.onInputs {
-			if len(e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams) == e.paramIdx {
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams = append(e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams, &LogicBlock{})
-			}
-			if e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams[e.paramIdx].Type == "" {
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams[e.paramIdx].Type = lit
-			} else {
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams[e.paramIdx].Name = e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams[e.paramIdx].Type
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams[e.paramIdx].Type = lit
-			}
+			e.f.LBlock(e,
+				NewFilter("logicBlock", e.idx),
+				NewFilter("input", e.paramIdx),
+			).Do(pos, tok, lit)
 		}
 		if e.inputsDone && !e.returnsDone && e.onReturns {
-			if len(e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams) == e.paramIdx {
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams = append(e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams, &LogicBlock{})
-			}
-			if e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams[e.paramIdx].Type == "" {
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams[e.paramIdx].Type = lit
-			} else {
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams[e.paramIdx].Name = e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams[e.paramIdx].Type
-				e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams[e.paramIdx].Type = lit
-			}
+			e.f.LBlock(e,
+				NewFilter("logicBlock", e.idx),
+				NewFilter("return", e.paramIdx),
+			).Do(pos, tok, lit)
 		}
 
 	case token.LPAREN:
@@ -117,7 +107,13 @@ func (e *InterfaceExtractor) Do(pos token.Pos, tok token.Token, lit string) Extr
 			return e
 		}
 	case token.FUNC:
-		e.funcParam = true
+		if !e.inputsDone && e.onInputs {
+			e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).InputParam(e.paramIdx).IsFunc()
+		}
+		if e.inputsDone && !e.returnsDone && e.onReturns {
+			e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).ReturnParam(e.paramIdx).IsFunc()
+		}
+
 		return e
 	case token.COMMA:
 		e.paramIdx += 1
@@ -130,11 +126,11 @@ func (e *InterfaceExtractor) Do(pos token.Pos, tok token.Token, lit string) Extr
 
 		e.returnsDone = false
 		e.inputsDone = false
-		if len(e.f.LogicBlocks[e.idx].BlockParams[e.iidx].InputParams) == 0 && len(e.f.LogicBlocks[e.idx].BlockParams[e.iidx].ReturnParams) == 0 {
-			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Type = e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Name
+		if e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).InputLen() == 0 && e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).ReturnLen() == 0 {
+			e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).SetType(e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).Name)
 		}
-		if e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Kind == 0 {
-			e.f.LogicBlocks[e.idx].BlockParams[e.iidx].Kind = TypeMethod
+		if e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).Kind == 0 {
+			e.f.GetLogicBlock(e.idx).BlockParam(e.iidx).SetKind(TypeMethod)
 		}
 		e.iidx += 1
 	case token.LBRACE:
@@ -155,10 +151,6 @@ func (e *InterfaceExtractor) Done() bool {
 }
 
 func (e *ElementsExtractor) Do(pos token.Pos, tok token.Token, lit string) Extractor {
-	if len(e.f.LogicBlocks[e.idx].BlockParams) == 0 {
-		e.f.LogicBlocks[e.idx].BlockParams = append(e.f.LogicBlocks[e.idx].BlockParams, &LogicBlock{})
-	}
-
 	switch e.f.LogicBlocks[e.idx].Kind {
 	case TypeInterface:
 		return e.f.Interface(e.idx, e.lvl).Do(pos, tok, lit)
