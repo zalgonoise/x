@@ -5,7 +5,9 @@ import (
 
 	dnsr "github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/dns"
+	"github.com/zalgonoise/x/dns/dns/uimpdns"
 	"github.com/zalgonoise/x/dns/store"
+	"github.com/zalgonoise/x/dns/store/uimpstore"
 )
 
 type Service interface {
@@ -19,6 +21,13 @@ type service struct {
 }
 
 func New(dns dns.DNSRepository, store store.StoreRepository) Service {
+	if dns == nil {
+		dns = uimpdns.New()
+	}
+	if store == nil {
+		store = uimpstore.New()
+	}
+
 	return &service{
 		dns:   dns,
 		store: store,
