@@ -11,23 +11,22 @@ import (
 )
 
 type Service interface {
-	dns.DNSRepository
-	store.StoreRepository
+	dns.Repository
+	store.Repository
 }
 
 type service struct {
-	dns   dns.DNSRepository
-	store store.StoreRepository
+	dns   dns.Repository
+	store store.Repository
 }
 
-func New(dns dns.DNSRepository, store store.StoreRepository) Service {
+func New(dns dns.Repository, store store.Repository) *service {
 	if dns == nil {
 		dns = uimpdns.New()
 	}
 	if store == nil {
 		store = uimpstore.New()
 	}
-
 	return &service{
 		dns:   dns,
 		store: store,
@@ -62,8 +61,8 @@ func (s *service) List(ctx context.Context) ([]store.Record, error) {
 	return s.store.List(ctx)
 }
 
-func (s *service) GetByAddr(ctx context.Context, addr string) (store.Record, error) {
-	return s.store.GetByAddr(ctx, addr)
+func (s *service) GetByAddr(ctx context.Context, rtype dns.RecordType, addr string) (store.Record, error) {
+	return s.store.GetByAddr(ctx, rtype, addr)
 }
 
 func (s *service) GetByDest(ctx context.Context, addr string) ([]store.Record, error) {

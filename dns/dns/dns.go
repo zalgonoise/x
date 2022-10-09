@@ -11,7 +11,7 @@ import (
 //
 // While the basic implementation is 100% based on `miekg/dns`, it is also
 // possible to further extend the service with different implementations
-type DNSRepository interface {
+type Repository interface {
 	// ParseQuery will parse the incoming dns.Msg and append an answer
 	// to it
 	ParseQuery(m *dnsr.Msg)

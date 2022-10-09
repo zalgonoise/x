@@ -1,12 +1,20 @@
 package store
 
-import "context"
+import (
+	"context"
+
+	"github.com/zalgonoise/x/dns/dns"
+)
 
 // Record defines the elements of a DNS Record
 //
 // TODO: add the elements necessary to comprehend the most common
 // DNS records' elements
-type Record struct{}
+type Record struct {
+	Type dns.RecordType
+	Name string
+	Addr string
+}
 
 // StoreRepository defines the behavior that a record store should have
 //
@@ -15,7 +23,7 @@ type Record struct{}
 //
 // Additionally, it is exposing both GetByAddr and GetByDest methods to
 // fetch items in the records list interchangeably
-type StoreRepository interface {
+type Repository interface {
 	// Add will create a new entry in they key-value store to include a
 	// new Record, returning an error
 	Add(ctx context.Context, r Record) error
@@ -28,7 +36,7 @@ type StoreRepository interface {
 	// GetByAddr will fetch an address based on its address string
 	//
 	// GetByAddr(ctx, "service.mydomain") -> { "127.0.0.1", nil }
-	GetByAddr(ctx context.Context, addr string) (Record, error)
+	GetByAddr(ctx context.Context, rtype dns.RecordType, addr string) (Record, error)
 
 	// GetByDest will fetch an address based on its target IP
 	//
