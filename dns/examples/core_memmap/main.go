@@ -21,11 +21,18 @@ func main() {
 	)
 
 	ctx := context.Background()
-	err := s.Add(ctx, store.Record{
-		Name: "nw.io",
-		Type: dns.TypeA,
-		Addr: "127.0.0.1",
-	})
+	err := s.Add(ctx,
+		store.Record{
+			Name: "nw.io",
+			Type: dns.TypeA,
+			Addr: "127.0.0.1",
+		},
+		store.Record{
+			Name: "host.nw.io",
+			Type: dns.TypeA,
+			Addr: "192.168.0.1",
+		},
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -14,7 +14,7 @@ var (
 
 type UnimplementedStore struct{}
 
-func (u UnimplementedStore) Add(context.Context, store.Record) error {
+func (u UnimplementedStore) Add(context.Context, ...store.Record) error {
 	return ErrUnimplementedStore
 }
 

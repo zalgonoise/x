@@ -53,8 +53,8 @@ func (s *service) Reload() error {
 	return s.dns.Reload()
 }
 
-func (s *service) Add(ctx context.Context, r store.Record) error {
-	return s.store.Add(ctx, r)
+func (s *service) Add(ctx context.Context, r ...store.Record) error {
+	return s.store.Add(ctx, r...)
 }
 
 func (s *service) List(ctx context.Context) ([]store.Record, error) {

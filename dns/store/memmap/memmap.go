@@ -23,13 +23,15 @@ func New() *MemoryStore {
 	}
 }
 
-func (m *MemoryStore) Add(ctx context.Context, r store.Record) error {
-	dottedN := r.Name + "."
+func (m *MemoryStore) Add(ctx context.Context, rs ...store.Record) error {
+	for _, r := range rs {
+		dottedN := r.Name + "."
 
-	if _, ok := m.Records[dottedN]; !ok {
-		m.Records[dottedN] = map[dns.RecordType]string{}
+		if _, ok := m.Records[dottedN]; !ok {
+			m.Records[dottedN] = map[dns.RecordType]string{}
+		}
+		m.Records[dottedN][r.Type] = r.Addr
 	}
-	m.Records[dottedN][r.Type] = r.Addr
 	return nil
 }
 

@@ -26,7 +26,7 @@ type Record struct {
 type Repository interface {
 	// Add will create a new entry in they key-value store to include a
 	// new Record, returning an error
-	Add(ctx context.Context, r Record) error
+	Add(ctx context.Context, r ...Record) error
 
 	// List will fetch all records in the key-value store
 	//
