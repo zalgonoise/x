@@ -12,24 +12,21 @@ import (
 )
 
 func main() {
-	memstore := memmap.New()
-	dnscore := core.New(memstore)
-
 	s := service.New(
-		dnscore,
-		memstore,
+		core.New(),
+		memmap.New(),
 	)
 
 	ctx := context.Background()
 	err := s.Add(ctx,
 		store.Record{
 			Name: "nw.io",
-			Type: dns.TypeA,
+			Type: dns.TypeA.String(),
 			Addr: "127.0.0.1",
 		},
 		store.Record{
 			Name: "host.nw.io",
-			Type: dns.TypeA,
+			Type: dns.TypeA.String(),
 			Addr: "192.168.0.1",
 		},
 	)

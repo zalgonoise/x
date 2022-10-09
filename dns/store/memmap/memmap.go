@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zalgonoise/x/dns/dns"
 	"github.com/zalgonoise/x/dns/store"
 )
 
@@ -14,12 +13,12 @@ var (
 
 type MemoryStore struct {
 	// maps a set of domain names to record types to IPs
-	Records map[string]map[dns.RecordType]string
+	Records map[string]map[string]string
 }
 
 func New() *MemoryStore {
 	return &MemoryStore{
-		Records: map[string]map[dns.RecordType]string{},
+		Records: map[string]map[string]string{},
 	}
 }
 
@@ -28,7 +27,7 @@ func (m *MemoryStore) Add(ctx context.Context, rs ...store.Record) error {
 		dottedN := r.Name + "."
 
 		if _, ok := m.Records[dottedN]; !ok {
-			m.Records[dottedN] = map[dns.RecordType]string{}
+			m.Records[dottedN] = map[string]string{}
 		}
 		m.Records[dottedN][r.Type] = r.Addr
 	}
@@ -50,7 +49,7 @@ func (m *MemoryStore) List(ctx context.Context) ([]store.Record, error) {
 	return output, nil
 }
 
-func (m *MemoryStore) GetByAddr(ctx context.Context, rtype dns.RecordType, addr string) (store.Record, error) {
+func (m *MemoryStore) GetByAddr(ctx context.Context, rtype string, addr string) (store.Record, error) {
 	if _, ok := m.Records[addr]; !ok {
 		return store.Record{}, ErrDoesNotExist
 	}

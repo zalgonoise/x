@@ -2,8 +2,6 @@ package store
 
 import (
 	"context"
-
-	"github.com/zalgonoise/x/dns/dns"
 )
 
 // Record defines the elements of a DNS Record
@@ -11,7 +9,7 @@ import (
 // TODO: add the elements necessary to comprehend the most common
 // DNS records' elements
 type Record struct {
-	Type dns.RecordType
+	Type string
 	Name string
 	Addr string
 }
@@ -36,7 +34,7 @@ type Repository interface {
 	// GetByAddr will fetch an address based on its address string
 	//
 	// GetByAddr(ctx, "service.mydomain") -> { "127.0.0.1", nil }
-	GetByAddr(ctx context.Context, rtype dns.RecordType, addr string) (Record, error)
+	GetByAddr(ctx context.Context, rtype string, addr string) (Record, error)
 
 	// GetByDest will fetch an address based on its target IP
 	//

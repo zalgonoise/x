@@ -5,9 +5,7 @@ import (
 
 	dnsr "github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/dns"
-	"github.com/zalgonoise/x/dns/dns/uimpdns"
 	"github.com/zalgonoise/x/dns/store"
-	"github.com/zalgonoise/x/dns/store/uimpstore"
 )
 
 type Service interface {
@@ -20,16 +18,20 @@ type service struct {
 	store store.Repository
 }
 
-func New(dns dns.Repository, store store.Repository) *service {
-	if dns == nil {
-		dns = uimpdns.New()
+func New(dnsR dns.Repository, storeR store.Repository) *service {
+	if dnsR == nil {
+		dnsR = dns.Unimplemented()
 	}
-	if store == nil {
-		store = uimpstore.New()
+	if storeR == nil {
+		storeR = store.Unimplemented()
 	}
+
+	// link DNS server to DNS Records store
+	dnsR.Store(storeR)
+
 	return &service{
-		dns:   dns,
-		store: store,
+		dns:   dnsR,
+		store: storeR,
 	}
 }
 
@@ -53,6 +55,10 @@ func (s *service) Reload() error {
 	return s.dns.Reload()
 }
 
+func (s *service) Store(store store.Repository) {
+	s.dns.Store(s.store)
+}
+
 func (s *service) Add(ctx context.Context, r ...store.Record) error {
 	return s.store.Add(ctx, r...)
 }
@@ -61,7 +67,7 @@ func (s *service) List(ctx context.Context) ([]store.Record, error) {
 	return s.store.List(ctx)
 }
 
-func (s *service) GetByAddr(ctx context.Context, rtype dns.RecordType, addr string) (store.Record, error) {
+func (s *service) GetByAddr(ctx context.Context, rtype string, addr string) (store.Record, error) {
 	return s.store.GetByAddr(ctx, rtype, addr)
 }
 

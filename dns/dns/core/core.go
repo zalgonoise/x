@@ -7,7 +7,6 @@ import (
 	dnsr "github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/dns"
 	"github.com/zalgonoise/x/dns/store"
-	"github.com/zalgonoise/x/dns/store/uimpstore"
 	// "github.com/zalgonoise/zlog/log/event"
 )
 
@@ -22,26 +21,23 @@ type DNSCore struct {
 	err   error
 }
 
-func New(store store.Repository) *DNSCore {
-	if store == nil {
-		store = uimpstore.New()
-	}
+func New() *DNSCore {
 	return &DNSCore{
-		store: store,
+		store: store.Unimplemented(),
 	}
 }
 
 func (d *DNSCore) answerFor(rtype dns.RecordType, question dnsr.Question, m *dnsr.Msg) {
 	ctx := context.Background()
 
-	answer, err := d.store.GetByAddr(ctx, rtype, question.Name)
+	answer, err := d.store.GetByAddr(ctx, rtype.String(), question.Name)
 	if err != nil {
 		d.err = err
 		return
 	}
 	if answer.Addr != "" {
 		response, err := dnsr.NewRR(
-			fmt.Sprintf("%s A %s", question.Name, answer.Addr),
+			fmt.Sprintf("%s %s %s", question.Name, rtype.String(), answer.Addr),
 		)
 		if err != nil {
 			d.err = err
@@ -100,15 +96,25 @@ func (d *DNSCore) Start() error {
 
 	return server.ListenAndServe()
 }
+
 func (d *DNSCore) Stop() error {
 	d.ctl <- struct{}{}
 
 	return d.err
 }
+
 func (d *DNSCore) Reload() error {
 	err := d.Stop()
 	if err != nil {
 		return err
 	}
 	return d.Start()
+}
+
+func (d *DNSCore) Store(storeR store.Repository) {
+	if storeR == nil && d.store == nil {
+		d.store = store.Unimplemented()
+		return
+	}
+	d.store = storeR
 }

@@ -2,6 +2,7 @@ package dns
 
 import (
 	dnsr "github.com/miekg/dns"
+	"github.com/zalgonoise/x/dns/store"
 )
 
 // DNSRepository defines the behavior that a DNS Server should have
@@ -28,4 +29,6 @@ type Repository interface {
 	// Reload will relaunch the running DNS server, taking into account
 	// any Records updates in the Records Store
 	Reload() error
+
+	Store(store.Repository)
 }
