@@ -12,13 +12,14 @@ import (
 )
 
 const (
-	addr string = ":5353"
+	addr  string = ":53"
+	proto string = "udp"
 )
 
 type DNSCore struct {
 	store store.Repository
 	ctl   chan struct{}
-	err   *error
+	err   error
 }
 
 func New(store store.Repository) *DNSCore {
@@ -35,7 +36,7 @@ func (d *DNSCore) answerFor(rtype dns.RecordType, question dnsr.Question, m *dns
 
 	answer, err := d.store.GetByAddr(ctx, rtype, question.Name)
 	if err != nil {
-		*d.err = err
+		d.err = err
 		return
 	}
 	if answer.Addr != "" {
@@ -43,7 +44,7 @@ func (d *DNSCore) answerFor(rtype dns.RecordType, question dnsr.Question, m *dns
 			fmt.Sprintf("%s A %s", question.Name, answer.Addr),
 		)
 		if err != nil {
-			*d.err = err
+			d.err = err
 			return
 		}
 		m.Answer = append(m.Answer, response)
@@ -71,27 +72,28 @@ func (d *DNSCore) HandleRequest(w dnsr.ResponseWriter, r *dnsr.Msg) {
 	switch r.Opcode {
 	case dnsr.OpcodeQuery:
 		d.ParseQuery(m)
-		if *d.err != nil {
+		if d.err != nil {
 			return
 		}
 	}
 
 	err := w.WriteMsg(m)
 	if err != nil {
-		*d.err = err
+		d.err = err
 	}
 }
 func (d *DNSCore) Start() error {
 	dnsr.HandleFunc(".", d.HandleRequest)
 	var server = &dnsr.Server{
 		Addr: addr,
+		Net:  proto,
 	}
 	d.ctl = make(chan struct{})
 	go func() {
 		for range d.ctl {
 			err := server.Shutdown()
 			if err != nil {
-				*d.err = err
+				d.err = err
 			}
 		}
 	}()
@@ -101,7 +103,7 @@ func (d *DNSCore) Start() error {
 func (d *DNSCore) Stop() error {
 	d.ctl <- struct{}{}
 
-	return *d.err
+	return d.err
 }
 func (d *DNSCore) Reload() error {
 	err := d.Stop()

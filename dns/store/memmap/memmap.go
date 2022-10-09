@@ -24,10 +24,12 @@ func New() *MemoryStore {
 }
 
 func (m *MemoryStore) Add(ctx context.Context, r store.Record) error {
-	if _, ok := m.Records[r.Name]; !ok {
-		m.Records[r.Name] = map[dns.RecordType]string{}
+	dottedN := r.Name + "."
+
+	if _, ok := m.Records[dottedN]; !ok {
+		m.Records[dottedN] = map[dns.RecordType]string{}
 	}
-	m.Records[r.Name][r.Type] = r.Addr
+	m.Records[dottedN][r.Type] = r.Addr
 	return nil
 }
 
@@ -47,6 +49,10 @@ func (m *MemoryStore) List(ctx context.Context) ([]store.Record, error) {
 }
 
 func (m *MemoryStore) GetByAddr(ctx context.Context, rtype dns.RecordType, addr string) (store.Record, error) {
+	if _, ok := m.Records[addr]; !ok {
+		return store.Record{}, ErrDoesNotExist
+	}
+
 	dest := m.Records[addr][rtype]
 	if dest == "" {
 		return store.Record{}, ErrDoesNotExist
@@ -76,13 +82,13 @@ func (m *MemoryStore) GetByDest(ctx context.Context, addr string) ([]store.Recor
 }
 
 func (m *MemoryStore) Update(ctx context.Context, addr string, r store.Record) error {
-	m.Records[addr][r.Type] = r.Addr
+	m.Records[addr+"."][r.Type] = r.Addr
 	return nil
 }
 
 func (m *MemoryStore) Delete(ctx context.Context, addr string) error {
 	for domain, r := range m.Records {
-		if domain == addr {
+		if domain == addr+"." {
 			for key := range r {
 				r[key] = ""
 			}
