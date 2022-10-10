@@ -13,8 +13,6 @@ var (
 
 type unimplemented struct{}
 
-func (u unimplemented) ParseQuery(*dns.Msg) {}
-
 func (u unimplemented) HandleRequest(dns.ResponseWriter, *dns.Msg) {}
 
 func (u unimplemented) Start() error {
@@ -29,7 +27,7 @@ func (u unimplemented) Reload() error {
 	return ErrUnimplemented
 }
 
-func (u unimplemented) Store(store.Repository) {}
+func (u unimplemented) Store(store.ReadRepository) {}
 
 func Unimplemented() unimplemented {
 	return unimplemented{}

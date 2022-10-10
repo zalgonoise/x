@@ -35,10 +35,6 @@ func New(dnsR dns.Repository, storeR store.Repository) *service {
 	}
 }
 
-func (s *service) ParseQuery(m *dnsr.Msg) {
-	s.dns.ParseQuery(m)
-}
-
 func (s *service) HandleRequest(w dnsr.ResponseWriter, r *dnsr.Msg) {
 	s.dns.HandleRequest(w, r)
 }
@@ -59,26 +55,26 @@ func (s *service) Store(store store.Repository) {
 	s.dns.Store(s.store)
 }
 
-func (s *service) Add(ctx context.Context, r ...store.Record) error {
+func (s *service) Add(ctx context.Context, r ...*store.Record) error {
 	return s.store.Add(ctx, r...)
 }
 
-func (s *service) List(ctx context.Context) ([]store.Record, error) {
+func (s *service) List(ctx context.Context) ([]*store.Record, error) {
 	return s.store.List(ctx)
 }
 
-func (s *service) GetByAddr(ctx context.Context, rtype string, addr string) (store.Record, error) {
-	return s.store.GetByAddr(ctx, rtype, addr)
+func (s *service) GetByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
+	return s.store.GetByDomain(ctx, r)
 }
 
-func (s *service) GetByDest(ctx context.Context, addr string) ([]store.Record, error) {
-	return s.store.GetByDest(ctx, addr)
+func (s *service) GetByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
+	return s.store.GetByDest(ctx, r)
 }
 
-func (s *service) Update(ctx context.Context, addr string, r store.Record) error {
+func (s *service) Update(ctx context.Context, addr string, r *store.Record) error {
 	return s.store.Update(ctx, addr, r)
 }
 
-func (s *service) Delete(ctx context.Context, addr string) error {
-	return s.store.Delete(ctx, addr)
+func (s *service) Delete(ctx context.Context, r *store.Record) error {
+	return s.store.Delete(ctx, r)
 }

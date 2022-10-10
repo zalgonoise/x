@@ -16,21 +16,31 @@ const (
 )
 
 type DNSCore struct {
-	store store.Repository
-	ctl   chan struct{}
-	err   error
+	addr   string
+	prefix string
+	store  store.ReadRepository
+	ctl    chan struct{}
+	err    error
 }
 
-func New() *DNSCore {
+func New(d *dns.DNS) *DNSCore {
+	if d == nil {
+		d = dns.New().Build()
+	}
 	return &DNSCore{
-		store: store.Unimplemented(),
+		addr:   d.Addr,
+		prefix: d.Prefix,
+		store:  store.Unimplemented(),
 	}
 }
 
 func (d *DNSCore) answerFor(rtype dns.RecordType, question dnsr.Question, m *dnsr.Msg) {
 	ctx := context.Background()
 
-	answer, err := d.store.GetByAddr(ctx, rtype.String(), question.Name)
+	answer, err := d.store.GetByDomain(
+		ctx,
+		store.New().Type(rtype.String()).Name(question.Name).Build(),
+	)
 	if err != nil {
 		d.err = err
 		return
@@ -47,8 +57,7 @@ func (d *DNSCore) answerFor(rtype dns.RecordType, question dnsr.Question, m *dns
 	}
 }
 
-func (d *DNSCore) ParseQuery(m *dnsr.Msg) {
-
+func (d *DNSCore) parseQuery(m *dnsr.Msg) {
 	for _, question := range m.Question {
 		switch question.Qtype {
 		case dnsr.TypeA:
@@ -67,7 +76,7 @@ func (d *DNSCore) HandleRequest(w dnsr.ResponseWriter, r *dnsr.Msg) {
 
 	switch r.Opcode {
 	case dnsr.OpcodeQuery:
-		d.ParseQuery(m)
+		d.parseQuery(m)
 		if d.err != nil {
 			return
 		}
@@ -78,8 +87,9 @@ func (d *DNSCore) HandleRequest(w dnsr.ResponseWriter, r *dnsr.Msg) {
 		d.err = err
 	}
 }
+
 func (d *DNSCore) Start() error {
-	dnsr.HandleFunc(".", d.HandleRequest)
+	dnsr.HandleFunc(d.prefix, d.HandleRequest)
 	var server = &dnsr.Server{
 		Addr: addr,
 		Net:  proto,
@@ -111,7 +121,7 @@ func (d *DNSCore) Reload() error {
 	return d.Start()
 }
 
-func (d *DNSCore) Store(storeR store.Repository) {
+func (d *DNSCore) Store(storeR store.ReadRepository) {
 	if storeR == nil && d.store == nil {
 		d.store = store.Unimplemented()
 		return

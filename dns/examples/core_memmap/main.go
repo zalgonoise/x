@@ -13,22 +13,14 @@ import (
 
 func main() {
 	s := service.New(
-		core.New(),
+		core.New(nil), // defaults
 		memmap.New(),
 	)
 
 	ctx := context.Background()
 	err := s.Add(ctx,
-		store.Record{
-			Name: "nw.io",
-			Type: dns.TypeA.String(),
-			Addr: "127.0.0.1",
-		},
-		store.Record{
-			Name: "host.nw.io",
-			Type: dns.TypeA.String(),
-			Addr: "192.168.0.1",
-		},
+		store.New().Type(dns.TypeA.String()).Name("nw.io").Addr("127.0.0.1").Build(),
+		store.New().Type(dns.TypeA.String()).Name("host.nw.io").Addr("192.168.0.1").Build(),
 	)
 	if err != nil {
 		log.Fatal(err)

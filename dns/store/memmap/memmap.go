@@ -9,6 +9,9 @@ import (
 
 var (
 	ErrDoesNotExist = errors.New("record does not exist")
+	ErrNoAddr       = errors.New("no IP address provided")
+	ErrNoName       = errors.New("no domain name provided")
+	ErrNoType       = errors.New("no DNS record type provided")
 )
 
 type MemoryStore struct {
@@ -22,7 +25,7 @@ func New() *MemoryStore {
 	}
 }
 
-func (m *MemoryStore) Add(ctx context.Context, rs ...store.Record) error {
+func (m *MemoryStore) Add(ctx context.Context, rs ...*store.Record) error {
 	for _, r := range rs {
 		dottedN := r.Name + "."
 
@@ -34,66 +37,87 @@ func (m *MemoryStore) Add(ctx context.Context, rs ...store.Record) error {
 	return nil
 }
 
-func (m *MemoryStore) List(ctx context.Context) ([]store.Record, error) {
-	var output []store.Record
+func (m *MemoryStore) List(ctx context.Context) ([]*store.Record, error) {
+	var output []*store.Record
 
 	for domain, r := range m.Records {
 		for rtype, addr := range r {
-			output = append(output, store.Record{
-				Type: rtype,
-				Addr: addr,
-				Name: domain,
-			})
+			output = append(
+				output,
+				store.New().
+					Type(rtype).
+					Name(domain).
+					Addr(addr).
+					Build(),
+			)
 		}
 	}
 	return output, nil
 }
 
-func (m *MemoryStore) GetByAddr(ctx context.Context, rtype string, addr string) (store.Record, error) {
-	if _, ok := m.Records[addr]; !ok {
-		return store.Record{}, ErrDoesNotExist
+func (m *MemoryStore) GetByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
+	if r.Name == "" {
+		return nil, ErrNoName
+	}
+	if r.Type == "" {
+		return nil, ErrNoType
 	}
 
+	var (
+		addr  = r.Name
+		rtype = r.Type
+	)
+
+	if _, ok := m.Records[addr]; !ok {
+		return nil, ErrDoesNotExist
+	}
 	dest := m.Records[addr][rtype]
 	if dest == "" {
-		return store.Record{}, ErrDoesNotExist
+		return nil, ErrDoesNotExist
 	}
-	return store.Record{
-		Type: rtype,
-		Addr: dest,
-		Name: addr,
-	}, nil
+
+	r.Addr = dest
+	return r, nil
 }
 
-func (m *MemoryStore) GetByDest(ctx context.Context, addr string) ([]store.Record, error) {
-	var output []store.Record
+func (m *MemoryStore) GetByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
+	if r.Addr == "" {
+		return nil, ErrNoAddr
+	}
 
-	for domain, r := range m.Records {
-		for rtype, ipAddr := range r {
-			if addr == ipAddr {
-				output = append(output, store.Record{
-					Type: rtype,
-					Addr: ipAddr,
-					Name: domain,
-				})
+	var output []*store.Record
+
+	for domain, rmap := range m.Records {
+		for rtype, ipAddr := range rmap {
+			if ipAddr == r.Addr {
+				output = append(
+					output,
+					store.New().
+						Type(rtype).
+						Name(domain).
+						Addr(r.Addr).
+						Build(),
+				)
 			}
 		}
 	}
 	return output, nil
 }
 
-func (m *MemoryStore) Update(ctx context.Context, addr string, r store.Record) error {
+func (m *MemoryStore) Update(ctx context.Context, addr string, r *store.Record) error {
 	m.Records[addr+"."][r.Type] = r.Addr
 	return nil
 }
 
-func (m *MemoryStore) Delete(ctx context.Context, addr string) error {
-	for domain, r := range m.Records {
-		if domain == addr+"." {
-			for key := range r {
-				r[key] = ""
-			}
-		}
+func (m *MemoryStore) Delete(ctx context.Context, r *store.Record) error {
+	if r.Name != "" && r.Type == "" && r.Addr == "" {
+		deleteDomain(m, r.Name)
+	}
+	if r.Name != "" && r.Type != "" && r.Addr == "" {
+		deleteDomainByType(m, r.Name, r.Type)
+	}
+	if r.Addr != "" {
+		deleteAddress(m, r.Addr)
 	}
 	return nil
 }

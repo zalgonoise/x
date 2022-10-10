@@ -1,34 +1,38 @@
 package dns
 
-import (
-	dnsr "github.com/miekg/dns"
-	"github.com/zalgonoise/x/dns/store"
-)
+type DNS struct {
+	Addr   string
+	Prefix string
+}
 
-// DNSRepository defines the behavior that a DNS Server should have
-//
-// This will consist in the basic UDP request handler actions as well as
-// start / stop / reload functionalities.
-//
-// While the basic implementation is 100% based on `miekg/dns`, it is also
-// possible to further extend the service with different implementations
-type Repository interface {
-	// ParseQuery will parse the incoming dns.Msg and append an answer
-	// to it
-	ParseQuery(m *dnsr.Msg)
+type DNSBuilder struct {
+	addr   string
+	prefix string
+}
 
-	// HandleRequest is the dns.HandleFunc for a DNS server
-	HandleRequest(w dnsr.ResponseWriter, r *dnsr.Msg)
+func New() *DNSBuilder {
+	return &DNSBuilder{}
+}
 
-	// Start will (re)launch the DNS Server
-	Start() error
+func (b *DNSBuilder) Addr(s string) *DNSBuilder {
+	b.addr = s
+	return b
+}
 
-	// Stop will gracefully terminate the running DNS Server
-	Stop() error
+func (b *DNSBuilder) Prefix(s string) *DNSBuilder {
+	b.prefix = s
+	return b
+}
 
-	// Reload will relaunch the running DNS server, taking into account
-	// any Records updates in the Records Store
-	Reload() error
-
-	Store(store.Repository)
+func (b *DNSBuilder) Build() *DNS {
+	if b.addr == "" {
+		b.addr = ":53"
+	}
+	if b.prefix == "" {
+		b.prefix = "."
+	}
+	return &DNS{
+		Addr:   b.addr,
+		Prefix: b.prefix,
+	}
 }
