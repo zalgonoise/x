@@ -22,9 +22,8 @@ type Service interface {
 }
 
 type service struct {
-	dns      dns.Repository
-	store    store.Repository
-	recordCh chan *store.Record
+	dns   dns.Repository
+	store store.Repository
 }
 
 func New(dnsR dns.Repository, storeR store.Repository) *service {
@@ -42,18 +41,16 @@ func New(dnsR dns.Repository, storeR store.Repository) *service {
 }
 
 func (s *service) Start() error {
-	s.recordCh = s.dns.Link()
-
 	// route queries
 	go func() {
-		for m := range s.recordCh {
+		for m := range s.dns.Link() {
 			ctx := context.Background()
 			answer, err := s.store.GetByDomain(ctx, m)
 			if err != nil {
 				// logger
-				s.recordCh <- store.New().Build()
+				s.dns.Link() <- store.New().Build()
 			} else {
-				s.recordCh <- answer
+				s.dns.Link() <- answer
 			}
 		}
 	}()
