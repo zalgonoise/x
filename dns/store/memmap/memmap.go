@@ -56,22 +56,10 @@ func (m *MemoryStore) List(ctx context.Context) ([]*store.Record, error) {
 }
 
 func (m *MemoryStore) GetByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
-	if r.Name == "" {
-		return nil, ErrNoName
-	}
-	if r.Type == "" {
-		return nil, ErrNoType
-	}
-
-	var (
-		addr  = r.Name
-		rtype = r.Type
-	)
-
-	if _, ok := m.Records[addr]; !ok {
+	if _, ok := m.Records[r.Name]; !ok {
 		return nil, ErrDoesNotExist
 	}
-	dest := m.Records[addr][rtype]
+	dest := m.Records[r.Name][r.Type]
 	if dest == "" {
 		return nil, ErrDoesNotExist
 	}
@@ -81,10 +69,6 @@ func (m *MemoryStore) GetByDomain(ctx context.Context, r *store.Record) (*store.
 }
 
 func (m *MemoryStore) GetByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
-	if r.Addr == "" {
-		return nil, ErrNoAddr
-	}
-
 	var output []*store.Record
 
 	for domain, rmap := range m.Records {

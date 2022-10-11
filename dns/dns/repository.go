@@ -1,7 +1,6 @@
 package dns
 
 import (
-	dnsr "github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/store"
 )
 
@@ -13,9 +12,6 @@ import (
 // While the basic implementation is 100% based on `miekg/dns`, it is also
 // possible to further extend the service with different implementations
 type Repository interface {
-	// HandleRequest is the dns.HandleFunc for a DNS server
-	HandleRequest(w dnsr.ResponseWriter, r *dnsr.Msg)
-
 	// Start will (re)launch the DNS Server
 	Start() error
 
@@ -26,5 +22,5 @@ type Repository interface {
 	// any Records updates in the Records Store
 	Reload() error
 
-	Store(store.ReadRepository)
+	Link() chan *store.Record
 }

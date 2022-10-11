@@ -1,17 +1,33 @@
 package dns
 
+const (
+	addr   string = ":53"
+	proto  string = "udp"
+	prefix string = "."
+)
+
 type DNS struct {
 	Addr   string
 	Prefix string
+	Proto  string
 }
 
 type DNSBuilder struct {
 	addr   string
 	prefix string
+	proto  string
 }
 
 func New() *DNSBuilder {
 	return &DNSBuilder{}
+}
+
+func From(d *DNS) *DNSBuilder {
+	return &DNSBuilder{
+		addr:   d.Addr,
+		prefix: d.Prefix,
+		proto:  d.Proto,
+	}
 }
 
 func (b *DNSBuilder) Addr(s string) *DNSBuilder {
@@ -24,12 +40,17 @@ func (b *DNSBuilder) Prefix(s string) *DNSBuilder {
 	return b
 }
 
+func (b *DNSBuilder) Proto(s string) *DNSBuilder {
+	b.proto = s
+	return b
+}
+
 func (b *DNSBuilder) Build() *DNS {
 	if b.addr == "" {
-		b.addr = ":53"
+		b.addr = addr
 	}
 	if b.prefix == "" {
-		b.prefix = "."
+		b.prefix = prefix
 	}
 	return &DNS{
 		Addr:   b.addr,

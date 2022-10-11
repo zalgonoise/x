@@ -20,6 +20,14 @@ func New() *RecordBuilder {
 	return &RecordBuilder{}
 }
 
+func From(r *Record) *RecordBuilder {
+	return &RecordBuilder{
+		t:    r.Type,
+		name: r.Name,
+		addr: r.Addr,
+	}
+}
+
 func (b *RecordBuilder) Type(s string) *RecordBuilder {
 	b.t = s
 	return b

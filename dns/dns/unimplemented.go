@@ -3,7 +3,6 @@ package dns
 import (
 	"errors"
 
-	"github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/store"
 )
 
@@ -13,7 +12,7 @@ var (
 
 type unimplemented struct{}
 
-func (u unimplemented) HandleRequest(dns.ResponseWriter, *dns.Msg) {}
+// func (u unimplemented) HandleRequest(dns.ResponseWriter, *dns.Msg) {}
 
 func (u unimplemented) Start() error {
 	return ErrUnimplemented
@@ -27,7 +26,9 @@ func (u unimplemented) Reload() error {
 	return ErrUnimplemented
 }
 
-func (u unimplemented) Store(store.ReadRepository) {}
+func (u unimplemented) Link() chan *store.Record {
+	return nil
+}
 
 func Unimplemented() unimplemented {
 	return unimplemented{}
