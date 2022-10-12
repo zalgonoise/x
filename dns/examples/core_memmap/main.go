@@ -9,16 +9,22 @@ import (
 	"github.com/zalgonoise/x/dns/service"
 	"github.com/zalgonoise/x/dns/store"
 	"github.com/zalgonoise/x/dns/store/memmap"
+	"github.com/zalgonoise/x/dns/transport/udp/miekgdns"
 )
 
 func main() {
-	s := service.New(
-		core.New(nil), // defaults
-		memmap.New(),
-	)
+	// init implementations
+	dnscore := core.New() // defaults
+	memstore := memmap.New()
+
+	// init service
+	s := service.New(dnscore, memstore)
+
+	// init transport
+	t := miekgdns.New(nil, s)
 
 	ctx := context.Background()
-	err := s.Add(ctx,
+	err := s.AddRecords(ctx,
 		store.New().Type(dns.TypeA.String()).Name("nw.io").Addr("127.0.0.1").Build(),
 		store.New().Type(dns.TypeA.String()).Name("host.nw.io").Addr("192.168.0.1").Build(),
 	)
@@ -26,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = s.Start()
+	err = t.Start()
 	if err != nil {
 		log.Fatal(err)
 	}

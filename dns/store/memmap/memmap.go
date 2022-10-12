@@ -3,6 +3,7 @@ package memmap
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/zalgonoise/x/dns/store"
 )
@@ -17,6 +18,7 @@ var (
 type MemoryStore struct {
 	// maps a set of domain names to record types to IPs
 	Records map[string]map[string]string
+	mtx     sync.RWMutex
 }
 
 func New() *MemoryStore {
@@ -26,6 +28,9 @@ func New() *MemoryStore {
 }
 
 func (m *MemoryStore) Add(ctx context.Context, rs ...*store.Record) error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	for _, r := range rs {
 		dottedN := r.Name + "."
 
@@ -38,6 +43,9 @@ func (m *MemoryStore) Add(ctx context.Context, rs ...*store.Record) error {
 }
 
 func (m *MemoryStore) List(ctx context.Context) ([]*store.Record, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	var output []*store.Record
 
 	for domain, r := range m.Records {
@@ -56,6 +64,9 @@ func (m *MemoryStore) List(ctx context.Context) ([]*store.Record, error) {
 }
 
 func (m *MemoryStore) GetByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	if _, ok := m.Records[r.Name]; !ok {
 		return nil, ErrDoesNotExist
 	}
@@ -69,6 +80,9 @@ func (m *MemoryStore) GetByDomain(ctx context.Context, r *store.Record) (*store.
 }
 
 func (m *MemoryStore) GetByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	var output []*store.Record
 
 	for domain, rmap := range m.Records {
@@ -88,12 +102,18 @@ func (m *MemoryStore) GetByDest(ctx context.Context, r *store.Record) ([]*store.
 	return output, nil
 }
 
-func (m *MemoryStore) Update(ctx context.Context, addr string, r *store.Record) error {
-	m.Records[addr+"."][r.Type] = r.Addr
+func (m *MemoryStore) Update(ctx context.Context, domain string, r *store.Record) error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	m.Records[domain+"."][r.Type] = r.Addr
 	return nil
 }
 
 func (m *MemoryStore) Delete(ctx context.Context, r *store.Record) error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	if r.Name != "" && r.Type == "" && r.Addr == "" {
 		deleteDomain(m, r.Name)
 	}

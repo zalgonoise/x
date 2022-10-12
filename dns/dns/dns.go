@@ -52,8 +52,12 @@ func (b *DNSBuilder) Build() *DNS {
 	if b.prefix == "" {
 		b.prefix = prefix
 	}
+	if b.proto == "" {
+		b.proto = proto
+	}
 	return &DNS{
 		Addr:   b.addr,
 		Prefix: b.prefix,
+		Proto:  b.proto,
 	}
 }

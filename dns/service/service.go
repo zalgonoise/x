@@ -5,6 +5,7 @@ import (
 	"errors"
 	"reflect"
 
+	dnsr "github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/dns"
 	"github.com/zalgonoise/x/dns/store"
 )
@@ -17,8 +18,17 @@ var (
 )
 
 type Service interface {
-	dns.Repository
-	store.Repository
+	// store-repository methods
+	AddRecord(context.Context, *store.Record) error
+	AddRecords(context.Context, ...*store.Record) error
+	ListRecords(context.Context) ([]*store.Record, error)
+	GetRecordByDomain(context.Context, *store.Record) (*store.Record, error)
+	GetRecordByAddress(context.Context, string) ([]*store.Record, error)
+	UpdateRecord(context.Context, string, *store.Record) error
+	DeleteRecord(context.Context, *store.Record) error
+
+	// dns-repository methods
+	AnswerDNS(*store.Record, *dnsr.Msg)
 }
 
 type service struct {
@@ -26,7 +36,7 @@ type service struct {
 	store store.Repository
 }
 
-func New(dnsR dns.Repository, storeR store.Repository) *service {
+func New(dnsR dns.Repository, storeR store.Repository) Service {
 	if dnsR == nil {
 		dnsR = dns.Unimplemented()
 	}
@@ -40,49 +50,19 @@ func New(dnsR dns.Repository, storeR store.Repository) *service {
 	}
 }
 
-func (s *service) Start() error {
-	// route queries
-	go func() {
-		for m := range s.dns.Link() {
-			ctx := context.Background()
-			answer, err := s.store.GetByDomain(ctx, m)
-			if err != nil {
-				// logger
-				s.dns.Link() <- store.New().Build()
-			} else {
-				s.dns.Link() <- answer
-			}
-		}
-	}()
-
-	return s.dns.Start()
+func (s *service) AddRecord(ctx context.Context, r *store.Record) error {
+	return s.store.Add(ctx, r)
 }
 
-func (s *service) Stop() error {
-	return s.dns.Stop()
+func (s *service) AddRecords(ctx context.Context, rs ...*store.Record) error {
+	return s.store.Add(ctx, rs...)
 }
 
-func (s *service) Reload() error {
-	err := s.dns.Stop()
-	if err != nil {
-		return err
-	}
-	return s.Start()
-}
-
-// func (s *service) Store(store store.Repository) {
-// 	s.dns.Store(s.store)
-// }
-
-func (s *service) Add(ctx context.Context, r ...*store.Record) error {
-	return s.store.Add(ctx, r...)
-}
-
-func (s *service) List(ctx context.Context) ([]*store.Record, error) {
+func (s *service) ListRecords(ctx context.Context) ([]*store.Record, error) {
 	return s.store.List(ctx)
 }
 
-func (s *service) GetByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
+func (s *service) GetRecordByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
 	if r.Name == "" {
 		return nil, ErrNoName
 	}
@@ -93,29 +73,35 @@ func (s *service) GetByDomain(ctx context.Context, r *store.Record) (*store.Reco
 	return s.store.GetByDomain(ctx, r)
 }
 
-func (s *service) GetByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
-	if r.Addr == "" {
+func (s *service) GetRecordByAddress(ctx context.Context, ip string) ([]*store.Record, error) {
+	if ip == "" {
 		return nil, ErrNoAddr
 	}
 
-	return s.store.GetByDest(ctx, r)
+	return s.store.GetByDest(ctx, store.New().Addr(ip).Build())
 }
 
-func (s *service) Update(ctx context.Context, addr string, r *store.Record) error {
-	if addr == "" {
+func (s *service) UpdateRecord(ctx context.Context, domain string, r *store.Record) error {
+	if domain == "" {
 		return ErrNoAddr
 	}
 	// if record is nil or empty, request is parsed as a delete operation
 	if r == nil || reflect.DeepEqual(r, &store.Record{}) {
-		return s.store.Delete(ctx, &store.Record{Addr: addr})
+		return s.store.Delete(ctx, &store.Record{Name: domain})
 	}
 
-	return s.store.Update(ctx, addr, r)
+	return s.store.Update(ctx, domain, r)
 }
 
-func (s *service) Delete(ctx context.Context, r *store.Record) error {
-	if r.Name == "" && r.Type == "" && r.Addr == "" {
-		return ErrEmtpyRecord
+func (s *service) DeleteRecord(ctx context.Context, r *store.Record) error {
+	return nil
+}
+
+func (s *service) AnswerDNS(r *store.Record, m *dnsr.Msg) {
+	ctx := context.Background()
+	answer, err := s.store.GetByDomain(ctx, r)
+	if err != nil || answer.Addr == "" {
+		return
 	}
-	return s.store.Delete(ctx, r)
+	s.dns.Answer(answer, m)
 }
