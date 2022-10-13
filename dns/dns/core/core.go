@@ -8,6 +8,8 @@ import (
 	// "github.com/zalgonoise/zlog/log/event"
 )
 
+// DNSCore adds a basic Answer interaction for miekg's DNS, used by
+// the service
 type DNSCore struct {
 	err error
 }

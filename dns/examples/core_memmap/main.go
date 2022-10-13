@@ -14,7 +14,7 @@ import (
 
 func main() {
 	// init implementations
-	dnscore := core.New() // defaults
+	dnscore := core.New()
 	memstore := memmap.New()
 
 	// init service
