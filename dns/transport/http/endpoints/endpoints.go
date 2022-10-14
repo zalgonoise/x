@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/zalgonoise/x/dns/service"
+	"github.com/zalgonoise/x/dns/transport/udp"
 )
 
 type endpoints struct {
-	s service.Service
+	s   service.Service
+	udp udp.Server
 }
 
 type HTTPAPI interface {
@@ -21,4 +23,11 @@ type HTTPAPI interface {
 	getRecordByAddress(w http.ResponseWriter, r *http.Request)
 	updateRecord(w http.ResponseWriter, r *http.Request)
 	deleteRecord(w http.ResponseWriter, r *http.Request)
+}
+
+func NewAPI(s service.Service, udps udp.Server) HTTPAPI {
+	return &endpoints{
+		s:   s,
+		udp: udps,
+	}
 }

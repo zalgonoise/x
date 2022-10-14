@@ -80,17 +80,17 @@ func (u *udps) parseQuery(m *dnsr.Msg) {
 		switch question.Qtype {
 		case dnsr.TypeA:
 			u.Answer(
-				r.Type(dns.TypeA.String()).Build(),
+				r.Type(store.TypeA.String()).Build(),
 				m,
 			)
 		case dnsr.TypeAAAA:
 			u.Answer(
-				r.Type(dns.TypeAAAA.String()).Build(),
+				r.Type(store.TypeAAAA.String()).Build(),
 				m,
 			)
 		case dnsr.TypeCNAME:
 			u.Answer(
-				r.Type(dns.TypeCNAME.String()).Build(),
+				r.Type(store.TypeCNAME.String()).Build(),
 				m,
 			)
 		}
