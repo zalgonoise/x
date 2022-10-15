@@ -21,7 +21,7 @@ func main() {
 	// init service
 	s := service.New(dnscore, memstore)
 
-	// init transport
+	// init UDP server
 	udps := miekgdns.NewServer(
 		udp.NewDNS().Build(),
 		s,
