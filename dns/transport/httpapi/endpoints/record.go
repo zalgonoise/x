@@ -17,14 +17,14 @@ var (
 )
 
 type StoreResponse struct {
-	Success bool           `json:"success,omitempty"`
-	Message string         `json:"message,omitempty"`
-	Record  store.Record   `json:"record,omitemtpy"`
-	Records []store.Record `json:"records,omitemtpy"`
-	Error   string         `json:"error,omitempty"`
+	Success bool            `json:"success,omitempty"`
+	Message string          `json:"message,omitempty"`
+	Record  *store.Record   `json:"record,omitemtpy"`
+	Records *[]store.Record `json:"records,omitemtpy"`
+	Error   string          `json:"error,omitempty"`
 }
 
-func (e *endpoints) addRecord(w http.ResponseWriter, r *http.Request) {
+func (e *endpoints) AddRecord(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	b, err := io.ReadAll(r.Body)
@@ -80,11 +80,11 @@ func (e *endpoints) addRecord(w http.ResponseWriter, r *http.Request) {
 	response, _ := json.Marshal(StoreResponse{
 		Success: true,
 		Message: "added record successfully",
-		Record:  *out,
+		Record:  out,
 	})
 	_, _ = w.Write(response)
 }
-func (e *endpoints) listRecords(w http.ResponseWriter, r *http.Request) {
+func (e *endpoints) ListRecords(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	records, err := e.s.ListRecords(ctx)
@@ -108,11 +108,11 @@ func (e *endpoints) listRecords(w http.ResponseWriter, r *http.Request) {
 	response, _ := json.Marshal(StoreResponse{
 		Success: true,
 		Message: "listing all records",
-		Records: out,
+		Records: &out,
 	})
 	_, _ = w.Write(response)
 }
-func (e *endpoints) getRecordByDomain(w http.ResponseWriter, r *http.Request) {
+func (e *endpoints) GetRecordByDomain(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	b, err := io.ReadAll(r.Body)
@@ -156,11 +156,12 @@ func (e *endpoints) getRecordByDomain(w http.ResponseWriter, r *http.Request) {
 	response, _ := json.Marshal(StoreResponse{
 		Success: true,
 		Message: "fetched record for domain " + record.Name,
-		Record:  *out,
+		Record:  out,
 	})
 	_, _ = w.Write(response)
 }
-func (e *endpoints) getRecordByAddress(w http.ResponseWriter, r *http.Request) {
+
+func (e *endpoints) GetRecordByAddress(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	b, err := io.ReadAll(r.Body)
@@ -209,11 +210,11 @@ func (e *endpoints) getRecordByAddress(w http.ResponseWriter, r *http.Request) {
 	response, _ := json.Marshal(StoreResponse{
 		Success: true,
 		Message: "listing all records for IP address " + record.Addr,
-		Records: out,
+		Records: &out,
 	})
 	_, _ = w.Write(response)
 }
-func (e *endpoints) updateRecord(w http.ResponseWriter, r *http.Request) {
+func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	b, err := io.ReadAll(r.Body)
@@ -268,11 +269,11 @@ func (e *endpoints) updateRecord(w http.ResponseWriter, r *http.Request) {
 	response, _ := json.Marshal(StoreResponse{
 		Success: true,
 		Message: "updated record successfully",
-		Record:  *out,
+		Record:  out,
 	})
 	_, _ = w.Write(response)
 }
-func (e *endpoints) deleteRecord(w http.ResponseWriter, r *http.Request) {
+func (e *endpoints) DeleteRecord(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
 	b, err := io.ReadAll(r.Body)

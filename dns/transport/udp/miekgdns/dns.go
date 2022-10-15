@@ -1,61 +1,73 @@
 package miekgdns
 
 import (
+	"errors"
+
 	dnsr "github.com/miekg/dns"
-	"github.com/zalgonoise/x/dns/dns"
 	"github.com/zalgonoise/x/dns/service"
 	"github.com/zalgonoise/x/dns/store"
+	"github.com/zalgonoise/x/dns/transport/udp"
+)
+
+var (
+	ErrAlreadyRunning error = errors.New("DNS server is already running")
+	ErrNotRunning     error = errors.New("DNS server is not running, yet")
 )
 
 // miekgdns implements the udp.Server interface
 type udps struct {
-	service service.Service
-	conf    *dns.DNS
-	ctl     chan struct{}
-	err     error
+	ans  service.Answering
+	conf *udp.DNS
+	srv  *dnsr.Server
+	err  error
 }
 
-func New(conf *dns.DNS, s service.Service) *udps {
+func NewServer(conf *udp.DNS, s service.Service) udp.Server {
 	if conf == nil {
-		conf = dns.New().Build()
+		conf = udp.NewDNS().Build()
 	}
 	return &udps{
-		conf:    conf,
-		service: s,
+		conf: conf,
+		ans:  s,
 	}
 }
 
 func (u *udps) Start() error {
-	dnsr.HandleFunc(u.conf.Prefix, u.HandleRequest)
-	var server = &dnsr.Server{
+	if u.srv != nil {
+		addr := u.srv.Listener.Addr()
+		if addr != nil {
+			return ErrAlreadyRunning
+		}
+	}
+	dnsr.HandleFunc(u.conf.Prefix, u.handleRequest)
+	u.srv = &dnsr.Server{
 		Addr: u.conf.Addr,
 		Net:  u.conf.Proto,
 	}
-	// launch shutdown controller
-	u.ctl = make(chan struct{})
-	go func() {
-		for range u.ctl {
-			err := server.Shutdown()
-			if err != nil {
-				u.err = err
-			}
-		}
-	}()
 
-	return server.ListenAndServe()
+	return u.srv.ListenAndServe()
 }
 
 func (u *udps) Stop() error {
-	u.ctl <- struct{}{}
-
-	return u.err
+	if u.srv == nil {
+		return ErrNotRunning
+	}
+	return u.srv.Shutdown()
 }
 
-func (u *udps) Answer(r *store.Record, m *dnsr.Msg) {
-	u.service.AnswerDNS(r, m)
+func (u *udps) answer(r *store.Record, m *dnsr.Msg) {
+	name := r.Name
+	if r.Name[len(r.Name)-1] == u.conf.Prefix[0] {
+		name = r.Name[:len(r.Name)-1]
+	}
+
+	u.ans.AnswerDNS(
+		store.New().Name(name).Type(r.Type).Build(),
+		m,
+	)
 }
 
-func (u *udps) HandleRequest(w dnsr.ResponseWriter, r *dnsr.Msg) {
+func (u *udps) handleRequest(w dnsr.ResponseWriter, r *dnsr.Msg) {
 	m := new(dnsr.Msg)
 	m.SetReply(r)
 	m.Compress = false
@@ -79,17 +91,17 @@ func (u *udps) parseQuery(m *dnsr.Msg) {
 		r := store.New().Name(question.Name)
 		switch question.Qtype {
 		case dnsr.TypeA:
-			u.Answer(
+			u.answer(
 				r.Type(store.TypeA.String()).Build(),
 				m,
 			)
 		case dnsr.TypeAAAA:
-			u.Answer(
+			u.answer(
 				r.Type(store.TypeAAAA.String()).Build(),
 				m,
 			)
 		case dnsr.TypeCNAME:
-			u.Answer(
+			u.answer(
 				r.Type(store.TypeCNAME.String()).Build(),
 				m,
 			)

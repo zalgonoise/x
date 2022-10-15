@@ -31,6 +31,21 @@ type Service interface {
 	AnswerDNS(*store.Record, *dnsr.Msg)
 }
 
+type Storing interface {
+	AddRecord(context.Context, *store.Record) error
+	AddRecords(context.Context, ...*store.Record) error
+	ListRecords(context.Context) ([]*store.Record, error)
+	GetRecordByDomain(context.Context, *store.Record) (*store.Record, error)
+	GetRecordByAddress(context.Context, string) ([]*store.Record, error)
+	UpdateRecord(context.Context, string, *store.Record) error
+	DeleteRecord(context.Context, *store.Record) error
+}
+
+type Answering interface {
+	GetRecordByDomain(context.Context, *store.Record) (*store.Record, error)
+	AnswerDNS(*store.Record, *dnsr.Msg)
+}
+
 type service struct {
 	dns   dns.Repository
 	store store.Repository

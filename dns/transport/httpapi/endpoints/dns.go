@@ -11,8 +11,13 @@ type DNSResponse struct {
 	Error   string `json:"error,omitempty"`
 }
 
-func (e *endpoints) startDNS(w http.ResponseWriter, r *http.Request) {
-	err := e.udp.Start()
+func (e *endpoints) StartDNS(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	go func(err error) {
+		err = e.udp.Start()
+	}(err)
+
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := json.Marshal(DNSResponse{
@@ -30,7 +35,8 @@ func (e *endpoints) startDNS(w http.ResponseWriter, r *http.Request) {
 	})
 	_, _ = w.Write(response)
 }
-func (e *endpoints) stopDNS(w http.ResponseWriter, r *http.Request) {
+
+func (e *endpoints) StopDNS(w http.ResponseWriter, r *http.Request) {
 	err := e.udp.Stop()
 	if err != nil {
 		w.WriteHeader(500)
@@ -49,7 +55,8 @@ func (e *endpoints) stopDNS(w http.ResponseWriter, r *http.Request) {
 	})
 	_, _ = w.Write(response)
 }
-func (e *endpoints) reloadDNS(w http.ResponseWriter, r *http.Request) {
+
+func (e *endpoints) ReloadDNS(w http.ResponseWriter, r *http.Request) {
 	err := e.udp.Stop()
 	if err != nil {
 		w.WriteHeader(500)
@@ -61,7 +68,11 @@ func (e *endpoints) reloadDNS(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(response)
 		return
 	}
-	err = e.udp.Start()
+
+	go func(err error) {
+		err = e.udp.Start()
+	}(err)
+
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := json.Marshal(DNSResponse{

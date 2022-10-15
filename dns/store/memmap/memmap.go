@@ -32,7 +32,7 @@ func (m *MemoryStore) Add(ctx context.Context, rs ...*store.Record) error {
 	defer m.mtx.Unlock()
 
 	for _, r := range rs {
-		dottedN := r.Name + "."
+		dottedN := r.Name
 
 		if _, ok := m.Records[dottedN]; !ok {
 			m.Records[dottedN] = map[string]string{}
@@ -106,7 +106,7 @@ func (m *MemoryStore) Update(ctx context.Context, domain string, r *store.Record
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	m.Records[domain+"."][r.Type] = r.Addr
+	m.Records[domain][r.Type] = r.Addr
 	return nil
 }
 

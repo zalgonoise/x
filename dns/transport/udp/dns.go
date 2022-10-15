@@ -1,4 +1,4 @@
-package dns
+package udp
 
 const (
 	addr   string = ":53"
@@ -18,16 +18,8 @@ type DNSBuilder struct {
 	proto  string
 }
 
-func New() *DNSBuilder {
+func NewDNS() *DNSBuilder {
 	return &DNSBuilder{}
-}
-
-func From(d *DNS) *DNSBuilder {
-	return &DNSBuilder{
-		addr:   d.Addr,
-		prefix: d.Prefix,
-		proto:  d.Proto,
-	}
 }
 
 func (b *DNSBuilder) Addr(s string) *DNSBuilder {
@@ -36,6 +28,10 @@ func (b *DNSBuilder) Addr(s string) *DNSBuilder {
 }
 
 func (b *DNSBuilder) Prefix(s string) *DNSBuilder {
+	// input is string, but we're looking for a rune
+	if len(s) > 1 {
+		s = string(s[0])
+	}
 	b.prefix = s
 	return b
 }
