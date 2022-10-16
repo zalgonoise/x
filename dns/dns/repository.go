@@ -7,4 +7,5 @@ import (
 
 type Repository interface {
 	Answer(*store.Record, *dnsr.Msg)
+	Fallback(*store.Record, *dnsr.Msg)
 }

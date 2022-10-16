@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// init implementations
-	dnscore := core.New()
+	dnscore := core.New("1.1.1.1") // falls back to one-dot
 	memstore := memmap.New()
 
 	// init service

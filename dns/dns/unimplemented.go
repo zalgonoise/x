@@ -15,6 +15,8 @@ type unimplemented struct{}
 
 func (u unimplemented) Answer(*store.Record, *dnsr.Msg) {}
 
+func (u unimplemented) Fallback(*store.Record, *dnsr.Msg) {}
+
 func Unimplemented() unimplemented {
 	return unimplemented{}
 }

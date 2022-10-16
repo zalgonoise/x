@@ -59,17 +59,23 @@ var (
 		TypeCNAME: 5,
 		TypeAAAA:  28,
 	}
-	RecordTypeVals = map[uint16]RecordType{
-		0:  TypeNone,
-		1:  TypeA,
-		5:  TypeCNAME,
-		28: TypeAAAA,
-	}
 	RecordTypeStrings = map[RecordType]string{
 		TypeNone:  "",
 		TypeA:     "A",
 		TypeCNAME: "CNAME",
 		TypeAAAA:  "AAAA",
+	}
+	RecordTypeVals = map[string]RecordType{
+		"":      TypeNone,
+		"A":     TypeA,
+		"CNAME": TypeCNAME,
+		"AAAA":  TypeAAAA,
+	}
+	RecordTypeInts = map[string]uint16{
+		"":      0,
+		"A":     1,
+		"CNAME": 5,
+		"AAAA":  28,
 	}
 )
 

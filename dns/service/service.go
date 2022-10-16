@@ -116,7 +116,9 @@ func (s *service) AnswerDNS(r *store.Record, m *dnsr.Msg) {
 	ctx := context.Background()
 	answer, err := s.store.GetByDomain(ctx, r)
 	if err != nil || answer.Addr == "" {
+		s.dns.Fallback(r, m)
 		return
 	}
+
 	s.dns.Answer(answer, m)
 }
