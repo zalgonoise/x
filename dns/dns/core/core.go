@@ -16,6 +16,13 @@ const (
 	portDNS        = ":53"
 )
 
+var (
+	defaultFallback = []string{
+		fallbackOneDot,
+		fallbackGoogle,
+	}
+)
+
 // DNSCore adds a basic Answer interaction for miekg's DNS, used by
 // the service
 type DNSCore struct {
@@ -38,11 +45,11 @@ func New(fallbackDNS ...string) *DNSCore {
 
 	if len(fbDNS) == 0 {
 		// add defaults
-		fbDNS = append(fbDNS, fallbackOneDot, fallbackGoogle)
+		fbDNS = defaultFallback
 	}
 
 	return &DNSCore{
-		fallbackDNS: fallbackDNS,
+		fallbackDNS: fbDNS,
 	}
 }
 
