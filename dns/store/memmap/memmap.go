@@ -21,7 +21,7 @@ type MemoryStore struct {
 	mtx     sync.RWMutex
 }
 
-func New() *MemoryStore {
+func New() store.Repository {
 	return &MemoryStore{
 		Records: map[string]map[string]string{},
 	}
@@ -32,12 +32,10 @@ func (m *MemoryStore) Add(ctx context.Context, rs ...*store.Record) error {
 	defer m.mtx.Unlock()
 
 	for _, r := range rs {
-		dottedN := r.Name
-
-		if _, ok := m.Records[dottedN]; !ok {
-			m.Records[dottedN] = map[string]string{}
+		if _, ok := m.Records[r.Name]; !ok {
+			m.Records[r.Name] = map[string]string{}
 		}
-		m.Records[dottedN][r.Type] = r.Addr
+		m.Records[r.Name][r.Type] = r.Addr
 	}
 	return nil
 }
