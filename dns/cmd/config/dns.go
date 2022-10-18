@@ -79,9 +79,11 @@ type dnsProto struct {
 
 func (l *dnsType) Apply(c *Config) {
 	c.DNS.Type = l.t
+
 }
 
 func (l *dnsFallback) Apply(c *Config) {
+
 	c.DNS.FallbackDNS = l.f
 }
 

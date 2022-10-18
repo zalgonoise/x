@@ -7,19 +7,13 @@ import (
 	stdlog "log"
 
 	"github.com/zalgonoise/x/dns/cmd/config"
-	svclog "github.com/zalgonoise/x/dns/service/middleware/logger"
+	"github.com/zalgonoise/x/dns/factory"
 
 	"github.com/zalgonoise/x/dns/dns"
-	"github.com/zalgonoise/x/dns/dns/core"
 	"github.com/zalgonoise/x/dns/service"
 	"github.com/zalgonoise/x/dns/store"
-	"github.com/zalgonoise/x/dns/store/jsonfile"
-	"github.com/zalgonoise/x/dns/store/memmap"
-	"github.com/zalgonoise/x/dns/store/yamlfile"
 	"github.com/zalgonoise/x/dns/transport/httpapi"
-	"github.com/zalgonoise/x/dns/transport/httpapi/endpoints"
 	"github.com/zalgonoise/x/dns/transport/udp"
-	"github.com/zalgonoise/x/dns/transport/udp/miekgdns"
 	"github.com/zalgonoise/zlog/log"
 )
 
@@ -32,7 +26,6 @@ func Run() {
 		svc       service.Service
 		logger    log.Logger
 		udps      udp.Server
-		apis      endpoints.HTTPAPI
 		https     httpapi.Server
 	)
 
@@ -40,98 +33,30 @@ func Run() {
 	conf = ParseFlags()
 
 	// initialize DNS repository
-	switch conf.DNS.Type {
-	case "miekgdns":
-		dnsRepo = core.New(splitFallback(conf.DNS.FallbackDNS)...)
-	default:
-		dnsRepo = core.New(splitFallback(conf.DNS.FallbackDNS)...)
-	}
+	dnsRepo = factory.DNSRepository(conf.DNS.Type, splitFallback(conf.DNS.FallbackDNS)...)
 
 	// initialize store repository
-	switch conf.Store.Type {
-	case "memmap":
-		storeRepo = memmap.New()
-	case "jsonfile":
-		storeRepo = jsonfile.New(conf.Store.Path)
-	case "yamlfile":
-		storeRepo = yamlfile.New(conf.Store.Path)
-	default:
-		storeRepo = memmap.New()
-	}
+	storeRepo = factory.StoreRepository(conf.Store.Type, conf.Store.Path)
 
 	// intialize service
-	svc = service.New(dnsRepo, storeRepo)
+	svc = factory.Service(dnsRepo, storeRepo, conf.Logger.Type, conf.Logger.Path)
 
-	// setup logger
-	var lcfg log.LoggerConfig = nil
-	if conf.Logger.Path != "" {
-		f, err := os.Open(conf.Logger.Path)
-		if err == nil {
-			lcfg = log.WithOut(f)
-		}
-	}
-	switch conf.Logger.Type {
-	case "text":
-		logger = log.New(
-			log.CfgTextColorLevelFirst,
-			lcfg,
-		)
-	case "json":
-		logger = log.New(
-			log.CfgFormatJSON,
-			lcfg,
-		)
-	default:
-		logger = nil
-	}
+	// setup HTTP and DNS servers
+	https, udps = factory.Server(
+		conf.DNS.Type,
+		conf.DNS.Address,
+		conf.DNS.Prefix,
+		conf.DNS.Proto,
+		conf.HTTP.Port,
+		svc,
+	)
 
-	// wrap service in logger, if set
-	if logger != nil {
-		svc = svclog.LogService(
-			svc,
-			logger,
-		)
-	}
-
-	// setup DNS server
-	switch conf.DNS.Type {
-	case "miekgdns":
-		udps = miekgdns.NewServer(
-			udp.NewDNS().
-				Addr(conf.DNS.Address).
-				Prefix(conf.DNS.Prefix).
-				Proto(conf.DNS.Proto).
-				Build(),
-			svc,
-		)
-	default:
-		udps = miekgdns.NewServer(
-			udp.NewDNS().
-				Addr(conf.DNS.Address).
-				Prefix(conf.DNS.Prefix).
-				Proto(conf.DNS.Proto).
-				Build(),
-			svc,
-		)
-	}
-
-	// setup API endpoints
-	apis = endpoints.NewAPI(svc, udps)
-
-	// setup HTTP server
-	https = httpapi.NewServer(apis, conf.HTTP.Port)
-
-	// start DNS server if set
 	if conf.Autostart.DNS {
 		// defer graceful closure
 		defer func() {
 			err := udps.Stop()
 			if err != nil {
-				if logger != nil {
-					log.Fatalf("error stopping DNS server: %v", err)
-				} else {
-					stdlog.Fatalf("error stopping DNS server: %v", err)
-				}
+				log.Fatalf("error stopping DNS server: %v", err)
 				os.Exit(1)
 			}
 		}()
@@ -139,11 +64,7 @@ func Run() {
 		go func() {
 			err := udps.Start()
 			if err != nil {
-				if logger != nil {
-					log.Fatalf("error starting DNS server: %v", err)
-				} else {
-					stdlog.Fatalf("error starting DNS server: %v", err)
-				}
+				log.Fatalf("error starting DNS server: %v", err)
 				os.Exit(1)
 			}
 		}()

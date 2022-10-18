@@ -3,14 +3,19 @@ package cmd
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
+	"io/fs"
+	"log"
 	"os"
 
 	"github.com/zalgonoise/x/dns/cmd/config"
+	"github.com/zalgonoise/x/dns/store"
 	"gopkg.in/yaml.v2"
 )
 
 func ParseFlags() *config.Config {
+	var conf = config.Default()
+	var getFlags = true
+
 	configPath := flag.String("file", "", "load a config from a file")
 
 	dnsType := flag.String("dns-type", "miekgdns", "use a specific domain-name server implementation")
@@ -27,66 +32,114 @@ func ParseFlags() *config.Config {
 	loggerPath := flag.String("log-path", "", "the log file's path, to register events")
 	loggerType := flag.String("log-type", "text", "the type of formatter to use for the logger (text, json, yaml)")
 
-	autostartDNS := flag.Bool("start-dns", false, "automatically start the DNS server")
+	autostartDNS := flag.Bool("start-dns", true, "automatically start the DNS server")
 
 	flag.Parse()
 
 	if *configPath != "" {
-		c, err := readConfig(*configPath)
-		if err != nil {
-			return nil
-		}
-
-		if c != nil {
-			return c
-		}
+		conf, getFlags = readConfig(*configPath, conf)
+		defer writeConfig(conf, *configPath)
 	}
 
-	return config.New(
-		config.StorePath(*configPath),
-		config.DNSType(*dnsType),
-		config.DNSFallback(*dnsFallback),
-		config.DNSAddress(*dnsAddress),
-		config.DNSPrefix(*dnsPrefix),
-		config.DNSProto(*dnsProto),
-		config.StoreType(*storeType),
-		config.StorePath(*storePath),
-		config.HTTPPort(*httpPort),
-		config.LoggerPath(*loggerPath),
-		config.LoggerType(*loggerType),
-		config.AutostartDNS(*autostartDNS),
-	)
+	if getFlags {
+
+		conf.Apply(
+			config.StorePath(*configPath),
+			config.DNSType(*dnsType),
+			config.DNSFallback(*dnsFallback),
+			config.DNSAddress(*dnsAddress),
+			config.DNSPrefix(*dnsPrefix),
+			config.DNSProto(*dnsProto),
+			config.StoreType(*storeType),
+			config.StorePath(*storePath),
+			config.HTTPPort(*httpPort),
+			config.LoggerPath(*loggerPath),
+			config.LoggerType(*loggerType),
+			config.AutostartDNS(*autostartDNS),
+		)
+	}
+
+	return conf
 }
 
-func readConfig(path string) (*config.Config, error) {
+func writeConfig(conf *config.Config, path string) {
 	var (
-		jerr error
-		yerr error
+		conv string
+		b    []byte
+		err  error
+	)
+
+	switch conf.Type {
+	case "json":
+		conv = conf.Type
+		b, err = json.Marshal(conf)
+	case "yaml":
+		conv = conf.Type
+		b, err = yaml.Marshal(conf)
+	default:
+		conf.Type = "yaml"
+		b, err = yaml.Marshal(conf)
+	}
+
+	if err != nil {
+		log.Printf("failed to encode config as %s: %v", conv, err)
+		return
+	}
+
+	err = os.Remove(path)
+	if err != nil {
+		log.Printf("failed to remove old config file in %s: %v", path, err)
+		return
+	}
+
+	err = os.WriteFile(path, b, fs.FileMode(store.OS_ALL_RWX))
+	if err != nil {
+		log.Printf("failed to write new config file in %s: %v", path, err)
+		return
+	}
+}
+
+func readConfig(path string, conf *config.Config) (*config.Config, bool) {
+	var (
+		ctype string
+		jerr  error
+		yerr  error
 	)
 	_, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		log.Printf("failed to stat config file in %s: %v", path, err)
+		return conf, true
 	}
+	conf.Path = path
 
 	b, err := os.ReadFile(path)
-	if err == nil {
-		return nil, err
+	if err != nil {
+		log.Printf("failed to read config file in %s: %v", path, err)
+		return conf, true
+	}
+	if len(b) == 0 {
+		return conf, true
 	}
 
-	var conf = &config.Config{}
-
 	jerr = json.Unmarshal(b, conf)
-	if jerr != nil {
+	switch jerr {
+	case nil:
+		ctype = "json"
+	default:
 		yerr = yaml.Unmarshal(b, conf)
 	}
 
 	if jerr != nil && yerr != nil {
-		return nil, fmt.Errorf(
-			"failed to parse file content: JSON: %v ; YAML: %w", jerr, yerr,
+		log.Printf(
+			"failed to parse file content: JSON: %v ; YAML: %v", jerr, yerr,
 		)
+		return conf, true
 	}
 
-	conf.Path = path
-	return conf, nil
+	if ctype == "" {
+		ctype = "yaml"
+	}
 
+	conf.Type = ctype
+	return conf, false
 }

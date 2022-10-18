@@ -5,7 +5,7 @@ type HTTPConfig struct {
 }
 
 func HTTPPort(p int) ConfigOption {
-	if p > 65535 {
+	if p > 65535 || p == 0 {
 		return nil
 	}
 	return &httpPort{
