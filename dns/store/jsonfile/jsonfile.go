@@ -144,7 +144,7 @@ func (f *FileStore) Sync() error {
 	if err != nil {
 		return fmt.Errorf("%w: failed to remove old reference file: %v", ErrSync, err)
 	}
-	err = os.WriteFile(f.Path, b, fs.FileMode(store.OS_ALL_RWX))
+	err = os.WriteFile(f.Path, b, fs.FileMode(store.OS_ALL_RW))
 	if err != nil {
 		return fmt.Errorf("%w: failed to write new reference file: %v", ErrSync, err)
 	}

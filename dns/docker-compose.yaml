@@ -1,0 +1,18 @@
+version: '3.7'
+services:
+
+  dns:
+    build:
+      context: . 
+      dockerfile: ./Dockerfile
+    container_name: dns
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - /tmp/dns:/conf
+    environment:
+      - DNS_STORE_TYPE=yamlfile
+      - DNS_STORE_PATH=/conf/dns.list
+      - DNS_CONFIG_PATH=/conf/dns.conf
+      - DNS_AUTOSTART=1
+      - DNS_LOGGER_PATH=/conf/dns.log

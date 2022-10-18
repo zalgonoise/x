@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/zalgonoise/x/dns/cmd/config"
 )
@@ -21,16 +22,17 @@ func intFromEnv(s string) int {
 
 func boolFromEnv(s string) bool {
 	val := os.Getenv(s)
-	return val != ""
+	return val != "" && val != "0" && strings.ToLower(val) != "false"
 }
 
 func ParseOSEnv() *config.Config {
 	return &config.Config{
 		DNS: &config.DNSConfig{
-			Type:    os.Getenv("DNS_TYPE"),
-			Address: os.Getenv("DNS_ADDRESS"),
-			Prefix:  os.Getenv("DNS_PREFIX"),
-			Proto:   os.Getenv("DNS_PROTO"),
+			Type:        os.Getenv("DNS_TYPE"),
+			FallbackDNS: os.Getenv("DNS_FALLBACK"),
+			Address:     os.Getenv("DNS_ADDRESS"),
+			Prefix:      os.Getenv("DNS_PREFIX"),
+			Proto:       os.Getenv("DNS_PROTO"),
 		},
 		Store: &config.StoreConfig{
 			Type: os.Getenv("DNS_STORE_TYPE"),

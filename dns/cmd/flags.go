@@ -93,7 +93,7 @@ func writeConfig(conf *config.Config, path string) {
 		return
 	}
 
-	err = os.WriteFile(path, b, fs.FileMode(store.OS_ALL_RWX))
+	err = os.WriteFile(path, b, fs.FileMode(store.OS_ALL_RW))
 	if err != nil {
 		log.Printf("failed to write new config file in %s: %v", path, err)
 		return
