@@ -35,6 +35,7 @@ func ParseFlags() *config.Config {
 	autostartDNS := flag.Bool("start-dns", true, "automatically start the DNS server")
 
 	flag.Parse()
+	osFlags := ParseOSEnv()
 
 	if *configPath != "" {
 		conf, getFlags = readConfig(*configPath, conf)
@@ -59,7 +60,7 @@ func ParseFlags() *config.Config {
 		)
 	}
 
-	return conf
+	return config.Merge(conf, osFlags)
 }
 
 func writeConfig(conf *config.Config, path string) {

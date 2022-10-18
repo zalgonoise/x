@@ -99,3 +99,50 @@ func New(opts ...ConfigOption) *Config {
 
 	return conf
 }
+
+func Merge(main, input *Config) *Config {
+	// DNS
+	if input.DNS.Type != "" {
+		main.DNS.Type = input.DNS.Type
+	}
+	if input.DNS.Address != "" {
+		main.DNS.Address = input.DNS.Address
+	}
+	if input.DNS.Prefix != "" {
+		main.DNS.Prefix = input.DNS.Prefix
+	}
+	if input.DNS.Proto != "" {
+		main.DNS.Proto = input.DNS.Proto
+	}
+
+	// Store
+	if input.Store.Type != "" {
+		main.Store.Type = input.Store.Type
+	}
+	if input.Store.Path != "" {
+		main.Store.Path = input.Store.Path
+	}
+
+	// HTTP
+	if input.HTTP.Port != 0 {
+		main.HTTP.Port = input.HTTP.Port
+	}
+
+	// Logger
+	if input.Logger.Type != "" {
+		main.Logger.Type = input.Logger.Type
+	}
+	if input.Logger.Path != "" {
+		main.Logger.Path = input.Logger.Path
+	}
+
+	// Autostart
+	if input.Autostart.DNS {
+		main.Autostart.DNS = input.Autostart.DNS
+	}
+
+	if input.Path != "" {
+		main.Path = input.Path
+	}
+	return main
+}
