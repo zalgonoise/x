@@ -6,6 +6,7 @@ import (
 
 	dnsr "github.com/miekg/dns"
 
+	"github.com/zalgonoise/x/dns/health"
 	"github.com/zalgonoise/x/dns/service"
 	"github.com/zalgonoise/x/dns/store"
 	"github.com/zalgonoise/zlog/log"
@@ -280,4 +281,54 @@ func (s *LoggedService) AnswerDNS(r *store.Record, m *dnsr.Msg) {
 			}).
 			Build())
 	}()
+}
+
+func (s *LoggedService) StoreHealth(entries int, t time.Duration) *health.Report {
+	s.logger.Log(event.New().
+		Level(event.Level_debug).
+		Prefix("service").
+		Sub("health").
+		Message("StoreHealth request").
+		Build())
+
+	r := s.svc.StoreHealth(entries, t)
+	go func() {
+		time.Sleep(5 * time.Millisecond)
+
+		s.logger.Log(event.New().
+			Level(event.Level_debug).
+			Prefix("service").
+			Sub("health").
+			Message("StoreHealth response").
+			Metadata(event.Field{
+				"output": r,
+			}).
+			Build())
+	}()
+	return r
+}
+
+func (s *LoggedService) DNSHealth() *health.Report {
+	s.logger.Log(event.New().
+		Level(event.Level_debug).
+		Prefix("service").
+		Sub("health").
+		Message("DNSHealth request").
+		Build())
+
+	r := s.svc.DNSHealth()
+	go func() {
+		time.Sleep(5 * time.Millisecond)
+
+		s.logger.Log(event.New().
+			Level(event.Level_debug).
+			Prefix("service").
+			Sub("health").
+			Message("DNSHealth response").
+			Metadata(event.Field{
+				"output": r,
+			}).
+			Build())
+	}()
+	return r
 }
