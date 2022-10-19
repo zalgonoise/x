@@ -46,7 +46,10 @@ func New(path string) store.Repository {
 	store := memmap.New()
 	f, err := os.Open(path)
 	if err != nil {
-		panic(err) // panic on init if file can't be opened / used
+		f, err = os.Create(path)
+		if err != nil {
+			panic(err) // panic on init if file can't be opened / used
+		}
 	}
 	b, err := io.ReadAll(f)
 	if err != nil {
@@ -140,7 +143,7 @@ func (f *FileStore) Sync() error {
 	if err != nil {
 		return fmt.Errorf("%w: failed to marshal store records to JSON: %v", ErrSync, err)
 	}
-	err = os.Remove(f.Path)
+	_, err = os.Create(f.Path)
 	if err != nil {
 		return fmt.Errorf("%w: failed to remove old reference file: %v", ErrSync, err)
 	}

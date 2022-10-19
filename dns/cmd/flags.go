@@ -87,7 +87,7 @@ func writeConfig(conf *config.Config, path string) {
 		return
 	}
 
-	err = os.Remove(path)
+	_, err = os.Create(path)
 	if err != nil {
 		log.Printf("failed to remove old config file in %s: %v", path, err)
 		return
@@ -108,8 +108,11 @@ func readConfig(path string, conf *config.Config) (*config.Config, bool) {
 	)
 	_, err := os.Stat(path)
 	if err != nil {
-		log.Printf("failed to stat config file in %s: %v", path, err)
-		return conf, true
+		_, err = os.Create(path)
+		if err != nil {
+			log.Printf("failed to stat config file in %s: %v", path, err)
+			return conf, true
+		}
 	}
 	conf.Path = path
 

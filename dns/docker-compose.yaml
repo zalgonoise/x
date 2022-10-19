@@ -7,6 +7,10 @@ services:
       dockerfile: ./Dockerfile
     container_name: dns
     network_mode: host
+    # privileged: true
+    # ports: 
+    #   - 53:53
+    #   - 8080:8080
     restart: unless-stopped
     volumes:
       - /tmp/dns:/conf

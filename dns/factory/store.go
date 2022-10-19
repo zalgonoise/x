@@ -63,9 +63,19 @@ func Service(dnsRepo dns.Repository, storeRepo store.Repository, ltype string, p
 
 	if path != "" {
 		_, err := os.Open(path)
-		if err == nil {
-			if f, err := fs.New(path); err == nil {
+		switch err {
+		case nil:
+			f, err := fs.New(path)
+			if err == nil {
 				logConf = log.WithOut(f, os.Stderr)
+			}
+		default:
+			_, err = os.Create(path)
+			if err == nil {
+				f, err := fs.New(path)
+				if err == nil {
+					logConf = log.WithOut(f, os.Stderr)
+				}
 			}
 		}
 	}

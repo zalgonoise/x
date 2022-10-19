@@ -4,8 +4,8 @@ WORKDIR /go/src/github.com/zalgonoise/x/dns
 
 COPY ./ ./
 
-RUN go mod download \
-    && mkdir /build \
+RUN go mod download
+RUN mkdir /build \
     && go build -o /build/dns . \
     && chmod +x /build/dns
 
