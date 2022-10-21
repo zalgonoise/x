@@ -39,12 +39,16 @@ func Service(
 				logConf = log.WithOut(f, os.Stderr)
 			}
 		default:
-			_, err = os.Create(conf.Logger.Path)
+			fsf, err := os.Create(conf.Logger.Path)
 			if err == nil {
-				f, err := fs.New(conf.Logger.Path)
+				err = fsf.Sync()
 				if err == nil {
-					logConf = log.WithOut(f, os.Stderr)
+					f, err := fs.New(conf.Logger.Path)
+					if err == nil {
+						logConf = log.WithOut(f, os.Stderr)
+					}
 				}
+
 			}
 		}
 	}

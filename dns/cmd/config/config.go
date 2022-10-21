@@ -8,6 +8,7 @@ type Config struct {
 	HTTP      *HTTPConfig      `json:"http,omitempty" yaml:"http,omitempty"`
 	Logger    *LoggerConfig    `json:"logger,omitempty" yaml:"logger,omitempty"`
 	Autostart *AutostartConfig `json:"autostart,omitempty" yaml:"autostart,omitempty"`
+	Health    *HealthConfig    `json:"health,omitempty" yaml:"health,omitempty"`
 	Type      string           `json:"type,omitempty" yaml:"type,omitempty"`
 	Path      string           `json:"path,omitempty" yaml:"path,omitempty"`
 }

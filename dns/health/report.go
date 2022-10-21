@@ -1,7 +1,5 @@
 package health
 
-import "time"
-
 type Report struct {
 	*StoreReport `json:"store,omitempty"`
 	*DNSReport   `json:"dns,omitempty"`
@@ -10,39 +8,28 @@ type Report struct {
 }
 
 type StoreReport struct {
-	Len      int           `json:"num_items,omitempty"`
-	Duration time.Duration `json:"query_duration,omitempty"`
+	Len      int     `json:"num_items,omitempty"`
+	Duration float64 `json:"query_ms,omitempty"`
 	Status   `json:"status,omitempty"`
 }
 
 type DNSReport struct {
-	Enabled       bool          `json:"is_enabled,omitempty"`
-	LocalQuery    time.Duration `json:"local_query_duration,omitempty"`
-	ExternalQuery time.Duration `json:"external_query_duration,omitempty"`
+	Enabled       bool    `json:"is_enabled,omitempty"`
+	LocalQuery    float64 `json:"local_query_ms,omitempty"`
+	ExternalQuery float64 `json:"external_query_ms,omitempty"`
 	Status        `json:"status,omitempty"`
 }
 
 type HTTPReport struct {
-	Query  time.Duration `json:"query_duration,omitempty"`
+	Query  float64 `json:"query_ms,omitempty"`
 	Status `json:"status,omitempty"`
 }
 
-type Status int
+type Status string
 
 const (
-	Stopped Status = iota
-	Unhealthy
-	Running
-	Healthy
+	Stopped   Status = "stopped"
+	Unhealthy Status = "unhealthy"
+	Running   Status = "running"
+	Healthy   Status = "healthy"
 )
-
-var statusStrings = map[Status]string{
-	Stopped:   "stopped",
-	Unhealthy: "unhealthy",
-	Running:   "running",
-	Healthy:   "healthy",
-}
-
-func (s Status) String() string {
-	return statusStrings[s]
-}

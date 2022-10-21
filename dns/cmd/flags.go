@@ -15,6 +15,7 @@ import (
 func ParseFlags() *config.Config {
 	var conf = config.Default()
 	var getFlags = true
+	var confPath string
 
 	configPath := flag.String("file", "", "load a config from a file")
 
@@ -32,14 +33,23 @@ func ParseFlags() *config.Config {
 	loggerPath := flag.String("log-path", "", "the log file's path, to register events")
 	loggerType := flag.String("log-type", "text", "the type of formatter to use for the logger (text, json, yaml)")
 
+	healthType := flag.String("health-type", "simplehealth", "the type of health / status report (simplehealth)")
+
 	autostartDNS := flag.Bool("start-dns", true, "automatically start the DNS server")
 
 	flag.Parse()
 	osFlags := ParseOSEnv()
 
 	if *configPath != "" {
-		conf, getFlags = readConfig(*configPath, conf)
-		defer writeConfig(conf, *configPath)
+		confPath = *configPath
+	}
+	if osFlags.Path != "" {
+		confPath = osFlags.Path // OS vars overwrite CLI flags
+	}
+
+	if confPath != "" {
+		conf, getFlags = readConfig(confPath, conf)
+		defer writeConfig(conf, confPath)
 	}
 
 	if getFlags {
@@ -56,6 +66,7 @@ func ParseFlags() *config.Config {
 			config.HTTPPort(*httpPort),
 			config.LoggerPath(*loggerPath),
 			config.LoggerType(*loggerType),
+			config.HealthType(*healthType),
 			config.AutostartDNS(*autostartDNS),
 		)
 	}
@@ -87,12 +98,6 @@ func writeConfig(conf *config.Config, path string) {
 		return
 	}
 
-	_, err = os.Create(path)
-	if err != nil {
-		log.Printf("failed to remove old config file in %s: %v", path, err)
-		return
-	}
-
 	err = os.WriteFile(path, b, fs.FileMode(store.OS_ALL_RW))
 	if err != nil {
 		log.Printf("failed to write new config file in %s: %v", path, err)
@@ -108,9 +113,14 @@ func readConfig(path string, conf *config.Config) (*config.Config, bool) {
 	)
 	_, err := os.Stat(path)
 	if err != nil {
-		_, err = os.Create(path)
+		f, err := os.Create(path)
 		if err != nil {
 			log.Printf("failed to stat config file in %s: %v", path, err)
+			return conf, true
+		}
+		err = f.Sync()
+		if err != nil {
+			log.Printf("failed to save file to disk in %s: %v", path, err)
 			return conf, true
 		}
 	}

@@ -39,6 +39,7 @@ func NewServer(api endpoints.HTTPAPI, port int) Server {
 	mux.HandleFunc("/records/getDomains", srv.ep.GetRecordByAddress)
 	mux.HandleFunc("/records/update", srv.ep.UpdateRecord)
 	mux.HandleFunc("/records/delete", srv.ep.DeleteRecord)
+	mux.HandleFunc("/health", srv.ep.Health)
 
 	return srv
 }

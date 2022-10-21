@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultDNSTarget     = "google.com"
+	defaultDNSTarget     = "google.com."
 	defaultDNSRecordType = "A"
 )
 
@@ -36,7 +36,7 @@ func (h *shealth) Store(length int, t time.Duration) *health.StoreReport {
 	}
 
 	out.Len = length
-	out.Duration = t
+	out.Duration = float64(t.Nanoseconds()) / 1000000
 
 	return out
 }
@@ -45,22 +45,22 @@ func (h *shealth) DNS(address string, fallback string, record *store.Record) *he
 	var (
 		isFailing bool
 		out       = &health.DNSReport{}
+		client    = &dnsr.Client{
+			DialTimeout:  2 * time.Second,
+			ReadTimeout:  2 * time.Second,
+			WriteTimeout: 2 * time.Second,
+			Net:          "udp",
+		}
 	)
 
 	// internal query
 	if record != nil {
 		message := new(dnsr.Msg)
 		message.SetQuestion(dnsr.Fqdn(record.Name), store.RecordTypeInts[record.Type])
-		client := &dnsr.Client{
-			DialTimeout:  2 * time.Second,
-			ReadTimeout:  2 * time.Second,
-			WriteTimeout: 2 * time.Second,
-			Net:          "udp",
-		}
 
 		before := time.Now()
 		_, _, err := client.Exchange(message, address)
-		out.LocalQuery = time.Since(before)
+		out.LocalQuery = float64(time.Since(before).Nanoseconds()) / 1000000
 
 		if err != nil {
 			isFailing = true
@@ -70,16 +70,10 @@ func (h *shealth) DNS(address string, fallback string, record *store.Record) *he
 	if fallback != "" {
 		message := new(dnsr.Msg)
 		message.SetQuestion(defaultDNSTarget, store.RecordTypeInts[defaultDNSRecordType])
-		client := &dnsr.Client{
-			DialTimeout:  2 * time.Second,
-			ReadTimeout:  2 * time.Second,
-			WriteTimeout: 2 * time.Second,
-			Net:          "udp",
-		}
 
 		before := time.Now()
-		_, _, err := client.Exchange(message, fallback)
-		out.ExternalQuery = time.Since(before)
+		_, _, err := client.Exchange(message, address)
+		out.ExternalQuery = float64(time.Since(before).Nanoseconds()) / 1000000
 
 		if err != nil {
 			isFailing = true
@@ -107,11 +101,11 @@ func (h *shealth) DNS(address string, fallback string, record *store.Record) *he
 func (h *shealth) HTTP(port int) *health.HTTPReport {
 	var out = &health.HTTPReport{}
 
-	address := fmt.Sprintf("http://localhost:%v/reports", port)
+	address := fmt.Sprintf("http://localhost:%v/records", port)
 
 	before := time.Now()
 	res, err := http.Get(address)
-	out.Query = time.Since(before)
+	out.Query = float64(time.Since(before).Nanoseconds()) / 1000000
 	if err != nil {
 		out.Status = health.Stopped
 	} else if res.StatusCode > 399 {
@@ -130,7 +124,9 @@ func (h *shealth) Merge(
 ) *health.Report {
 	out := &health.Report{}
 
-	if storeH.Status > 1 && dnsH.Status > 1 && httpH.Status > 1 {
+	if (storeH.Status == health.Running || storeH.Status == health.Healthy) &&
+		(dnsH.Status == health.Running || dnsH.Status == health.Healthy) &&
+		(httpH.Status == health.Running || httpH.Status == health.Healthy) {
 		out.Status = health.Running
 		if storeH.Status == health.Healthy &&
 			dnsH.Status == health.Healthy &&

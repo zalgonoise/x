@@ -8,8 +8,8 @@ import (
 )
 
 type HealthResponse struct {
-	Message string
-	Report  *health.Report
+	Message string         `json:"message,omitempty"`
+	Report  *health.Report `json:"report,omitempty"`
 }
 
 func (e *endpoints) Health(w http.ResponseWriter, r *http.Request) {

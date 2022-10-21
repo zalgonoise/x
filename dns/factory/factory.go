@@ -23,7 +23,9 @@ func From(conf *config.Config) httpapi.Server {
 	)
 
 	// initialize health repository
-	healthRepo := HealthRepository("")
+	healthRepo := HealthRepository(
+		conf.Health.Type,
+	)
 
 	// intialize service
 	svc := Service(
@@ -43,6 +45,7 @@ func From(conf *config.Config) httpapi.Server {
 		svc,
 	)
 
+	// autostart DNS if configured
 	if conf.Autostart.DNS {
 		go func() {
 			err := udps.Start()

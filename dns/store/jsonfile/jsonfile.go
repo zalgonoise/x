@@ -42,6 +42,10 @@ func New(path string) store.Repository {
 		if err != nil {
 			panic(err) // panic on init if file can't be opened / used
 		}
+		err = f.Sync()
+		if err != nil {
+			panic(err) // panic on init if file can't be saved to disk
+		}
 	}
 	b, err := io.ReadAll(f)
 	if err != nil {
@@ -134,10 +138,6 @@ func (f *FileStore) Sync() error {
 	b, err := json.Marshal(fromEntity(rs...))
 	if err != nil {
 		return fmt.Errorf("%w: failed to marshal store records to JSON: %v", store.ErrSync, err)
-	}
-	_, err = os.Create(f.Path)
-	if err != nil {
-		return fmt.Errorf("%w: failed to remove old reference file: %v", store.ErrSync, err)
 	}
 	err = os.WriteFile(f.Path, b, fs.FileMode(store.OS_ALL_RW))
 	if err != nil {

@@ -22,7 +22,10 @@ func intFromEnv(s string) int {
 
 func boolFromEnv(s string) bool {
 	val := os.Getenv(s)
-	return val != "" && val != "0" && strings.ToLower(val) != "false"
+	return val != "" &&
+		val != "0" &&
+		strings.ToLower(val) != "false" &&
+		strings.ToLower(val) != "no"
 }
 
 func ParseOSEnv() *config.Config {
@@ -47,6 +50,9 @@ func ParseOSEnv() *config.Config {
 		},
 		Autostart: &config.AutostartConfig{
 			DNS: boolFromEnv("DNS_AUTOSTART"),
+		},
+		Health: &config.HealthConfig{
+			Type: os.Getenv("DNS_HEALTH_TYPE"),
 		},
 		Path: os.Getenv("DNS_CONFIG_PATH"),
 	}

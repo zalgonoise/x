@@ -19,8 +19,8 @@ var (
 type StoreResponse struct {
 	Success bool            `json:"success,omitempty"`
 	Message string          `json:"message,omitempty"`
-	Record  *store.Record   `json:"record,omitemtpy"`
-	Records *[]store.Record `json:"records,omitemtpy"`
+	Record  *store.Record   `json:"record,omitempty"`
+	Records *[]store.Record `json:"records,omitempty"`
 	Error   string          `json:"error,omitempty"`
 }
 
