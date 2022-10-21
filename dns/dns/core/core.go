@@ -1,12 +1,9 @@
 package core
 
 import (
-	"fmt"
 	"strings"
-	"time"
 
-	dnsr "github.com/miekg/dns"
-	"github.com/zalgonoise/x/dns/store"
+	"github.com/zalgonoise/x/dns/dns"
 )
 
 const (
@@ -23,13 +20,17 @@ var (
 	}
 )
 
-// DNSCore adds a basic Answer interaction for miekg's DNS, used by
-// the service
+// DNSCore adds a basic Answer / Fallback interaction for miekg's DNS
+// implementation (used on the transport layer)
+//
+// It holds a list of strings which will be the fallback domain-name servers
+// to contact if a domain's IP is requested but there no records for it
 type DNSCore struct {
 	fallbackDNS []string
 }
 
-func New(fallbackDNS ...string) *DNSCore {
+// New returns a new DNSCore as a dns.Repository
+func New(fallbackDNS ...string) dns.Repository {
 	var fbDNS []string
 
 	for _, fb := range fallbackDNS {
@@ -50,35 +51,5 @@ func New(fallbackDNS ...string) *DNSCore {
 
 	return &DNSCore{
 		fallbackDNS: fbDNS,
-	}
-}
-
-func (d *DNSCore) Answer(r *store.Record, m *dnsr.Msg) {
-	response, err := dnsr.NewRR(
-		fmt.Sprintf("%s %s %s", r.Name, r.Type, r.Addr),
-	)
-	if err != nil {
-		return
-	}
-	m.Answer = append(m.Answer, response)
-}
-
-func (d *DNSCore) Fallback(r *store.Record, m *dnsr.Msg) {
-	message := new(dnsr.Msg)
-	message.SetQuestion(dnsr.Fqdn(r.Name), store.RecordTypeInts[r.Type])
-	client := &dnsr.Client{
-		DialTimeout:  2 * time.Second,
-		ReadTimeout:  2 * time.Second,
-		WriteTimeout: 2 * time.Second,
-		Net:          "udp",
-	}
-
-	for _, fallback := range d.fallbackDNS {
-		in, _, err := client.Exchange(message, fallback)
-		if err != nil || len(in.Answer) == 0 {
-			continue
-		}
-		m.Answer = append(m.Answer, in.Answer...)
-		break
 	}
 }

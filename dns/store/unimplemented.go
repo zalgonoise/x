@@ -11,32 +11,32 @@ var (
 
 type unimplemented struct{}
 
-// Create implements store.Repository
+// Create implements the store.Repository interface
 func (u unimplemented) Create(ctx context.Context, rs ...*Record) error {
 	return ErrUnimplemented
 }
 
-// List implements store.Repository
+// List implements the store.Repository interface
 func (u unimplemented) List(ctx context.Context) ([]*Record, error) {
 	return nil, ErrUnimplemented
 }
 
-// FilterByDomain implements store.Repository
+// FilterByDomain implements the store.Repository interface
 func (u unimplemented) FilterByDomain(ctx context.Context, r *Record) (*Record, error) {
 	return nil, ErrUnimplemented
 }
 
-// FilterByDest implements store.Repository
+// FilterByDest implements the store.Repository interface
 func (u unimplemented) FilterByDest(ctx context.Context, r *Record) ([]*Record, error) {
 	return nil, ErrUnimplemented
 }
 
-// Update implements store.Repository
+// Update implements the store.Repository interface
 func (u unimplemented) Update(ctx context.Context, domain string, r *Record) error {
 	return ErrUnimplemented
 }
 
-// Delete implements store.Repository
+// Delete implements the store.Repository interface
 func (u unimplemented) Delete(ctx context.Context, r *Record) error {
 	return ErrUnimplemented
 }

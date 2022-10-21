@@ -2,7 +2,7 @@ package store
 
 import "context"
 
-// Repository defines the behavior that a record store should have
+// Repository defines the set of operations that a record store should expose
 //
 // This will consist of basic CRUD operations against a key-value store,
 // to add, list, get, update or delete DNS Records from the key-value store.

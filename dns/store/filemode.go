@@ -1,6 +1,11 @@
 package store
 
-// from https://stackoverflow.com/questions/28969455/how-to-properly-instantiate-os-filemode
+// filemode.go will contain a readable and accessible list of file modes
+// to simplify a filesystem interaction (such as saving configuration,
+// DNS records and logfiles to a file).
+//
+// ref:
+// https://stackoverflow.com/questions/28969455/how-to-properly-instantiate-os-filemode
 const (
 	OS_READ        = 04
 	OS_WRITE       = 02
