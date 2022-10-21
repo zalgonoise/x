@@ -2,17 +2,9 @@ package memmap
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/zalgonoise/x/dns/store"
-)
-
-var (
-	ErrDoesNotExist = errors.New("record does not exist")
-	ErrNoAddr       = errors.New("no IP address provided")
-	ErrNoName       = errors.New("no domain name provided")
-	ErrNoType       = errors.New("no DNS record type provided")
 )
 
 type MemoryStore struct {
@@ -66,11 +58,11 @@ func (m *MemoryStore) GetByDomain(ctx context.Context, r *store.Record) (*store.
 	defer m.mtx.Unlock()
 
 	if _, ok := m.Records[r.Name]; !ok {
-		return nil, ErrDoesNotExist
+		return nil, store.ErrDoesNotExist
 	}
 	dest := m.Records[r.Name][r.Type]
 	if dest == "" {
-		return nil, ErrDoesNotExist
+		return nil, store.ErrDoesNotExist
 	}
 
 	r.Addr = dest

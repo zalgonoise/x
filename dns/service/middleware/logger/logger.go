@@ -283,7 +283,7 @@ func (s *LoggedService) AnswerDNS(r *store.Record, m *dnsr.Msg) {
 	}()
 }
 
-func (s *LoggedService) StoreHealth(entries int, t time.Duration) *health.Report {
+func (s *LoggedService) StoreHealth() *health.StoreReport {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
 		Prefix("service").
@@ -291,7 +291,7 @@ func (s *LoggedService) StoreHealth(entries int, t time.Duration) *health.Report
 		Message("StoreHealth request").
 		Build())
 
-	r := s.svc.StoreHealth(entries, t)
+	r := s.svc.StoreHealth()
 	go func() {
 		time.Sleep(5 * time.Millisecond)
 
@@ -308,7 +308,7 @@ func (s *LoggedService) StoreHealth(entries int, t time.Duration) *health.Report
 	return r
 }
 
-func (s *LoggedService) DNSHealth() *health.Report {
+func (s *LoggedService) DNSHealth() *health.DNSReport {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
 		Prefix("service").
@@ -325,6 +325,54 @@ func (s *LoggedService) DNSHealth() *health.Report {
 			Prefix("service").
 			Sub("health").
 			Message("DNSHealth response").
+			Metadata(event.Field{
+				"output": r,
+			}).
+			Build())
+	}()
+	return r
+}
+func (s *LoggedService) HTTPHealth() *health.HTTPReport {
+	s.logger.Log(event.New().
+		Level(event.Level_debug).
+		Prefix("service").
+		Sub("health").
+		Message("HTTPHealth request").
+		Build())
+
+	r := s.svc.HTTPHealth()
+	go func() {
+		time.Sleep(5 * time.Millisecond)
+
+		s.logger.Log(event.New().
+			Level(event.Level_debug).
+			Prefix("service").
+			Sub("health").
+			Message("HTTPHealth response").
+			Metadata(event.Field{
+				"output": r,
+			}).
+			Build())
+	}()
+	return r
+}
+func (s *LoggedService) Health() *health.Report {
+	s.logger.Log(event.New().
+		Level(event.Level_debug).
+		Prefix("service").
+		Sub("health").
+		Message("MergeHealth request").
+		Build())
+
+	r := s.svc.Health()
+	go func() {
+		time.Sleep(5 * time.Millisecond)
+
+		s.logger.Log(event.New().
+			Level(event.Level_debug).
+			Prefix("service").
+			Sub("health").
+			Message("MergeHealth response").
 			Metadata(event.Field{
 				"output": r,
 			}).

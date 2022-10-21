@@ -33,11 +33,8 @@ func NewServer(conf *udp.DNS, s service.Service) udp.Server {
 }
 
 func (u *udps) Start() error {
-	if u.srv != nil {
-		addr := u.srv.Listener.Addr()
-		if addr != nil {
-			return ErrAlreadyRunning
-		}
+	if u.Running() {
+		return ErrAlreadyRunning
 	}
 	dnsr.HandleFunc(u.conf.Prefix, u.handleRequest)
 	u.srv = &dnsr.Server{
@@ -49,10 +46,19 @@ func (u *udps) Start() error {
 }
 
 func (u *udps) Stop() error {
-	if u.srv == nil {
+	if !u.Running() {
 		return ErrNotRunning
 	}
 	return u.srv.Shutdown()
+}
+
+func (u *udps) Running() bool {
+	if u.srv != nil {
+		if addr := u.srv.Listener.Addr(); addr != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (u *udps) answer(r *store.Record, m *dnsr.Msg) {

@@ -5,41 +5,19 @@ import (
 
 	"github.com/zalgonoise/zlog/log"
 
-	"github.com/zalgonoise/x/dns/dns/core"
-	"github.com/zalgonoise/x/dns/service"
-	"github.com/zalgonoise/x/dns/service/middleware/logger"
-	"github.com/zalgonoise/x/dns/store/jsonfile"
-	"github.com/zalgonoise/x/dns/transport/httpapi"
-	"github.com/zalgonoise/x/dns/transport/httpapi/endpoints"
-	"github.com/zalgonoise/x/dns/transport/udp"
-	"github.com/zalgonoise/x/dns/transport/udp/miekgdns"
+	"github.com/zalgonoise/x/dns/cmd/config"
+	"github.com/zalgonoise/x/dns/factory"
 )
 
 func main() {
-	// init implementations
-	dnsCore := core.New("1.1.1.1") // falls back to one-dot
-	jsonMemStore := jsonfile.New("/tmp/dns/dns.json")
-
-	// init service
-	s := service.New(dnsCore, jsonMemStore)
-	loggedSvc := logger.LogService(
-		s,
-		log.New(
-			log.CfgTextColorLevelFirst,
-		),
+	cfg := config.New(
+		config.StoreType("json"),
+		config.StorePath("/tmp/dns/dns.list"),
 	)
 
-	// init UDP server
-	udps := miekgdns.NewServer(
-		udp.NewDNS().Build(),
-		loggedSvc,
-	)
+	// create HTTP / UDP server from config
+	svr := factory.From(cfg)
 
-	// init API endpoints
-	apis := endpoints.NewAPI(loggedSvc, udps)
-
-	// init HTTP server (defer graceful closure)
-	svr := httpapi.NewServer(apis, 8080)
 	defer func() {
 		err := svr.Stop()
 		if err != nil {

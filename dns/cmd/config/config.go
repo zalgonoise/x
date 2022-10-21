@@ -68,10 +68,11 @@ func (c *Config) Apply(opts ...ConfigOption) *Config {
 func Default() *Config {
 	return &Config{
 		DNS: &DNSConfig{
-			Type:    "miekgdns",
-			Address: ":53",
-			Prefix:  ".",
-			Proto:   "udp",
+			Type:        "miekgdns",
+			Address:     ":53",
+			Prefix:      ".",
+			Proto:       "udp",
+			FallbackDNS: "1.1.1.1",
 		},
 		Store: &StoreConfig{
 			Type: "memmap",
@@ -113,6 +114,9 @@ func Merge(main, input *Config) *Config {
 	}
 	if input.DNS.Proto != "" {
 		main.DNS.Proto = input.DNS.Proto
+	}
+	if input.DNS.FallbackDNS != "" {
+		main.DNS.FallbackDNS = input.DNS.FallbackDNS
 	}
 
 	// Store

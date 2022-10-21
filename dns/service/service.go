@@ -3,11 +3,12 @@ package service
 import (
 	"context"
 	"errors"
-	"time"
 
 	dnsr "github.com/miekg/dns"
+	"github.com/zalgonoise/x/dns/cmd/config"
 	"github.com/zalgonoise/x/dns/dns"
 	"github.com/zalgonoise/x/dns/health"
+	"github.com/zalgonoise/x/dns/health/simplehealth"
 	"github.com/zalgonoise/x/dns/store"
 )
 
@@ -19,6 +20,12 @@ var (
 )
 
 type Service interface {
+	StoreService
+	DNSService
+	HealthService
+}
+
+type StoreService interface {
 	// store-repository methods
 	AddRecord(context.Context, *store.Record) error
 	AddRecords(context.Context, ...*store.Record) error
@@ -27,23 +34,24 @@ type Service interface {
 	GetRecordByAddress(context.Context, string) ([]*store.Record, error)
 	UpdateRecord(context.Context, string, *store.Record) error
 	DeleteRecord(context.Context, *store.Record) error
-
-	// dns-repository methods
-	AnswerDNS(*store.Record, *dnsr.Msg)
-
-	// health-repository methods
-	StoreHealth(int, time.Duration) *health.Report
-	DNSHealth() *health.Report
 }
 
-type Storing interface {
-	AddRecord(context.Context, *store.Record) error
-	AddRecords(context.Context, ...*store.Record) error
-	ListRecords(context.Context) ([]*store.Record, error)
-	GetRecordByDomain(context.Context, *store.Record) (*store.Record, error)
-	GetRecordByAddress(context.Context, string) ([]*store.Record, error)
-	UpdateRecord(context.Context, string, *store.Record) error
-	DeleteRecord(context.Context, *store.Record) error
+type DNSService interface {
+	// dns-repository methods
+	AnswerDNS(*store.Record, *dnsr.Msg)
+}
+
+type HealthService interface {
+	// health-repository methods
+	StoreHealth() *health.StoreReport
+	DNSHealth() *health.DNSReport
+	HTTPHealth() *health.HTTPReport
+	Health() *health.Report
+}
+
+type StoreWithHealth interface {
+	StoreService
+	HealthService
 }
 
 type Answering interface {
@@ -55,18 +63,29 @@ type service struct {
 	dns    dns.Repository
 	store  store.Repository
 	health health.Repository
+	conf   *config.Config
 }
 
-func New(dnsR dns.Repository, storeR store.Repository) Service {
+func New(
+	dnsR dns.Repository,
+	storeR store.Repository,
+	healthR health.Repository,
+	conf *config.Config,
+) Service {
 	if dnsR == nil {
 		dnsR = dns.Unimplemented()
 	}
 	if storeR == nil {
 		storeR = store.Unimplemented()
 	}
+	if healthR == nil {
+		healthR = simplehealth.New()
+	}
 
 	return &service{
-		dns:   dnsR,
-		store: storeR,
+		dns:    dnsR,
+		store:  storeR,
+		health: healthR,
+		conf:   conf,
 	}
 }

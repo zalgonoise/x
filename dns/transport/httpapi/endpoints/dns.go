@@ -15,7 +15,7 @@ func (e *endpoints) StartDNS(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	go func(err error) {
-		err = e.udp.Start()
+		err = e.UDP.Start()
 	}(err)
 
 	if err != nil {
@@ -37,7 +37,7 @@ func (e *endpoints) StartDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *endpoints) StopDNS(w http.ResponseWriter, r *http.Request) {
-	err := e.udp.Stop()
+	err := e.UDP.Stop()
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := json.Marshal(DNSResponse{
@@ -57,7 +57,7 @@ func (e *endpoints) StopDNS(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *endpoints) ReloadDNS(w http.ResponseWriter, r *http.Request) {
-	err := e.udp.Stop()
+	err := e.UDP.Stop()
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := json.Marshal(DNSResponse{
@@ -70,7 +70,7 @@ func (e *endpoints) ReloadDNS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func(err error) {
-		err = e.udp.Start()
+		err = e.UDP.Start()
 	}(err)
 
 	if err != nil {

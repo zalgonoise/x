@@ -48,5 +48,24 @@ func (s *server) Start() error {
 }
 
 func (s *server) Stop() error {
-	return s.srv.Shutdown(context.Background())
+	var (
+		rw  = &responseWriter{}
+		err error
+	)
+	s.ep.StopDNS(rw, &http.Request{})
+
+	if rw.header != 200 {
+		err = fmt.Errorf("%s", rw.response)
+	}
+
+	httpErr := s.srv.Shutdown(context.Background())
+	if err == nil && httpErr != nil {
+		err = httpErr
+		httpErr = nil
+	}
+	if httpErr != nil && err != nil {
+		err = fmt.Errorf("http: %v ; udp: %w", httpErr, err)
+	}
+
+	return err
 }

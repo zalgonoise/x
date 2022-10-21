@@ -2,7 +2,6 @@ package yamlfile
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -13,13 +12,6 @@ import (
 	"github.com/go-yaml/yaml"
 	"github.com/zalgonoise/x/dns/store"
 	"github.com/zalgonoise/x/dns/store/memmap"
-)
-
-var (
-	ErrZeroBytesWritten error = errors.New("zero bytes written")
-	ErrAlreadyExists    error = errors.New("entry already exists")
-	ErrNotFound         error = errors.New("entry was not found")
-	ErrSync             error = errors.New("sync error")
 )
 
 type FileStore struct {
@@ -137,19 +129,19 @@ inputLoop:
 func (f *FileStore) Sync() error {
 	rs, err := f.store.List(context.Background())
 	if err != nil {
-		return fmt.Errorf("%w: failed to list store records: %v", ErrSync, err)
+		return fmt.Errorf("%w: failed to list store records: %v", store.ErrSync, err)
 	}
 	b, err := yaml.Marshal(fromEntity(rs...))
 	if err != nil {
-		return fmt.Errorf("%w: failed to marshal store records to JSON: %v", ErrSync, err)
+		return fmt.Errorf("%w: failed to marshal store records to JSON: %v", store.ErrSync, err)
 	}
 	_, err = os.Create(f.Path)
 	if err != nil {
-		return fmt.Errorf("%w: failed to remove old reference file: %v", ErrSync, err)
+		return fmt.Errorf("%w: failed to remove old reference file: %v", store.ErrSync, err)
 	}
 	err = os.WriteFile(f.Path, b, fs.FileMode(store.OS_ALL_RW))
 	if err != nil {
-		return fmt.Errorf("%w: failed to write new reference file: %v", ErrSync, err)
+		return fmt.Errorf("%w: failed to write new reference file: %v", store.ErrSync, err)
 	}
 	return nil
 }

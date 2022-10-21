@@ -4,4 +4,5 @@ package udp
 type Server interface {
 	Start() error
 	Stop() error
+	Running() bool
 }

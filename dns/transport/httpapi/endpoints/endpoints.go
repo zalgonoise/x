@@ -8,8 +8,8 @@ import (
 )
 
 type endpoints struct {
-	s   service.Storing
-	udp udp.Server
+	s   service.StoreWithHealth
+	UDP udp.Server
 }
 
 type HTTPAPI interface {
@@ -23,11 +23,13 @@ type HTTPAPI interface {
 	GetRecordByAddress(w http.ResponseWriter, r *http.Request)
 	UpdateRecord(w http.ResponseWriter, r *http.Request)
 	DeleteRecord(w http.ResponseWriter, r *http.Request)
+
+	Health(w http.ResponseWriter, r *http.Request)
 }
 
 func NewAPI(s service.Service, udps udp.Server) HTTPAPI {
 	return &endpoints{
 		s:   s,
-		udp: udps,
+		UDP: udps,
 	}
 }

@@ -4,34 +4,16 @@ import (
 	"log"
 	"os"
 
-	"github.com/zalgonoise/x/dns/dns/core"
-	"github.com/zalgonoise/x/dns/service"
-	"github.com/zalgonoise/x/dns/store/memmap"
-	"github.com/zalgonoise/x/dns/transport/httpapi"
-	"github.com/zalgonoise/x/dns/transport/httpapi/endpoints"
-	"github.com/zalgonoise/x/dns/transport/udp"
-	"github.com/zalgonoise/x/dns/transport/udp/miekgdns"
+	"github.com/zalgonoise/x/dns/cmd/config"
+	"github.com/zalgonoise/x/dns/factory"
 )
 
 func main() {
-	// init implementations
-	dnscore := core.New("1.1.1.1") // falls back to one-dot
-	memstore := memmap.New()
+	cfg := config.New()
 
-	// init service
-	s := service.New(dnscore, memstore)
+	// create HTTP / UDP server from config
+	svr := factory.From(cfg)
 
-	// init UDP server
-	udps := miekgdns.NewServer(
-		udp.NewDNS().Build(),
-		s,
-	)
-
-	// init API endpoints
-	apis := endpoints.NewAPI(s, udps)
-
-	// init HTTP server (defer graceful closure)
-	svr := httpapi.NewServer(apis, 8080)
 	defer func() {
 		err := svr.Stop()
 		if err != nil {
