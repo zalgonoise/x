@@ -2,9 +2,7 @@ package yamlfile
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 	"sync"
@@ -14,26 +12,44 @@ import (
 	"github.com/zalgonoise/x/dns/store/memmap"
 )
 
+// FileStore is an in-memory implementation of a DNS record store
+// wrapped with a syncer that will dump / retrieve DNS record data
+// from a file in YAML format
+//
+// The in-memory implementation used is store/memmap
 type FileStore struct {
 	Path  string `yaml:"path,omitempty"`
 	store store.Repository
 	mtx   sync.RWMutex
 }
 
+// Store holds a set of (DNS) Records
 type Store struct {
 	Records []*Record `yaml:"records,omitempty"`
 }
 
+// Record is labeled by an IP address and contains a slice of (pointers to) Types
 type Record struct {
 	Address string  `yaml:"address,omitempty"`
 	Types   []*Type `yaml:"types,omitempty"`
 }
 
+// Type is labeled by a DNS record type and contains a slice of Domains
 type Type struct {
 	RType   string   `yaml:"type,omitempty"`
 	Domains []string `yaml:"domains,omitempty"`
 }
 
+// New returns a new YAML FileStore as a store.Repository
+//
+// It takes in a path to a file which will be used for reads and writes,
+// to back-up and sync the record store to disk.
+//
+// This initialization function will try to open an existing file, or create it
+// if it does not exist, and also read it if it has content. If any of the critical
+// operations fail, the function will panic since the store will not be able to start.
+//
+// TODO: decide if it's better to return a naked in-memory record store and log as critical
 func New(path string) store.Repository {
 	store := memmap.New()
 	f, err := os.Open(path)
@@ -58,7 +74,7 @@ func New(path string) store.Repository {
 			log.Printf("failed to unmarshal YAML: %v\n", err)
 		}
 
-		err := store.Add(context.Background(), toEntity(s)...)
+		err := store.Create(context.Background(), toEntity(s)...)
 		if err != nil {
 			log.Printf("error adding entries: %v\n", err)
 		}
@@ -68,122 +84,4 @@ func New(path string) store.Repository {
 		Path:  path,
 		store: store,
 	}
-}
-
-func toEntity(s *Store) []*store.Record {
-	var out []*store.Record
-
-	for _, record := range s.Records {
-		addr := record.Address
-		for _, recordType := range record.Types {
-			rtype := recordType.RType
-			for _, domain := range recordType.Domains {
-				out = append(out, store.New().
-					Name(domain).
-					Type(rtype).
-					Addr(addr).
-					Build())
-			}
-		}
-	}
-
-	return out
-}
-
-func fromEntity(rs ...*store.Record) *Store {
-	out := &Store{}
-
-inputLoop:
-	for _, r := range rs {
-		for _, record := range out.Records {
-			if record.Address == r.Addr {
-				for _, recordTypes := range record.Types {
-					if recordTypes.RType == r.Type {
-						for _, domain := range recordTypes.Domains {
-							if domain == r.Name {
-								continue inputLoop
-							}
-						}
-						recordTypes.Domains = append(recordTypes.Domains, r.Name)
-						continue inputLoop
-					}
-				}
-				record.Types = append(record.Types, &Type{
-					RType:   r.Type,
-					Domains: []string{r.Name},
-				})
-				continue inputLoop
-			}
-		}
-		out.Records = append(out.Records, &Record{
-			Address: r.Addr,
-			Types: []*Type{
-				{
-					RType:   r.Type,
-					Domains: []string{r.Name},
-				},
-			},
-		})
-		continue inputLoop
-	}
-
-	return out
-}
-
-func (f *FileStore) Sync() error {
-	rs, err := f.store.List(context.Background())
-	if err != nil {
-		return fmt.Errorf("%w: failed to list store records: %v", store.ErrSync, err)
-	}
-	b, err := yaml.Marshal(fromEntity(rs...))
-	if err != nil {
-		return fmt.Errorf("%w: failed to marshal store records to JSON: %v", store.ErrSync, err)
-	}
-	err = os.WriteFile(f.Path, b, fs.FileMode(store.OS_ALL_RW))
-	if err != nil {
-		return fmt.Errorf("%w: failed to write new reference file: %v", store.ErrSync, err)
-	}
-	return nil
-}
-
-func (f *FileStore) Add(ctx context.Context, rs ...*store.Record) error {
-	f.mtx.Lock()
-	defer func() {
-		_ = f.Sync()
-	}()
-	defer f.mtx.Unlock()
-
-	return f.store.Add(ctx, rs...)
-}
-
-func (f *FileStore) List(ctx context.Context) ([]*store.Record, error) {
-	return f.store.List(ctx)
-}
-
-func (f *FileStore) GetByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
-	return f.store.GetByDomain(ctx, r)
-}
-
-func (f *FileStore) GetByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
-	return f.store.GetByDest(ctx, r)
-}
-
-func (f *FileStore) Update(ctx context.Context, domain string, r *store.Record) error {
-	f.mtx.Lock()
-	defer func() {
-		_ = f.Sync()
-	}()
-	defer f.mtx.Unlock()
-
-	return f.store.Update(ctx, domain, r)
-}
-
-func (f *FileStore) Delete(ctx context.Context, r *store.Record) error {
-	f.mtx.Lock()
-	defer func() {
-		_ = f.Sync()
-	}()
-	defer f.mtx.Unlock()
-
-	return f.store.Delete(ctx, r)
 }

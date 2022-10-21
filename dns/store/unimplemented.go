@@ -11,30 +11,37 @@ var (
 
 type unimplemented struct{}
 
-func (u unimplemented) Add(context.Context, ...*Record) error {
+// Create implements store.Repository
+func (u unimplemented) Create(ctx context.Context, rs ...*Record) error {
 	return ErrUnimplemented
 }
 
-func (u unimplemented) List(context.Context) ([]*Record, error) {
+// List implements store.Repository
+func (u unimplemented) List(ctx context.Context) ([]*Record, error) {
 	return nil, ErrUnimplemented
 }
 
-func (u unimplemented) GetByDomain(context.Context, *Record) (*Record, error) {
+// FilterByDomain implements store.Repository
+func (u unimplemented) FilterByDomain(ctx context.Context, r *Record) (*Record, error) {
 	return nil, ErrUnimplemented
 }
 
-func (u unimplemented) GetByDest(context.Context, *Record) ([]*Record, error) {
+// FilterByDest implements store.Repository
+func (u unimplemented) FilterByDest(ctx context.Context, r *Record) ([]*Record, error) {
 	return nil, ErrUnimplemented
 }
 
-func (u unimplemented) Update(context.Context, string, *Record) error {
+// Update implements store.Repository
+func (u unimplemented) Update(ctx context.Context, domain string, r *Record) error {
 	return ErrUnimplemented
 }
 
-func (u unimplemented) Delete(context.Context, *Record) error {
+// Delete implements store.Repository
+func (u unimplemented) Delete(ctx context.Context, r *Record) error {
 	return ErrUnimplemented
 }
 
+// Unimplemented returns an unimplemented (and invalid) store.Repository
 func Unimplemented() unimplemented {
 	return unimplemented{}
 }

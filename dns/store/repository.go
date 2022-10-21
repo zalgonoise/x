@@ -10,24 +10,22 @@ import "context"
 // Additionally, it is exposing both GetByAddr and GetByDest methods to
 // fetch items in the records list interchangeably
 type Repository interface {
-	// Add will create a new entry in they key-value store to include a
+	// Create will add a new entry in they key-value store to include a
 	// new Record, returning an error
-	Add(context.Context, ...*Record) error
+	Create(context.Context, ...*Record) error
 
 	// List will fetch all records in the key-value store
-	//
-	// TODO: implement listing filters
 	List(context.Context) ([]*Record, error)
 
-	// GetByDomain will fetch an address based on its address string
+	// FilterByDomain will fetch an address based on its address string
 	//
-	// GetByDomain(ctx, "service.mydomain") -> { "127.0.0.1", nil }
-	GetByDomain(context.Context, *Record) (*Record, error)
+	// FilterByDomain(ctx, "service.mydomain") -> { "127.0.0.1", nil }
+	FilterByDomain(context.Context, *Record) (*Record, error)
 
-	// GetByDest will fetch an address based on its target IP
+	// FilterByDest will fetch an address based on its target IP
 	//
-	// GetByDest(ctx, "127.0.0.1") -> { ["service.mydomain"], nil }
-	GetByDest(context.Context, *Record) ([]*Record, error)
+	// FilterByDest(ctx, "127.0.0.1") -> { ["service.mydomain"], nil }
+	FilterByDest(context.Context, *Record) ([]*Record, error)
 
 	// Update will modify an existing record by targetting its domain string,
 	// and by supplying a new version of the Record to update. Returns an error
