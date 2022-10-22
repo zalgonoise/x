@@ -11,4 +11,5 @@ var (
 	ErrAlreadyExists    error = errors.New("entry already exists")
 	ErrZeroBytesWritten error = errors.New("zero bytes written")
 	ErrSync             error = errors.New("sync error")
+	ErrZeroRecords      error = errors.New("zero records in the store")
 )

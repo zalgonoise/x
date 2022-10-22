@@ -7,6 +7,8 @@ import (
 	"github.com/zalgonoise/x/dns/store"
 )
 
+// AnswerDNS uses the dns.Repository to reply to the dns.Msg `m` with the answer
+// in store.Record `r`
 func (s *service) AnswerDNS(r *store.Record, m *dnsr.Msg) {
 	ctx := context.Background()
 	answer, err := s.store.FilterByDomain(ctx, r)

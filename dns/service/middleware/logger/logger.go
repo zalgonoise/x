@@ -13,11 +13,15 @@ import (
 	"github.com/zalgonoise/zlog/log/event"
 )
 
+// LoggedService will wrap a service.Service with a logger and
+// register the incoming events, as well as their outcome
 type LoggedService struct {
 	svc    service.Service
 	logger log.Logger
 }
 
+// LogService will return a LoggedService in the form of a service.Service,
+// by wraping an input service.Service `svc` with log.Logger `logger`
 func LogService(svc service.Service, logger log.Logger) service.Service {
 	return &LoggedService{
 		svc:    svc,
@@ -25,6 +29,7 @@ func LogService(svc service.Service, logger log.Logger) service.Service {
 	}
 }
 
+// AddRecord uses the store.Repository to create a DNS Record
 func (s *LoggedService) AddRecord(ctx context.Context, r *store.Record) error {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -57,6 +62,8 @@ func (s *LoggedService) AddRecord(ctx context.Context, r *store.Record) error {
 		Build())
 	return nil
 }
+
+// AddRecords uses the store.Repository to create a set of DNS Records
 func (s *LoggedService) AddRecords(ctx context.Context, rs ...*store.Record) error {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -90,6 +97,8 @@ func (s *LoggedService) AddRecords(ctx context.Context, rs ...*store.Record) err
 		Build())
 	return nil
 }
+
+// ListRecord uses the store.Repository to return all DNS Records
 func (s *LoggedService) ListRecords(ctx context.Context) ([]*store.Record, error) {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -123,6 +132,9 @@ func (s *LoggedService) ListRecords(ctx context.Context) ([]*store.Record, error
 		Build())
 	return rs, nil
 }
+
+// GetRecordByDomain uses the store.Repository to return the DNS Record associated with
+// the domain name and record type found in store.Record `r`
 func (s *LoggedService) GetRecordByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -158,6 +170,9 @@ func (s *LoggedService) GetRecordByDomain(ctx context.Context, r *store.Record) 
 		Build())
 	return out, nil
 }
+
+// GetRecordByDomain uses the store.Repository to return the DNS Records associated with
+// the IP address found in store.Record `r`
 func (s *LoggedService) GetRecordByAddress(ctx context.Context, address string) ([]*store.Record, error) {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -194,6 +209,9 @@ func (s *LoggedService) GetRecordByAddress(ctx context.Context, address string) 
 		Build())
 	return rs, nil
 }
+
+// UpdateRecord uses the store.Repository to update the record with domain name `domain`,
+// based on the data provided in store.Record `r`
 func (s *LoggedService) UpdateRecord(ctx context.Context, domain string, r *store.Record) error {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -227,6 +245,8 @@ func (s *LoggedService) UpdateRecord(ctx context.Context, domain string, r *stor
 		Build())
 	return nil
 }
+
+// DeleteRecord uses the store.Repository to remove the store.Record based on input `r`
 func (s *LoggedService) DeleteRecord(ctx context.Context, r *store.Record) error {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -259,6 +279,9 @@ func (s *LoggedService) DeleteRecord(ctx context.Context, r *store.Record) error
 		Build())
 	return nil
 }
+
+// AnswerDNS uses the dns.Repository to reply to the dns.Msg `m` with the answer
+// in store.Record `r`
 func (s *LoggedService) AnswerDNS(r *store.Record, m *dnsr.Msg) {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -283,6 +306,7 @@ func (s *LoggedService) AnswerDNS(r *store.Record, m *dnsr.Msg) {
 	}()
 }
 
+// StoreHealth uses the health.Repository to generate a health.StoreReport
 func (s *LoggedService) StoreHealth() *health.StoreReport {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -308,6 +332,7 @@ func (s *LoggedService) StoreHealth() *health.StoreReport {
 	return r
 }
 
+// DNSHealth uses the health.Repository to generate a health.DNSReport
 func (s *LoggedService) DNSHealth() *health.DNSReport {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -332,6 +357,8 @@ func (s *LoggedService) DNSHealth() *health.DNSReport {
 	}()
 	return r
 }
+
+// HTTPHealth uses the health.Repository to generate a health.HTTPReport
 func (s *LoggedService) HTTPHealth() *health.HTTPReport {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
@@ -356,6 +383,8 @@ func (s *LoggedService) HTTPHealth() *health.HTTPReport {
 	}()
 	return r
 }
+
+// Health uses the health.Repository to generate a health.Report
 func (s *LoggedService) Health() *health.Report {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).

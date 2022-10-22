@@ -9,6 +9,7 @@ import (
 	"github.com/zalgonoise/x/dns/store"
 )
 
+// StoreHealth uses the health.Repository to generate a health.StoreReport
 func (s *service) StoreHealth() *health.StoreReport {
 	before := time.Now()
 	r, err := s.store.List(context.Background())
@@ -18,6 +19,8 @@ func (s *service) StoreHealth() *health.StoreReport {
 	}
 	return s.health.Store(len(r), after)
 }
+
+// DNSHealth uses the health.Repository to generate a health.DNSReport
 func (s *service) DNSHealth() *health.DNSReport {
 	var addr string
 
@@ -37,9 +40,13 @@ func (s *service) DNSHealth() *health.DNSReport {
 	)
 
 }
+
+// HTTPHealth uses the health.Repository to generate a health.HTTPReport
 func (s *service) HTTPHealth() *health.HTTPReport {
 	return s.health.HTTP(s.conf.HTTP.Port)
 }
+
+// Health uses the health.Repository to generate a health.Report
 func (s *service) Health() *health.Report {
 	return s.health.Merge(
 		s.StoreHealth(),
