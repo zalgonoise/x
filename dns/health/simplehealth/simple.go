@@ -17,10 +17,13 @@ const (
 
 type shealth struct{}
 
+// New will return a new shealth as a health.Repository
 func New() health.Repository {
 	return &shealth{}
 }
 
+// Store will take in the number of records in the store and the time.Duration for a
+// store.List operation, and return a StoreReport based off of this information
 func (h *shealth) Store(length int, t time.Duration) *health.StoreReport {
 	var out = &health.StoreReport{}
 
@@ -41,6 +44,9 @@ func (h *shealth) Store(length int, t time.Duration) *health.StoreReport {
 	return out
 }
 
+// DNS will take in the address of the UDP server, the fallback DNS address (if set),
+// and a store.Record, which are used to answer internal and external DNS queries as part
+// of a health check; returning a DNSReport based off of this information
 func (h *shealth) DNS(address string, fallback string, record *store.Record) *health.DNSReport {
 	var (
 		isFailing bool
@@ -98,6 +104,8 @@ func (h *shealth) DNS(address string, fallback string, record *store.Record) *he
 	return out
 }
 
+// HTTP will take the HTTP server's port so it can perform a HTTP request against one
+// of its endpoints, and returning a HTTPReport based off of this information
 func (h *shealth) HTTP(port int) *health.HTTPReport {
 	var out = &health.HTTPReport{}
 
@@ -117,6 +125,8 @@ func (h *shealth) HTTP(port int) *health.HTTPReport {
 	return out
 }
 
+// Merge will unite a StoreReport, DNSReport and HTTPReport, returning a Report which
+// encapsulates these as well as an overall status for the service
 func (h *shealth) Merge(
 	storeH *health.StoreReport,
 	dnsH *health.DNSReport,
