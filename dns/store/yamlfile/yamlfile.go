@@ -2,6 +2,7 @@ package yamlfile
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log"
 	"os"
@@ -25,19 +26,19 @@ type FileStore struct {
 
 // Store holds a set of (DNS) Records
 type Store struct {
-	Records []*Record `yaml:"records,omitempty"`
+	Records []*Record `json:"records,omitempty" yaml:"records,omitempty"`
 }
 
 // Record is labeled by an IP address and contains a slice of (pointers to) Types
 type Record struct {
-	Address string  `yaml:"address,omitempty"`
-	Types   []*Type `yaml:"types,omitempty"`
+	Address string  `json:"address,omitempty" yaml:"address,omitempty"`
+	Types   []*Type `json:"types,omitempty"   yaml:"types,omitempty"`
 }
 
 // Type is labeled by a DNS record type and contains a slice of Domains
 type Type struct {
-	RType   string   `yaml:"type,omitempty"`
-	Domains []string `yaml:"domains,omitempty"`
+	RType   string   `json:"type,omitempty"    yaml:"type,omitempty"`
+	Domains []string `json:"domains,omitempty" yaml:"domains,omitempty"`
 }
 
 // New returns a new YAML FileStore as a store.Repository
@@ -69,9 +70,12 @@ func New(path string) store.Repository {
 	}
 	if len(b) > 0 {
 		s := &Store{}
-		err = yaml.Unmarshal(b, s)
-		if err != nil {
-			log.Printf("failed to unmarshal YAML: %v\n", err)
+		jerr := json.Unmarshal(b, s)
+		if jerr != nil {
+			yerr := yaml.Unmarshal(b, s)
+			if yerr != nil {
+				log.Printf("failed to unmarshal JSON: %v ; failed to unmarshal YAML: %v\n", jerr, yerr)
+			}
 		}
 
 		err := store.Create(context.Background(), toEntity(s)...)
