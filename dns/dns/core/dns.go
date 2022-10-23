@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	dnsr "github.com/miekg/dns"
+	dns "github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/store"
 )
 
 // Answer will take the IP address populated in the store.Response `r`, and
 // append it as a DNS response to the dns.Msg `m`'s Answer slice
-func (d *DNSCore) Answer(r *store.Record, m *dnsr.Msg) {
-	response, err := dnsr.NewRR(
+func (d *DNSCore) Answer(r *store.Record, m *dns.Msg) {
+	response, err := dns.NewRR(
 		fmt.Sprintf("%s %s %s", r.Name, r.Type, r.Addr),
 	)
 	if err != nil {
@@ -25,10 +25,10 @@ func (d *DNSCore) Answer(r *store.Record, m *dnsr.Msg) {
 //
 // If there is an answer, it is written to the dns.Msg `r`'s Answer slice; otherwise
 // the request is discarted until it times out
-func (d *DNSCore) Fallback(r *store.Record, m *dnsr.Msg) {
-	message := new(dnsr.Msg)
-	message.SetQuestion(dnsr.Fqdn(r.Name), store.RecordTypeInts[r.Type])
-	client := &dnsr.Client{
+func (d *DNSCore) Fallback(r *store.Record, m *dns.Msg) {
+	message := new(dns.Msg)
+	message.SetQuestion(dns.Fqdn(r.Name), store.RecordTypeInts[r.Type])
+	client := &dns.Client{
 		DialTimeout:  2 * time.Second,
 		ReadTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
