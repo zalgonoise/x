@@ -2,16 +2,20 @@ package cmd
 
 import (
 	"os"
-	"strings"
 
 	"log"
 
 	"github.com/zalgonoise/x/dns/cmd/config"
+	"github.com/zalgonoise/x/dns/cmd/flags"
 	"github.com/zalgonoise/x/dns/factory"
 
 	"github.com/zalgonoise/x/dns/transport/httpapi"
 )
 
+// Run starts the DNS app based on the input configuration (file configuration,
+// CLI flags, and OS environment variables)
+//
+// Blocking call; will error out (with os.Exit(1)) if failed
 func Run() {
 	var (
 		conf *config.Config
@@ -19,7 +23,7 @@ func Run() {
 	)
 
 	// get config
-	conf = ParseFlags()
+	conf = flags.ParseFlags()
 
 	// create HTTP / UDP servers
 	svr = factory.From(conf)
@@ -39,11 +43,4 @@ func Run() {
 		log.Fatalf("error starting HTTP server: %v", err)
 		os.Exit(1)
 	}
-}
-
-func splitFallback(s string) []string {
-	if len(s) > 14 {
-		return strings.Split(s, ",")
-	}
-	return []string{s}
 }

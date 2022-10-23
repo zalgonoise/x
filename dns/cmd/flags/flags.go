@@ -1,17 +1,13 @@
-package cmd
+package flags
 
 import (
-	"encoding/json"
 	"flag"
-	"io/fs"
-	"log"
-	"os"
 
 	"github.com/zalgonoise/x/dns/cmd/config"
-	"github.com/zalgonoise/x/dns/store"
-	"gopkg.in/yaml.v2"
 )
 
+// ParseFlags will read the input OS environment variables, CLI flags, and config file
+// to generate and return a config.Config
 func ParseFlags() *config.Config {
 	var conf = config.Default()
 	var getFlags = true
@@ -72,88 +68,4 @@ func ParseFlags() *config.Config {
 	}
 
 	return config.Merge(conf, osFlags)
-}
-
-func writeConfig(conf *config.Config, path string) {
-	var (
-		conv string
-		b    []byte
-		err  error
-	)
-
-	switch conf.Type {
-	case "json":
-		conv = conf.Type
-		b, err = json.Marshal(conf)
-	case "yaml":
-		conv = conf.Type
-		b, err = yaml.Marshal(conf)
-	default:
-		conf.Type = "yaml"
-		b, err = yaml.Marshal(conf)
-	}
-
-	if err != nil {
-		log.Printf("failed to encode config as %s: %v", conv, err)
-		return
-	}
-
-	err = os.WriteFile(path, b, fs.FileMode(store.OS_ALL_RW))
-	if err != nil {
-		log.Printf("failed to write new config file in %s: %v", path, err)
-		return
-	}
-}
-
-func readConfig(path string, conf *config.Config) (*config.Config, bool) {
-	var (
-		ctype string
-		jerr  error
-		yerr  error
-	)
-	_, err := os.Stat(path)
-	if err != nil {
-		f, err := os.Create(path)
-		if err != nil {
-			log.Printf("failed to stat config file in %s: %v", path, err)
-			return conf, true
-		}
-		err = f.Sync()
-		if err != nil {
-			log.Printf("failed to save file to disk in %s: %v", path, err)
-			return conf, true
-		}
-	}
-	conf.Path = path
-
-	b, err := os.ReadFile(path)
-	if err != nil {
-		log.Printf("failed to read config file in %s: %v", path, err)
-		return conf, true
-	}
-	if len(b) == 0 {
-		return conf, true
-	}
-
-	jerr = json.Unmarshal(b, conf)
-	switch jerr {
-	case nil:
-		ctype = "json"
-	default:
-		yerr = yaml.Unmarshal(b, conf)
-	}
-
-	if jerr != nil && yerr != nil {
-		log.Printf(
-			"failed to parse file content: JSON: %v ; YAML: %v", jerr, yerr,
-		)
-		return conf, true
-	}
-
-	if ctype == "" {
-		ctype = "yaml"
-	}
-
-	conf.Type = ctype
-	return conf, false
 }

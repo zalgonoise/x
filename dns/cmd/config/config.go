@@ -1,7 +1,9 @@
 package config
 
-import "os"
-
+// Config structures the setup of the DNS app, according to the caller's needs
+//
+// This information can also be stored and loaded in a file for quicker access in
+// future executions
 type Config struct {
 	DNS       *DNSConfig       `json:"dns,omitempty" yaml:"dns,omitempty"`
 	Store     *StoreConfig     `json:"store,omitempty" yaml:"store,omitempty"`
@@ -13,59 +15,43 @@ type Config struct {
 	Path      string           `json:"path,omitempty" yaml:"path,omitempty"`
 }
 
-func ConfigType(t string) ConfigOption {
-	switch t {
-	case "json", "yaml":
-		return &configType{
-			t: t,
-		}
-	default:
-		return &configType{
-			t: "yaml",
-		}
-	}
-}
-
-func ConfigPath(p string) ConfigOption {
-	_, err := os.Stat(p)
-	if err != nil {
-		return nil
-	}
-	return &configPath{
-		p: p,
-	}
-}
-
-type configType struct {
-	t string
-}
-
-type configPath struct {
-	p string
-}
-
-func (l *configType) Apply(c *Config) {
-	c.Type = l.t
-}
-
-func (l *configPath) Apply(c *Config) {
-	c.Path = l.p
-}
-
+// ConfigOption describes setter types for a Config
+//
+// As new options / elements are added to the Config, new data structures can
+// implement the ConfigOption interface to allow setting these options in the Config
 type ConfigOption interface {
 	Apply(*Config)
 }
 
+// New initializes a new config with default settings, and then iterates through
+// all input ConfigOption `opts` applying them to the Config, which is returned
+// to the caller
+func New(opts ...ConfigOption) *Config {
+	conf := Default()
+
+	for _, opt := range opts {
+		if opt != nil {
+			opt.Apply(conf)
+		}
+	}
+
+	return conf
+}
+
+// Apply implements the ConfigOption interface
+//
+// It allows applying new options on top of an already existing config
 func (c *Config) Apply(opts ...ConfigOption) *Config {
 	for _, opt := range opts {
 		if opt != nil {
 			opt.Apply(c)
 		}
 	}
-
 	return c
 }
 
+// Default returns a pointer to a Config, initialized with sane defaults
+// and ready for automatic start-up
 func Default() *Config {
 	return &Config{
 		DNS: &DNSConfig{
@@ -90,18 +76,11 @@ func Default() *Config {
 	}
 }
 
-func New(opts ...ConfigOption) *Config {
-	conf := Default()
-
-	for _, opt := range opts {
-		if opt != nil {
-			opt.Apply(conf)
-		}
-	}
-
-	return conf
-}
-
+// Merge combines Configs `main` with `input`, returning a merged version
+// of the two
+//
+// All set elements in `input` will be applied to `main`, and the unset elements
+// will be ignored (keeps `main`'s data)
 func Merge(main, input *Config) *Config {
 	// DNS
 	if input.DNS.Type != "" {

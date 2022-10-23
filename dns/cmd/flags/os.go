@@ -1,33 +1,15 @@
-package cmd
+package flags
 
 import (
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/zalgonoise/x/dns/cmd/config"
 )
 
-func intFromEnv(s string) int {
-	val := os.Getenv(s)
-	if val == "" {
-		return 0
-	}
-	n, err := strconv.Atoi(s)
-	if err != nil {
-		return 0
-	}
-	return n
-}
-
-func boolFromEnv(s string) bool {
-	val := os.Getenv(s)
-	return val != "" &&
-		val != "0" &&
-		strings.ToLower(val) != "false" &&
-		strings.ToLower(val) != "no"
-}
-
+// ParseOSEnv reads the contents of a number of target environment variables
+// to create a new config from.
+//
+// Any unset variables will be left unset in the output config.Config
 func ParseOSEnv() *config.Config {
 	return &config.Config{
 		DNS: &config.DNSConfig{
