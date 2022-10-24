@@ -15,10 +15,10 @@ func (m *MemoryStore) Create(ctx context.Context, rs ...*store.Record) error {
 	defer m.mtx.Unlock()
 
 	for _, r := range rs {
-		if _, ok := m.Records[r.Name]; !ok {
-			m.Records[r.Name] = map[string]string{}
+		if _, ok := m.Records[r.Type]; !ok {
+			m.Records[r.Type] = map[string]string{}
 		}
-		m.Records[r.Name][r.Type] = r.Addr
+		m.Records[r.Type][r.Name] = r.Addr
 	}
 	return nil
 }
@@ -33,8 +33,8 @@ func (m *MemoryStore) List(ctx context.Context) ([]*store.Record, error) {
 
 	var output []*store.Record
 
-	for domain, r := range m.Records {
-		for rtype, addr := range r {
+	for rtype, r := range m.Records {
+		for domain, addr := range r {
 			output = append(
 				output,
 				store.New().
@@ -58,10 +58,10 @@ func (m *MemoryStore) FilterByDomain(ctx context.Context, r *store.Record) (*sto
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	if _, ok := m.Records[r.Name]; !ok {
+	if _, ok := m.Records[r.Type]; !ok {
 		return nil, store.ErrDoesNotExist
 	}
-	dest := m.Records[r.Name][r.Type]
+	dest := m.Records[r.Type][r.Name]
 	if dest == "" {
 		return nil, store.ErrDoesNotExist
 	}
@@ -86,8 +86,8 @@ func (m *MemoryStore) FilterByDest(ctx context.Context, r *store.Record) ([]*sto
 
 	var output []*store.Record
 
-	for domain, rmap := range m.Records {
-		for rtype, ipAddr := range rmap {
+	for rtype, domains := range m.Records {
+		for domain, ipAddr := range domains {
 			if ipAddr == r.Addr {
 				output = append(
 					output,
@@ -116,13 +116,13 @@ func (m *MemoryStore) Update(ctx context.Context, domain string, r *store.Record
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	if _, ok := m.Records[domain]; !ok {
+	if _, ok := m.Records[r.Type]; !ok {
 		return store.ErrDoesNotExist
 	}
-	if _, ok := m.Records[domain][r.Type]; !ok {
+	if _, ok := m.Records[r.Type][domain]; !ok {
 		return store.ErrDoesNotExist
 	}
-	m.Records[domain][r.Type] = r.Addr
+	m.Records[r.Type][domain] = r.Addr
 	return nil
 }
 

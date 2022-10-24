@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 
 		err := os.WriteFile(
 			target,
-			[]byte(`{"records":[{"address":"192.168.0.10","types":[{"type":"A","domains":["not.a.dom.ain"]}]}]}`),
+			[]byte(`{"types":[{"type":"A","records":[{"address":"192.168.0.10","domains":["not.a.dom.ain"]}]}]}`),
 			os.FileMode(store.OS_ALL_RW),
 		)
 		if err != nil {
@@ -83,10 +83,10 @@ func TestNew(t *testing.T) {
 		err := os.WriteFile(
 			target,
 			[]byte(`
-records:
-- address: 192.168.0.10
-  types:
-  - type: A
+types:
+- type: A
+  records:
+  - address: 192.168.0.10
     domains:
     - not.a.dom.ain`),
 			os.FileMode(store.OS_ALL_RW),

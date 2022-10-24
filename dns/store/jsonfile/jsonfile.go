@@ -26,19 +26,19 @@ type FileStore struct {
 
 // Store holds a set of (DNS) Records
 type Store struct {
-	Records []*Record `json:"records,omitempty" yaml:"records,omitempty"`
+	Types []*Type `json:"types,omitempty" yaml:"types,omitempty"`
 }
 
 // Record is labeled by an IP address and contains a slice of (pointers to) Types
 type Record struct {
-	Address string  `json:"address,omitempty" yaml:"address,omitempty"`
-	Types   []*Type `json:"types,omitempty"   yaml:"types,omitempty"`
+	Address string   `json:"address,omitempty" yaml:"address,omitempty"`
+	Domains []string `json:"domains,omitempty"   yaml:"domains,omitempty"`
 }
 
 // Type is labeled by a DNS record type and contains a slice of Domains
 type Type struct {
-	RType   string   `json:"type,omitempty"    yaml:"type,omitempty"`
-	Domains []string `json:"domains,omitempty" yaml:"domains,omitempty"`
+	RType   string    `json:"type,omitempty"    yaml:"type,omitempty"`
+	Records []*Record `json:"records,omitempty" yaml:"records,omitempty"`
 }
 
 // New returns a new JSON FileStore as a store.Repository

@@ -13,11 +13,11 @@ import (
 func toEntity(s *Store) []*store.Record {
 	var out []*store.Record
 
-	for _, record := range s.Records {
-		addr := record.Address
-		for _, recordType := range record.Types {
-			rtype := recordType.RType
-			for _, domain := range recordType.Domains {
+	for _, recordType := range s.Types {
+		rtype := recordType.RType
+		for _, record := range recordType.Records {
+			addr := record.Address
+			for _, domain := range record.Domains {
 				out = append(out, store.New().
 					Name(domain).
 					Type(rtype).
@@ -35,31 +35,31 @@ func fromEntity(rs ...*store.Record) *Store {
 
 inputLoop:
 	for _, r := range rs {
-		for _, record := range out.Records {
-			if record.Address == r.Addr {
-				for _, recordTypes := range record.Types {
-					if recordTypes.RType == r.Type {
-						for _, domain := range recordTypes.Domains {
+		for _, recordType := range out.Types {
+			if recordType.RType == r.Type {
+				for _, record := range recordType.Records {
+					if record.Address == r.Addr {
+						for _, domain := range record.Domains {
 							if domain == r.Name {
 								continue inputLoop
 							}
 						}
-						recordTypes.Domains = append(recordTypes.Domains, r.Name)
+						record.Domains = append(record.Domains, r.Name)
 						continue inputLoop
 					}
 				}
-				record.Types = append(record.Types, &Type{
-					RType:   r.Type,
+				recordType.Records = append(recordType.Records, &Record{
+					Address: r.Addr,
 					Domains: []string{r.Name},
 				})
 				continue inputLoop
 			}
 		}
-		out.Records = append(out.Records, &Record{
-			Address: r.Addr,
-			Types: []*Type{
+		out.Types = append(out.Types, &Type{
+			RType: r.Type,
+			Records: []*Record{
 				{
-					RType:   r.Type,
+					Address: r.Addr,
 					Domains: []string{r.Name},
 				},
 			},

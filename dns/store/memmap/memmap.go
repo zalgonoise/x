@@ -9,7 +9,7 @@ import (
 // MemoryStore is an in-memory implementation of a DNS record store
 //
 // It uses simple Go maps to represent a relationship of
-// domain-to-record-type-to-IP as a map[string]map[string]string.
+// record-type-to-domain-to-IP as a map[string]map[string]string.
 //
 // This direction is so that DNS queries can be answered faster, while the remaining
 // operations are not as important.

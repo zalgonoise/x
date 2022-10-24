@@ -26,11 +26,11 @@ func TestCreate(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		records, ok := s.(*MemoryStore).Records[test1.Name]
+		records, ok := s.(*MemoryStore).Records[test1.Type]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but domain is not assigned", test1)
 		}
-		addr, ok := records[test1.Type]
+		addr, ok := records[test1.Name]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but record type is not assigned", test1)
 		}
@@ -47,11 +47,11 @@ func TestCreate(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		records, ok := s.(*MemoryStore).Records[test1.Name]
+		records, ok := s.(*MemoryStore).Records[test1.Type]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but domain is not assigned", test1)
 		}
-		addr, ok := records[test1.Type]
+		addr, ok := records[test1.Name]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but record type is not assigned", test1)
 		}
@@ -59,11 +59,11 @@ func TestCreate(t *testing.T) {
 			t.Errorf("stored address %s is incompatible with %v", addr, test1)
 		}
 
-		records, ok = s.(*MemoryStore).Records[test2.Name]
+		records, ok = s.(*MemoryStore).Records[test2.Type]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but domain is not assigned", test2)
 		}
-		addr, ok = records[test2.Type]
+		addr, ok = records[test2.Name]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but record type is not assigned", test2)
 		}
@@ -193,14 +193,14 @@ func TestFilterByDest(t *testing.T) {
 		for idx, record := range rs {
 			var passes bool
 			for _, want := range wants {
-				if reflect.DeepEqual(want, record) {
+				if reflect.DeepEqual(*want, *record) {
 					passes = true
 					break
 				}
 			}
 
 			if !passes {
-				t.Errorf("output mismatch error: record #%v doesn't match any of %v: record: %v", idx, wants, record)
+				t.Errorf("output mismatch error: record #%v doesn't match any of [%v %v]: record: %v", idx, wants[0], wants[1], *record)
 			}
 		}
 	})
@@ -222,11 +222,11 @@ func TestUpdate(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		records, ok := s.(*MemoryStore).Records[updated.Name]
+		records, ok := s.(*MemoryStore).Records[updated.Type]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but domain is not assigned", updated)
 		}
-		addr, ok := records[updated.Type]
+		addr, ok := records[updated.Name]
 		if !ok {
 			t.Errorf("expected entry for %v to be present in the store, but record type is not assigned", updated)
 		}
