@@ -135,18 +135,21 @@ func (s *LoggedService) ListRecords(ctx context.Context) ([]*store.Record, error
 
 // GetRecordByDomain uses the store.Repository to return the DNS Record associated with
 // the domain name and record type found in store.Record `r`
-func (s *LoggedService) GetRecordByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
+func (s *LoggedService) GetRecordByTypeAndDomain(ctx context.Context, rtype, domain string) (*store.Record, error) {
 	s.logger.Log(event.New().
 		Level(event.Level_debug).
 		Prefix("service").
 		Sub("records").
 		Message("GetRecordByDomain request").
 		Metadata(event.Field{
-			"input": r,
+			"input": map[string]string{
+				"type":   rtype,
+				"domain": domain,
+			},
 		}).
 		Build())
 
-	out, err := s.svc.GetRecordByDomain(ctx, r)
+	out, err := s.svc.GetRecordByTypeAndDomain(ctx, rtype, domain)
 	if err != nil {
 		s.logger.Log(event.New().
 			Level(event.Level_warn).

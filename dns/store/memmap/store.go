@@ -54,20 +54,19 @@ func (m *MemoryStore) List(ctx context.Context) ([]*store.Record, error) {
 // registered to the input store.Record's domain name and record type.
 //
 // It also returns an error in case the record does not exist
-func (m *MemoryStore) FilterByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
+func (m *MemoryStore) FilterByTypeAndDomain(ctx context.Context, rtype, domain string) (*store.Record, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
-	if _, ok := m.Records[r.Type]; !ok {
+	if _, ok := m.Records[rtype]; !ok {
 		return nil, store.ErrDoesNotExist
 	}
-	dest := m.Records[r.Type][r.Name]
+	dest := m.Records[rtype][domain]
 	if dest == "" {
 		return nil, store.ErrDoesNotExist
 	}
 
-	r.Addr = dest
-	return r, nil
+	return store.New().Type(rtype).Name(domain).Addr(dest).Build(), nil
 }
 
 // FilterByDest implements the store.Repository interface
@@ -80,7 +79,7 @@ func (m *MemoryStore) FilterByDomain(ctx context.Context, r *store.Record) (*sto
 //
 // It also returns an error in case the operation fails (which is currently not
 // a scenario)
-func (m *MemoryStore) FilterByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
+func (m *MemoryStore) FilterByDest(ctx context.Context, addr string) ([]*store.Record, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 
@@ -88,13 +87,13 @@ func (m *MemoryStore) FilterByDest(ctx context.Context, r *store.Record) ([]*sto
 
 	for rtype, domains := range m.Records {
 		for domain, ipAddr := range domains {
-			if ipAddr == r.Addr {
+			if ipAddr == addr {
 				output = append(
 					output,
 					store.New().
 						Type(rtype).
 						Name(domain).
-						Addr(r.Addr).
+						Addr(addr).
 						Build(),
 				)
 			}

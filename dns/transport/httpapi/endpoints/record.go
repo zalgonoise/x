@@ -64,7 +64,7 @@ func (e *endpoints) AddRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, err := e.s.GetRecordByDomain(ctx, record)
+	out, err := e.s.GetRecordByTypeAndDomain(ctx, record.Type, record.Name)
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := json.Marshal(StoreResponse{
@@ -140,7 +140,7 @@ func (e *endpoints) GetRecordByDomain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, err := e.s.GetRecordByDomain(ctx, record)
+	out, err := e.s.GetRecordByTypeAndDomain(ctx, record.Type, record.Name)
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := json.Marshal(StoreResponse{
@@ -253,7 +253,7 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(response)
 		return
 	}
-	out, err := e.s.GetRecordByDomain(ctx, record)
+	out, err := e.s.GetRecordByTypeAndDomain(ctx, record.Type, record.Name)
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := json.Marshal(StoreResponse{

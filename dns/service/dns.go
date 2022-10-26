@@ -11,7 +11,7 @@ import (
 // in store.Record `r`
 func (s *service) AnswerDNS(r *store.Record, m *dnsr.Msg) {
 	ctx := context.Background()
-	answer, err := s.store.FilterByDomain(ctx, r)
+	answer, err := s.store.FilterByTypeAndDomain(ctx, r.Type, r.Name)
 	if err != nil || answer.Addr == "" {
 		s.dns.Fallback(r, m)
 		return

@@ -40,8 +40,8 @@ func (f *FileStore) List(ctx context.Context) ([]*store.Record, error) {
 // FilterByDomain implements the store.Repository interface
 //
 // It will call the in-memory store's method of the same signature
-func (f *FileStore) FilterByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
-	r, err := f.store.FilterByDomain(ctx, r)
+func (f *FileStore) FilterByTypeAndDomain(ctx context.Context, rtype, domain string) (*store.Record, error) {
+	r, err := f.store.FilterByTypeAndDomain(ctx, rtype, domain)
 	if err != nil {
 		return r, fmt.Errorf("failed to get record by domain: %w", err)
 	}
@@ -51,8 +51,8 @@ func (f *FileStore) FilterByDomain(ctx context.Context, r *store.Record) (*store
 // FilterByDest implements the store.Repository interface
 //
 // It will call the in-memory store's method of the same signature
-func (f *FileStore) FilterByDest(ctx context.Context, r *store.Record) ([]*store.Record, error) {
-	rs, err := f.store.FilterByDest(ctx, r)
+func (f *FileStore) FilterByDest(ctx context.Context, addr string) ([]*store.Record, error) {
+	rs, err := f.store.FilterByDest(ctx, addr)
 	if err != nil {
 		return rs, fmt.Errorf("failed to get record by address: %w", err)
 	}

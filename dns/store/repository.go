@@ -20,12 +20,12 @@ type Repository interface {
 	// FilterByDomain will fetch an address based on its address string
 	//
 	// FilterByDomain(ctx, "service.mydomain") -> { "127.0.0.1", nil }
-	FilterByDomain(context.Context, *Record) (*Record, error)
+	FilterByTypeAndDomain(context.Context, string, string) (*Record, error)
 
 	// FilterByDest will fetch an address based on its target IP
 	//
 	// FilterByDest(ctx, "127.0.0.1") -> { ["service.mydomain"], nil }
-	FilterByDest(context.Context, *Record) ([]*Record, error)
+	FilterByDest(context.Context, string) ([]*Record, error)
 
 	// Update will modify an existing record by targetting its domain string,
 	// and by supplying a new version of the Record to update. Returns an error

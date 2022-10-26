@@ -16,7 +16,7 @@ import (
 //
 // It also has a sync.RWMutex to ensure that data races do not occur
 type MemoryStore struct {
-	// maps a set of domain names to record types to IPs
+	// maps a set of record types to domain names to IPs
 	Records map[string]map[string]string
 	mtx     sync.RWMutex
 }

@@ -44,15 +44,15 @@ func (s *service) ListRecords(ctx context.Context) ([]*store.Record, error) {
 //
 // Returns a NoName error if no domain name is provided
 // Returns a NoType if no record type is provided
-func (s *service) GetRecordByDomain(ctx context.Context, r *store.Record) (*store.Record, error) {
-	if r.Name == "" {
+func (s *service) GetRecordByTypeAndDomain(ctx context.Context, rtype, domain string) (*store.Record, error) {
+	if domain == "" {
 		return nil, ErrNoName
 	}
-	if r.Type == "" {
+	if rtype == "" {
 		return nil, ErrNoType
 	}
 
-	r, err := s.store.FilterByDomain(ctx, r)
+	r, err := s.store.FilterByTypeAndDomain(ctx, rtype, rtype)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't fetch target record: %w", err)
 	}
@@ -68,7 +68,7 @@ func (s *service) GetRecordByAddress(ctx context.Context, ip string) ([]*store.R
 		return nil, ErrNoAddr
 	}
 
-	rs, err := s.store.FilterByDest(ctx, store.New().Addr(ip).Build())
+	rs, err := s.store.FilterByDest(ctx, ip)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't fetch target records: %w", err)
 	}
@@ -84,13 +84,16 @@ func (s *service) GetRecordByAddress(ctx context.Context, ip string) ([]*store.R
 // Returns a NoAddr error if no IP address is provided
 func (s *service) UpdateRecord(ctx context.Context, domain string, r *store.Record) error {
 	if domain == "" {
-		return ErrNoAddr
+		return store.ErrNoName
+	}
+	if r.Type == "" {
+		return store.ErrNoType
 	}
 	// if record is nil or empty, request is parsed as a delete operation
 	if r == nil || reflect.DeepEqual(r, &store.Record{}) {
 		return s.store.Delete(ctx, &store.Record{Name: domain})
 	}
-	r, err := s.store.FilterByDomain(ctx, r)
+	r, err := s.store.FilterByTypeAndDomain(ctx, r.Type, r.Name)
 	if err != nil && errors.Is(err, store.ErrDoesNotExist) {
 		return fmt.Errorf("couldn't find target record: %w", err)
 	}

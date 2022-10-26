@@ -119,9 +119,7 @@ func TestFilterByDomain(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		query := store.New().Name(test2.Name).Type(test2.Type).Build()
-
-		r, err := s.FilterByDomain(ctx, query)
+		r, err := s.FilterByTypeAndDomain(ctx, test2.Type, test2.Name)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -143,9 +141,7 @@ func TestFilterByDomain(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		query := store.New().Name(test2.Name).Type(test2.Type).Build()
-
-		_, err = s.FilterByDomain(ctx, query)
+		_, err = s.FilterByTypeAndDomain(ctx, test2.Type, test2.Name)
 		if !errors.Is(store.ErrDoesNotExist, err) {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -159,9 +155,7 @@ func TestFilterByDomain(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		query := store.New().Name(test2.Name).Type(test2.Type).Build()
-
-		_, err = s.FilterByDomain(ctx, query)
+		_, err = s.FilterByTypeAndDomain(ctx, test2.Type, test2.Name)
 		if !errors.Is(store.ErrDoesNotExist, err) {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -179,9 +173,7 @@ func TestFilterByDest(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		query := store.New().Addr(test2.Addr).Build()
-
-		rs, err := s.FilterByDest(ctx, query)
+		rs, err := s.FilterByDest(ctx, test2.Addr)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}

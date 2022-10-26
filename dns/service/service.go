@@ -41,7 +41,7 @@ type StoreService interface {
 	ListRecords(ctx context.Context) ([]*store.Record, error)
 	// GetRecordByDomain uses the store.Repository to return the DNS Record associated with
 	// the domain name and record type found in store.Record `r`
-	GetRecordByDomain(ctx context.Context, r *store.Record) (*store.Record, error)
+	GetRecordByTypeAndDomain(ctx context.Context, rtype, domain string) (*store.Record, error)
 	// GetRecordByDomain uses the store.Repository to return the DNS Records associated with
 	// the IP address found in store.Record `r`
 	GetRecordByAddress(ctx context.Context, address string) ([]*store.Record, error)
@@ -84,7 +84,7 @@ type StoreWithHealth interface {
 //
 //	granular scope of which operations can a certain module access
 type Answering interface {
-	GetRecordByDomain(context.Context, *store.Record) (*store.Record, error)
+	GetRecordByTypeAndDomain(context.Context, string, string) (*store.Record, error)
 	AnswerDNS(*store.Record, *dnsr.Msg)
 }
 
