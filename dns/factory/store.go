@@ -2,9 +2,8 @@ package factory
 
 import (
 	"github.com/zalgonoise/x/dns/store"
-	"github.com/zalgonoise/x/dns/store/jsonfile"
+	"github.com/zalgonoise/x/dns/store/file"
 	"github.com/zalgonoise/x/dns/store/memmap"
-	"github.com/zalgonoise/x/dns/store/yamlfile"
 )
 
 func StoreRepository(rtype string, path string) store.Repository {
@@ -14,9 +13,9 @@ func StoreRepository(rtype string, path string) store.Repository {
 	case "memmap", "memory", "in-memory":
 		storeRepo = memmap.New()
 	case "jsonfile", "json":
-		storeRepo = jsonfile.New(path)
+		storeRepo = file.New("json", path)
 	case "yamlfile", "yaml":
-		storeRepo = yamlfile.New(path)
+		storeRepo = file.New("yaml", path)
 	default:
 		storeRepo = memmap.New()
 	}

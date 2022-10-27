@@ -1,4 +1,4 @@
-package jsonfile
+package file
 
 import (
 	"context"
@@ -17,9 +17,9 @@ var (
 )
 
 func TestCreate(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run("SuccessJSON", func(t *testing.T) {
 		ctx := context.Background()
-		s := New(target)
+		s := New("json", target)
 		wants := `{"types":[{"type":"A","records":[{"address":"192.168.0.10","domains":["not.a.dom.ain"]}]}]}`
 
 		err := s.Create(ctx, test1)

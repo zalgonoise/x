@@ -1,4 +1,4 @@
-package jsonfile
+package file
 
 import (
 	"context"
@@ -18,9 +18,9 @@ func rm(t *testing.T) {
 	}
 }
 
-func TestNew(t *testing.T) {
+func TestNewJSON(t *testing.T) {
 	t.Run("SuccessNonExistingList", func(t *testing.T) {
-		repo := New(target)
+		repo := New("json", target)
 		if repo == nil {
 			t.Errorf("repository was unexpectedly nil")
 		}
@@ -37,7 +37,7 @@ func TestNew(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		repo := New(target)
+		repo := New("json", target)
 		if repo == nil {
 			t.Errorf("repository was unexpectedly nil")
 		}
@@ -57,7 +57,7 @@ func TestNew(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		repo := New(target)
+		repo := New("json", target)
 		if repo == nil {
 			t.Errorf("repository was unexpectedly nil")
 		}
@@ -95,7 +95,7 @@ types:
 			t.Errorf("unexpected error: %v", err)
 		}
 
-		repo := New(target)
+		repo := New("json", target)
 		if repo == nil {
 			t.Errorf("repository was unexpectedly nil")
 		}

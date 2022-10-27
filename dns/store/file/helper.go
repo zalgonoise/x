@@ -1,4 +1,4 @@
-package yamlfile
+package file
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/go-yaml/yaml"
 	"github.com/zalgonoise/x/dns/store"
 )
 
@@ -75,7 +74,7 @@ func (f *FileStore) sync() error {
 	if err != nil {
 		return fmt.Errorf("%w: failed to list store records: %v", store.ErrSync, err)
 	}
-	b, err := yaml.Marshal(fromEntity(rs...))
+	b, err := f.enc.Encode(fromEntity(rs...))
 	if err != nil {
 		return fmt.Errorf("%w: failed to marshal store records to JSON: %v", store.ErrSync, err)
 	}

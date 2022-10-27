@@ -1,4 +1,4 @@
-package jsonfile
+package file
 
 import (
 	"context"
