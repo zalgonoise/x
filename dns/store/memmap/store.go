@@ -114,6 +114,7 @@ func (m *MemoryStore) FilterByDest(ctx context.Context, addr string) ([]*store.R
 func (m *MemoryStore) Update(ctx context.Context, domain string, r *store.Record) error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
+	isSameDomain := domain == r.Name
 
 	if _, ok := m.Records[r.Type]; !ok {
 		return store.ErrDoesNotExist
@@ -121,7 +122,10 @@ func (m *MemoryStore) Update(ctx context.Context, domain string, r *store.Record
 	if _, ok := m.Records[r.Type][domain]; !ok {
 		return store.ErrDoesNotExist
 	}
-	m.Records[r.Type][domain] = r.Addr
+	if !isSameDomain {
+		delete(m.Records[r.Type], domain)
+	}
+	m.Records[r.Type][r.Name] = r.Addr
 	return nil
 }
 
