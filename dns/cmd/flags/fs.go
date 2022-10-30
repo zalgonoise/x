@@ -8,7 +8,7 @@ import (
 
 	"github.com/zalgonoise/x/dns/cmd/config"
 	"github.com/zalgonoise/x/dns/store"
-	"github.com/zalgonoise/x/dns/store/file"
+	"github.com/zalgonoise/x/dns/store/encoder"
 )
 
 // writeConfig writes config.Config `conf` to file in path `path`, according to `conf`'s Type
@@ -22,7 +22,7 @@ func writeConfig(conf *config.Config, path string) {
 	if conf.Type == "" {
 		conf.Type = "yaml"
 	}
-	enc := file.NewEncoder(conf.Type)
+	enc := encoder.New(conf.Type)
 	b, err = enc.Encode(conf)
 
 	if err != nil {
@@ -89,8 +89,8 @@ func decodeBuffer(b []byte, rec interface{}) (etype string, err error) {
 	var (
 		jerr error
 		yerr error
-		jenc = file.NewEncoder("json")
-		yenc = file.NewEncoder("yaml")
+		jenc = encoder.New("json")
+		yenc = encoder.New("yaml")
 	)
 
 	jerr = jenc.Decode(b, rec)

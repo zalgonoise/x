@@ -6,8 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	json "github.com/goccy/go-json"
-
 	"github.com/zalgonoise/x/dns/store"
 )
 
@@ -31,7 +29,7 @@ func (e *endpoints) AddRecord(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidBody.Error(),
 			Error:   err.Error(),
@@ -41,10 +39,10 @@ func (e *endpoints) AddRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	record := &store.Record{}
-	err = json.Unmarshal(b, record)
+	err = e.enc.Decode(b, record)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidJSON.Error(),
 			Error:   err.Error(),
@@ -56,7 +54,7 @@ func (e *endpoints) AddRecord(w http.ResponseWriter, r *http.Request) {
 	err = e.s.AddRecord(ctx, record)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -68,7 +66,7 @@ func (e *endpoints) AddRecord(w http.ResponseWriter, r *http.Request) {
 	out, err := e.s.GetRecordByTypeAndDomain(ctx, record.Type, record.Name)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: true,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -78,7 +76,7 @@ func (e *endpoints) AddRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(200)
-	response, _ := json.Marshal(StoreResponse{
+	response, _ := e.enc.Encode(StoreResponse{
 		Success: true,
 		Message: "added record successfully",
 		Record:  out,
@@ -91,7 +89,7 @@ func (e *endpoints) ListRecords(w http.ResponseWriter, r *http.Request) {
 	records, err := e.s.ListRecords(ctx)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -106,7 +104,7 @@ func (e *endpoints) ListRecords(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(200)
-	response, _ := json.Marshal(StoreResponse{
+	response, _ := e.enc.Encode(StoreResponse{
 		Success: true,
 		Message: "listing all records",
 		Records: &out,
@@ -119,7 +117,7 @@ func (e *endpoints) GetRecordByDomain(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidBody.Error(),
 			Error:   err.Error(),
@@ -129,10 +127,10 @@ func (e *endpoints) GetRecordByDomain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	record := &store.Record{}
-	err = json.Unmarshal(b, record)
+	err = e.enc.Decode(b, record)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidJSON.Error(),
 			Error:   err.Error(),
@@ -144,7 +142,7 @@ func (e *endpoints) GetRecordByDomain(w http.ResponseWriter, r *http.Request) {
 	out, err := e.s.GetRecordByTypeAndDomain(ctx, record.Type, record.Name)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: true,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -154,7 +152,7 @@ func (e *endpoints) GetRecordByDomain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(200)
-	response, _ := json.Marshal(StoreResponse{
+	response, _ := e.enc.Encode(StoreResponse{
 		Success: true,
 		Message: "fetched record for domain " + record.Name,
 		Record:  out,
@@ -168,7 +166,7 @@ func (e *endpoints) GetRecordByAddress(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidBody.Error(),
 			Error:   err.Error(),
@@ -178,10 +176,10 @@ func (e *endpoints) GetRecordByAddress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	record := &store.Record{}
-	err = json.Unmarshal(b, record)
+	err = e.enc.Decode(b, record)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidJSON.Error(),
 			Error:   err.Error(),
@@ -193,7 +191,7 @@ func (e *endpoints) GetRecordByAddress(w http.ResponseWriter, r *http.Request) {
 	records, err := e.s.GetRecordByAddress(ctx, record.Addr)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: true,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -208,7 +206,7 @@ func (e *endpoints) GetRecordByAddress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(200)
-	response, _ := json.Marshal(StoreResponse{
+	response, _ := e.enc.Encode(StoreResponse{
 		Success: true,
 		Message: "listing all records for IP address " + record.Addr,
 		Records: &out,
@@ -221,7 +219,7 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidBody.Error(),
 			Error:   err.Error(),
@@ -231,10 +229,10 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	record := &store.Record{}
-	err = json.Unmarshal(b, record)
+	err = e.enc.Decode(b, record)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidJSON.Error(),
 			Error:   err.Error(),
@@ -246,7 +244,7 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 	err = e.s.UpdateRecord(ctx, record.Name, record)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: true,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -257,7 +255,7 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 	out, err := e.s.GetRecordByTypeAndDomain(ctx, record.Type, record.Name)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: true,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -267,7 +265,7 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(200)
-	response, _ := json.Marshal(StoreResponse{
+	response, _ := e.enc.Encode(StoreResponse{
 		Success: true,
 		Message: "updated record successfully",
 		Record:  out,
@@ -280,7 +278,7 @@ func (e *endpoints) DeleteRecord(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidBody.Error(),
 			Error:   err.Error(),
@@ -290,10 +288,10 @@ func (e *endpoints) DeleteRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	record := &store.Record{}
-	err = json.Unmarshal(b, record)
+	err = e.enc.Decode(b, record)
 	if err != nil {
 		w.WriteHeader(400)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: false,
 			Message: ErrInvalidJSON.Error(),
 			Error:   err.Error(),
@@ -305,7 +303,7 @@ func (e *endpoints) DeleteRecord(w http.ResponseWriter, r *http.Request) {
 	err = e.s.DeleteRecord(ctx, record)
 	if err != nil {
 		w.WriteHeader(500)
-		response, _ := json.Marshal(StoreResponse{
+		response, _ := e.enc.Encode(StoreResponse{
 			Success: true,
 			Message: ErrInternal.Error(),
 			Error:   err.Error(),
@@ -315,7 +313,7 @@ func (e *endpoints) DeleteRecord(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(200)
-	response, _ := json.Marshal(StoreResponse{
+	response, _ := e.enc.Encode(StoreResponse{
 		Success: true,
 		Message: "record deleted successfully",
 	})

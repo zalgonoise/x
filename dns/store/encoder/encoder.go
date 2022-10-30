@@ -1,4 +1,4 @@
-package file
+package encoder
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func NewEncoder(encoderType string) EncodeDecoder {
+func New(encoderType string) EncodeDecoder {
 	switch encoderType {
 	case "json":
 		return gojsonEnc{}

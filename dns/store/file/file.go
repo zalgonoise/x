@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/zalgonoise/x/dns/store"
+	"github.com/zalgonoise/x/dns/store/encoder"
 	"github.com/zalgonoise/x/dns/store/memmap"
 )
 
@@ -19,7 +20,7 @@ import (
 type FileStore struct {
 	Path  string `json:"path,omitempty" yaml:"path,omitempty"`
 	store store.Repository
-	enc   EncodeDecoder
+	enc   encoder.EncodeDecoder
 	mtx   sync.RWMutex
 }
 
@@ -52,8 +53,8 @@ type Type struct {
 // TODO: decide if it's better to return a naked in-memory record store and log as critical
 func New(encoderType, path string) store.Repository {
 	var (
-		mainEnc     EncodeDecoder
-		altEnc      EncodeDecoder
+		mainEnc     encoder.EncodeDecoder
+		altEnc      encoder.EncodeDecoder
 		mainEncType string
 		altEncType  string
 	)
@@ -69,8 +70,8 @@ func New(encoderType, path string) store.Repository {
 		altEncType = "json"
 	}
 
-	mainEnc = NewEncoder(mainEncType)
-	altEnc = NewEncoder(altEncType)
+	mainEnc = encoder.New(mainEncType)
+	altEnc = encoder.New(altEncType)
 
 	mstore := memmap.New()
 	f, err := os.OpenFile(path, os.O_CREATE, os.FileMode(store.OS_ALL_RW))

@@ -3,8 +3,6 @@ package endpoints
 import (
 	"net/http"
 
-	json "github.com/goccy/go-json"
-
 	"github.com/zalgonoise/x/dns/health"
 )
 
@@ -17,7 +15,7 @@ func (e *endpoints) Health(w http.ResponseWriter, r *http.Request) {
 	out := e.s.Health()
 
 	w.WriteHeader(200)
-	response, _ := json.Marshal(HealthResponse{
+	response, _ := e.enc.Encode(HealthResponse{
 		Message: "status and health report",
 		Report:  out,
 	})
