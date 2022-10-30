@@ -2,10 +2,11 @@ package endpoints
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+
+	json "github.com/goccy/go-json"
 
 	"github.com/zalgonoise/x/dns/store"
 )

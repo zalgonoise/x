@@ -70,6 +70,9 @@ func Default() *Config {
 		Logger: &LoggerConfig{
 			Type: "text",
 		},
+		Health: &HealthConfig{
+			Type: "simplehealth",
+		},
 		Autostart: &AutostartConfig{
 			DNS: true,
 		},

@@ -1,14 +1,14 @@
 package flags
 
 import (
-	"encoding/json"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
 
 	"github.com/zalgonoise/x/dns/cmd/config"
 	"github.com/zalgonoise/x/dns/store"
-	"gopkg.in/yaml.v2"
+	"github.com/zalgonoise/x/dns/store/file"
 )
 
 // writeConfig writes config.Config `conf` to file in path `path`, according to `conf`'s Type
@@ -19,17 +19,11 @@ func writeConfig(conf *config.Config, path string) {
 		err  error
 	)
 
-	switch conf.Type {
-	case "json":
-		conv = conf.Type
-		b, err = json.Marshal(conf)
-	case "yaml":
-		conv = conf.Type
-		b, err = yaml.Marshal(conf)
-	default:
+	if conf.Type == "" {
 		conf.Type = "yaml"
-		b, err = yaml.Marshal(conf)
 	}
+	enc := file.NewEncoder(conf.Type)
+	b, err = enc.Encode(conf)
 
 	if err != nil {
 		log.Printf("failed to encode config as %s: %v", conv, err)
@@ -57,11 +51,7 @@ func writeConfig(conf *config.Config, path string) {
 //
 // if the config file exists and is valid, returns the parsed config and `false`
 func readConfig(path string, conf *config.Config) (*config.Config, bool) {
-	var (
-		ctype string
-		jerr  error
-		yerr  error
-	)
+	var ()
 	_, err := os.Stat(path)
 	if err != nil {
 		f, err := os.Create(path)
@@ -86,25 +76,37 @@ func readConfig(path string, conf *config.Config) (*config.Config, bool) {
 		return conf, true
 	}
 
-	jerr = json.Unmarshal(b, conf)
-	switch jerr {
-	case nil:
-		ctype = "json"
-	default:
-		yerr = yaml.Unmarshal(b, conf)
+	etype, err := decodeBuffer(b, conf)
+	if err != nil {
+		log.Print(err)
 	}
+	conf.Type = etype
 
-	if jerr != nil && yerr != nil {
-		log.Printf(
-			"failed to parse file content: JSON: %v ; YAML: %v", jerr, yerr,
-		)
-		return conf, true
-	}
-
-	if ctype == "" {
-		ctype = "yaml"
-	}
-
-	conf.Type = ctype
 	return conf, false
+}
+
+func decodeBuffer(b []byte, rec interface{}) (etype string, err error) {
+	var (
+		jerr error
+		yerr error
+		jenc = file.NewEncoder("json")
+		yenc = file.NewEncoder("yaml")
+	)
+
+	jerr = jenc.Decode(b, rec)
+	if jerr != nil {
+		yerr = yenc.Decode(b, rec)
+		if yerr != nil {
+			err = fmt.Errorf(
+				"failed to parse file content: JSON: %v ; YAML: %v", jerr, yerr,
+			)
+			return
+		} else {
+			etype = "yaml"
+		}
+	} else {
+		etype = "json"
+	}
+
+	return
 }

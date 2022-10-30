@@ -3,13 +3,17 @@ package file
 import (
 	"encoding/json"
 
+	gojson "github.com/goccy/go-json"
+
 	"gopkg.in/yaml.v2"
 )
 
 func NewEncoder(encoderType string) EncodeDecoder {
 	switch encoderType {
 	case "json":
-		return jsonEnc{}
+		return gojsonEnc{}
+	case "stdjson":
+		return stdjsonEnc{}
 	case "yaml":
 		return yamlEnc{}
 	default:
@@ -30,13 +34,22 @@ type EncodeDecoder interface {
 	Decoder
 }
 
-type jsonEnc struct{}
+type stdjsonEnc struct{}
 
-func (jsonEnc) Encode(v any) ([]byte, error) {
+func (stdjsonEnc) Encode(v any) ([]byte, error) {
 	return json.Marshal(v)
 }
-func (jsonEnc) Decode(b []byte, v any) error {
+func (stdjsonEnc) Decode(b []byte, v any) error {
 	return json.Unmarshal(b, v)
+}
+
+type gojsonEnc struct{}
+
+func (gojsonEnc) Encode(v any) ([]byte, error) {
+	return gojson.Marshal(v)
+}
+func (gojsonEnc) Decode(b []byte, v any) error {
+	return gojson.Unmarshal(b, v)
 }
 
 type yamlEnc struct{}

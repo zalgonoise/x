@@ -52,7 +52,7 @@ func (s *service) GetRecordByTypeAndDomain(ctx context.Context, rtype, domain st
 		return nil, ErrNoType
 	}
 
-	r, err := s.store.FilterByTypeAndDomain(ctx, rtype, rtype)
+	r, err := s.store.FilterByTypeAndDomain(ctx, rtype, domain)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't fetch target record: %w", err)
 	}

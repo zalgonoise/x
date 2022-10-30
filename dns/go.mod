@@ -3,9 +3,10 @@ module github.com/zalgonoise/x/dns
 go 1.19
 
 require (
-	github.com/go-yaml/yaml v2.1.0+incompatible
+	github.com/goccy/go-json v0.9.11
 	github.com/miekg/dns v1.1.50
 	github.com/zalgonoise/zlog v0.0.0-20220923183542-660a5ed27c5a
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -21,5 +22,4 @@ require (
 	google.golang.org/grpc v1.45.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
