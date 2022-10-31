@@ -93,7 +93,7 @@ func (s *service) UpdateRecord(ctx context.Context, domain string, r *store.Reco
 	if r == nil || reflect.DeepEqual(r, &store.Record{}) {
 		return s.store.Delete(ctx, &store.Record{Name: domain})
 	}
-	r, err := s.store.FilterByTypeAndDomain(ctx, r.Type, r.Name)
+	_, err := s.store.FilterByTypeAndDomain(ctx, r.Type, domain)
 	if err != nil && errors.Is(err, store.ErrDoesNotExist) {
 		return fmt.Errorf("couldn't find target record: %w", err)
 	}
