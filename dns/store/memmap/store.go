@@ -48,7 +48,7 @@ func (m *MemoryStore) List(ctx context.Context) ([]*store.Record, error) {
 	return output, nil
 }
 
-// FilterByDomain implements the store.Repository interface
+// FilterByTypeAndDomain implements the store.Repository interface
 //
 // It will return a pointer to a store.Record if there is an IP address
 // registered to the input store.Record's domain name and record type.
