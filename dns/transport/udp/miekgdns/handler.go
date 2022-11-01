@@ -55,6 +55,11 @@ func (u *udps) parseQuery(m *dns.Msg) {
 				r.Type(store.TypeCNAME.String()).Build(),
 				m,
 			)
+		case dns.TypeANY:
+			u.answer(
+				r.Build(),
+				m,
+			)
 		}
 	}
 }

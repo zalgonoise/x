@@ -61,6 +61,7 @@ const (
 	TypeA     RecordType = 1  // A record
 	TypeCNAME RecordType = 5  // AAAA record
 	TypeAAAA  RecordType = 28 // CNAME record
+	TypeANY   RecordType = 255
 )
 
 var (
@@ -70,6 +71,7 @@ var (
 		TypeA:     1,
 		TypeCNAME: 5,
 		TypeAAAA:  28,
+		TypeANY:   255,
 	}
 	// RecordTypeKeys converts a RecordType to string
 	RecordTypeStrings = map[RecordType]string{
@@ -77,6 +79,7 @@ var (
 		TypeA:     "A",
 		TypeCNAME: "CNAME",
 		TypeAAAA:  "AAAA",
+		TypeANY:   "ANY",
 	}
 	// RecordTypeKeys converts a string to RecordType
 	RecordTypeVals = map[string]RecordType{
@@ -84,6 +87,7 @@ var (
 		"A":     TypeA,
 		"CNAME": TypeCNAME,
 		"AAAA":  TypeAAAA,
+		"ANY":   TypeANY,
 	}
 	// RecordTypeKeys converts a RecordType string to uint16
 	RecordTypeInts = map[string]uint16{
@@ -91,6 +95,7 @@ var (
 		"A":     1,
 		"CNAME": 5,
 		"AAAA":  28,
+		"ANY":   255,
 	}
 )
 

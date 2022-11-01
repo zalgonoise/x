@@ -17,10 +17,15 @@ type Repository interface {
 	// List will fetch all records in the key-value store
 	List(context.Context) ([]*Record, error)
 
-	// FilterByDomain will fetch an address based on its address string
+	// FilterByTypeAndDomain will fetch an address based on its address and type strings
 	//
-	// FilterByDomain(ctx, "service.mydomain") -> { "127.0.0.1", nil }
+	// FilterByTypeAndDomain(ctx, "A", "service.mydomain") -> { "127.0.0.1", nil }
 	FilterByTypeAndDomain(context.Context, string, string) (*Record, error)
+
+	// FilterByDomain will fetch an address based on its address for all types
+	//
+	// FilterByDomain(ctx, "service.mydomain") -> { ["127.0.0.1"], nil }
+	FilterByDomain(context.Context, string) ([]*Record, error)
 
 	// FilterByDest will fetch an address based on its target IP
 	//

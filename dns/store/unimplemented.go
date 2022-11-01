@@ -21,8 +21,13 @@ func (u unimplemented) List(ctx context.Context) ([]*Record, error) {
 	return nil, ErrUnimplemented
 }
 
-// FilterByDomain implements the store.Repository interface
+// FilterByTypeAndDomain implements the store.Repository interface
 func (u unimplemented) FilterByTypeAndDomain(ctx context.Context, rtype, domain string) (*Record, error) {
+	return nil, ErrUnimplemented
+}
+
+// FilterByDomain implements the store.Repository interface
+func (u unimplemented) FilterByDomain(ctx context.Context, domain string) ([]*Record, error) {
 	return nil, ErrUnimplemented
 }
 

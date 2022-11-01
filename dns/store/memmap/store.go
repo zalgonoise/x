@@ -69,6 +69,35 @@ func (m *MemoryStore) FilterByTypeAndDomain(ctx context.Context, rtype, domain s
 	return store.New().Type(rtype).Name(domain).Addr(dest).Build(), nil
 }
 
+// FilterByDomain implements the store.Repository interface
+//
+// It will return a list of pointers to store.Record if there records associated
+// with the input domain name, for all record types.
+//
+// It also returns an error in case the record does not exist
+func (m *MemoryStore) FilterByDomain(ctx context.Context, domain string) ([]*store.Record, error) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	var out = []*store.Record{}
+	for rtype, domains := range m.Records {
+		for name, addr := range domains {
+			if name == domain {
+				out = append(
+					out,
+					store.New().Type(rtype).Name(name).Addr(addr).Build(),
+				)
+			}
+		}
+	}
+
+	if len(out) == 0 {
+		return out, store.ErrDoesNotExist
+	}
+
+	return out, nil
+}
+
 // FilterByDest implements the store.Repository interface
 //
 // It will return a slice of pointers to store.Records if there are records
