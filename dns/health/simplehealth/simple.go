@@ -143,6 +143,8 @@ func (h *shealth) Merge(
 			httpH.Status == health.Healthy {
 			out.Status = health.Healthy
 		}
+	} else {
+		out.Status = health.Unhealthy
 	}
 
 	out.StoreReport = storeH
