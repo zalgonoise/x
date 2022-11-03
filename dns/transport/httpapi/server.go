@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	json "github.com/goccy/go-json"
+
 	"github.com/zalgonoise/x/dns/transport/httpapi/endpoints"
+	"github.com/zalgonoise/x/dns/transport/udp"
 )
 
 type Server interface {
@@ -54,8 +57,11 @@ func (s *server) Stop() error {
 		err error
 	)
 	s.ep.StopDNS(rw, &http.Request{})
+	res := &endpoints.DNSResponse{}
 
-	if rw.header != 200 {
+	_ = json.Unmarshal([]byte(rw.response), res)
+
+	if rw.header != 200 && res.Error != udp.ErrNotRunning.Error() {
 		err = fmt.Errorf("%s", rw.response)
 	}
 

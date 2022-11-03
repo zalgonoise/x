@@ -1,5 +1,12 @@
 package udp
 
+import "errors"
+
+var (
+	ErrAlreadyRunning error = errors.New("DNS server is already running")
+	ErrNotRunning     error = errors.New("DNS server is not running, yet")
+)
+
 // Server interface allows launching a UDP server
 // to use as a DNS server
 type Server interface {

@@ -1,20 +1,14 @@
 package miekgdns
 
 import (
-	"errors"
-
 	"github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/service"
 	"github.com/zalgonoise/x/dns/transport/udp"
 )
 
-var (
-	ErrAlreadyRunning error = errors.New("DNS server is already running")
-	ErrNotRunning     error = errors.New("DNS server is not running, yet")
-)
-
 // miekgdns implements the udp.Server interface
 type udps struct {
+	on   bool
 	ans  service.Answering
 	conf *udp.DNS
 	srv  *dns.Server
