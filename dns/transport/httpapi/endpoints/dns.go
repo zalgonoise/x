@@ -13,9 +13,9 @@ type DNSResponse struct {
 func (e *endpoints) StartDNS(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	go func(err error) {
+	go func() {
 		err = e.UDP.Start()
-	}(err)
+	}()
 
 	if err != nil {
 		w.WriteHeader(500)
@@ -68,9 +68,9 @@ func (e *endpoints) ReloadDNS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func(err error) {
+	go func() {
 		err = e.UDP.Start()
-	}(err)
+	}()
 
 	if err != nil {
 		w.WriteHeader(500)
