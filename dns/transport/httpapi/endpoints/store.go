@@ -228,8 +228,8 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record := &store.Record{}
-	err = e.enc.Decode(b, record)
+	rwt := &store.RecordWithTarget{}
+	err = e.enc.Decode(b, rwt)
 	if err != nil {
 		w.WriteHeader(400)
 		response, _ := e.enc.Encode(StoreResponse{
@@ -241,7 +241,7 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = e.s.UpdateRecord(ctx, record.Name, record)
+	err = e.s.UpdateRecord(ctx, rwt.Target, &rwt.Record)
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := e.enc.Encode(StoreResponse{
@@ -252,7 +252,7 @@ func (e *endpoints) UpdateRecord(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(response)
 		return
 	}
-	out, err := e.s.GetRecordByTypeAndDomain(ctx, record.Type, record.Name)
+	out, err := e.s.GetRecordByTypeAndDomain(ctx, rwt.Record.Type, rwt.Record.Name)
 	if err != nil {
 		w.WriteHeader(500)
 		response, _ := e.enc.Encode(StoreResponse{

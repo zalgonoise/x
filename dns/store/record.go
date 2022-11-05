@@ -7,6 +7,11 @@ type Record struct {
 	Addr string `json:"address,omitempty"`
 }
 
+type RecordWithTarget struct {
+	Record `json:"record,omitempty"`
+	Target string `json:"target,omitempty"`
+}
+
 // RecordBuilder is a helper struct to modularly build a store.Record
 type RecordBuilder struct {
 	t    string
