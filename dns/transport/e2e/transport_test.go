@@ -245,29 +245,28 @@ func TestTransport(t *testing.T) {
 			}
 		})
 	})
+	t.Run("Health", func(t *testing.T) {
+		b, status, err := httpReq("/health", nil)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+			return
+		}
 
-	t.Run("HTTP", func(t *testing.T) {
-		t.Run("Health", func(t *testing.T) {
-			b, status, err := httpReq("/health", nil)
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-				return
-			}
+		if status != 200 {
+			t.Errorf("unexpected status code: wanted %v ; got %v -- body: %s", 200, status, string(b))
+			return
+		}
 
-			if status != 200 {
-				t.Errorf("unexpected status code: wanted %v ; got %v -- body: %s", 200, status, string(b))
-				return
-			}
+		res := &endpoints.HealthResponse{}
+		_ = json.Unmarshal(b, res)
 
-			res := &endpoints.HealthResponse{}
-			_ = json.Unmarshal(b, res)
+		if res.Report.Status != health.Healthy {
+			t.Errorf("service status is not as expected: wanted %v ; got %v", health.Healthy, res.Report.Status)
+			return
+		}
 
-			if res.Report.Status != health.Healthy {
-				t.Errorf("service status is not as expected: wanted %v ; got %v", health.Healthy, res.Report.Status)
-				return
-			}
-
-		})
+	})
+	t.Run("Shutdown", func(t *testing.T) {
 		t.Run("Store", func(t *testing.T) {
 			t.Run("DeleteRecord", func(t *testing.T) {
 				wants := `{"success":true,"message":"record deleted successfully"}`
