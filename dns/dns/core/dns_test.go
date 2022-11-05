@@ -27,6 +27,7 @@ func TestAnswer(t *testing.T) {
 
 		if len(m.Answer) != 1 {
 			t.Errorf("unexpected answer length: wanted %v ; got %v", 1, len(m.Answer))
+			return
 		}
 		if !strings.Contains(m.Answer[0].String(), testName) {
 			t.Errorf("unexpected answer: should contain domain %s ; got %s", testName, m.Answer[0].String())
