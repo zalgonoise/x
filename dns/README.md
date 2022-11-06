@@ -211,7 +211,37 @@ _______________
 
 ## Transports
 
+The app works with two transport types, UDP for answering DNS questions and HTTP to expose certain endpoints, providing users with controls over the DNS records store, the DNS server, and health checks.
+
 ### UDP
+
+The UDP transport will listen on DNS queries, while interacting with the service, with its `service.Answering` interface.
+
+```go
+type Server interface {
+	Start() error
+	Stop() error
+	Running() bool
+}
+```
+
+While there is only one implementation of `udp.Server` with [miekg/dns](https://github.com/miekg/dns), there is *room* to expand the app with a new implementation of the server.
+
+#### Implementations
+
+##### [`miekgdns`](./transport/udp/miekgdns/server.go#L10)
+
+This implementation leverages the [`miekg/dns`](https://github.com/miekg/dns) library to serve as a DNS server. It's also configured with a `service.Answering` interface to interact with the DNS records store.
+
+```go
+type udps struct {
+	on   bool
+	ans  service.Answering
+	conf *udp.DNS
+	srv  *dns.Server
+	err  error
+}
+```
 
 ### HTTP
 
