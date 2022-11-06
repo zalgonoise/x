@@ -402,6 +402,7 @@ func (h *httpPort) Apply(c *Config) {
 Below is a list of all CLI parameters (flags) you can pass when starting the app:
 
 Flag | Type | Default | Description
+:---:|:----:|:-------:|:-----------:
 `-dns-addr` | `string` | `:53` | the address to listen to for DNS queries
 `-dns-fallback` | `string` | `` | use a secondary DNS to parse unsuccessful queries
 `-dns-prefix` | `string` | `.` | the prefix for DNS queries / answers. Usually it's a period (.) 
@@ -421,6 +422,7 @@ Flag | Type | Default | Description
 Below is a list of all OS environment variables you can set before starting the app:
 
 Variable name | Type | Description
+:------------:|:----:|:-----------:
 `DNS_ADDRESS` | `string` | the address to listen to for DNS queries
 `DNS_FALLBACK` | `string` | use a secondary DNS to parse unsuccessful queries
 `DNS_PREFIX` | `string`  | the prefix for DNS queries / answers. Usually it's a period (.) 
