@@ -21,7 +21,7 @@ import (
 	"github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/health"
 	"github.com/zalgonoise/x/dns/store"
-	"github.com/zalgonoise/x/dns/transport/httpapi/endpoints"
+	"github.com/zalgonoise/x/dns/transport/httpapi"
 )
 
 func httpReq(endpoint string, data []byte) ([]byte, int, error) {
@@ -257,7 +257,7 @@ func TestTransport(t *testing.T) {
 			return
 		}
 
-		res := &endpoints.HealthResponse{}
+		res := &httpapi.HealthResponse{}
 		_ = json.Unmarshal(b, res)
 
 		if res.Report.Status != health.Healthy {

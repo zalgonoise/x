@@ -7,7 +7,6 @@ import (
 
 	json "github.com/goccy/go-json"
 
-	"github.com/zalgonoise/x/dns/transport/httpapi/endpoints"
 	"github.com/zalgonoise/x/dns/transport/udp"
 )
 
@@ -17,12 +16,12 @@ type Server interface {
 }
 
 type server struct {
-	ep   endpoints.HTTPAPI
+	ep   HTTPAPI
 	port int
 	srv  *http.Server
 }
 
-func NewServer(api endpoints.HTTPAPI, port int) Server {
+func NewServer(api HTTPAPI, port int) Server {
 	mux := http.NewServeMux()
 	httpSrv := &http.Server{
 		Addr:    fmt.Sprintf(":%v", port),
@@ -57,7 +56,7 @@ func (s *server) Stop() error {
 		err error
 	)
 	s.ep.StopDNS(rw, &http.Request{})
-	res := &endpoints.DNSResponse{}
+	res := &DNSResponse{}
 
 	_ = json.Unmarshal([]byte(rw.response), res)
 
