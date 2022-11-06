@@ -1,7 +1,7 @@
 package dns
 
 import (
-	dnsr "github.com/miekg/dns"
+	"github.com/miekg/dns"
 	"github.com/zalgonoise/x/dns/store"
 )
 
@@ -12,9 +12,9 @@ import (
 type Repository interface {
 	// Answer will write the IP address present in the store.Record in the dns.Msg
 	// slice of Answers
-	Answer(*store.Record, *dnsr.Msg)
+	Answer(*store.Record, *dns.Msg)
 	// Fallback is called when the DNS store does not hold a record for the requested
 	// domain, so the DNS service spawns a DNS client that will query the fallback server
 	// and write that answer to the dns.Msg
-	Fallback(*store.Record, *dnsr.Msg)
+	Fallback(*store.Record, *dns.Msg)
 }
