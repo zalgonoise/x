@@ -404,17 +404,17 @@ Below is a list of all CLI parameters (flags) you can pass when starting the app
 Flag | Type | Default | Description
 :---:|:----:|:-------:|:-----------:
 `-dns-addr` | `string` | `:53` | the address to listen to for DNS queries
-`-dns-fallback` | `string` | `` | use a secondary DNS to parse unsuccessful queries
+`-dns-fallback` | `string` |  | use a secondary DNS to parse unsuccessful queries
 `-dns-prefix` | `string` | `.` | the prefix for DNS queries / answers. Usually it's a period (.) 
 `-dns-proto` | `string` | `udp` | the protocol for the DNS server
 `-dns-type` | `string` | `miekgdns` | use a specific domain-name server implementation 
-`-file` | `string` | `` | load a config from a file
+`-file` | `string` |  | load a config from a file
 `-health-type` | `string` | `simplehealth` | the type of health / status report 
 `-http-port` | `int` | `8080` | port to use for the HTTP API, defaults to :8080
-`-log-path` | `string` | `` | the log file's path, to register events
+`-log-path` | `string` |  | the log file's path, to register events
 `-log-type` | `string` | `text` | the type of formatter to use for the logger (text, json, yaml)
 `-start-dns` | `bool` | `true` | automatically start the DNS server
-`-store-path` | `string` | `` | the record store file path, if stored to a file
+`-store-path` | `string` |  | the record store file path, if stored to a file
 `-store-type` |`string` | `memmap` | the record store implementation to use (memmap, yamlfile, jsonfile)
 
 #### OS environment variables
