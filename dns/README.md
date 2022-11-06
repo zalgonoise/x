@@ -213,7 +213,7 @@ _______________
 
 The app works with two transport types, UDP for answering DNS questions and HTTP to expose certain endpoints, providing users with controls over the DNS records store, the DNS server, and health checks.
 
-### UDP
+### [UDP](./transport/udp/server.go#L12)
 
 The UDP transport will listen on DNS queries, while interacting with the service, with its `service.Answering` interface.
 
@@ -243,28 +243,224 @@ type udps struct {
 }
 ```
 
-### HTTP
+### [HTTP](./transport/httpapi/server.go#L14)
+
+HTTP will expose endpoints to provide users with access to the DNS records store, the DNS server and health-checks. 
+
+```go
+type Server interface {
+	Start() error
+	Stop() error
+}
+
+type HTTPAPI interface {
+	StartDNS(w http.ResponseWriter, r *http.Request)
+	StopDNS(w http.ResponseWriter, r *http.Request)
+	ReloadDNS(w http.ResponseWriter, r *http.Request)
+
+	AddRecord(w http.ResponseWriter, r *http.Request)
+	ListRecords(w http.ResponseWriter, r *http.Request)
+	GetRecordByDomain(w http.ResponseWriter, r *http.Request)
+	GetRecordByAddress(w http.ResponseWriter, r *http.Request)
+	UpdateRecord(w http.ResponseWriter, r *http.Request)
+	DeleteRecord(w http.ResponseWriter, r *http.Request)
+
+	Health(w http.ResponseWriter, r *http.Request)
+}
+```
 
 #### Endpoints
+
+The endpoints are configured with a standard-library HTTP server and muxer. Similarly, there isn't much complexity with the endpoints themselves, mostly based on GET / POST HTTP requests (without actually specifying any data in the URL path or parameters, at most as POST data).
+
+The endpoints can be implemented with any HTTP library, provided they can satisfy the `HTTPAPI` interface (and the endpoints themselves are accessible).
+
+Below is a list of all endpoints and their characteristics:
+
+Endpoint | Method | Action | Description | Post Data
+:-------:|:------:|:------:|:-----------:|:---------:
+`/dns/start` | `GET` | [`StartDNS`](./transport/httpapi/endpoints/dns.go#L9) | Starts the DNS server | N/A 
+`/dns/stop` | `GET` | [`StopDNS`](./transport/httpapi/endpoints/dns.go#L34) | Stops the DNS server | N/A 
+`/dns/reload` | `GET` | [`ReloadDNS`](./transport/httpapi/endpoints/dns.go#L54) | Stops and then starts the DNS server | N/A 
+`/records/add` | `POST` | [`AddRecord`](./transport/httpapi/endpoints/store.go#L12) | Adds a new entry to the DNS records store | `{"name":"not.a.dom.ain","type":"A","address":"192.168.0.10"}`
+`/records` | `GET` | [`ListRecords`](./transport/httpapi/endpoints/store.go#L72) | Lists all DNS records in the store | N/A
+`/records/getAddress` | `POST` | [`GetRecordByDomain`](./transport/httpapi/endpoints/store.go#L100) | Gets the IP Address of a record, filtered by domain name and by record type | `{"name":"not.a.dom.ain","type":"A"}`
+`/records/getDomains` | `POST` | [`GetRecordByAddress`](./transport/httpapi/endpoints/store.go#L149) | Gets a list of record types and associated domains, filtered by IP address  | `{"address":"192.168.0.10"}`
+`/records/update` | `POST` | [`UpdateRecord`](./transport/httpapi/endpoints/store.go#L202) | Updates a certain record by targetting its domain name | `{"target":"not.a.dom.ain","record":{"name":"really.not.a.dom.ain","type":"A","address":"192.168.0.10"}}`
+`/records/delete` | `POST` | [`DeleteRecord`](./transport/httpapi/endpoints/store.go#L261) | Removes a record from the store, by targetting its domain name and record type | `{"name":"really.not.a.dom.ain","type":"A"}`
+`/health` | `GET` | [`DeleteRecord`](./transport/httpapi/endpoints/health.go#L9) | Generates a health-check / status report on the app's services | N/A
 
 _________________
 
 
 ## Factories
 
+To make it easier to spawn each of these, be it a repository, service or anything else, there is a `factory` package available.
+
+This package will simply do all the *manual* configuration work and spit out what you really need:
+
+```go
+func StoreRepository(rtype string, path string) store.Repository
+func DNSRepository(rtype string, fallbackDNS ...string) dns.Repository
+func HealthRepository(rtype string) health.Repository
+func Service(dnsRepo dns.Repository, storeRepo store.Repository, healthRepo health.Repository, conf *config.Config) service.Service
+func UDPServer(stype, address, prefix, proto string, svc service.Service) udp.Server 
+func Server(dnstype, dnsAddress, dnsPrefix, dnsProto string, httpPort int, svc service.Service) (httpapi.Server, udp.Server) 
+func From(conf *config.Config) httpapi.Server
+```
+
+While most of these are granular enough to *compose* your configuration along the way, it is worth underlining that the most streamlined option is to leverage the `From(*config.Config) httpapi.Server` function, and in one-shot set up the app (from a configuration, even if default).
+
 _______________
 
 
 ## CLI
 
+The command-line interface for this app is set up in `cmd`; who will also manage the configuration structures for the app.
+
 ### Config
+
+For each service or major feature, there will be a dedicated data structure used to configure it. 
+
+Every single configuration struct will need to satisfy the `ConfigOption` interface, which only contains one method which applies said configuration to a pointer to a Config:
+
+```go
+type ConfigOption interface {
+	Apply(*Config)
+}
+```
+
+The Config itself will be composed of many modules as pointed out above:
+
+```go
+type Config struct {
+	DNS       *DNSConfig       `json:"dns,omitempty" yaml:"dns,omitempty"`
+	Store     *StoreConfig     `json:"store,omitempty" yaml:"store,omitempty"`
+	HTTP      *HTTPConfig      `json:"http,omitempty" yaml:"http,omitempty"`
+	Logger    *LoggerConfig    `json:"logger,omitempty" yaml:"logger,omitempty"`
+	Autostart *AutostartConfig `json:"autostart,omitempty" yaml:"autostart,omitempty"`
+	Health    *HealthConfig    `json:"health,omitempty" yaml:"health,omitempty"`
+	Type      string           `json:"type,omitempty" yaml:"type,omitempty"`
+	Path      string           `json:"path,omitempty" yaml:"path,omitempty"`
+}
+
+type DNSConfig struct {
+	Type        string `json:"type,omitempty" yaml:"type,omitempty"`
+	FallbackDNS string `json:"fallback,omitempty" yaml:"fallback,omitempty"`
+	Address     string `json:"address,omitempty" yaml:"address,omitempty"`
+	Prefix      string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
+	Proto       string `json:"proto,omitempty" yaml:"proto,omitempty"`
+}
+
+type StoreConfig struct {
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
+	Path string `json:"path,omitempty" yaml:"path,omitempty"`
+}
+
+type HTTPConfig struct {
+	Port int `json:"port,omitempty" yaml:"port,omitempty"`
+}
+
+type LoggerConfig struct {
+	Path string `json:"path,omitempty" yaml:"path,omitempty"`
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+type AutostartConfig struct {
+	DNS bool `json:"dns,omitempty" yaml:"dns,omitempty"`
+}
+
+type HealthConfig struct {
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
+}
+```
+
+As it is ensured that using the `config.New()` or `config.Default()` functions will correctly initialize a Config (even ready for usage, if you wanted an in-memory store), the configuration struct will simply work with the target field. Any validation for the input is done on a separate function. Take as an example `config.HTTPPort(p int) ConfigOption`:
+
+```go
+func HTTPPort(p int) ConfigOption {
+	if p > 65535 || p == 0 {
+		return nil
+	}
+	return &httpPort{
+		p: p,
+	}
+}
+
+type httpPort struct {
+	p int
+}
+
+// Apply implements the ConfigOption interface
+func (h *httpPort) Apply(c *Config) {
+	c.HTTP.Port = h.p
+}
+```
 
 #### CLI parameters
 
+Below is a list of all CLI parameters (flags) you can pass when starting the app:
+
+Flag | Type | Default | Description
+`-dns-addr` | `string` | `:53` | the address to listen to for DNS queries
+`-dns-fallback` | `string` | `` | use a secondary DNS to parse unsuccessful queries
+`-dns-prefix` | `string` | `.` | the prefix for DNS queries / answers. Usually it's a period (.) 
+`-dns-proto` | `string` | `udp` | the protocol for the DNS server
+`-dns-type` | `string` | `miekgdns` | use a specific domain-name server implementation 
+`-file` | `string` | `` | load a config from a file
+`-health-type` | `string` | `simplehealth` | the type of health / status report 
+`-http-port` | `int` | `8080` | port to use for the HTTP API, defaults to :8080
+`-log-path` | `string` | `` | the log file's path, to register events
+`-log-type` | `string` | `text` | the type of formatter to use for the logger (text, json, yaml)
+`-start-dns` | `bool` | `true` | automatically start the DNS server
+`-store-path` | `string` | `` | the record store file path, if stored to a file
+`-store-type` |`string` | `memmap` | the record store implementation to use (memmap, yamlfile, jsonfile)
+
 #### OS environment variables
+
+Below is a list of all OS environment variables you can set before starting the app:
+
+Variable name | Type | Description
+`DNS_ADDRESS` | `string` | the address to listen to for DNS queries
+`DNS_FALLBACK` | `string` | use a secondary DNS to parse unsuccessful queries
+`DNS_PREFIX` | `string`  | the prefix for DNS queries / answers. Usually it's a period (.) 
+`DNS_PROTO` | `string`  | the protocol for the DNS server
+`DNS_TYPE` | `string`  | use a specific domain-name server implementation 
+`DNS_CONFIG_PATH` | `string`  | load a config from a file
+`DNS_HEALTH_TYPE` | `string`  | the type of health / status report 
+`DNS_API_PORT` | `int`  | port to use for the HTTP API, defaults to :8080
+`DNS_LOGGER_PATH` | `string`  | the log file's path, to register events
+`DNS_LOGGER_TYPE` | `string`  | the type of formatter to use for the logger (text, json, yaml)
+`DNS_AUTOSTART` | `string`  | automatically start the DNS server
+`DNS_STORE_PATH` | `string` | the record store file path, if stored to a file
+`DNS_STORE_TYPE` |`string` | the record store implementation to use (memmap, yamlfile, jsonfile)
 
 #### From file
 
+Below is the content of an example configuration file, in YAML format:
+
+```yaml
+dns:
+  type: miekgdns
+  fallback: 1.1.1.1
+  address: :53
+  prefix: .
+  proto: udp
+store:
+  type: yamlfile
+  path: /tmp/dns/dns.list
+http:
+  port: 8080
+logger:
+  type: text
+  path: /tmp/dns/dns.log
+autostart:
+  dns: true
+health:
+  type: simplehealth
+type: yaml
+path: /tmp/dns/dns.conf
+```
 _______________
 
 
