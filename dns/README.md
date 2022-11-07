@@ -468,4 +468,12 @@ _______________
 
 ## Docker
 
+The app can be deployed to a container easily via the [Dockerfile](./Dockerfile) in the repository's root directory.
+
+The Dockerfile will perform a multi-stage build with `golang:alpine` fetching the dependencies and building the binary -- which is then copied to the final `alpine:edge` container.
+
 ### Docker-compose
+
+To deploy the app (and also build+deploy) you can use the [`docker-compose.yaml` file](./docker-compose.yaml) where you can launch the app with a certain configuration (and also in an isolated container).
+
+While the default file configures the container with a `network_mode: host` setting, a setup that fits neatly in a home-based DNS deployment, you may prefer to set it up for an isolated network of containers -- for that you can comment-out the `network_mode: host` line and uncomment the `privileged` and `ports` elements.
