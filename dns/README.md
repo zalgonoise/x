@@ -465,15 +465,62 @@ path: /tmp/dns/dns.conf
 ```
 _______________
 
+## Build / Test
 
-## Docker
+
+### Go
+
+**Building** - From the root of the repository, run:
+
+```shell
+go build -o dns .
+```
+
+This generates a binary you can execute directly.
+
+**Testing** - From the root of the repository, run:
+
+```shell
+go test -v -timeout=0 ./...
+```
+
+### Bazel
+
+**Building** - From the root of the repository, run:
+
+```shell
+bazel build //...
+```
+
+This builds a binary which you can use with Bazel (run, test, etc).
+
+**Testing** - From the root of the repository, run:
+
+```shell
+bazel test //...
+```
+
+
+### Docker
 
 The app can be deployed to a container easily via the [Dockerfile](./Dockerfile) in the repository's root directory.
 
 The Dockerfile will perform a multi-stage build with `golang:alpine` fetching the dependencies and building the binary -- which is then copied to the final `alpine:edge` container.
+
+**Building** - From the root of the repository, run:
+
+```shell
+docker build -t dns:local .
+```
 
 ### Docker-compose
 
 To deploy the app (and also build+deploy) you can use the [`docker-compose.yaml` file](./docker-compose.yaml) where you can launch the app with a certain configuration (and also in an isolated container).
 
 While the default file configures the container with a `network_mode: host` setting, a setup that fits neatly in a home-based DNS deployment, you may prefer to set it up for an isolated network of containers -- for that you can comment-out the `network_mode: host` line and uncomment the `privileged` and `ports` elements.
+
+**Executing** - From the root of the repository, run:
+
+```shell
+docker compose up -d dns
+```
