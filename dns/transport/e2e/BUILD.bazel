@@ -8,5 +8,6 @@ go_test(
         "//store",
         "//transport/httpapi",
         "@com_github_miekg_dns//:dns",
+        "@com_github_testcontainers_testcontainers_go//:testcontainers-go",
     ],
 )
