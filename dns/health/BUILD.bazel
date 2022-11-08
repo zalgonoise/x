@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "health",
+    srcs = [
+        "report.go",
+        "repository.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/health",
+    visibility = ["//visibility:public"],
+    deps = ["//store"],
+)

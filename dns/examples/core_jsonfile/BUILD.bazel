@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "core_jsonfile_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/zalgonoise/x/dns/examples/core_jsonfile",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//cmd/config",
+        "//factory",
+        "@com_github_zalgonoise_zlog//log",
+    ],
+)
+
+go_binary(
+    name = "core_jsonfile",
+    embed = [":core_jsonfile_lib"],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "logger",
+    srcs = ["logger.go"],
+    importpath = "github.com/zalgonoise/x/dns/service/middleware/logger",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//health",
+        "//service",
+        "//store",
+        "@com_github_miekg_dns//:dns",
+        "@com_github_zalgonoise_zlog//log",
+        "@com_github_zalgonoise_zlog//log/event",
+    ],
+)

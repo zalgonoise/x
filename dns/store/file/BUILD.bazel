@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "file",
+    srcs = [
+        "file.go",
+        "helper.go",
+        "store.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/store/file",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//store",
+        "//store/encoder",
+        "//store/memmap",
+    ],
+)
+
+go_test(
+    name = "file_test",
+    srcs = [
+        "file_test.go",
+        "store_test.go",
+    ],
+    embed = [":file"],
+    deps = ["//store"],
+)

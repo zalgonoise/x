@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "config",
+    srcs = [
+        "autostart.go",
+        "config.go",
+        "dns.go",
+        "health.go",
+        "http.go",
+        "logger.go",
+        "store.go",
+        "type.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/cmd/config",
+    visibility = ["//visibility:public"],
+)

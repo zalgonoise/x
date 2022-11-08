@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "service",
+    srcs = [
+        "dns.go",
+        "health.go",
+        "service.go",
+        "store.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/service",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cmd/config",
+        "//dns",
+        "//health",
+        "//health/simplehealth",
+        "//store",
+        "@com_github_miekg_dns//:dns",
+    ],
+)

@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "flags",
+    srcs = [
+        "flags.go",
+        "fs.go",
+        "helper.go",
+        "os.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/cmd/flags",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cmd/config",
+        "//store",
+        "//store/encoder",
+    ],
+)

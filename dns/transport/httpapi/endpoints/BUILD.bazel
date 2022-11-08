@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "endpoints",
+    srcs = [
+        "dns.go",
+        "endpoints.go",
+        "health.go",
+        "store.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/transport/httpapi/endpoints",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//service",
+        "//store",
+        "//store/encoder",
+        "//transport/httpapi",
+        "//transport/udp",
+    ],
+)

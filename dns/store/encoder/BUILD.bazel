@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "encoder",
+    srcs = ["encoder.go"],
+    importpath = "github.com/zalgonoise/x/dns/store/encoder",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_goccy_go_json//:go-json",
+        "@in_gopkg_yaml_v2//:yaml_v2",
+    ],
+)

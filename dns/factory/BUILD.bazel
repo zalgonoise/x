@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "factory",
+    srcs = [
+        "dns.go",
+        "factory.go",
+        "health.go",
+        "server.go",
+        "service.go",
+        "store.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/factory",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cmd/config",
+        "//dns",
+        "//dns/core",
+        "//health",
+        "//health/simplehealth",
+        "//service",
+        "//service/middleware/logger",
+        "//store",
+        "//store/file",
+        "//store/memmap",
+        "//transport/httpapi",
+        "//transport/httpapi/endpoints",
+        "//transport/udp",
+        "//transport/udp/miekgdns",
+        "@com_github_zalgonoise_zlog//log",
+        "@com_github_zalgonoise_zlog//store/fs",
+    ],
+)

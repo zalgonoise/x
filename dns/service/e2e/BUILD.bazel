@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "e2e_test",
+    srcs = [
+        "dns_test.go",
+        "health_test.go",
+        "service_test.go",
+        "store_test.go",
+    ],
+    deps = [
+        "//cmd/config",
+        "//dns/core",
+        "//health",
+        "//health/simplehealth",
+        "//service",
+        "//store",
+        "//store/memmap",
+        "@com_github_miekg_dns//:dns",
+    ],
+)

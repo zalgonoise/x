@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "httpapi",
+    srcs = [
+        "api.go",
+        "nilwriter.go",
+        "response.go",
+        "server.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/transport/httpapi",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//health",
+        "//store",
+        "//transport/udp",
+        "@com_github_goccy_go_json//:go-json",
+    ],
+)

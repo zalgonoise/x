@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "miekgdns",
+    srcs = [
+        "dns.go",
+        "handler.go",
+        "server.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/transport/udp/miekgdns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//service",
+        "//store",
+        "//transport/udp",
+        "@com_github_miekg_dns//:dns",
+    ],
+)

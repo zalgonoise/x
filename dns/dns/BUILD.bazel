@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "dns",
+    srcs = [
+        "repository.go",
+        "unimplemented.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/dns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//store",
+        "@com_github_miekg_dns//:dns",
+    ],
+)

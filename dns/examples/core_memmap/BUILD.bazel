@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "core_memmap_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/zalgonoise/x/dns/examples/core_memmap",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//cmd/config",
+        "//factory",
+    ],
+)
+
+go_binary(
+    name = "core_memmap",
+    embed = [":core_memmap_lib"],
+    visibility = ["//visibility:public"],
+)

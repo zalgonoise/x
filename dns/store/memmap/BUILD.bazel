@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "memmap",
+    srcs = [
+        "helper.go",
+        "memmap.go",
+        "store.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/store/memmap",
+    visibility = ["//visibility:public"],
+    deps = ["//store"],
+)
+
+go_test(
+    name = "memmap_test",
+    srcs = ["store_test.go"],
+    embed = [":memmap"],
+    deps = ["//store"],
+)

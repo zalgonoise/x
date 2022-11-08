@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "store",
+    srcs = [
+        "error.go",
+        "filemode.go",
+        "record.go",
+        "repository.go",
+        "unimplemented.go",
+    ],
+    importpath = "github.com/zalgonoise/x/dns/store",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "cmd",
+    srcs = ["server.go"],
+    importpath = "github.com/zalgonoise/x/dns/cmd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cmd/config",
+        "//cmd/flags",
+        "//factory",
+        "//transport/httpapi",
+    ],
+)
