@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/testcontainers/testcontainers-go"
+	testcontainers "github.com/testcontainers/testcontainers-go"
 	"github.com/zalgonoise/x/dns/health"
 	"github.com/zalgonoise/x/dns/store"
 	"github.com/zalgonoise/x/dns/transport/httpapi"
