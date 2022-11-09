@@ -1,7 +1,0 @@
-filegroup(
-    name = "golangci",
-    srcs = glob([
-        "golangci-lint",
-    ]),
-    visibility = ["//visibility:public"],
-)

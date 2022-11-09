@@ -3484,15 +3484,17 @@ http_archive(
 )
 
 ## golangci-lint
-http_archive(
-    name = "golangci_golangci-lint",
-    build_file = "//:BUILD.golanglint-ci",
-    sha256 = "5badc6e9fee2003621efa07e385910d9a88c89b38f6c35aded153193c5125178",
-    strip_prefix = "golangci-lint-1.49.0-linux-amd64",
-    urls = [
-        "https://github.com/golangci/golangci-lint/releases/download/v1.49.0/golangci-lint-1.49.0-linux-amd64.tar.gz",
-    ],
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "com_github_atlassian_bazel_tools",
+    commit = "8b69172a66e62060a628e13111ca8d9072c4978e",
+    remote = "https://github.com/atlassian/bazel-tools.git",
 )
+
+load("//:util/golangci-lint/deps.bzl", "golangcilint_dependencies")
+
+golangcilint_dependencies()
 
 ## docker
 http_archive(
