@@ -126,6 +126,7 @@ func TestFilterByDomain(t *testing.T) {
 
 		if r == nil {
 			t.Errorf("expected a succesful query, returned store.Record is nil")
+			return
 		}
 
 		if r.Addr != test2.Addr {

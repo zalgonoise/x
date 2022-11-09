@@ -137,7 +137,13 @@ func TestTransport(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error starting test container: %v", err)
 	}
-	defer dnsC.Terminate(context.Background())
+	defer func() {
+		err := dnsC.Terminate(context.Background())
+		if err != nil {
+			t.Errorf("failed to terminate test container: %v", err)
+			return
+		}
+	}()
 
 	time.Sleep(time.Second * 2)
 	t.Run("HTTP", func(t *testing.T) {
