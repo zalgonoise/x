@@ -68,7 +68,6 @@ jobs:
       run: bazel run //:lint
 
   bazel-build:
-    
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -88,7 +87,6 @@ jobs:
       run: bazel build //...
     
   bazel-test:
-    
     runs-on: ubuntu-latest
     permissions:
       contents: read
