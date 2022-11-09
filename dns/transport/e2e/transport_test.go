@@ -138,7 +138,7 @@ func TestTransport(t *testing.T) {
 		t.Errorf("unexpected error starting test container: %v", err)
 	}
 	defer func() {
-		err := dnsC.Terminate(context.Background())
+		err := dnsC.Container.Terminate(context.Background())
 		if err != nil {
 			t.Errorf("failed to terminate test container: %v", err)
 			return
