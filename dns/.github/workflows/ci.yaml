@@ -1,0 +1,108 @@
+name: Bazel-CI
+
+on: [push, pull_request]
+
+jobs:
+  buildifier:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Deploy bazelisk
+      uses: bazelbuild/setup-bazelisk@v1
+      
+    - name: Mount bazel cache  
+      uses: actions/cache@v2
+      with:
+        path: "~/.cache/bazel"
+        key: bazel
+    - name: Run buildifier checks
+      run: bazel run //:buildifier-check --
+      
+    - name: Run buildifier fixes
+      run: bazel run //:buildifier-fix --
+
+  gazelle:
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Deploy bazelisk
+      uses: bazelbuild/setup-bazelisk@v1
+      
+    - name: Mount bazel cache  
+      uses: actions/cache@v2
+      with:
+        path: "~/.cache/bazel"
+        key: bazel
+    - name: Run gazelle
+      run: bazel run //:gazelle --
+      
+    - name: Run gazelle w/ update-repos flag
+      run: bazel run //:gazelle -- update-repos -from_file=go.mod -prune
+
+  golanglint-ci:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Deploy bazelisk
+      uses: bazelbuild/setup-bazelisk@v1
+      
+    - name: Mount bazel cache  
+      uses: actions/cache@v2
+      with:
+        path: "~/.cache/bazel"
+        key: bazel
+    - name: Run gazelle
+      run: bazel run //:lint
+
+  bazel-build:
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Deploy bazelisk
+      uses: bazelbuild/setup-bazelisk@v1
+      
+    - name: Mount bazel cache  
+      uses: actions/cache@v2
+      with:
+        path: "~/.cache/bazel"
+        key: bazel
+    - name: Build project
+      run: bazel build //...
+    
+  bazel-test:
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Deploy bazelisk
+      uses: bazelbuild/setup-bazelisk@v1
+      
+    - name: Mount bazel cache  
+      uses: actions/cache@v2
+      with:
+        path: "~/.cache/bazel"
+        key: bazel
+    - name: Run tests (verbose)
+      run: bazel test --test_output=all --test_summary=detailed --cache_test_results=no //...
