@@ -2,6 +2,11 @@ package log
 
 type lv int
 
+type Level interface {
+	String() string
+	Int() int
+}
+
 const (
 	LTrace lv = iota
 	LDebug
@@ -30,12 +35,12 @@ var (
 	}
 )
 
-type Level interface {
-	String() string
-}
-
 func (l lv) String() string {
 	return lvValues[l]
+}
+
+func (l lv) Int() int {
+	return (int)(l)
 }
 
 func AsLevel(level string) Level {

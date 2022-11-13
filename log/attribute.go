@@ -1,6 +1,9 @@
 package log
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type Attr interface {
 	Key() string
@@ -10,6 +13,9 @@ type Attr interface {
 }
 
 func NewAttr[T any](key string, value T) Attr {
+	if err, ok := (any)(value).(error); ok {
+		return ErrAttr(key, err)
+	}
 	return attr[T]{
 		key:   key,
 		value: value,
@@ -30,6 +36,17 @@ func ComplexAttr[T ComplexRestriction](key string, value T) Attr {
 }
 func StringAttr[T CharRestriction](key string, value T) Attr {
 	return NewAttr(key, (string)(value))
+}
+func ErrAttr(key string, err error) Attr {
+	var errs []string
+	for err != nil {
+		errs = append(errs, err.Error())
+		err = errors.Unwrap(err)
+	}
+	if len(errs) == 1 {
+		return NewAttr(key, errs[0])
+	}
+	return NewAttr(key, errs)
 }
 
 type attr[T any] struct {
