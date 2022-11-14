@@ -1,25 +1,28 @@
-package log
+package records
 
 import (
 	"sync"
 	"time"
+
+	"github.com/zalgonoise/x/log/attr"
+	"github.com/zalgonoise/x/log/level"
 )
 
 type Record interface {
-	AddAttr(a ...Attr)
-	Attr(idx int) Attr
-	Attrs() []Attr
+	AddAttr(a ...attr.Attr)
+	Attr(idx int) attr.Attr
+	Attrs() []attr.Attr
 	AttLen() int
 	Message() string
 	Time() time.Time
-	Level() Level
+	Level() level.Level
 }
 
-func NewRecord(t time.Time, level Level, msg string, attrs ...Attr) Record {
+func New(t time.Time, lv level.Level, msg string, attrs ...attr.Attr) Record {
 	return &record{
 		timestamp: t,
 		message:   msg,
-		level:     level,
+		level:     lv,
 		attrs:     attrs,
 	}
 }
@@ -28,11 +31,11 @@ type record struct {
 	mu        sync.RWMutex
 	timestamp time.Time
 	message   string
-	level     Level
-	attrs     []Attr
+	level     level.Level
+	attrs     []attr.Attr
 }
 
-func (r *record) AddAttr(a ...Attr) {
+func (r *record) AddAttr(a ...attr.Attr) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -42,7 +45,7 @@ func (r *record) AddAttr(a ...Attr) {
 	r.attrs = append(r.attrs, a...)
 }
 
-func (r *record) Attr(idx int) Attr {
+func (r *record) Attr(idx int) attr.Attr {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -52,7 +55,7 @@ func (r *record) Attr(idx int) Attr {
 	return r.attrs[idx]
 }
 
-func (r *record) Attrs() []Attr {
+func (r *record) Attrs() []attr.Attr {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -74,6 +77,6 @@ func (r *record) Time() time.Time {
 	return r.timestamp
 }
 
-func (r *record) Level() Level {
+func (r *record) Level() level.Level {
 	return r.level
 }

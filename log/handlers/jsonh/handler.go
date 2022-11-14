@@ -6,7 +6,10 @@ import (
 	"io"
 	"time"
 
-	"github.com/zalgonoise/x/log"
+	"github.com/zalgonoise/x/log/attr"
+	"github.com/zalgonoise/x/log/handlers"
+	"github.com/zalgonoise/x/log/level"
+	"github.com/zalgonoise/x/log/records"
 )
 
 var (
@@ -16,11 +19,9 @@ var (
 type jsonHandler struct {
 	w         io.Writer
 	addSource bool
-	levelRef  log.Level
-	replFn    func(a log.Attr) log.Attr
-	attrs     []log.Attr
-
-	wChan chan log.Record
+	levelRef  level.Level
+	replFn    func(a attr.Attr) attr.Attr
+	attrs     []attr.Attr
 }
 
 type jsonRecord struct {
@@ -30,15 +31,14 @@ type jsonRecord struct {
 	Data  map[string]interface{} `json:"data,omitempty"`
 }
 
-func New(w io.Writer) log.Handler {
+func New(w io.Writer) handlers.Handler {
 	return &jsonHandler{
-		w:     w,
-		wChan: make(chan log.Record),
+		w: w,
 	}
 }
 
-func (h *jsonHandler) Handle(r log.Record) error {
-	if r.Level().Int() < h.levelRef.Int() {
+func (h *jsonHandler) Handle(r records.Record) error {
+	if h.levelRef != nil && r.Level().Int() < h.levelRef.Int() {
 		return nil
 	}
 
@@ -80,13 +80,13 @@ func (h *jsonHandler) Handle(r log.Record) error {
 	return nil
 }
 
-func (h *jsonHandler) asMap(attrs []log.Attr) map[string]interface{} {
+func (h *jsonHandler) asMap(attrs []attr.Attr) map[string]interface{} {
 	var out = map[string]interface{}{}
 	for _, a := range attrs {
 		if h.replFn != nil {
 			a = h.replFn(a)
 		}
-		if v, ok := (a.Value()).([]log.Attr); ok {
+		if v, ok := (a.Value()).([]attr.Attr); ok {
 			out[a.Key()] = h.asMap(v)
 			continue
 		}
@@ -95,41 +95,56 @@ func (h *jsonHandler) asMap(attrs []log.Attr) map[string]interface{} {
 	return out
 }
 
-func (h *jsonHandler) With(attrs ...log.Attr) log.Handler {
-	new := *h
-	new.attrs = make([]log.Attr, len(h.attrs))
-	copy(new.attrs, h.attrs)
-	new.attrs = append(new.attrs, attrs...)
-	return &new
+func (h *jsonHandler) With(attrs ...attr.Attr) handlers.Handler {
+	new := &jsonHandler{
+		w:         h.w,
+		addSource: h.addSource,
+		levelRef:  h.levelRef,
+		replFn:    h.replFn,
+		attrs:     attrs,
+	}
+	return new
 }
 
-func (h *jsonHandler) Enabled(level log.Level) bool {
+func (h *jsonHandler) Enabled(level level.Level) bool {
 	if h.levelRef == nil || level.Int() >= h.levelRef.Int() {
 		return true
 	}
 	return false
 }
 
-func (h *jsonHandler) WithSource(addSource bool) log.Handler {
-	new := *h
-	new.addSource = addSource
-	new.attrs = make([]log.Attr, len(h.attrs))
+func (h *jsonHandler) WithSource(addSource bool) handlers.Handler {
+	new := &jsonHandler{
+		w:         h.w,
+		addSource: addSource,
+		levelRef:  h.levelRef,
+		replFn:    h.replFn,
+		attrs:     []attr.Attr{},
+	}
 	copy(new.attrs, h.attrs)
-	return &new
+	return new
 }
 
-func (h *jsonHandler) WithLevel(level log.Level) log.Handler {
-	new := *h
-	new.levelRef = level
-	new.attrs = make([]log.Attr, len(h.attrs))
+func (h *jsonHandler) WithLevel(level level.Level) handlers.Handler {
+	new := &jsonHandler{
+		w:         h.w,
+		addSource: h.addSource,
+		levelRef:  level,
+		replFn:    h.replFn,
+		attrs:     []attr.Attr{},
+	}
 	copy(new.attrs, h.attrs)
-	return &new
+	return new
 }
 
-func (h *jsonHandler) WithReplaceFn(fn func(a log.Attr) log.Attr) log.Handler {
-	new := *h
-	new.replFn = fn
-	new.attrs = make([]log.Attr, len(h.attrs))
+func (h *jsonHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Handler {
+	new := &jsonHandler{
+		w:         h.w,
+		addSource: h.addSource,
+		levelRef:  h.levelRef,
+		replFn:    fn,
+		attrs:     []attr.Attr{},
+	}
 	copy(new.attrs, h.attrs)
-	return &new
+	return new
 }
