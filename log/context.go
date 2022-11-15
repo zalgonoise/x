@@ -7,12 +7,15 @@ type CtxLoggerKey string
 const StandardCtxKey CtxLoggerKey = "logger"
 
 func InContext(ctx context.Context, logger Logger) context.Context {
+	if ctx == nil || logger == nil {
+		return nil
+	}
 	return context.WithValue(ctx, StandardCtxKey, logger)
 }
 func From(ctx context.Context) Logger {
-	logger := ctx.Value(StandardCtxKey)
-	if logger == nil {
-		return std
+	v := ctx.Value(StandardCtxKey)
+	if l, ok := v.(Logger); ok {
+		return l
 	}
-	return (logger).(Logger)
+	return nil
 }
