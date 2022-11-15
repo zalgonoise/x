@@ -1,11 +1,11 @@
 package jsonh
 
 import (
-	"encoding/json"
 	"errors"
 	"io"
 	"time"
 
+	json "github.com/goccy/go-json"
 	"github.com/zalgonoise/x/log/attr"
 	"github.com/zalgonoise/x/log/handlers"
 	"github.com/zalgonoise/x/log/level"
