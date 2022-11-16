@@ -5,7 +5,7 @@ import (
 
 	"github.com/zalgonoise/x/log/attr"
 	"github.com/zalgonoise/x/log/handlers"
-	"github.com/zalgonoise/x/log/handlers/jsonh"
+	"github.com/zalgonoise/x/log/handlers/texth"
 	"github.com/zalgonoise/x/log/level"
 )
 
@@ -16,7 +16,7 @@ type Logger interface {
 	With(attrs ...attr.Attr) Logger
 }
 
-var std = New(jsonh.New(os.Stderr))
+var std = New(texth.New(os.Stderr))
 
 type logger struct {
 	h        handlers.Handler

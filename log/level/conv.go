@@ -2,19 +2,19 @@ package level
 
 var (
 	lvKeys = map[string]lv{
-		"trace": LTrace,
-		"debug": LDebug,
-		"info":  LInfo,
-		"warn":  LWarn,
-		"error": LError,
-		"fatal": LFatal,
+		"trace": Trace,
+		"debug": Debug,
+		"info":  Info,
+		"warn":  Warn,
+		"error": Error,
+		"fatal": Fatal,
 	}
 	lvValues = map[lv]string{
-		LTrace: "trace",
-		LDebug: "debug",
-		LInfo:  "info",
-		LWarn:  "warn",
-		LError: "error",
-		LFatal: "fatal",
+		Trace: "trace",
+		Debug: "debug",
+		Info:  "info",
+		Warn:  "warn",
+		Error: "error",
+		Fatal: "fatal",
 	}
 )

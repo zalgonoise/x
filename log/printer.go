@@ -23,7 +23,7 @@ func (l *logger) Log(lv level.Level, msg string, attrs ...attr.Attr) {
 		return
 	}
 	if lv == nil {
-		lv = level.LInfo
+		lv = level.Info
 	}
 
 	rAttr := append(attrs, l.attrs...)
@@ -36,7 +36,7 @@ func (l *logger) Trace(msg string, attrs ...attr.Attr) {
 	}
 
 	rAttr := append(attrs, l.attrs...)
-	r := records.New(time.Now(), level.LTrace, msg, rAttr...)
+	r := records.New(time.Now(), level.Trace, msg, rAttr...)
 	_ = l.h.Handle(r)
 }
 func (l *logger) Debug(msg string, attrs ...attr.Attr) {
@@ -45,7 +45,7 @@ func (l *logger) Debug(msg string, attrs ...attr.Attr) {
 	}
 
 	rAttr := append(attrs, l.attrs...)
-	r := records.New(time.Now(), level.LDebug, msg, rAttr...)
+	r := records.New(time.Now(), level.Debug, msg, rAttr...)
 	_ = l.h.Handle(r)
 }
 func (l *logger) Info(msg string, attrs ...attr.Attr) {
@@ -54,7 +54,7 @@ func (l *logger) Info(msg string, attrs ...attr.Attr) {
 	}
 
 	rAttr := append(attrs, l.attrs...)
-	r := records.New(time.Now(), level.LInfo, msg, rAttr...)
+	r := records.New(time.Now(), level.Info, msg, rAttr...)
 	_ = l.h.Handle(r)
 }
 func (l *logger) Warn(msg string, attrs ...attr.Attr) {
@@ -63,7 +63,7 @@ func (l *logger) Warn(msg string, attrs ...attr.Attr) {
 	}
 
 	rAttr := append(attrs, l.attrs...)
-	r := records.New(time.Now(), level.LWarn, msg, rAttr...)
+	r := records.New(time.Now(), level.Warn, msg, rAttr...)
 	_ = l.h.Handle(r)
 }
 func (l *logger) Error(msg string, attrs ...attr.Attr) {
@@ -72,7 +72,7 @@ func (l *logger) Error(msg string, attrs ...attr.Attr) {
 	}
 
 	rAttr := append(attrs, l.attrs...)
-	r := records.New(time.Now(), level.LError, msg, rAttr...)
+	r := records.New(time.Now(), level.Error, msg, rAttr...)
 	_ = l.h.Handle(r)
 }
 func (l *logger) Fatal(msg string, attrs ...attr.Attr) {
@@ -81,6 +81,6 @@ func (l *logger) Fatal(msg string, attrs ...attr.Attr) {
 	}
 
 	rAttr := append(attrs, l.attrs...)
-	r := records.New(time.Now(), level.LFatal, msg, rAttr...)
+	r := records.New(time.Now(), level.Fatal, msg, rAttr...)
 	_ = l.h.Handle(r)
 }

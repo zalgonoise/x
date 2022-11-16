@@ -8,12 +8,12 @@ type Level interface {
 type lv int
 
 const (
-	LTrace lv = iota
-	LDebug
-	LInfo
-	LWarn
-	LError
-	LFatal
+	Trace lv = iota
+	Debug
+	Info
+	Warn
+	Error
+	Fatal
 )
 
 func (l lv) String() string {
