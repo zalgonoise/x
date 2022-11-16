@@ -8,9 +8,6 @@ type Attr interface {
 }
 
 func NewAttr[T any](key string, value T) Attr {
-	if err, ok := (any)(value).(error); ok {
-		return ErrAttr(key, err)
-	}
 	return attr[T]{
 		key:   key,
 		value: value,
