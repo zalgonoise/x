@@ -1,7 +1,6 @@
 package records
 
 import (
-	"sync"
 	"time"
 
 	"github.com/zalgonoise/x/log/attr"
@@ -9,7 +8,7 @@ import (
 )
 
 type Record interface {
-	AddAttr(a ...attr.Attr)
+	AddAttr(a ...attr.Attr) Record
 	Attr(idx int) attr.Attr
 	Attrs() []attr.Attr
 	AttLen() int
@@ -19,7 +18,7 @@ type Record interface {
 }
 
 func New(t time.Time, lv level.Level, msg string, attrs ...attr.Attr) Record {
-	return &record{
+	return record{
 		timestamp: t,
 		message:   msg,
 		level:     lv,
@@ -28,55 +27,44 @@ func New(t time.Time, lv level.Level, msg string, attrs ...attr.Attr) Record {
 }
 
 type record struct {
-	mu        sync.RWMutex
 	timestamp time.Time
 	message   string
 	level     level.Level
 	attrs     []attr.Attr
 }
 
-func (r *record) AddAttr(a ...attr.Attr) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if len(a) == 0 {
-		return
+func (r record) AddAttr(a ...attr.Attr) Record {
+	return record{
+		timestamp: r.timestamp,
+		message:   r.message,
+		level:     r.level,
+		attrs:     append(r.attrs, a...),
 	}
-	r.attrs = append(r.attrs, a...)
 }
 
-func (r *record) Attr(idx int) attr.Attr {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
+func (r record) Attr(idx int) attr.Attr {
 	if idx >= len(r.attrs) {
 		return nil
 	}
 	return r.attrs[idx]
 }
 
-func (r *record) Attrs() []attr.Attr {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
+func (r record) Attrs() []attr.Attr {
 	return r.attrs
 }
 
-func (r *record) AttLen() int {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
+func (r record) AttLen() int {
 	return len(r.attrs)
 }
 
-func (r *record) Message() string {
+func (r record) Message() string {
 	return r.message
 }
 
-func (r *record) Time() time.Time {
+func (r record) Time() time.Time {
 	return r.timestamp
 }
 
-func (r *record) Level() level.Level {
+func (r record) Level() level.Level {
 	return r.level
 }
