@@ -8,6 +8,9 @@ type Attr interface {
 }
 
 func New[T any](key string, value T) Attr {
+	if key == "" {
+		return nil
+	}
 	return attr[T]{
 		key:   key,
 		value: value,
@@ -28,12 +31,20 @@ func (a attr[T]) Value() any {
 }
 
 func (a attr[T]) WithKey(key string) Attr {
+	if key == "" {
+		return nil
+	}
 	return New(key, a.value)
 }
 
 func (a attr[T]) WithValue(value any) Attr {
-	if v, ok := (value).(T); ok {
-		return New(a.key, v)
+	if value == nil {
+		return nil
 	}
-	return nil
+
+	v, ok := (value).(T)
+	if !ok {
+		return nil
+	}
+	return New(a.key, v)
 }
