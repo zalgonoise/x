@@ -21,10 +21,10 @@ func BenchmarkLogger(b *testing.B) {
 
 	var (
 		newMeta = []attr.Attr{
-			attr.NewAttr("complex", true),
-			attr.NewAttr("id", 1234567890),
-			attr.NewAttr("content", []attr.Attr{attr.NewAttr("data", true)}),
-			attr.NewAttr("affected", []string{"none", "nothing", "nada"}),
+			attr.New("complex", true),
+			attr.New("id", 1234567890),
+			attr.New("content", []attr.Attr{attr.New("data", true)}),
+			attr.New("affected", []string{"none", "nothing", "nada"}),
 		}
 		buf = new(bytes.Buffer)
 	)

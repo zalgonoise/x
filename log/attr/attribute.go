@@ -7,7 +7,7 @@ type Attr interface {
 	WithValue(value any) Attr
 }
 
-func NewAttr[T any](key string, value T) Attr {
+func New[T any](key string, value T) Attr {
 	return attr[T]{
 		key:   key,
 		value: value,
@@ -28,12 +28,12 @@ func (a attr[T]) Value() any {
 }
 
 func (a attr[T]) WithKey(key string) Attr {
-	return NewAttr(key, a.value)
+	return New(key, a.value)
 }
 
 func (a attr[T]) WithValue(value any) Attr {
 	if v, ok := (value).(T); ok {
-		return NewAttr(a.key, v)
+		return New(a.key, v)
 	}
 	return nil
 }
