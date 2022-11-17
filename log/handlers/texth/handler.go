@@ -36,7 +36,7 @@ type textHandlerConfig struct {
 }
 
 func New(w io.Writer) handlers.Handler {
-	return &textHandler{
+	return textHandler{
 		w: w,
 		conf: textHandlerConfig{
 			wrapperL:   '[',
@@ -49,7 +49,7 @@ func New(w io.Writer) handlers.Handler {
 	}
 }
 
-func (h *textHandler) Handle(r records.Record) error {
+func (h textHandler) Handle(r records.Record) error {
 	if h.levelRef != nil && r.Level().Int() < h.levelRef.Int() {
 		return nil
 	}
@@ -88,7 +88,7 @@ func (h *textHandler) Handle(r records.Record) error {
 	return nil
 }
 
-func (h *textHandler) asString(attrs []attr.Attr) string {
+func (h textHandler) asString(attrs []attr.Attr) string {
 	var out = &bytes.Buffer{}
 	for idx, a := range attrs {
 		if h.replFn != nil {
@@ -119,56 +119,49 @@ func (h *textHandler) asString(attrs []attr.Attr) string {
 	return out.String()
 }
 
-func (h *textHandler) With(attrs ...attr.Attr) handlers.Handler {
-	new := &textHandler{
+func (h textHandler) With(attrs ...attr.Attr) handlers.Handler {
+	return textHandler{
 		w:         h.w,
 		addSource: h.addSource,
 		levelRef:  h.levelRef,
 		replFn:    h.replFn,
 		attrs:     attrs,
 	}
-	return new
 }
 
-func (h *textHandler) Enabled(level level.Level) bool {
+func (h textHandler) Enabled(level level.Level) bool {
 	if h.levelRef == nil || level.Int() >= h.levelRef.Int() {
 		return true
 	}
 	return false
 }
 
-func (h *textHandler) WithSource(addSource bool) handlers.Handler {
-	new := &textHandler{
+func (h textHandler) WithSource(addSource bool) handlers.Handler {
+	return textHandler{
 		w:         h.w,
 		addSource: addSource,
 		levelRef:  h.levelRef,
 		replFn:    h.replFn,
-		attrs:     []attr.Attr{},
+		attrs:     h.attrs,
 	}
-	copy(new.attrs, h.attrs)
-	return new
 }
 
-func (h *textHandler) WithLevel(level level.Level) handlers.Handler {
-	new := &textHandler{
+func (h textHandler) WithLevel(level level.Level) handlers.Handler {
+	return textHandler{
 		w:         h.w,
 		addSource: h.addSource,
 		levelRef:  level,
 		replFn:    h.replFn,
-		attrs:     []attr.Attr{},
+		attrs:     h.attrs,
 	}
-	copy(new.attrs, h.attrs)
-	return new
 }
 
 func (h *textHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Handler {
-	new := &textHandler{
+	return textHandler{
 		w:         h.w,
 		addSource: h.addSource,
 		levelRef:  h.levelRef,
 		replFn:    fn,
-		attrs:     []attr.Attr{},
+		attrs:     h.attrs,
 	}
-	copy(new.attrs, h.attrs)
-	return new
 }

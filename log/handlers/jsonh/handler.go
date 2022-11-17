@@ -32,12 +32,12 @@ type jsonRecord struct {
 }
 
 func New(w io.Writer) handlers.Handler {
-	return &jsonHandler{
+	return jsonHandler{
 		w: w,
 	}
 }
 
-func (h *jsonHandler) Handle(r records.Record) error {
+func (h jsonHandler) Handle(r records.Record) error {
 	if h.levelRef != nil && r.Level().Int() < h.levelRef.Int() {
 		return nil
 	}
@@ -80,7 +80,7 @@ func (h *jsonHandler) Handle(r records.Record) error {
 	return nil
 }
 
-func (h *jsonHandler) asMap(attrs []attr.Attr) map[string]interface{} {
+func (h jsonHandler) asMap(attrs []attr.Attr) map[string]interface{} {
 	var out = map[string]interface{}{}
 	for _, a := range attrs {
 		if h.replFn != nil {
@@ -95,56 +95,49 @@ func (h *jsonHandler) asMap(attrs []attr.Attr) map[string]interface{} {
 	return out
 }
 
-func (h *jsonHandler) With(attrs ...attr.Attr) handlers.Handler {
-	new := &jsonHandler{
+func (h jsonHandler) With(attrs ...attr.Attr) handlers.Handler {
+	return jsonHandler{
 		w:         h.w,
 		addSource: h.addSource,
 		levelRef:  h.levelRef,
 		replFn:    h.replFn,
 		attrs:     attrs,
 	}
-	return new
 }
 
-func (h *jsonHandler) Enabled(level level.Level) bool {
+func (h jsonHandler) Enabled(level level.Level) bool {
 	if h.levelRef == nil || level.Int() >= h.levelRef.Int() {
 		return true
 	}
 	return false
 }
 
-func (h *jsonHandler) WithSource(addSource bool) handlers.Handler {
-	new := &jsonHandler{
+func (h jsonHandler) WithSource(addSource bool) handlers.Handler {
+	return jsonHandler{
 		w:         h.w,
 		addSource: addSource,
 		levelRef:  h.levelRef,
 		replFn:    h.replFn,
-		attrs:     []attr.Attr{},
+		attrs:     h.attrs,
 	}
-	copy(new.attrs, h.attrs)
-	return new
 }
 
 func (h *jsonHandler) WithLevel(level level.Level) handlers.Handler {
-	new := &jsonHandler{
+	return jsonHandler{
 		w:         h.w,
 		addSource: h.addSource,
 		levelRef:  level,
 		replFn:    h.replFn,
-		attrs:     []attr.Attr{},
+		attrs:     h.attrs,
 	}
-	copy(new.attrs, h.attrs)
-	return new
 }
 
 func (h *jsonHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Handler {
-	new := &jsonHandler{
+	return jsonHandler{
 		w:         h.w,
 		addSource: h.addSource,
 		levelRef:  h.levelRef,
 		replFn:    fn,
-		attrs:     []attr.Attr{},
+		attrs:     h.attrs,
 	}
-	copy(new.attrs, h.attrs)
-	return new
 }
