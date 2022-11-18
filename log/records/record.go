@@ -18,11 +18,17 @@ type Record interface {
 }
 
 func New(t time.Time, lv level.Level, msg string, attrs ...attr.Attr) Record {
+	as := []attr.Attr{}
+	for _, a := range attrs {
+		if a != nil {
+			as = append(as, a)
+		}
+	}
 	return record{
 		timestamp: t,
 		message:   msg,
 		level:     lv,
-		attrs:     attrs,
+		attrs:     as,
 	}
 }
 
@@ -33,12 +39,18 @@ type record struct {
 	attrs     []attr.Attr
 }
 
-func (r record) AddAttr(a ...attr.Attr) Record {
+func (r record) AddAttr(attrs ...attr.Attr) Record {
+	as := r.attrs
+	for _, a := range attrs {
+		if a != nil {
+			as = append(as, a)
+		}
+	}
 	return record{
 		timestamp: r.timestamp,
 		message:   r.message,
 		level:     r.level,
-		attrs:     append(r.attrs, a...),
+		attrs:     as,
 	}
 }
 
