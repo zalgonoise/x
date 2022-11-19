@@ -67,7 +67,7 @@ func (h textHandler) Handle(r records.Record) error {
 	b.WriteRune(h.conf.whiteSpace)
 	b.WriteString(r.Message())
 
-	if r.AttLen() > 0 {
+	if r.AttrLen() > 0 {
 		b.WriteRune(h.conf.whiteSpace)
 		b.WriteRune(h.conf.wrapperL)
 		b.WriteRune(h.conf.whiteSpace)

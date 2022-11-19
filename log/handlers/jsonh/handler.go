@@ -51,7 +51,7 @@ func (h jsonHandler) Handle(r records.Record) error {
 			Data:  map[string]interface{}{},
 		}
 	)
-	if r.AttLen() > 0 {
+	if r.AttrLen() > 0 {
 		out.Data = h.asMap(r.Attrs())
 	}
 	if len(h.attrs) > 0 {
