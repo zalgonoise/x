@@ -60,6 +60,63 @@ func TestNew(t *testing.T) {
 			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
 		}
 	})
+	t.Run("ZeroTime", func(t *testing.T) {
+		wants := record{
+			message: testMsg,
+			level:   testLevel,
+			attrs:   testAttrs,
+		}
+
+		a := New(time.Time{}, testLevel, testMsg, testAttrs...)
+
+		if a.Time().IsZero() {
+			t.Errorf("expected time not to be zero ; got %v", a.Time())
+		}
+		wants.timestamp = a.Time()
+
+		if !reflect.DeepEqual(wants, a) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("ZeroUnixTime", func(t *testing.T) {
+		wants := record{
+			message: testMsg,
+			level:   testLevel,
+			attrs:   testAttrs,
+		}
+
+		a := New(time.Unix(0, 0), testLevel, testMsg, testAttrs...)
+
+		if a.Time().IsZero() {
+			t.Errorf("expected time not to be zero ; got %v", a.Time())
+		}
+		wants.timestamp = a.Time()
+
+		if !reflect.DeepEqual(wants, a) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("NoLevel", func(t *testing.T) {
+		wants := record{
+			timestamp: testTime,
+			message:   testMsg,
+			level:     testLevel,
+			attrs:     testAttrs,
+		}
+
+		a := New(testTime, nil, testMsg, testAttrs...)
+
+		if !reflect.DeepEqual(wants, a) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("NoMessage", func(t *testing.T) {
+		a := New(testTime, testLevel, "", testAttrs...)
+
+		if a != nil {
+			t.Errorf("unexpected output error: wanted %v ; got %v", nil, a)
+		}
+	})
 }
 
 func TestRecordAddAttr(t *testing.T) {
@@ -110,37 +167,6 @@ func TestRecordAddAttr(t *testing.T) {
 	})
 }
 
-func TestRecordAttr(t *testing.T) {
-	t.Run("IdxZero", func(t *testing.T) {
-		wants := ta1
-
-		r := New(testTime, testLevel, testMsg, ta1, ta2)
-		a := r.Attr(0)
-
-		if !reflect.DeepEqual(wants, a) {
-			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
-		}
-	})
-	t.Run("IdxThree", func(t *testing.T) {
-		wants := ta4
-
-		r := New(testTime, testLevel, testMsg, ta1, ta2, ta3, ta4)
-		a := r.Attr(3)
-
-		if !reflect.DeepEqual(wants, a) {
-			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
-		}
-	})
-	t.Run("IdxOOB", func(t *testing.T) {
-		r := New(testTime, testLevel, testMsg, ta1, ta2)
-		a := r.Attr(90)
-
-		if a != nil {
-			t.Errorf("expected value to be nil; got %v of type %T", a, a)
-		}
-	})
-}
-
 func TestRecordAttrs(t *testing.T) {
 	t.Run("GetOne", func(t *testing.T) {
 		wants := []attr.Attr{ta1}
@@ -178,6 +204,36 @@ func TestRecordAttrs(t *testing.T) {
 		})
 
 		if !reflect.DeepEqual(wants, a) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+}
+
+func TestRecordAttrLen(t *testing.T) {
+	t.Run("ZeroLen", func(t *testing.T) {
+		wants := 0
+		r := New(testTime, testLevel, testMsg)
+		a := r.AttrLen()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("OneLen", func(t *testing.T) {
+		wants := 1
+		r := New(testTime, testLevel, testMsg, ta1)
+		a := r.AttrLen()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("FourLen", func(t *testing.T) {
+		wants := 4
+		r := New(testTime, testLevel, testMsg, ta1, ta2, ta3, ta4)
+		a := r.AttrLen()
+
+		if a != wants {
 			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
 		}
 	})
