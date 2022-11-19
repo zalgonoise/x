@@ -1,6 +1,7 @@
 package records
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/zalgonoise/x/log/attr"
@@ -9,15 +10,25 @@ import (
 
 type Record interface {
 	AddAttr(a ...attr.Attr) Record
-	Attr(idx int) attr.Attr
 	Attrs() []attr.Attr
-	AttLen() int
+	AttrLen() int
 	Message() string
 	Time() time.Time
 	Level() level.Level
 }
 
 func New(t time.Time, lv level.Level, msg string, attrs ...attr.Attr) Record {
+	if msg == "" {
+		return nil
+	}
+	fmt.Println(t)
+	if t.IsZero() || t == time.Unix(0, 0) {
+		t = time.Now()
+	}
+	if lv == nil {
+		lv = level.Info
+	}
+
 	as := []attr.Attr{}
 	for _, a := range attrs {
 		if a != nil {
@@ -54,18 +65,11 @@ func (r record) AddAttr(attrs ...attr.Attr) Record {
 	}
 }
 
-func (r record) Attr(idx int) attr.Attr {
-	if idx >= len(r.attrs) {
-		return nil
-	}
-	return r.attrs[idx]
-}
-
 func (r record) Attrs() []attr.Attr {
 	return r.attrs
 }
 
-func (r record) AttLen() int {
+func (r record) AttrLen() int {
 	return len(r.attrs)
 }
 
