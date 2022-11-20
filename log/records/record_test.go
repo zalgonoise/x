@@ -111,10 +111,16 @@ func TestNew(t *testing.T) {
 		}
 	})
 	t.Run("NoMessage", func(t *testing.T) {
+		wants := record{
+			timestamp: testTime,
+			message:   "",
+			level:     testLevel,
+			attrs:     testAttrs,
+		}
 		a := New(testTime, testLevel, "", testAttrs...)
 
-		if a != nil {
-			t.Errorf("unexpected output error: wanted %v ; got %v", nil, a)
+		if !reflect.DeepEqual(wants, a) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
 		}
 	})
 }
@@ -232,6 +238,84 @@ func TestRecordAttrLen(t *testing.T) {
 		wants := 4
 		r := New(testTime, testLevel, testMsg, ta1, ta2, ta3, ta4)
 		a := r.AttrLen()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+}
+
+func TestMessage(t *testing.T) {
+	t.Run("Short", func(t *testing.T) {
+		wants := "m"
+		r := New(testTime, testLevel, "m", ta1, ta2, ta3, ta4)
+		a := r.Message()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("Long", func(t *testing.T) {
+		wants := testMsg
+		r := New(testTime, testLevel, testMsg, ta1, ta2, ta3, ta4)
+		a := r.Message()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+}
+
+func TestLevel(t *testing.T) {
+	t.Run("Trace", func(t *testing.T) {
+		wants := level.Trace.Int()
+		r := New(testTime, level.Trace, "m", ta1, ta2, ta3, ta4)
+		a := r.Level().Int()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("Debug", func(t *testing.T) {
+		wants := level.Debug.Int()
+		r := New(testTime, level.Debug, "m", ta1, ta2, ta3, ta4)
+		a := r.Level().Int()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("Info", func(t *testing.T) {
+		wants := level.Info.Int()
+		r := New(testTime, level.Info, "m", ta1, ta2, ta3, ta4)
+		a := r.Level().Int()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("Warn", func(t *testing.T) {
+		wants := level.Warn.Int()
+		r := New(testTime, level.Warn, "m", ta1, ta2, ta3, ta4)
+		a := r.Level().Int()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("Error", func(t *testing.T) {
+		wants := level.Error.Int()
+		r := New(testTime, level.Error, "m", ta1, ta2, ta3, ta4)
+		a := r.Level().Int()
+
+		if a != wants {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
+		}
+	})
+	t.Run("Fatal", func(t *testing.T) {
+		wants := level.Fatal.Int()
+		r := New(testTime, level.Fatal, testMsg, ta1, ta2, ta3, ta4)
+		a := r.Level().Int()
 
 		if a != wants {
 			t.Errorf("unexpected output error: wanted %v ; got %v", wants, a)
