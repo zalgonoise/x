@@ -1,7 +1,6 @@
 package records
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/zalgonoise/x/log/attr"
@@ -18,10 +17,6 @@ type Record interface {
 }
 
 func New(t time.Time, lv level.Level, msg string, attrs ...attr.Attr) Record {
-	if msg == "" {
-		return nil
-	}
-	fmt.Println(t)
 	if t.IsZero() || t == time.Unix(0, 0) {
 		t = time.Now()
 	}
