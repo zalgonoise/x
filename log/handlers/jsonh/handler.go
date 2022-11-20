@@ -36,6 +36,9 @@ type jsonRecord struct {
 
 // New creates a JSON handler based on the input io.Writer `w`
 func New(w io.Writer) handlers.Handler {
+	if w == nil {
+		return nil
+	}
 	return jsonHandler{
 		w: w,
 	}
