@@ -13,6 +13,9 @@ import (
 )
 
 var (
+	// ErrZeroBytes is raised when the `io.Writer` in the handler
+	// returns a zero-length of bytes written, when the `Write()`
+	// method is called
 	ErrZeroBytes error = errors.New("zero bytes written")
 )
 
@@ -31,12 +34,14 @@ type jsonRecord struct {
 	Data  map[string]interface{} `json:"data,omitempty"`
 }
 
+// New creates a JSON handler based on the input io.Writer `w`
 func New(w io.Writer) handlers.Handler {
 	return jsonHandler{
 		w: w,
 	}
 }
 
+// Handle will process the input Record, returning an error if raised
 func (h jsonHandler) Handle(r records.Record) error {
 	if h.levelRef != nil && r.Level().Int() < h.levelRef.Int() {
 		return nil
@@ -95,6 +100,8 @@ func (h jsonHandler) asMap(attrs []attr.Attr) map[string]interface{} {
 	return out
 }
 
+// With will spawn a copy of this Handler with the input attributes
+// `attrs`
 func (h jsonHandler) With(attrs ...attr.Attr) handlers.Handler {
 	return jsonHandler{
 		w:         h.w,
@@ -105,13 +112,17 @@ func (h jsonHandler) With(attrs ...attr.Attr) handlers.Handler {
 	}
 }
 
+// Enabled returns a boolean on whether the Handler is accepting
+// records with log level `level`
 func (h jsonHandler) Enabled(level level.Level) bool {
-	if h.levelRef == nil || level.Int() >= h.levelRef.Int() {
+	if h.levelRef == nil || level == nil || level.Int() >= h.levelRef.Int() {
 		return true
 	}
 	return false
 }
 
+// WithSource will spawn a new copy of this Handler with the setting
+// to add a source file+line reference to `addSource` boolean
 func (h jsonHandler) WithSource(addSource bool) handlers.Handler {
 	return jsonHandler{
 		w:         h.w,
@@ -122,7 +133,9 @@ func (h jsonHandler) WithSource(addSource bool) handlers.Handler {
 	}
 }
 
-func (h *jsonHandler) WithLevel(level level.Level) handlers.Handler {
+// WithLevel will spawn a copy of this Handler with the input level `level`
+// as a verbosity filter
+func (h jsonHandler) WithLevel(level level.Level) handlers.Handler {
 	return jsonHandler{
 		w:         h.w,
 		addSource: h.addSource,
@@ -132,7 +145,9 @@ func (h *jsonHandler) WithLevel(level level.Level) handlers.Handler {
 	}
 }
 
-func (h *jsonHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Handler {
+// WithReplaceFn will spawn a copy of this Handler with the input attribute
+// replace function `fn`
+func (h jsonHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Handler {
 	return jsonHandler{
 		w:         h.w,
 		addSource: h.addSource,

@@ -14,6 +14,9 @@ import (
 )
 
 var (
+	// ErrZeroBytes is raised when the `io.Writer` in the handler
+	// returns a zero-length of bytes written, when the `Write()`
+	// method is called
 	ErrZeroBytes error = errors.New("zero bytes written")
 )
 
@@ -35,6 +38,7 @@ type textHandlerConfig struct {
 	timeFmt    string
 }
 
+// New creates a text handler based on the input io.Writer `w`
 func New(w io.Writer) handlers.Handler {
 	return textHandler{
 		w: w,
@@ -49,6 +53,7 @@ func New(w io.Writer) handlers.Handler {
 	}
 }
 
+// Handle will process the input Record, returning an error if raised
 func (h textHandler) Handle(r records.Record) error {
 	if h.levelRef != nil && r.Level().Int() < h.levelRef.Int() {
 		return nil
@@ -119,6 +124,8 @@ func (h textHandler) asString(attrs []attr.Attr) string {
 	return out.String()
 }
 
+// With will spawn a copy of this Handler with the input attributes
+// `attrs`
 func (h textHandler) With(attrs ...attr.Attr) handlers.Handler {
 	return textHandler{
 		w:         h.w,
@@ -129,6 +136,8 @@ func (h textHandler) With(attrs ...attr.Attr) handlers.Handler {
 	}
 }
 
+// Enabled returns a boolean on whether the Handler is accepting
+// records with log level `level`
 func (h textHandler) Enabled(level level.Level) bool {
 	if h.levelRef == nil || level.Int() >= h.levelRef.Int() {
 		return true
@@ -136,6 +145,8 @@ func (h textHandler) Enabled(level level.Level) bool {
 	return false
 }
 
+// WithSource will spawn a new copy of this Handler with the setting
+// to add a source file+line reference to `addSource` boolean
 func (h textHandler) WithSource(addSource bool) handlers.Handler {
 	return textHandler{
 		w:         h.w,
@@ -146,6 +157,8 @@ func (h textHandler) WithSource(addSource bool) handlers.Handler {
 	}
 }
 
+// WithLevel will spawn a copy of this Handler with the input level `level`
+// as a verbosity filter
 func (h textHandler) WithLevel(level level.Level) handlers.Handler {
 	return textHandler{
 		w:         h.w,
@@ -156,7 +169,9 @@ func (h textHandler) WithLevel(level level.Level) handlers.Handler {
 	}
 }
 
-func (h *textHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Handler {
+// WithReplaceFn will spawn a copy of this Handler with the input attribute
+// replace function `fn`
+func (h textHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Handler {
 	return textHandler{
 		w:         h.w,
 		addSource: h.addSource,

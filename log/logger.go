@@ -25,17 +25,13 @@ type Logger interface {
 	// With will spawn a copy of this Logger with the input attributes
 	// `attrs`
 	With(attrs ...attr.Attr) Logger
-	// WithLevel will spawn a copy of this Logger with the input level `level`
-	// as a verbosity filter
-	WithLevel(level level.Level) Logger
 }
 
 var std = New(texth.New(os.Stderr))
 
 type logger struct {
-	h        handlers.Handler
-	attrs    []attr.Attr
-	levelRef level.Level
+	h     handlers.Handler
+	attrs []attr.Attr
 }
 
 // New spawns a new logger based on the handler `h`
@@ -54,40 +50,27 @@ func Default() Logger {
 // with the input attributes `attrs`
 func With(attrs ...attr.Attr) Logger {
 	return &logger{
-		h:        std.Handler(),
-		levelRef: (std).(*logger).levelRef,
-		attrs:    attrs,
+		h:     std.Handler(),
+		attrs: attrs,
 	}
-}
-
-// WithLevel will spawn a copy of this Logger with the input level `level`
-// as a verbosity filter
-func (l *logger) WithLevel(level level.Level) Logger {
-	new := &logger{
-		h:        l.h,
-		levelRef: level,
-	}
-	copy(new.attrs, l.attrs)
-	return new
 }
 
 // With will spawn a copy of this Logger with the input attributes
 // `attrs`
 func (l *logger) With(attrs ...attr.Attr) Logger {
 	return &logger{
-		h:        l.h,
-		levelRef: l.levelRef,
-		attrs:    attrs,
+		h:     l.h,
+		attrs: attrs,
 	}
 }
 
 // Enabled returns a boolean on whether the logger is accepting
 // records with log level `level`
 func (l *logger) Enabled(level level.Level) bool {
-	if l.levelRef == nil || level.Int() >= l.levelRef.Int() {
+	if level == nil {
 		return true
 	}
-	return false
+	return l.h.Enabled(level)
 }
 
 // Handler returns this Logger's Handler interface
