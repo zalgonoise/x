@@ -134,7 +134,7 @@ func TestHandle(t *testing.T) {
 		}
 	})
 	t.Run("LevelHandlerAttr", func(t *testing.T) {
-		wants := `[2022-11-18T21:21:27+01:00] [info] test message [ k: v ] [ a_key: value ; b_test_no: 1 ; c_success_rate: 1 ; d_custom: {custom_key 2} ]`
+		wants := `[2022-11-18T21:21:27+01:00] [info] test message [ k: v ; a_key: value ; b_test_no: 1 ; c_success_rate: 1 ; d_custom: {custom_key 2} ]`
 		newH := h.With(attr.New("k", "v"))
 
 		err := newH.Handle(r3)

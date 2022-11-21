@@ -83,20 +83,14 @@ func (h textHandler) Handle(r records.Record) error {
 	b.WriteRune(h.conf.whitespace)
 	b.WriteString(r.Message())
 
-	if len(h.attrs) > 0 {
+	var attributes []attr.Attr
+	attributes = append(attributes, h.attrs...)
+	attributes = append(attributes, r.Attrs()...)
+	if len(attributes) > 0 {
 		b.WriteRune(h.conf.whitespace)
 		b.WriteRune(h.conf.wrapperL)
 		b.WriteRune(h.conf.whitespace)
-		b.WriteString(h.asString(h.attrs))
-		b.WriteRune(h.conf.whitespace)
-		b.WriteRune(h.conf.wrapperR)
-	}
-
-	if r.AttrLen() > 0 {
-		b.WriteRune(h.conf.whitespace)
-		b.WriteRune(h.conf.wrapperL)
-		b.WriteRune(h.conf.whitespace)
-		b.WriteString(h.asString(r.Attrs()))
+		b.WriteString(h.asString(attributes))
 		b.WriteRune(h.conf.whitespace)
 		b.WriteRune(h.conf.wrapperR)
 	}
