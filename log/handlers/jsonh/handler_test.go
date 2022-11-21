@@ -191,3 +191,15 @@ func TestEnabled(t *testing.T) {
 		}
 	})
 }
+
+func TestWithSource(t *testing.T) {
+	b := &bytes.Buffer{}
+	h := New(b)
+	t.Run("True", func(t *testing.T) {
+		new := h.WithSource(true)
+
+		if !new.(jsonHandler).addSource {
+			t.Errorf("expected addSource to be true")
+		}
+	})
+}
