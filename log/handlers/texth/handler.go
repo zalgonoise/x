@@ -13,6 +13,15 @@ import (
 	"github.com/zalgonoise/x/log/records"
 )
 
+const (
+	wrapperL   rune   = '['
+	wrapperR   rune   = ']'
+	sepKV      string = ": "
+	sepAttr    rune   = ';'
+	whitespace rune   = ' '
+	tFmt       string = time.RFC3339Nano
+)
+
 var (
 	// ErrZeroBytes is raised when the `io.Writer` in the handler
 	// returns a zero-length of bytes written, when the `Write()`
@@ -34,21 +43,24 @@ type textHandlerConfig struct {
 	wrapperR   rune
 	sepKV      string
 	sepAttr    rune
-	whiteSpace rune
+	whitespace rune
 	timeFmt    string
 }
 
 // New creates a text handler based on the input io.Writer `w`
 func New(w io.Writer) handlers.Handler {
+	if w == nil {
+		return nil
+	}
 	return textHandler{
 		w: w,
 		conf: textHandlerConfig{
-			wrapperL:   '[',
-			wrapperR:   ']',
-			sepKV:      ": ",
-			sepAttr:    ';',
-			whiteSpace: ' ',
-			timeFmt:    time.RFC3339Nano,
+			wrapperL:   wrapperL,
+			wrapperR:   wrapperR,
+			sepKV:      sepKV,
+			sepAttr:    sepAttr,
+			whitespace: whitespace,
+			timeFmt:    tFmt,
 		},
 	}
 }
@@ -64,20 +76,28 @@ func (h textHandler) Handle(r records.Record) error {
 	b.WriteRune(h.conf.wrapperL)
 	b.WriteString(r.Time().Format(h.conf.timeFmt))
 	b.WriteRune(h.conf.wrapperR)
-	b.WriteRune(h.conf.wrapperL)
-	b.WriteRune(h.conf.whiteSpace)
+	b.WriteRune(h.conf.whitespace)
 	b.WriteRune(h.conf.wrapperL)
 	b.WriteString(r.Level().String())
 	b.WriteRune(h.conf.wrapperR)
-	b.WriteRune(h.conf.whiteSpace)
+	b.WriteRune(h.conf.whitespace)
 	b.WriteString(r.Message())
 
-	if r.AttrLen() > 0 {
-		b.WriteRune(h.conf.whiteSpace)
+	if len(h.attrs) > 0 {
+		b.WriteRune(h.conf.whitespace)
 		b.WriteRune(h.conf.wrapperL)
-		b.WriteRune(h.conf.whiteSpace)
+		b.WriteRune(h.conf.whitespace)
+		b.WriteString(h.asString(h.attrs))
+		b.WriteRune(h.conf.whitespace)
+		b.WriteRune(h.conf.wrapperR)
+	}
+
+	if r.AttrLen() > 0 {
+		b.WriteRune(h.conf.whitespace)
+		b.WriteRune(h.conf.wrapperL)
+		b.WriteRune(h.conf.whitespace)
 		b.WriteString(h.asString(r.Attrs()))
-		b.WriteRune(h.conf.whiteSpace)
+		b.WriteRune(h.conf.whitespace)
 		b.WriteRune(h.conf.wrapperR)
 	}
 
@@ -99,26 +119,23 @@ func (h textHandler) asString(attrs []attr.Attr) string {
 		if h.replFn != nil {
 			a = h.replFn(a)
 		}
-		if v, ok := (a.Value()).([]attr.Attr); ok {
-			out.WriteString(a.Key())
-			out.WriteString(h.conf.sepKV)
-			out.WriteRune(h.conf.wrapperL)
-			out.WriteString(h.asString(v))
-			out.WriteRune(h.conf.wrapperR)
-			out.WriteRune(h.conf.whiteSpace)
-			if idx < len(attrs)-2 {
-				out.WriteRune(h.conf.sepAttr)
-				out.WriteRune(h.conf.whiteSpace)
-			}
-			continue
-		}
 		out.WriteString(a.Key())
 		out.WriteString(h.conf.sepKV)
-		out.WriteString(fmt.Sprintf("%v", a.Value()))
-		out.WriteRune(h.conf.whiteSpace)
-		if idx < len(attrs)-2 {
+
+		switch v := (a.Value()).(type) {
+		case []attr.Attr:
+			out.WriteRune(h.conf.wrapperL)
+			out.WriteRune(h.conf.whitespace)
+			out.WriteString(h.asString(v))
+			out.WriteRune(h.conf.whitespace)
+			out.WriteRune(h.conf.wrapperR)
+		default:
+			out.WriteString(fmt.Sprint(v))
+		}
+		if idx < len(attrs)-1 {
+			out.WriteRune(h.conf.whitespace)
 			out.WriteRune(h.conf.sepAttr)
-			out.WriteRune(h.conf.whiteSpace)
+			out.WriteRune(h.conf.whitespace)
 		}
 	}
 	return out.String()
@@ -133,6 +150,7 @@ func (h textHandler) With(attrs ...attr.Attr) handlers.Handler {
 		levelRef:  h.levelRef,
 		replFn:    h.replFn,
 		attrs:     attrs,
+		conf:      h.conf,
 	}
 }
 
@@ -154,6 +172,7 @@ func (h textHandler) WithSource(addSource bool) handlers.Handler {
 		levelRef:  h.levelRef,
 		replFn:    h.replFn,
 		attrs:     h.attrs,
+		conf:      h.conf,
 	}
 }
 
@@ -166,6 +185,7 @@ func (h textHandler) WithLevel(level level.Level) handlers.Handler {
 		levelRef:  level,
 		replFn:    h.replFn,
 		attrs:     h.attrs,
+		conf:      h.conf,
 	}
 }
 
@@ -178,5 +198,6 @@ func (h textHandler) WithReplaceFn(fn func(a attr.Attr) attr.Attr) handlers.Hand
 		levelRef:  h.levelRef,
 		replFn:    fn,
 		attrs:     h.attrs,
+		conf:      h.conf,
 	}
 }

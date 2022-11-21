@@ -24,7 +24,7 @@ func WithWrapper(h handlers.Handler, leftWrapper, rightWrapper rune) handlers.Ha
 			wrapperR:   rightWrapper,
 			sepKV:      textH.conf.sepKV,
 			sepAttr:    textH.conf.sepAttr,
-			whiteSpace: textH.conf.whiteSpace,
+			whitespace: textH.conf.whitespace,
 			timeFmt:    textH.conf.timeFmt,
 		},
 	}
@@ -38,6 +38,10 @@ func WithKVSeparator(h handlers.Handler, kvSeparator string) handlers.Handler {
 		return nil
 	}
 
+	if kvSeparator == "" {
+		kvSeparator = sepKV
+	}
+
 	return textHandler{
 		w:         textH.w,
 		addSource: textH.addSource,
@@ -49,7 +53,7 @@ func WithKVSeparator(h handlers.Handler, kvSeparator string) handlers.Handler {
 			wrapperR:   textH.conf.wrapperR,
 			sepKV:      kvSeparator,
 			sepAttr:    textH.conf.sepAttr,
-			whiteSpace: textH.conf.whiteSpace,
+			whitespace: textH.conf.whitespace,
 			timeFmt:    textH.conf.timeFmt,
 		},
 	}
@@ -74,7 +78,7 @@ func WithAttrSeparator(h handlers.Handler, attrSeparator rune) handlers.Handler 
 			wrapperR:   textH.conf.wrapperR,
 			sepKV:      textH.conf.sepKV,
 			sepAttr:    attrSeparator,
-			whiteSpace: textH.conf.whiteSpace,
+			whitespace: textH.conf.whitespace,
 			timeFmt:    textH.conf.timeFmt,
 		},
 	}
@@ -87,6 +91,9 @@ func WithTimeFormat(h handlers.Handler, timeFmt string) handlers.Handler {
 	if !ok {
 		return nil
 	}
+	if timeFmt == "" {
+		timeFmt = tFmt
+	}
 
 	return textHandler{
 		w:         textH.w,
@@ -99,15 +106,15 @@ func WithTimeFormat(h handlers.Handler, timeFmt string) handlers.Handler {
 			wrapperR:   textH.conf.wrapperR,
 			sepKV:      textH.conf.sepKV,
 			sepAttr:    textH.conf.sepAttr,
-			whiteSpace: textH.conf.whiteSpace,
+			whitespace: textH.conf.whitespace,
 			timeFmt:    timeFmt,
 		},
 	}
 }
 
-// WithWhiteSpace creates a copy the Handler `h`, with the whitespace rune
-// `whiteSpace`. Returns nil if the Handler is not a textHandler
-func WithWhiteSpace(h handlers.Handler, whiteSpace rune) handlers.Handler {
+// WithWhitespace creates a copy the Handler `h`, with the whitespace rune
+// `whitespace`. Returns nil if the Handler is not a textHandler
+func WithWhitespace(h handlers.Handler, whitespace rune) handlers.Handler {
 	textH, ok := (h).(textHandler)
 	if !ok {
 		return nil
@@ -124,7 +131,7 @@ func WithWhiteSpace(h handlers.Handler, whiteSpace rune) handlers.Handler {
 			wrapperR:   textH.conf.wrapperR,
 			sepKV:      textH.conf.sepKV,
 			sepAttr:    textH.conf.sepAttr,
-			whiteSpace: whiteSpace,
+			whitespace: whitespace,
 			timeFmt:    textH.conf.timeFmt,
 		},
 	}
