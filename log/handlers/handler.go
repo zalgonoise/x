@@ -6,6 +6,11 @@ import (
 	"github.com/zalgonoise/x/log/records"
 )
 
+// Handler describes a logging backend, capable of writing a Record to an
+// io.Writer (with its Handle() method).
+//
+// Beyond this feature, it also exposes methods of copying it with different
+// configuration options.
 type Handler interface {
 	// Enabled returns a boolean on whether the Handler is accepting
 	// records with log level `level`
