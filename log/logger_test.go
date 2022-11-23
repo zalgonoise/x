@@ -3,7 +3,6 @@ package log
 import (
 	"bytes"
 	"reflect"
-	"regexp"
 	"testing"
 
 	"github.com/zalgonoise/x/log/attr"
@@ -161,110 +160,4 @@ func TestLoggerHandler(t *testing.T) {
 			t.Errorf("output mismatch error: wanted %v ; got %v", th, out)
 		}
 	})
-}
-
-func TestLoggerLog(t *testing.T) {
-	b := &bytes.Buffer{}
-	h := jsonh.New(b)
-	testMsg := "test message"
-	testLevel := level.Info
-
-	wants := regexp.MustCompile(`{"timestamp":".*","message":"test message","level":"info"}`)
-
-	l := New(h)
-	l.Log(testLevel, testMsg)
-
-	if !wants.MatchString(b.String()) {
-		t.Errorf("output mismatch error: wanted %s ; got %s", wants.String(), b.String())
-	}
-}
-
-func TestLoggerTrace(t *testing.T) {
-	b := &bytes.Buffer{}
-	h := jsonh.New(b)
-	testMsg := "test message"
-
-	wants := regexp.MustCompile(`{"timestamp":".*","message":"test message","level":"trace"}`)
-
-	l := New(h)
-	l.Trace(testMsg)
-
-	if !wants.MatchString(b.String()) {
-		t.Errorf("output mismatch error: wanted %s ; got %s", wants.String(), b.String())
-	}
-}
-
-func TestLoggerDebug(t *testing.T) {
-	b := &bytes.Buffer{}
-	h := jsonh.New(b)
-	testMsg := "test message"
-
-	wants := regexp.MustCompile(`{"timestamp":".*","message":"test message","level":"debug"}`)
-
-	l := New(h)
-	l.Debug(testMsg)
-
-	if !wants.MatchString(b.String()) {
-		t.Errorf("output mismatch error: wanted %s ; got %s", wants.String(), b.String())
-	}
-}
-
-func TestLoggerInfo(t *testing.T) {
-	b := &bytes.Buffer{}
-	h := jsonh.New(b)
-	testMsg := "test message"
-
-	wants := regexp.MustCompile(`{"timestamp":".*","message":"test message","level":"info"}`)
-
-	l := New(h)
-	l.Info(testMsg)
-
-	if !wants.MatchString(b.String()) {
-		t.Errorf("output mismatch error: wanted %s ; got %s", wants.String(), b.String())
-	}
-}
-
-func TestLoggerWarn(t *testing.T) {
-	b := &bytes.Buffer{}
-	h := jsonh.New(b)
-	testMsg := "test message"
-
-	wants := regexp.MustCompile(`{"timestamp":".*","message":"test message","level":"warn"}`)
-
-	l := New(h)
-	l.Warn(testMsg)
-
-	if !wants.MatchString(b.String()) {
-		t.Errorf("output mismatch error: wanted %s ; got %s", wants.String(), b.String())
-	}
-}
-
-func TestLoggerError(t *testing.T) {
-	b := &bytes.Buffer{}
-	h := jsonh.New(b)
-	testMsg := "test message"
-
-	wants := regexp.MustCompile(`{"timestamp":".*","message":"test message","level":"error"}`)
-
-	l := New(h)
-	l.Error(testMsg)
-
-	if !wants.MatchString(b.String()) {
-		t.Errorf("output mismatch error: wanted %s ; got %s", wants.String(), b.String())
-	}
-}
-
-func TestLoggerFatal(t *testing.T) {
-	b := &bytes.Buffer{}
-	h := jsonh.New(b)
-	testMsg := "test message"
-
-	wants := regexp.MustCompile(`{"timestamp":".*","message":"test message","level":"fatal"}`)
-
-	l := New(h)
-	l.Fatal(testMsg)
-
-	if !wants.MatchString(b.String()) {
-		t.Errorf("output mismatch error: wanted %s ; got %s", wants.String(), b.String())
-	}
 }
