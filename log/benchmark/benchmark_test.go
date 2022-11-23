@@ -8,7 +8,7 @@ import (
 	"github.com/zalgonoise/x/log/handlers/jsonh"
 	"github.com/zalgonoise/x/log/handlers/texth"
 
-	logv2 "github.com/zalgonoise/x/log"
+	logx "github.com/zalgonoise/x/log"
 )
 
 func BenchmarkLogger(b *testing.B) {
@@ -31,8 +31,8 @@ func BenchmarkLogger(b *testing.B) {
 
 	b.Run("Writing", func(b *testing.B) {
 		b.Run("SimpleText", func(b *testing.B) {
-			b.Run("LogV2", func(b *testing.B) {
-				localLogger := logv2.New(texth.New(buf))
+			b.Run("LogX", func(b *testing.B) {
+				localLogger := logx.New(texth.New(buf))
 
 				b.ResetTimer()
 				for n := 0; n < b.N; n++ {
@@ -42,8 +42,8 @@ func BenchmarkLogger(b *testing.B) {
 			})
 		})
 		b.Run("SimpleJSON", func(b *testing.B) {
-			b.Run("LogV2", func(b *testing.B) {
-				localLogger := logv2.New(jsonh.New(buf))
+			b.Run("LogX", func(b *testing.B) {
+				localLogger := logx.New(jsonh.New(buf))
 
 				b.ResetTimer()
 				for n := 0; n < b.N; n++ {
@@ -54,8 +54,8 @@ func BenchmarkLogger(b *testing.B) {
 		})
 
 		b.Run("ComplexText", func(b *testing.B) {
-			b.Run("LogV2", func(b *testing.B) {
-				localLogger := logv2.New(texth.New(buf))
+			b.Run("LogX", func(b *testing.B) {
+				localLogger := logx.New(texth.New(buf))
 
 				b.ResetTimer()
 				for n := 0; n < b.N; n++ {
@@ -65,8 +65,8 @@ func BenchmarkLogger(b *testing.B) {
 			})
 		})
 		b.Run("ComplexJSON", func(b *testing.B) {
-			b.Run("LogV2", func(b *testing.B) {
-				localLogger := logv2.New(jsonh.New(buf))
+			b.Run("LogX", func(b *testing.B) {
+				localLogger := logx.New(jsonh.New(buf))
 
 				b.ResetTimer()
 				for n := 0; n < b.N; n++ {
