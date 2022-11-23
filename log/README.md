@@ -288,25 +288,25 @@ benchmark                                                         iter        ti
 BenchmarkVendorLoggers/Writing/SimpleText/ZeroLogger-4         2570126     471.30 ns/op      156 B/op    0 allocs/op
 BenchmarkVendorLoggers/Writing/SimpleText/StdLibLogger-4       2948067     412.70 ns/op       24 B/op    1 allocs/op
 BenchmarkVendorLoggers/Writing/SimpleText/ZapLogger-4           827116    1396.00 ns/op       64 B/op    3 allocs/op
-BenchmarkLogger/Writing/SimpleText/LogX-4    				    916345    1605.00 ns/op      537 B/op    4 allocs/op
+BenchmarkLogger/Writing/SimpleText/LogX-4    			916345    1605.00 ns/op      537 B/op    4 allocs/op
 BenchmarkVendorLoggers/Writing/SimpleText/ZlogLogger-4          945510    1336.00 ns/op      368 B/op    9 allocs/op
 BenchmarkVendorLoggers/Writing/SimpleText/LogrusLogger-4        273914    4253.00 ns/op      480 B/op   15 allocs/op
 
 BenchmarkVendorLoggers/Writing/SimpleJSON/ZeroLogger-4         5817523     317.00 ns/op       92 B/op    0 allocs/op
 BenchmarkVendorLoggers/Writing/SimpleJSON/ZapLogger-4          1000000    1152.00 ns/op        0 B/op    0 allocs/op
-BenchmarkLogger/Writing/SimpleJSON/LogX-4    					644287    1824.00 ns/op      352 B/op    5 allocs/op
+BenchmarkLogger/Writing/SimpleJSON/LogX-4    			644287    1824.00 ns/op      352 B/op    5 allocs/op
 BenchmarkVendorLoggers/Writing/SimpleJSON/ZlogLogger-4          425534    2815.00 ns/op      376 B/op    6 allocs/op
 BenchmarkVendorLoggers/Writing/SimpleJSON/LogrusLogger-4        203432    5298.00 ns/op     1080 B/op   22 allocs/op
 
 BenchmarkVendorLoggers/Writing/ComplexText/ZeroLogger-4         382442    2906.00 ns/op      288 B/op   11 allocs/op
 BenchmarkVendorLoggers/Writing/ComplexText/ZapLogger-4          171844    6609.00 ns/op      848 B/op   21 allocs/op
-BenchmarkLogger/Writing/ComplexText/LogX-4   					253484    4982.00 ns/op     1271 B/op   24 allocs/op
+BenchmarkLogger/Writing/ComplexText/LogX-4   			253484    4982.00 ns/op     1271 B/op   24 allocs/op
 BenchmarkVendorLoggers/Writing/ComplexText/ZlogLogger-4         121747   11129.00 ns/op     3756 B/op   50 allocs/op
 BenchmarkVendorLoggers/Writing/ComplexText/LogrusLogger-4        71154   14105.00 ns/op     2168 B/op   43 allocs/op
 
 BenchmarkVendorLoggers/Writing/ComplexJSON/ZeroLogger-4         388226    3722.00 ns/op      288 B/op   11 allocs/op
 BenchmarkVendorLoggers/Writing/ComplexJSON/ZapLogger-4          231116    6320.00 ns/op      784 B/op   18 allocs/op
-BenchmarkLogger/Writing/ComplexJSON/LogX-4   					208918    5727.00 ns/op     1544 B/op   18 allocs/op
+BenchmarkLogger/Writing/ComplexJSON/LogX-4   			208918    5727.00 ns/op     1544 B/op   18 allocs/op
 BenchmarkVendorLoggers/Writing/ComplexJSON/ZlogLogger-4         115693   11486.00 ns/op     2680 B/op   40 allocs/op
 BenchmarkVendorLoggers/Writing/ComplexJSON/LogrusLogger-4       116692   11029.00 ns/op     2592 B/op   44 allocs/op
 ```
