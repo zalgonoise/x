@@ -123,9 +123,9 @@ func (s SpanData) AsAttr() attr.Attr {
 				attr.String("trace_id", s.TraceID),
 				attr.String("span_id", s.SpanID),
 			}),
-			attr.New("parent_id", s.ParentID),
+			attr.Ptr("parent_id", s.ParentID),
 			attr.String("start_time", s.StartTime),
-			attr.New("end_time", s.EndTime),
+			attr.Ptr("end_time", s.EndTime),
 			attr.New("attributes", s.Attributes),
 		})
 }
