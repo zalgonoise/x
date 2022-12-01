@@ -23,6 +23,7 @@ func newTrace() Trace {
 func (t trace) Get() []Span {
 	return t.spans
 }
+
 func (t trace) Add(s Span, ref Span) Trace {
 	sCopy := make([]Span, 0, len(t.spans))
 	copy(sCopy, t.spans)

@@ -15,22 +15,9 @@ type baseTracer struct{}
 var tr Tracer = baseTracer{}
 
 func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
-	t := GetTrace(ctx)
-	if t == nil {
-		ctx, _ = WithNewTrace(ctx)
-	}
+	var t Trace
 
-	newCtx, s := addSpan(ctx, name, attrs...)
-	s.Start()
-	return newCtx, s
-}
-
-func Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
-	return tr.Start(ctx, name, attrs...)
-}
-
-func addSpan(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
-	t := GetTrace(ctx)
+	t = GetTrace(ctx)
 	if t == nil {
 		ctx, t = WithNewTrace(ctx)
 	}
@@ -42,5 +29,10 @@ func addSpan(ctx context.Context, name string, attrs ...attr.Attr) (context.Cont
 	ctx = WithTrace(ctx, unset)
 	newCtx := WithTrace(ctx, set)
 
+	s.Start()
 	return newCtx, s
+}
+
+func Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
+	return tr.Start(ctx, name, attrs...)
 }

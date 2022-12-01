@@ -3,6 +3,7 @@ package spanner
 import (
 	"bytes"
 	"encoding/hex"
+	"strings"
 
 	json "github.com/goccy/go-json"
 )
@@ -20,7 +21,10 @@ func (t TraceID) MarshalJSON() ([]byte, error) {
 }
 
 func (t TraceID) String() string {
-	return hex.EncodeToString(t[:])
+	var sb = &strings.Builder{}
+	sb.WriteString("0x")
+	sb.WriteString(hex.EncodeToString(t[:]))
+	return sb.String()
 }
 
 type SpanID [8]byte
@@ -35,5 +39,8 @@ func (s SpanID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 func (s SpanID) String() string {
-	return hex.EncodeToString(s[:])
+	var sb = &strings.Builder{}
+	sb.WriteString("0x")
+	sb.WriteString(hex.EncodeToString(s[:]))
+	return sb.String()
 }
