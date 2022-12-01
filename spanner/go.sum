@@ -2,3 +2,5 @@ github.com/goccy/go-json v0.10.0 h1:mXKd9Qw4NuzShiRlOXKews24ufknHO7gx30lsDyokKA=
 github.com/goccy/go-json v0.10.0/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
 github.com/zalgonoise/logx v0.0.0-20221128200033-709cc6ffd362 h1:e4EOAJtheSX4Os90MgjTZA8eUSH5zNsQGe3lQqLdDyU=
 github.com/zalgonoise/logx v0.0.0-20221128200033-709cc6ffd362/go.mod h1:ZP1D2HrYAkzTrr6BSYtOLYtTX7qLpdKfeQV0vRPvmS8=
+github.com/zalgonoise/logx v0.0.0-20221201215814-b35206ef8cd2 h1:NHBr42+pmgpagehSUzmG24UGOJJDA+EGTlxw7Ekc2zI=
+github.com/zalgonoise/logx v0.0.0-20221201215814-b35206ef8cd2/go.mod h1:ZP1D2HrYAkzTrr6BSYtOLYtTX7qLpdKfeQV0vRPvmS8=
