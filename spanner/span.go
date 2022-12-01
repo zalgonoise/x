@@ -3,10 +3,12 @@ package spanner
 import (
 	"time"
 
-	"github.com/zalgonoise/x/log/attr"
+	"github.com/zalgonoise/logx/attr"
 )
 
 type Span interface {
+	ID() SpanID
+	Start()
 	End() SpanData
 	Add(attrs ...attr.Attr)
 	IsRecording() bool
@@ -27,10 +29,10 @@ type SpanData struct {
 }
 
 type span struct {
-	rec      bool
-	traceID  TraceID
-	spanID   SpanID
-	parentID *SpanID
+	rec     bool
+	traceID TraceID
+	spanID  SpanID
+	parent  Trace
 
 	name  string
 	start time.Time
@@ -38,13 +40,34 @@ type span struct {
 	data  []attr.Attr
 }
 
+func newSpan(t Trace, name string, attrs ...attr.Attr) Span {
+	return &span{
+		traceID: t.ID(),
+		spanID:  NewSpanID(),
+		parent:  t,
+
+		name: name,
+		data: attrs,
+	}
+}
+
+func (s *span) ID() SpanID {
+	return s.spanID
+}
+
+func (s *span) Start() {
+	s.start = time.Now()
+	s.rec = true
+}
+
 func (s *span) End() SpanData {
 	s.end = time.Now()
 	s.rec = false
 
 	var parentID *string = nil
-	if s.parentID != nil {
-		*parentID = s.parentID.String()
+	if s.parent.PID() != nil {
+		pID := s.parent.PID().String()
+		parentID = &pID
 	}
 	var endTime = s.end.Format(time.RFC3339Nano)
 
@@ -75,8 +98,9 @@ func (s *span) Replace(attrs ...attr.Attr) {
 }
 func (s *span) Extract() SpanData {
 	var parentID *string = nil
-	if s.parentID != nil {
-		*parentID = s.parentID.String()
+	if s.parent.PID() != nil {
+		pID := s.parent.PID().String()
+		parentID = &pID
 	}
 	var endTime = s.end.Format(time.RFC3339Nano)
 

@@ -1,0 +1,53 @@
+package spanner
+
+import (
+	cryptorand "crypto/rand"
+	"encoding/binary"
+	"math/rand"
+	"sync"
+)
+
+func init() {
+	idGen = &stdIDGenerator{}
+	var rngSeed int64
+	_ = binary.Read(cryptorand.Reader, binary.LittleEndian, &rngSeed)
+	idGen.(*stdIDGenerator).random = rand.New(rand.NewSource(rngSeed))
+}
+
+type IDGenerator interface {
+	NewTraceID() TraceID
+	NewSpanID() SpanID
+}
+
+var idGen IDGenerator = &stdIDGenerator{}
+
+type stdIDGenerator struct {
+	sync.Mutex
+	random *rand.Rand
+}
+
+func (g *stdIDGenerator) NewTraceID() TraceID {
+	g.Lock()
+	defer g.Unlock()
+
+	tid := TraceID{}
+	_, _ = g.random.Read(tid[:])
+	return tid
+}
+
+func (g *stdIDGenerator) NewSpanID() SpanID {
+	g.Lock()
+	defer g.Unlock()
+
+	sid := SpanID{}
+	_, _ = g.random.Read(sid[:])
+	return sid
+}
+
+func NewTraceID() TraceID {
+	return idGen.NewTraceID()
+}
+
+func NewSpanID() SpanID {
+	return idGen.NewSpanID()
+}
