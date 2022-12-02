@@ -22,6 +22,19 @@ func GetTrace(ctx context.Context) Trace {
 	return nil
 }
 
+// GetTraceOrCreate returns the Trace from the input context `ctx`, or it will create one
+// if it doesn't exist. Returns the context with value and the Trace
+func GetTraceOrCreate(ctx context.Context) (context.Context, Trace) {
+	v := ctx.Value(ContextKey)
+	if v == nil {
+		return WithNewTrace(ctx)
+	}
+	if t, ok := v.(Trace); ok {
+		return WithTrace(ctx, t), t
+	}
+	return WithNewTrace(ctx)
+}
+
 // WithNewTrace wraps the input context `ctx` with a new Trace, returning both the
 // context with value and the Trace
 func WithNewTrace(ctx context.Context) (context.Context, Trace) {

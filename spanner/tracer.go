@@ -33,19 +33,11 @@ var tr Tracer = baseTracer{}
 //
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
 func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
-	var t Trace
-
-	t = GetTrace(ctx)
-	if t == nil {
-		ctx, t = WithNewTrace(ctx)
-	}
+	ctx, t := GetTraceOrCreate(ctx)
 	s := newSpan(t, name, attrs...)
 
-	set := t.Add(s, s)
-	unset := t.Add(s, nil)
-
-	ctx = WithTrace(ctx, unset)
-	newCtx := WithTrace(ctx, set)
+	ctx = WithTrace(ctx, t.Add(s, nil))
+	newCtx := WithTrace(ctx, t.Add(s, s))
 
 	s.Start()
 	return newCtx, s
