@@ -14,8 +14,11 @@ func init() {
 	idGen.(*stdIDGenerator).random = rand.New(rand.NewSource(rngSeed))
 }
 
+// IDGenerator is able to create TraceIDs and SpanIDs
 type IDGenerator interface {
+	// NewTraceID creates a new TraceID
 	NewTraceID() TraceID
+	// NewSpanID creates a new SpanID
 	NewSpanID() SpanID
 }
 
@@ -26,6 +29,7 @@ type stdIDGenerator struct {
 	random *rand.Rand
 }
 
+// NewTraceID creates a new TraceID
 func (g *stdIDGenerator) NewTraceID() TraceID {
 	g.Lock()
 	defer g.Unlock()
@@ -35,6 +39,7 @@ func (g *stdIDGenerator) NewTraceID() TraceID {
 	return tid
 }
 
+// NewSpanID creates a new SpanID
 func (g *stdIDGenerator) NewSpanID() SpanID {
 	g.Lock()
 	defer g.Unlock()
@@ -44,10 +49,12 @@ func (g *stdIDGenerator) NewSpanID() SpanID {
 	return sid
 }
 
+// NewTraceID creates a new TraceID
 func NewTraceID() TraceID {
 	return idGen.NewTraceID()
 }
 
+// NewSpanID creates a new SpanID
 func NewSpanID() SpanID {
 	return idGen.NewSpanID()
 }
