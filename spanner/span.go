@@ -9,40 +9,30 @@ import (
 // Span is a single action within a Trace, which holds metadata about
 // the action's execution, as well as optional attributes
 type Span interface {
-	// ID returns the SpanID of the Span
-	ID() SpanID
 	// Start sets the span to record
 	Start()
 	// End stops the span, returning the collected SpanData in the action
 	End() SpanData
-	// Add appends attributes (key-value pairs) to the Span
-	Add(attrs ...attr.Attr)
+	// Extract returns the current SpanData for the Span, regardless of its status
+	Extract() SpanData
+	// ID returns the SpanID of the Span
+	ID() SpanID
 	// IsRecording returns a boolean on whether the Span is currently recording
 	IsRecording() bool
 	// SetName overwrites the Span's name field with the string `name`
 	SetName(name string)
 	// SetParent overwrites the Span's parent_id field with the SpanID `id`
 	SetParent(id *SpanID)
+	// Add appends attributes (key-value pairs) to the Span
+	Add(attrs ...attr.Attr)
 	// Attrs returns the Span's stored attributes
 	Attrs() []attr.Attr
 	// Replace will flush the Span's attributes and store the input attributes `attrs` in place
 	Replace(attrs ...attr.Attr)
-	// Extract returns the current SpanData for the Span, regardless of its status
-	Extract() SpanData
-}
-
-// SpanData is the output data that was recorded by a Span
-//
-// It contains all the details stored in the Span, and it is returned either
-// with the `Extract()` method, or when `End()` is called (and its returned value captured)
-type SpanData struct {
-	TraceID    string      `json:"trace_id"`
-	SpanID     string      `json:"span_id"`
-	ParentID   *string     `json:"parent_id"`
-	Name       string      `json:"name"`
-	StartTime  string      `json:"start_time"`
-	EndTime    *string     `json:"end_time"`
-	Attributes []attr.Attr `json:"attributes"`
+	// Event creates a new event within the Span
+	Event(name string, attrs ...attr.Attr)
+	// Events returns the events in the Span
+	Events() []EventData
 }
 
 type span struct {
@@ -52,10 +42,11 @@ type span struct {
 	parent  *SpanID
 	rcv     chan Span
 
-	name  string
-	start time.Time
-	end   time.Time
-	data  []attr.Attr
+	name   string
+	start  time.Time
+	end    time.Time
+	data   []attr.Attr
+	events []event
 }
 
 func newSpan(rcv chan Span, tid TraceID, pid *SpanID, name string, attrs ...attr.Attr) Span {
@@ -140,21 +131,24 @@ func (s *span) Extract() SpanData {
 		StartTime:  s.start.Format(time.RFC3339Nano),
 		EndTime:    &endTime,
 		Attributes: s.data,
+		Events:     s.Events(),
 	}
 }
 
-// AsAttr returns the SpanData as an Attr
-func (s SpanData) AsAttr() attr.Attr {
-	return attr.New(
-		"span", []attr.Attr{
-			attr.String("name", s.Name),
-			attr.New("context", []attr.Attr{
-				attr.String("trace_id", s.TraceID),
-				attr.String("span_id", s.SpanID),
-			}),
-			attr.Ptr("parent_id", s.ParentID),
-			attr.String("start_time", s.StartTime),
-			attr.Ptr("end_time", s.EndTime),
-			attr.New("attributes", s.Attributes),
-		})
+// Event creates a new event within the Span
+func (s *span) Event(name string, attrs ...attr.Attr) {
+	s.events = append(s.events, newEvent(name, attrs...))
+}
+
+// Events returns the events in the Span
+func (s *span) Events() []EventData {
+	eventData := make([]EventData, len(s.events))
+	for idx, e := range s.events {
+		eventData[idx] = EventData{
+			Name:       e.name,
+			Timestamp:  e.timestamp,
+			Attributes: e.attrs,
+		}
+	}
+	return eventData
 }

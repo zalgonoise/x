@@ -18,38 +18,51 @@ func runtime() {
 
 	_, s := Start(ctx, "Runtime:Start:A")
 	x := runtimeA(ctx, 2)
-	logx.From(ctx).Trace("Runtime:Start:A", s.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:Start:A", AsAttr(s.End()))
 	_, s = Start(ctx, "Runtime:Start:E")
 	runtimeE(ctx, "Hello", x)
-	logx.From(ctx).Trace("Runtime:Start:E", s.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:Start:E", AsAttr(s.End()))
 
-	logx.From(ctx).Trace("Runtime:Main", startS.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:Main", AsAttr(startS.End()))
+
+	fmt.Print("\n\n\n")
+	t := GetTrace(ctx)
+	if t == nil {
+		return
+	}
+	sp := t.Get()
+	for _, s := range sp {
+		fmt.Println(s.Extract())
+	}
 }
 
 func runtimeA(ctx context.Context, i int) int {
 	ctx, s := Start(ctx, "Runtime:A")
 
+	s.Event("A: multiply by 2")
 	x := i * 2
 
-	logx.From(ctx).Trace("Runtime:A", s.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:A", AsAttr(s.End()))
 	return runtimeB(ctx, x)
 }
 
 func runtimeB(ctx context.Context, i int) int {
 	ctx, s := Start(ctx, "Runtime:B")
 
+	s.Event("B: multiply by 2")
 	x := i * 2
 
-	logx.From(ctx).Trace("Runtime:B", s.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:B", AsAttr(s.End()))
 	return runtimeC(ctx, x)
 }
 
 func runtimeC(ctx context.Context, i int) int {
 	ctx, s := Start(ctx, "Runtime:C")
 
+	s.Event("C: multiply by 2")
 	x := i * 2
 
-	logx.From(ctx).Trace("Runtime:C", s.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:C", AsAttr(s.End()))
 
 	return x
 }
@@ -67,7 +80,7 @@ func runtimeE(ctx context.Context, text string, i int) {
 	s.Add(attr.String("text", text), attr.Int("result", i))
 	runtimeD(ctx, fmt.Sprintf("%s ; result: %v", text, i))
 
-	logx.From(ctx).Trace("Runtime:E", s.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:E", AsAttr(s.End()))
 }
 func TestFunctionsWithSpan(t *testing.T) {
 	runtime()
