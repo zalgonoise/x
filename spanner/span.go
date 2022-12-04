@@ -21,6 +21,8 @@ type Span interface {
 	IsRecording() bool
 	// SetName overwrites the Span's name field with the string `name`
 	SetName(name string)
+	// SetParent overwrites the Span's parent_id field with the SpanID `id`
+	SetParent(id *SpanID)
 	// Attrs returns the Span's stored attributes
 	Attrs() []attr.Attr
 	// Replace will flush the Span's attributes and store the input attributes `attrs` in place
@@ -47,7 +49,8 @@ type span struct {
 	rec     bool
 	traceID TraceID
 	spanID  SpanID
-	parent  Trace
+	parent  *SpanID
+	rcv     chan Span
 
 	name  string
 	start time.Time
@@ -55,11 +58,12 @@ type span struct {
 	data  []attr.Attr
 }
 
-func newSpan(t Trace, name string, attrs ...attr.Attr) Span {
+func newSpan(rcv chan Span, tid TraceID, pid *SpanID, name string, attrs ...attr.Attr) Span {
 	return &span{
-		traceID: t.ID(),
+		traceID: tid,
 		spanID:  NewSpanID(),
-		parent:  t,
+		rcv:     rcv,
+		parent:  pid,
 
 		name: name,
 		data: attrs,
@@ -82,22 +86,8 @@ func (s *span) End() SpanData {
 	s.end = time.Now()
 	s.rec = false
 
-	var parentID *string = nil
-	if s.parent.PID() != nil {
-		pID := s.parent.PID().String()
-		parentID = &pID
-	}
-	var endTime = s.end.Format(time.RFC3339Nano)
-
-	return SpanData{
-		TraceID:    s.traceID.String(),
-		SpanID:     s.spanID.String(),
-		ParentID:   parentID,
-		Name:       s.name,
-		StartTime:  s.start.Format(time.RFC3339Nano),
-		EndTime:    &endTime,
-		Attributes: s.data,
-	}
+	s.rcv <- s
+	return s.Extract()
 }
 
 // Add appends attributes (key-value pairs) to the Span
@@ -115,6 +105,14 @@ func (s *span) SetName(name string) {
 	s.name = name
 }
 
+// SetParent overwrites the Span's parent_id field with the SpanID `id`
+func (s *span) SetParent(id *SpanID) {
+	if id != nil && id.IsValid() {
+		s.parent = id
+	}
+	s.parent = nil
+}
+
 // Attrs returns the Span's stored attributes
 func (s *span) Attrs() []attr.Attr {
 	return s.data
@@ -128,9 +126,9 @@ func (s *span) Replace(attrs ...attr.Attr) {
 // Extract returns the current SpanData for the Span, regardless of its status
 func (s *span) Extract() SpanData {
 	var parentID *string = nil
-	if s.parent.PID() != nil {
-		pID := s.parent.PID().String()
-		parentID = &pID
+	if s.parent != nil {
+		pid := s.parent.String()
+		parentID = &pid
 	}
 	var endTime = s.end.Format(time.RFC3339Nano)
 

@@ -34,10 +34,19 @@ var tr Tracer = baseTracer{}
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
 func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
 	ctx, t := GetTraceOrCreate(ctx)
-	s := newSpan(t, name, attrs...)
+	var pid *SpanID = nil
+	parent := GetSpan(ctx)
+	if parent != nil {
+		id := parent.ID()
+		pid = &id
+	}
 
-	ctx = WithTrace(ctx, t.Add(s, nil))
-	newCtx := WithTrace(ctx, t.Add(s, s))
+	s := newSpan(t.Receiver(), t.ID(), pid, name, attrs...)
+	t.Register(s)
+
+	ctx = WithTrace(ctx, t)
+	ctx = WithSpan(ctx, t.Parent())
+	newCtx := WithSpan(ctx, s)
 
 	s.Start()
 	return newCtx, s

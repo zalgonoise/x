@@ -58,6 +58,14 @@ func WithTrace(ctx context.Context, t Trace) context.Context {
 func GetSpan(ctx context.Context) Span {
 	v := ctx.Value(SpanContextKey)
 	if v == nil {
+		// try Trace's reference parent Span
+		v := ctx.Value(ContextKey)
+		if v == nil {
+			return nil
+		}
+		if t, ok := v.(Trace); ok {
+			return t.Parent()
+		}
 		return nil
 	}
 	if s, ok := v.(Span); ok {

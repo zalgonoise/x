@@ -12,24 +12,34 @@ type Trace interface {
 	// next Trace
 	//
 	// Traces are immutable, and adding a Span returns a new Trace
-	Add(s, ref Span) Trace
+	Register(s Span)
 	// ID returns the TraceID
 	ID() TraceID
 	// PID returns the parent SpanID, or nil if unset
-	PID() *SpanID
+	Parent() Span
+	// Receiver returns the Span receiving channel of the Tracer
+	Receiver() chan Span
 }
 
 type trace struct {
 	spans []Span
 	trace TraceID
 	ref   Span
+	rcv   chan Span
 }
 
 func newTrace() Trace {
-	return trace{
+	t := &trace{
 		spans: []Span{},
 		trace: NewTraceID(),
+		rcv:   make(chan Span),
 	}
+	go func() {
+		for s := range t.rcv {
+			t.spans = append(t.spans, s)
+		}
+	}()
+	return t
 }
 
 // Get returns the slice of Spans in the Trace
@@ -42,17 +52,8 @@ func (t trace) Get() []Span {
 // next Trace
 //
 // Traces are immutable, and adding a Span returns a new Trace
-func (t trace) Add(s, ref Span) Trace {
-	sCopy := make([]Span, 0, len(t.spans))
-	copy(sCopy, t.spans)
-
-	sCopy = append(sCopy, s)
-
-	return trace{
-		spans: sCopy,
-		trace: t.trace,
-		ref:   ref,
-	}
+func (t *trace) Register(s Span) {
+	t.ref = s
 }
 
 // ID returns the TraceID
@@ -61,10 +62,11 @@ func (t trace) ID() TraceID {
 }
 
 // PID returns the parent SpanID, or nil if unset
-func (t trace) PID() *SpanID {
-	if t.ref == nil {
-		return nil
-	}
-	id := t.ref.ID()
-	return &id
+func (t trace) Parent() Span {
+	return t.ref
+}
+
+// Receiver returns the Span receiving channel of the Tracer
+func (t trace) Receiver() chan Span {
+	return t.rcv
 }

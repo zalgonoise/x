@@ -8,18 +8,22 @@ import (
 
 	"github.com/zalgonoise/logx"
 	"github.com/zalgonoise/logx/attr"
-	"github.com/zalgonoise/logx/handlers/texth"
+	"github.com/zalgonoise/logx/handlers/jsonh"
 )
 
 func runtime() {
-	logger := logx.New(texth.New(os.Stderr))
+	logger := logx.New(jsonh.New(os.Stderr))
 	ctx := logx.InContext(context.Background(), logger)
-	ctx, s := Start(ctx, "Runtime:Main")
+	ctx, startS := Start(ctx, "Runtime:Main")
 
+	_, s := Start(ctx, "Runtime:Start:A")
 	x := runtimeA(ctx, 2)
+	logx.From(ctx).Trace("Runtime:Start:A", s.End().AsAttr())
+	_, s = Start(ctx, "Runtime:Start:E")
 	runtimeE(ctx, "Hello", x)
+	logx.From(ctx).Trace("Runtime:Start:E", s.End().AsAttr())
 
-	logx.From(ctx).Trace("Runtime:Main", s.End().AsAttr())
+	logx.From(ctx).Trace("Runtime:Main", startS.End().AsAttr())
 }
 
 func runtimeA(ctx context.Context, i int) int {
