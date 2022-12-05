@@ -19,11 +19,3 @@ func newEvent(name string, attrs ...attr.Attr) event {
 		attrs:     attrs,
 	}
 }
-
-func (e event) Export() EventData {
-	return EventData{
-		Name:       e.name,
-		Timestamp:  e.timestamp,
-		Attributes: e.attrs,
-	}
-}
