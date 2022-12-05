@@ -45,7 +45,7 @@ type span struct {
 	name   string
 	start  time.Time
 	end    time.Time
-	data   []attr.Attr
+	attrs  []attr.Attr
 	events []event
 }
 
@@ -56,8 +56,8 @@ func newSpan(rcv chan Span, tid TraceID, pid *SpanID, name string, attrs ...attr
 		rcv:     rcv,
 		parent:  pid,
 
-		name: name,
-		data: attrs,
+		name:  name,
+		attrs: attrs,
 	}
 }
 
@@ -83,7 +83,7 @@ func (s *span) End() SpanData {
 
 // Add appends attributes (key-value pairs) to the Span
 func (s *span) Add(attrs ...attr.Attr) {
-	s.data = append(s.data, attrs...)
+	s.attrs = append(s.attrs, attrs...)
 }
 
 // IsRecording returns a boolean on whether the Span is currently recording
@@ -100,18 +100,19 @@ func (s *span) SetName(name string) {
 func (s *span) SetParent(id *SpanID) {
 	if id != nil && id.IsValid() {
 		s.parent = id
+		return
 	}
 	s.parent = nil
 }
 
 // Attrs returns the Span's stored attributes
 func (s *span) Attrs() []attr.Attr {
-	return s.data
+	return s.attrs
 }
 
 // Replace will flush the Span's attributes and store the input attributes `attrs` in place
 func (s *span) Replace(attrs ...attr.Attr) {
-	s.data = attrs
+	s.attrs = attrs
 }
 
 // Extract returns the current SpanData for the Span, regardless of its status
@@ -130,7 +131,7 @@ func (s *span) Extract() SpanData {
 		Name:       s.name,
 		StartTime:  s.start.Format(time.RFC3339Nano),
 		EndTime:    &endTime,
-		Attributes: s.data,
+		Attributes: s.attrs,
 		Events:     s.Events(),
 	}
 }
