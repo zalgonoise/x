@@ -78,3 +78,12 @@ func GetSpan(ctx context.Context) Span {
 func WithSpan(ctx context.Context, s Span) context.Context {
 	return context.WithValue(ctx, SpanContextKey, s)
 }
+
+// Extract returns the SpanData from the Trace within the context, if existing
+func Extract(ctx context.Context) []SpanData {
+	t := GetTrace(ctx)
+	if t == nil {
+		return nil
+	}
+	return t.Extract()
+}

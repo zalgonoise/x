@@ -19,6 +19,8 @@ type Trace interface {
 	Parent() Span
 	// Receiver returns the Span receiving channel of the Tracer
 	Receiver() chan Span
+	// Extract returns the SpanData from the Trace, if any
+	Extract() []SpanData
 }
 
 type trace struct {
@@ -69,4 +71,16 @@ func (t trace) Parent() Span {
 // Receiver returns the Span receiving channel of the Tracer
 func (t trace) Receiver() chan Span {
 	return t.rcv
+}
+
+// Extract returns the SpanData from the Trace, if any
+func (t trace) Extract() []SpanData {
+	if len(t.spans) == 0 {
+		return nil
+	}
+	data := make([]SpanData, len(t.spans))
+	for idx, s := range t.spans {
+		data[idx] = s.Extract()
+	}
+	return data
 }
