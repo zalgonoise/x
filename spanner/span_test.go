@@ -322,7 +322,8 @@ func TestSpanAllMethods(t *testing.T) {
 			t.Errorf("expected events list with %v element(s)", 1)
 		}
 
-		spanData := s.End()
+		s.End()
+		spanData := s.Extract()
 		if s.end.IsZero() || reflect.DeepEqual(time.Time{}, s.end) {
 			t.Errorf("expected end to be zero: got %v", s.end)
 		}

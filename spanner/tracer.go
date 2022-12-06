@@ -45,7 +45,7 @@ func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (c
 	t.Register(s)
 
 	ctx = WithTrace(ctx, t)
-	ctx = WithSpan(ctx, t.Parent())
+	ctx = WithSpan(ctx, s)
 	newCtx := WithSpan(ctx, s)
 
 	s.Start()

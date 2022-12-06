@@ -12,7 +12,7 @@ type Span interface {
 	// Start sets the span to record
 	Start()
 	// End stops the span, returning the collected SpanData in the action
-	End() SpanData
+	End()
 	// Extract returns the current SpanData for the Span, regardless of its status
 	Extract() SpanData
 	// ID returns the SpanID of the Span
@@ -73,12 +73,11 @@ func (s *span) Start() {
 }
 
 // End stops the span, returning the collected SpanData in the action
-func (s *span) End() SpanData {
+func (s *span) End() {
 	s.end = time.Now()
 	s.rec = false
 
 	s.rcv <- s
-	return s.Extract()
 }
 
 // Add appends attributes (key-value pairs) to the Span
