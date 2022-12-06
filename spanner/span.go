@@ -40,25 +40,28 @@ type span struct {
 	traceID TraceID
 	spanID  SpanID
 	parent  *SpanID
-	rcv     chan Span
 
 	name   string
 	start  time.Time
-	end    time.Time
+	end    *time.Time
 	attrs  []attr.Attr
 	events []event
 }
 
-func newSpan(rcv chan Span, tid TraceID, pid *SpanID, name string, attrs ...attr.Attr) Span {
+func newSpan(tid TraceID, pid *SpanID, name string, attrs ...attr.Attr) Span {
 	return &span{
 		traceID: tid,
 		spanID:  NewSpanID(),
-		rcv:     rcv,
 		parent:  pid,
 
 		name:  name,
 		attrs: attrs,
 	}
+}
+
+// can't overwrite a span
+func (s *span) canWrite() bool {
+	return s.end == nil
 }
 
 // ID returns the SpanID of the Span
@@ -68,20 +71,28 @@ func (s *span) ID() SpanID {
 
 // Start sets the span to record
 func (s *span) Start() {
+	if !s.canWrite() {
+		return
+	}
 	s.start = time.Now()
 	s.rec = true
 }
 
 // End stops the span, returning the collected SpanData in the action
 func (s *span) End() {
-	s.end = time.Now()
+	if !s.canWrite() {
+		return
+	}
+	s.end = new(time.Time)
+	*s.end = time.Now()
 	s.rec = false
-
-	s.rcv <- s
 }
 
 // Add appends attributes (key-value pairs) to the Span
 func (s *span) Add(attrs ...attr.Attr) {
+	if !s.canWrite() {
+		return
+	}
 	s.attrs = append(s.attrs, attrs...)
 }
 
@@ -92,11 +103,17 @@ func (s *span) IsRecording() bool {
 
 // SetName overwrites the Span's name field with the string `name`
 func (s *span) SetName(name string) {
+	if !s.canWrite() {
+		return
+	}
 	s.name = name
 }
 
 // SetParent overwrites the Span's parent_id field with the SpanID `id`
 func (s *span) SetParent(id *SpanID) {
+	if !s.canWrite() {
+		return
+	}
 	if id != nil && id.IsValid() {
 		s.parent = id
 		return
@@ -111,6 +128,9 @@ func (s *span) Attrs() []attr.Attr {
 
 // Replace will flush the Span's attributes and store the input attributes `attrs` in place
 func (s *span) Replace(attrs ...attr.Attr) {
+	if !s.canWrite() {
+		return
+	}
 	s.attrs = attrs
 }
 
@@ -121,7 +141,10 @@ func (s *span) Extract() SpanData {
 		pid := s.parent.String()
 		parentID = &pid
 	}
-	var endTime = s.end.Format(time.RFC3339Nano)
+	var endTime = "<nil>"
+	if s.end != nil {
+		endTime = s.end.Format(time.RFC3339Nano)
+	}
 
 	return SpanData{
 		TraceID:    s.traceID.String(),
@@ -137,6 +160,9 @@ func (s *span) Extract() SpanData {
 
 // Event creates a new event within the Span
 func (s *span) Event(name string, attrs ...attr.Attr) {
+	if !s.canWrite() {
+		return
+	}
 	s.events = append(s.events, newEvent(name, attrs...))
 }
 

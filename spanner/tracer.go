@@ -41,11 +41,14 @@ func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (c
 		pid = &id
 	}
 
-	s := newSpan(t.Receiver(), t.ID(), pid, name, attrs...)
+	s := newSpan(t.ID(), pid, name, attrs...)
+	defer func() {
+		t.Receiver() <- s // push span into trace since it will be mutated until stopped
+	}()
 	t.Register(s)
 
 	ctx = WithTrace(ctx, t)
-	ctx = WithSpan(ctx, s)
+	ctx = WithSpan(ctx, t.Parent())
 	newCtx := WithSpan(ctx, s)
 
 	s.Start()

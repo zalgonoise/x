@@ -16,11 +16,11 @@ func TestNewSpan(t *testing.T) {
 			attr.Int("idx", 0),
 		}
 		tr = newTrace()
-		sp = newSpan(tr.Receiver(), tr.ID(), nil, name)
+		sp = newSpan(tr.ID(), nil, name)
 	)
 
 	t.Run("Simple", func(t *testing.T) {
-		newSpan := newSpan(tr.Receiver(), tr.ID(), nil, name)
+		newSpan := newSpan(tr.ID(), nil, name)
 		s, ok := (newSpan).(*span)
 		if !ok {
 			t.Errorf("failed to cast Span as *span")
@@ -44,14 +44,11 @@ func TestNewSpan(t *testing.T) {
 		if s.parent != nil {
 			t.Error("expected parent's SpanID to be nil")
 		}
-		if s.rcv != tr.Receiver() {
-			t.Errorf("expected receiver channels to be the same")
-		}
 		if !s.start.IsZero() || !reflect.DeepEqual(time.Time{}, s.start) {
 			t.Errorf("invalid start time: %v", s.start)
 		}
-		if !s.end.IsZero() || !reflect.DeepEqual(time.Time{}, s.end) {
-			t.Errorf("expected end to be zero: got %v", s.end)
+		if s.end != nil {
+			t.Errorf("expected end to be nil: got %v", s.end)
 		}
 		if len(s.attrs) != 0 {
 			t.Errorf("expected empty attribute list")
@@ -61,7 +58,7 @@ func TestNewSpan(t *testing.T) {
 		}
 	})
 	t.Run("WithAttrs", func(t *testing.T) {
-		newSpan := newSpan(tr.Receiver(), tr.ID(), nil, name, attrs...)
+		newSpan := newSpan(tr.ID(), nil, name, attrs...)
 		s, ok := (newSpan).(*span)
 		if !ok {
 			t.Errorf("failed to cast Span as *span")
@@ -85,14 +82,11 @@ func TestNewSpan(t *testing.T) {
 		if s.parent != nil {
 			t.Error("expected parent's SpanID to be nil")
 		}
-		if s.rcv != tr.Receiver() {
-			t.Errorf("expected receiver channels to be the same")
-		}
 		if !s.start.IsZero() || !reflect.DeepEqual(time.Time{}, s.start) {
 			t.Errorf("invalid start time: %v", s.start)
 		}
-		if !s.end.IsZero() || !reflect.DeepEqual(time.Time{}, s.end) {
-			t.Errorf("expected end to be zero: got %v", s.end)
+		if s.end != nil {
+			t.Errorf("expected end to be nil: got %v", s.end)
 		}
 		if len(s.attrs) != 2 {
 			t.Errorf("expected empty attribute list")
@@ -103,7 +97,7 @@ func TestNewSpan(t *testing.T) {
 	})
 	t.Run("WithParent", func(t *testing.T) {
 		pid := sp.ID()
-		newSpan := newSpan(tr.Receiver(), tr.ID(), &pid, name)
+		newSpan := newSpan(tr.ID(), &pid, name)
 		s, ok := (newSpan).(*span)
 		if !ok {
 			t.Errorf("failed to cast Span as *span")
@@ -130,14 +124,11 @@ func TestNewSpan(t *testing.T) {
 		if *s.parent != sp.ID() {
 			t.Errorf("unexpected output error: wanted %v ; got %v", sp.ID(), *s.parent)
 		}
-		if s.rcv != tr.Receiver() {
-			t.Errorf("expected receiver channels to be the same")
-		}
 		if !s.start.IsZero() || !reflect.DeepEqual(time.Time{}, s.start) {
 			t.Errorf("invalid start time: %v", s.start)
 		}
-		if !s.end.IsZero() || !reflect.DeepEqual(time.Time{}, s.end) {
-			t.Errorf("expected end to be zero: got %v", s.end)
+		if s.end != nil {
+			t.Errorf("expected end to be nil: got %v", s.end)
 		}
 		if len(s.attrs) != 0 {
 			t.Errorf("expected empty attribute list")
@@ -154,7 +145,7 @@ func TestSpanIDMethod(t *testing.T) {
 		tr   = newTrace()
 	)
 	t.Run("Success", func(t *testing.T) {
-		s := newSpan(tr.Receiver(), tr.ID(), nil, name)
+		s := newSpan(tr.ID(), nil, name)
 		id := s.ID()
 
 		if !id.IsValid() {
@@ -169,7 +160,7 @@ func TestSpanStart(t *testing.T) {
 		tr   = newTrace()
 	)
 	t.Run("Success", func(t *testing.T) {
-		newSpan := newSpan(tr.Receiver(), tr.ID(), nil, name)
+		newSpan := newSpan(tr.ID(), nil, name)
 		s, ok := (newSpan).(*span)
 		if !ok {
 			t.Errorf("failed to cast Span as *span")
@@ -202,11 +193,11 @@ func TestSpanAllMethods(t *testing.T) {
 			attr.Int("idx", 0),
 		}
 		tr  = newTrace()
-		sp  = newSpan(tr.Receiver(), tr.ID(), nil, name)
+		sp  = newSpan(tr.ID(), nil, name)
 		pid = sp.ID().String()
 	)
 	t.Run("Success", func(t *testing.T) {
-		newSpan := newSpan(tr.Receiver(), tr.ID(), nil, name)
+		newSpan := newSpan(tr.ID(), nil, name)
 		s, ok := (newSpan).(*span)
 		if !ok {
 			t.Errorf("failed to cast Span as *span")
@@ -242,14 +233,11 @@ func TestSpanAllMethods(t *testing.T) {
 		if s.parent != nil {
 			t.Error("expected parent's SpanID to be nil")
 		}
-		if s.rcv != tr.Receiver() {
-			t.Errorf("expected receiver channels to be the same")
-		}
 		if !s.start.IsZero() || !reflect.DeepEqual(time.Time{}, s.start) {
 			t.Errorf("invalid start time: %v", s.start)
 		}
-		if !s.end.IsZero() || !reflect.DeepEqual(time.Time{}, s.end) {
-			t.Errorf("expected end to be zero: got %v", s.end)
+		if s.end != nil {
+			t.Errorf("expected end to be nil: got %v", s.end)
 		}
 		if len(s.attrs) != 0 {
 			t.Errorf("expected empty attribute list")
@@ -324,7 +312,7 @@ func TestSpanAllMethods(t *testing.T) {
 
 		s.End()
 		spanData := s.Extract()
-		if s.end.IsZero() || reflect.DeepEqual(time.Time{}, s.end) {
+		if s.end == nil || s.end.IsZero() || reflect.DeepEqual(time.Time{}, s.end) {
 			t.Errorf("expected end to be zero: got %v", s.end)
 		}
 		if s.rec || s.IsRecording() {

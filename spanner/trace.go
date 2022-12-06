@@ -7,15 +7,11 @@ package spanner
 type Trace interface {
 	// Get returns the slice of Spans in the Trace
 	Get() []Span
-	// Add takes in two Spans, the first one which is appended to the list of Spans
-	// and the second one which is used as a reference for the parent SpanID in the
-	// next Trace
-	//
-	// Traces are immutable, and adding a Span returns a new Trace
+	// Register sets the input Span `s`'s SpanID as this Trace's reference parent_id
 	Register(s Span)
 	// ID returns the TraceID
 	ID() TraceID
-	// PID returns the parent SpanID, or nil if unset
+	// Parent returns the parent SpanID, or nil if unset
 	Parent() Span
 	// Receiver returns the Span receiving channel of the Tracer
 	Receiver() chan Span
