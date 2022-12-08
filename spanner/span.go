@@ -1,6 +1,7 @@
 package spanner
 
 import (
+	"sync"
 	"time"
 
 	"github.com/zalgonoise/logx/attr"
@@ -36,7 +37,8 @@ type Span interface {
 }
 
 type span struct {
-	rec     bool
+	rec bool
+	sync.RWMutex
 	traceID TraceID
 	spanID  SpanID
 	parent  *SpanID
@@ -74,6 +76,9 @@ func (s *span) Start() {
 	if !s.canWrite() {
 		return
 	}
+
+	s.Lock()
+	defer s.Unlock()
 	s.start = time.Now()
 	s.rec = true
 }
@@ -83,6 +88,9 @@ func (s *span) End() {
 	if !s.canWrite() {
 		return
 	}
+
+	s.Lock()
+	defer s.Unlock()
 	s.end = new(time.Time)
 	*s.end = time.Now()
 	s.rec = false
@@ -93,6 +101,9 @@ func (s *span) Add(attrs ...attr.Attr) {
 	if !s.canWrite() {
 		return
 	}
+
+	s.Lock()
+	defer s.Unlock()
 	s.attrs = append(s.attrs, attrs...)
 }
 
@@ -103,9 +114,13 @@ func (s *span) IsRecording() bool {
 
 // SetName overwrites the Span's name field with the string `name`
 func (s *span) SetName(name string) {
+
 	if !s.canWrite() {
 		return
 	}
+
+	s.Lock()
+	defer s.Unlock()
 	s.name = name
 }
 
@@ -114,6 +129,9 @@ func (s *span) SetParent(id *SpanID) {
 	if !s.canWrite() {
 		return
 	}
+
+	s.Lock()
+	defer s.Unlock()
 	if id != nil && id.IsValid() {
 		s.parent = id
 		return
@@ -131,11 +149,19 @@ func (s *span) Replace(attrs ...attr.Attr) {
 	if !s.canWrite() {
 		return
 	}
+
+	s.Lock()
+	defer s.Unlock()
 	s.attrs = attrs
 }
 
 // Extract returns the current SpanData for the Span, regardless of its status
 func (s *span) Extract() SpanData {
+	if s.canWrite() && s.rec {
+		s.Lock()
+		defer s.Unlock()
+	}
+
 	var parentID *string = nil
 	if s.parent != nil {
 		pid := s.parent.String()
@@ -163,11 +189,19 @@ func (s *span) Event(name string, attrs ...attr.Attr) {
 	if !s.canWrite() {
 		return
 	}
+
+	s.Lock()
+	defer s.Unlock()
 	s.events = append(s.events, newEvent(name, attrs...))
 }
 
 // Events returns the events in the Span
 func (s *span) Events() []EventData {
+	if s.canWrite() && s.rec {
+		s.Lock()
+		defer s.Unlock()
+	}
+
 	eventData := make([]EventData, len(s.events))
 	for idx, e := range s.events {
 		eventData[idx] = EventData{
