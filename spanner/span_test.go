@@ -15,7 +15,7 @@ func TestNewSpan(t *testing.T) {
 			attr.String("attr", "attr"),
 			attr.Int("idx", 0),
 		}
-		tr = newTrace()
+		tr = newTrace(nil)
 		sp = newSpan(tr.ID(), nil, name)
 	)
 
@@ -142,7 +142,7 @@ func TestNewSpan(t *testing.T) {
 func TestSpanIDMethod(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace()
+		tr   = newTrace(TTY())
 	)
 	t.Run("Success", func(t *testing.T) {
 		s := newSpan(tr.ID(), nil, name)
@@ -157,7 +157,7 @@ func TestSpanIDMethod(t *testing.T) {
 func TestSpanStart(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace()
+		tr   = newTrace(TTY())
 	)
 	t.Run("Success", func(t *testing.T) {
 		newSpan := newSpan(tr.ID(), nil, name)
@@ -192,7 +192,7 @@ func TestSpanAllMethods(t *testing.T) {
 			attr.String("attr", "attr"),
 			attr.Int("idx", 0),
 		}
-		tr  = newTrace()
+		tr  = newTrace(TTY())
 		sp  = newSpan(tr.ID(), nil, name)
 		pid = sp.ID().String()
 	)

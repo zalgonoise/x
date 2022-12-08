@@ -17,20 +17,24 @@ type Trace interface {
 	Receiver() chan Span
 	// Extract returns the SpanData from the Trace, if any
 	Extract() []SpanData
+	// Export pushes the current slice of SpanData to the configured Exporter
+	Export() error
 }
 
 type trace struct {
-	spans []Span
-	trace TraceID
-	ref   Span
-	rcv   chan Span
+	rcv      chan Span
+	exporter Exporter
+	trace    TraceID
+	ref      Span
+	spans    []Span
 }
 
-func newTrace() Trace {
+func newTrace(e Exporter) Trace {
 	t := &trace{
-		spans: []Span{},
-		trace: NewTraceID(),
-		rcv:   make(chan Span),
+		rcv:      make(chan Span),
+		exporter: e,
+		trace:    NewTraceID(),
+		spans:    []Span{},
 	}
 	go func() {
 		for s := range t.rcv {
@@ -79,4 +83,8 @@ func (t trace) Extract() []SpanData {
 		data[idx] = s.Extract()
 	}
 	return data
+}
+
+func (t trace) Export() error {
+	return t.exporter.Export(t.trace, t.Extract()...)
 }

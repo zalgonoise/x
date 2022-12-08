@@ -19,9 +19,13 @@ type Tracer interface {
 	Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span)
 }
 
-type baseTracer struct{}
+type baseTracer struct {
+	e Exporter
+}
 
-var tr Tracer = baseTracer{}
+var tr Tracer = &baseTracer{
+	e: TTY(),
+}
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
 // creates the Span for the action, with string name `name` and Attr attributes `attrs`
@@ -32,8 +36,10 @@ var tr Tracer = baseTracer{}
 // created Span, which is returned alongside this context.
 //
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
-func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
-	ctx, t := GetTraceOrCreate(ctx)
+func (t baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
+	var trace Trace
+	ctx, trace = GetTraceOrCreate(ctx, t.e)
+
 	var pid *SpanID = nil
 	parent := GetSpan(ctx)
 	if parent != nil {
@@ -41,18 +47,22 @@ func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (c
 		pid = &id
 	}
 
-	s := newSpan(t.ID(), pid, name, attrs...)
+	s := newSpan(trace.ID(), pid, name, attrs...)
 	defer func() {
-		t.Receiver() <- s // push span into trace since it will be mutated until stopped
+		trace.Receiver() <- s // push span into trace since it will be mutated until stopped
 	}()
-	t.Register(s)
 
-	ctx = WithTrace(ctx, t)
-	ctx = WithSpan(ctx, t.Parent())
+	ctx = WithTrace(ctx, trace)
+	ctx = WithSpan(ctx, trace.Parent())
+	trace.Register(s)
 	newCtx := WithSpan(ctx, s)
 
 	s.Start()
 	return newCtx, s
+}
+
+func (t *baseTracer) To(e Exporter) {
+	t.e = e
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
@@ -66,4 +76,9 @@ func (baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (c
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
 func Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
 	return tr.Start(ctx, name, attrs...)
+}
+
+// To globally sets the Span exporter to Exporter `e`
+func To(e Exporter) {
+	tr.(*baseTracer).To(e)
 }
