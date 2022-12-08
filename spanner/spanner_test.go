@@ -21,12 +21,12 @@ func runtime() {
 	defer spanner.GetTrace(ctx).Export()
 	defer startS.End()
 
-	// _, s := Start(ctx, "Runtime:Start:A")
+	_, s := spanner.Start(ctx, "Runtime:Start:A")
 	x := runtimeA(ctx, 2)
-	// logx.From(ctx).Trace("Runtime:Start:A", AsAttr(s.End()))
-	// _, s = Start(ctx, "Runtime:Start:E")
+	s.End()
+	_, s = spanner.Start(ctx, "Runtime:Start:E")
 	runtimeE(ctx, "Hello", x)
-	// logx.From(ctx).Trace("Runtime:Start:E", AsAttr(s.End()))
+	s.End()
 
 }
 
