@@ -9,6 +9,12 @@ type Exporter interface {
 	Export(traceID TraceID, spans ...SpanData) error
 }
 
+type noOpExporter struct{}
+
+func (noOpExporter) Export(traceID TraceID, spans ...SpanData) error {
+	return nil
+}
+
 type ttyExporter struct {
 	enc Encoder
 }
