@@ -23,7 +23,7 @@ type Span interface {
 	// SetName overwrites the Span's name field with the string `name`
 	SetName(name string)
 	// SetParent overwrites the Span's parent_id field with the SpanID `id`
-	SetParent(id *SpanID)
+	SetParent(span Span)
 	// Add appends attributes (key-value pairs) to the Span
 	Add(attrs ...attr.Attr)
 	// Attrs returns the Span's stored attributes
@@ -39,9 +39,9 @@ type Span interface {
 type span struct {
 	rec bool
 	sync.RWMutex
-	traceID TraceID
-	spanID  SpanID
-	parent  *SpanID
+	trace  Trace
+	spanID SpanID
+	parent *SpanID
 
 	name   string
 	start  time.Time
@@ -50,11 +50,17 @@ type span struct {
 	events []event
 }
 
-func newSpan(tid TraceID, pid *SpanID, name string, attrs ...attr.Attr) Span {
+func newSpan(trace Trace, name string, attrs ...attr.Attr) Span {
+	var s *SpanID = nil
+	if trace.Parent() != nil {
+		sid := trace.Parent().ID()
+		s = &sid
+	}
+
 	return &span{
-		traceID: tid,
-		spanID:  NewSpanID(),
-		parent:  pid,
+		trace:  trace,
+		spanID: NewSpanID(),
+		parent: s,
 
 		name:  name,
 		attrs: attrs,
@@ -94,6 +100,10 @@ func (s *span) End() {
 	s.end = new(time.Time)
 	*s.end = time.Now()
 	s.rec = false
+
+	if s.parent == nil {
+		defer func() { _ = s.trace.Export() }()
+	}
 }
 
 // Add appends attributes (key-value pairs) to the Span
@@ -125,15 +135,16 @@ func (s *span) SetName(name string) {
 }
 
 // SetParent overwrites the Span's parent_id field with the SpanID `id`
-func (s *span) SetParent(id *SpanID) {
+func (s *span) SetParent(span Span) {
 	if !s.canWrite() {
 		return
 	}
 
 	s.Lock()
 	defer s.Unlock()
-	if id != nil && id.IsValid() {
-		s.parent = id
+	if span != nil {
+		sid := span.ID()
+		s.parent = &sid
 		return
 	}
 	s.parent = nil
@@ -173,7 +184,7 @@ func (s *span) Extract() SpanData {
 	}
 
 	return SpanData{
-		TraceID:    s.traceID.String(),
+		TraceID:    s.trace.ID().String(),
 		SpanID:     s.spanID.String(),
 		ParentID:   parentID,
 		Name:       s.name,
