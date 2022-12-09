@@ -5,6 +5,8 @@ package spanner
 // It exposes methods for retrieving the slice of Spans, adding a new Span,
 // retrieving the TraceID, and retrieving the next span's parent SpanID if set
 type Trace interface {
+	// Add appends a Span to the Trace
+	Add(s Span)
 	// Get returns the slice of Spans in the Trace
 	Get() []Span
 	// Register sets the input Span `s`'s SpanID as this Trace's reference parent_id
@@ -13,8 +15,6 @@ type Trace interface {
 	ID() TraceID
 	// Parent returns the parent SpanID, or nil if unset
 	Parent() Span
-	// Receiver returns the Span receiving channel of the Tracer
-	Receiver() chan Span
 	// Extract returns the SpanData from the Trace, if any
 	Extract() []SpanData
 	// Export pushes the current slice of SpanData to the configured Exporter
@@ -22,7 +22,6 @@ type Trace interface {
 }
 
 type trace struct {
-	rcv      chan Span
 	exporter Exporter
 	trace    TraceID
 	ref      Span
@@ -30,18 +29,20 @@ type trace struct {
 }
 
 func newTrace(e Exporter) Trace {
+	if e == nil {
+		e = noOpExporter{}
+	}
 	t := &trace{
-		rcv:      make(chan Span),
 		exporter: e,
 		trace:    NewTraceID(),
 		spans:    []Span{},
 	}
-	go func() {
-		for s := range t.rcv {
-			t.spans = append(t.spans, s)
-		}
-	}()
 	return t
+}
+
+// Add appends a Span to the Trace
+func (t *trace) Add(s Span) {
+	t.spans = append(t.spans, s)
 }
 
 // Get returns the slice of Spans in the Trace
@@ -66,11 +67,6 @@ func (t trace) ID() TraceID {
 // PID returns the parent SpanID, or nil if unset
 func (t trace) Parent() Span {
 	return t.ref
-}
-
-// Receiver returns the Span receiving channel of the Tracer
-func (t trace) Receiver() chan Span {
-	return t.rcv
 }
 
 // Extract returns the SpanData from the Trace, if any
