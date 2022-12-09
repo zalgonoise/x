@@ -40,17 +40,11 @@ func (t baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) 
 	var trace Trace
 	ctx, trace = GetTraceOrCreate(ctx, t.e)
 
-	var pid *SpanID = nil
 	parent := GetSpan(ctx)
-	if parent != nil {
-		id := parent.ID()
-		pid = &id
-	}
+	trace.Register(parent)
 
-	s := newSpan(trace.ID(), pid, name, attrs...)
-	defer func() {
-		trace.Receiver() <- s // push span into trace since it will be mutated until stopped
-	}()
+	s := newSpan(trace, name, attrs...)
+	trace.Add(s)
 
 	ctx = WithTrace(ctx, trace)
 	ctx = WithSpan(ctx, trace.Parent())
@@ -62,6 +56,9 @@ func (t baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) 
 }
 
 func (t *baseTracer) To(e Exporter) {
+	if e == nil {
+		t.e = noOpExporter{}
+	}
 	t.e = e
 }
 
