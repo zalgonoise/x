@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zalgonoise/logx/attr"
+	"github.com/zalgonoise/attr"
 )
 
 func TestNewEvent(t *testing.T) {

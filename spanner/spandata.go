@@ -4,7 +4,7 @@ import (
 	"time"
 
 	json "github.com/goccy/go-json"
-	"github.com/zalgonoise/logx/attr"
+	"github.com/zalgonoise/attr"
 )
 
 // SpanData is the output data that was recorded by a Span

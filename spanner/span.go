@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zalgonoise/logx/attr"
+	"github.com/zalgonoise/attr"
 )
 
 // Span is a single action within a Trace, which holds metadata about

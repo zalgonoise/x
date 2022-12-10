@@ -3,7 +3,7 @@ package spanner
 import (
 	"context"
 
-	"github.com/zalgonoise/logx/attr"
+	"github.com/zalgonoise/attr"
 )
 
 // Tracer will capture spans when its `Start()` method is called, by creating a new

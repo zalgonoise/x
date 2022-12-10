@@ -3,7 +3,7 @@ package spanner
 import (
 	"time"
 
-	"github.com/zalgonoise/logx/attr"
+	"github.com/zalgonoise/attr"
 )
 
 type event struct {

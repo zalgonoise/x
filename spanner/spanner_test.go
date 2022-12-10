@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/logx"
-	"github.com/zalgonoise/logx/attr"
 	"github.com/zalgonoise/logx/handlers/jsonh"
 	"github.com/zalgonoise/x/spanner"
 	"github.com/zalgonoise/x/spanner/export"
