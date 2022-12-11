@@ -2,6 +2,7 @@ package spanner
 
 import (
 	"context"
+	"os"
 
 	"github.com/zalgonoise/attr"
 )
@@ -24,7 +25,7 @@ type baseTracer struct {
 }
 
 var tr Tracer = &baseTracer{
-	e: TTY(),
+	e: Writer(os.Stderr),
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also

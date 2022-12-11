@@ -1,6 +1,9 @@
 package spanner
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+)
 
 // Exporter is a module that pushes the span data to an output
 type Exporter interface {
@@ -15,11 +18,12 @@ func (noOpExporter) Export(traceID TraceID, spans ...SpanData) error {
 	return nil
 }
 
-type ttyExporter struct {
+type writerExporter struct {
 	enc Encoder
+	w   io.Writer
 }
 
-func (e ttyExporter) Export(traceID TraceID, spans ...SpanData) error {
+func (e writerExporter) Export(traceID TraceID, spans ...SpanData) error {
 	trace := struct {
 		TraceID string     `json:"trace_id"`
 		Spans   []SpanData `json:"spans"`
@@ -27,18 +31,20 @@ func (e ttyExporter) Export(traceID TraceID, spans ...SpanData) error {
 		TraceID: traceID.String(),
 		Spans:   spans,
 	}
+	fmt.Println(trace)
 
 	b, err := e.enc.Encode(trace)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(b))
+	fmt.Fprint(e.w, string(b))
 
 	return nil
 }
 
-func TTY() Exporter {
-	return ttyExporter{
+func Writer(w io.Writer) Exporter {
+	return writerExporter{
 		enc: jsonEnc{},
+		w:   w,
 	}
 }

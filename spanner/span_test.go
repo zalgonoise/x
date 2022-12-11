@@ -1,6 +1,7 @@
 package spanner
 
 import (
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -142,7 +143,7 @@ func TestNewSpan(t *testing.T) {
 func TestSpanIDMethod(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace(TTY())
+		tr   = newTrace(Writer(os.Stderr))
 	)
 	t.Run("Success", func(t *testing.T) {
 		s := newSpan(tr, name)
@@ -157,7 +158,7 @@ func TestSpanIDMethod(t *testing.T) {
 func TestSpanStart(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace(TTY())
+		tr   = newTrace(Writer(os.Stderr))
 	)
 	t.Run("Success", func(t *testing.T) {
 		newSpan := newSpan(tr, name)
@@ -192,7 +193,7 @@ func TestSpanAllMethods(t *testing.T) {
 			attr.String("attr", "attr"),
 			attr.Int("idx", 0),
 		}
-		tr  = newTrace(TTY())
+		tr  = newTrace(Writer(os.Stderr))
 		sp  = newSpan(tr, name)
 		pid = sp.ID().String()
 	)
