@@ -12,7 +12,7 @@ type loggerExporter struct {
 	}
 }
 
-func (e loggerExporter) Export(traceID spanner.TraceID, spans ...spanner.SpanData) error {
+func (e loggerExporter) Export(traceID spanner.TraceID, spans ...*spanner.SpanData) error {
 	e.log.Trace(traceID.String(),
 		attr.New("spans", spans),
 	)

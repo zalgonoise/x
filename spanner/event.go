@@ -12,8 +12,8 @@ type event struct {
 	attrs     []attr.Attr
 }
 
-func newEvent(name string, attrs ...attr.Attr) event {
-	return event{
+func newEvent(name string, attrs ...attr.Attr) *event {
+	return &event{
 		name:      name,
 		timestamp: time.Now(),
 		attrs:     attrs,

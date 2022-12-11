@@ -12,14 +12,14 @@ import (
 // It contains all the details stored in the Span, and it is returned either
 // with the `Extract()` method, or when `End()` is called (and its returned value captured)
 type SpanData struct {
-	TraceID    TraceID     `json:"trace_id"`
-	SpanID     SpanID      `json:"span_id"`
-	ParentID   *SpanID     `json:"parent_id"`
-	Name       string      `json:"name"`
-	StartTime  time.Time   `json:"start_time"`
-	EndTime    *time.Time  `json:"end_time"`
-	Attributes attr.Attrs  `json:"attributes,omitempty"`
-	Events     []EventData `json:"events,omitempty"`
+	TraceID    TraceID
+	SpanID     SpanID
+	ParentID   *SpanID
+	Name       string
+	StartTime  time.Time
+	EndTime    *time.Time
+	Attributes attr.Attrs
+	Events     []*EventData
 }
 
 // MarshalJSON encodes the SpanData into a byte slice, returning it and an error
@@ -36,7 +36,7 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 		StartTime  string          `json:"start_time"`
 		EndTime    string          `json:"end_time"`
 		Attributes map[string]any  `json:"attributes,omitempty"`
-		Events     []EventData     `json:"events,omitempty"`
+		Events     []*EventData    `json:"events,omitempty"`
 	}
 
 	var parentID *string = nil

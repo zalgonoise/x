@@ -9,12 +9,12 @@ import (
 type Exporter interface {
 	// Export pushes the input SpanData `spans` to its output and returns
 	// an error
-	Export(traceID TraceID, spans ...SpanData) error
+	Export(traceID TraceID, spans ...*SpanData) error
 }
 
 type noOpExporter struct{}
 
-func (noOpExporter) Export(traceID TraceID, spans ...SpanData) error {
+func (noOpExporter) Export(traceID TraceID, spans ...*SpanData) error {
 	return nil
 }
 
@@ -23,10 +23,10 @@ type writerExporter struct {
 	w   io.Writer
 }
 
-func (e writerExporter) Export(traceID TraceID, spans ...SpanData) error {
+func (e writerExporter) Export(traceID TraceID, spans ...*SpanData) error {
 	trace := struct {
-		TraceID string     `json:"trace_id"`
-		Spans   []SpanData `json:"spans"`
+		TraceID string      `json:"trace_id"`
+		Spans   []*SpanData `json:"spans"`
 	}{
 		TraceID: traceID.String(),
 		Spans:   spans,
