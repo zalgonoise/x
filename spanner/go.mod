@@ -7,4 +7,4 @@ require (
 	github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be
 )
 
-require github.com/zalgonoise/attr v0.0.0-20221210213709-1dd235ad9234
+require github.com/zalgonoise/attr v0.0.0-20221211142006-7562f1f9106f

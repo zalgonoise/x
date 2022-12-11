@@ -173,23 +173,13 @@ func (s *span) Extract() SpanData {
 		defer s.Unlock()
 	}
 
-	var parentID *string = nil
-	if s.parent != nil {
-		pid := s.parent.String()
-		parentID = &pid
-	}
-	var endTime = "<nil>"
-	if s.end != nil {
-		endTime = s.end.Format(time.RFC3339Nano)
-	}
-
 	return SpanData{
-		TraceID:    s.trace.ID().String(),
-		SpanID:     s.spanID.String(),
-		ParentID:   parentID,
+		TraceID:    s.trace.ID(),
+		SpanID:     s.spanID,
+		ParentID:   s.parent,
 		Name:       s.name,
-		StartTime:  s.start.Format(time.RFC3339Nano),
-		EndTime:    &endTime,
+		StartTime:  s.start,
+		EndTime:    s.end,
 		Attributes: s.attrs,
 		Events:     s.Events(),
 	}

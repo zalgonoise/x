@@ -195,7 +195,7 @@ func TestSpanAllMethods(t *testing.T) {
 		}
 		tr  = newTrace(Writer(os.Stderr))
 		sp  = newSpan(tr, name)
-		pid = sp.ID().String()
+		pid = sp.ID()
 	)
 	t.Run("Success", func(t *testing.T) {
 		newSpan := newSpan(tr, name)
@@ -206,9 +206,9 @@ func TestSpanAllMethods(t *testing.T) {
 
 		wants := SpanData{
 			Name:       newName,
-			TraceID:    tr.ID().String(),
+			TraceID:    tr.ID(),
 			ParentID:   &pid,
-			SpanID:     s.ID().String(),
+			SpanID:     s.ID(),
 			Attributes: []attr.Attr{attrs[0]},
 			Events: []EventData{{
 				Name:       name,
@@ -318,9 +318,8 @@ func TestSpanAllMethods(t *testing.T) {
 		if s.rec || s.IsRecording() {
 			t.Errorf("expected the Span not to be recording since it already ended")
 		}
-		wants.StartTime = s.start.Format(time.RFC3339Nano)
-		end := s.end.Format(time.RFC3339Nano)
-		wants.EndTime = &end
+		wants.StartTime = s.start
+		wants.EndTime = s.end
 		wants.Events[0].Timestamp = s.events[0].timestamp
 
 		if wants.String() != spanData.String() {
