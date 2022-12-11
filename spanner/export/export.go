@@ -12,11 +12,10 @@ type loggerExporter struct {
 	}
 }
 
-func (e loggerExporter) Export(traceID spanner.TraceID, spans ...*spanner.SpanData) error {
-	e.log.Trace(traceID.String(),
-		attr.New("spans", spans),
+func (e loggerExporter) Export(trace spanner.Trace) {
+	e.log.Trace(trace.ID().String(),
+		attr.New("spans", trace.Extract()),
 	)
-	return nil
 }
 
 func Logger(log logx.Logger) spanner.Exporter {

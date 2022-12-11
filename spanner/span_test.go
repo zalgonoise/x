@@ -210,7 +210,7 @@ func TestSpanAllMethods(t *testing.T) {
 			ParentID:   &pid,
 			SpanID:     s.ID(),
 			Attributes: []attr.Attr{attrs[0]},
-			Events: []*EventData{{
+			Events: []EventData{{
 				Name:       name,
 				Attributes: []attr.Attr{},
 			}},

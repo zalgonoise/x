@@ -15,7 +15,7 @@ type Span interface {
 	// End stops the span, returning the collected SpanData in the action
 	End()
 	// Extract returns the current SpanData for the Span, regardless of its status
-	Extract() *SpanData
+	Extract() SpanData
 	// ID returns the SpanID of the Span
 	ID() SpanID
 	// IsRecording returns a boolean on whether the Span is currently recording
@@ -33,7 +33,7 @@ type Span interface {
 	// Event creates a new event within the Span
 	Event(name string, attrs ...attr.Attr)
 	// Events returns the events in the Span
-	Events() []*EventData
+	Events() []EventData
 }
 
 type span struct {
@@ -102,7 +102,7 @@ func (s *span) End() {
 	s.rec = false
 
 	if s.parent == nil {
-		defer func() { _ = s.trace.Export() }()
+		defer s.trace.Export()
 	}
 }
 
@@ -167,13 +167,13 @@ func (s *span) Replace(attrs ...attr.Attr) {
 }
 
 // Extract returns the current SpanData for the Span, regardless of its status
-func (s *span) Extract() *SpanData {
+func (s *span) Extract() SpanData {
 	if s.canWrite() && s.rec {
 		s.Lock()
 		defer s.Unlock()
 	}
 
-	return &SpanData{
+	return SpanData{
 		TraceID:    s.trace.ID(),
 		SpanID:     s.spanID,
 		ParentID:   s.parent,
@@ -197,19 +197,19 @@ func (s *span) Event(name string, attrs ...attr.Attr) {
 }
 
 // Events returns the events in the Span
-func (s *span) Events() []*EventData {
+func (s *span) Events() []EventData {
 	if s.canWrite() && s.rec {
 		s.Lock()
 		defer s.Unlock()
 	}
 
-	eventData := make([]*EventData, len(s.events))
-	for idx, e := range s.events {
-		eventData[idx] = &EventData{
+	eventData := make([]EventData, 0, len(s.events))
+	for _, e := range s.events {
+		eventData = append(eventData, EventData{
 			Name:       e.name,
 			Timestamp:  e.timestamp,
 			Attributes: e.attrs,
-		}
+		})
 	}
 	return eventData
 }

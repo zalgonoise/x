@@ -16,9 +16,9 @@ type Trace interface {
 	// Parent returns the parent SpanID, or nil if unset
 	Parent() Span
 	// Extract returns the SpanData from the Trace, if any
-	Extract() []*SpanData
+	Extract() []SpanData
 	// Export pushes the current slice of SpanData to the configured Exporter
-	Export() error
+	Export()
 }
 
 type trace struct {
@@ -70,17 +70,17 @@ func (t trace) Parent() Span {
 }
 
 // Extract returns the SpanData from the Trace, if any
-func (t trace) Extract() []*SpanData {
+func (t trace) Extract() []SpanData {
 	if len(t.spans) == 0 {
 		return nil
 	}
-	data := make([]*SpanData, len(t.spans))
-	for idx, s := range t.spans {
-		data[idx] = s.Extract()
+	data := make([]SpanData, 0, len(t.spans))
+	for _, s := range t.spans {
+		data = append(data, s.Extract())
 	}
 	return data
 }
 
-func (t trace) Export() error {
-	return t.exporter.Export(t.trace, t.Extract()...)
+func (t *trace) Export() {
+	t.exporter.Export(t)
 }

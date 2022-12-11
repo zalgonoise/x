@@ -19,7 +19,7 @@ type SpanData struct {
 	StartTime  time.Time
 	EndTime    *time.Time
 	Attributes attr.Attrs
-	Events     []*EventData
+	Events     []EventData
 }
 
 // MarshalJSON encodes the SpanData into a byte slice, returning it and an error
@@ -34,9 +34,9 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 		Context    exportedContext `json:"context"`
 		ParentID   *string         `json:"parent_id"`
 		StartTime  string          `json:"start_time"`
-		EndTime    string          `json:"end_time"`
-		Attributes map[string]any  `json:"attributes,omitempty"`
-		Events     []*EventData    `json:"events,omitempty"`
+		EndTime    *string         `json:"end_time"`
+		Attributes attr.Attrs      `json:"attributes,omitempty"`
+		Events     []EventData     `json:"events,omitempty"`
 	}
 
 	var parentID *string = nil
@@ -44,9 +44,10 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 		pid := s.ParentID.String()
 		parentID = &pid
 	}
-	var endTime = "<nil>"
+	var endTime *string = nil
 	if s.EndTime != nil {
-		endTime = s.EndTime.Format(time.RFC3339Nano)
+		t := s.EndTime.Format(time.RFC3339Nano)
+		endTime = &t
 	}
 
 	return json.Marshal(exportedSpanData{
@@ -58,7 +59,7 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 		ParentID:   parentID,
 		StartTime:  s.StartTime.Format(time.RFC3339Nano),
 		EndTime:    endTime,
-		Attributes: attr.Map(s.Attributes...),
+		Attributes: s.Attributes,
 		Events:     s.Events,
 	})
 }
@@ -78,14 +79,14 @@ type EventData struct {
 // MarshalJSON encodes the EventData into a byte slice, returning it and an error
 func (e EventData) MarshalJSON() ([]byte, error) {
 	type exportedEvent struct {
-		Name       string         `json:"name"`
-		Timestamp  string         `json:"timestamp"`
-		Attributes map[string]any `json:"attributes,omitempty"`
+		Name       string     `json:"name"`
+		Timestamp  string     `json:"timestamp"`
+		Attributes attr.Attrs `json:"attributes,omitempty"`
 	}
 	return json.Marshal(exportedEvent{
 		Name:       e.Name,
 		Timestamp:  e.Timestamp.Format(time.RFC3339Nano),
-		Attributes: attr.Map(e.Attributes...),
+		Attributes: e.Attributes,
 	})
 }
 

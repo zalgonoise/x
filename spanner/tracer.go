@@ -40,15 +40,13 @@ var tr Tracer = &baseTracer{
 func (t baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
 	var trace Trace
 	ctx, trace = GetTraceOrCreate(ctx, t.e)
-
 	parent := GetSpan(ctx)
-	trace.Register(parent)
 
 	s := newSpan(trace, name, attrs...)
 	trace.Add(s)
 
 	ctx = WithTrace(ctx, trace)
-	ctx = WithSpan(ctx, trace.Parent())
+	ctx = WithSpan(ctx, parent)
 	trace.Register(s)
 	newCtx := WithSpan(ctx, s)
 
