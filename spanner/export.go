@@ -31,7 +31,6 @@ func (e writerExporter) Export(traceID TraceID, spans ...SpanData) error {
 		TraceID: traceID.String(),
 		Spans:   spans,
 	}
-	fmt.Println(trace)
 
 	b, err := e.enc.Encode(trace)
 	if err != nil {
