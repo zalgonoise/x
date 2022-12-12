@@ -53,18 +53,20 @@ type span struct {
 func newSpan(trace Trace, name string, attrs ...attr.Attr) Span {
 	var s *SpanID = nil
 	if trace.Parent() != nil {
-		sid := trace.Parent().ID()
-		s = &sid
+		s = trace.Parent()
 	}
 
-	return &span{
+	newSpan := &span{
 		trace:  trace,
 		spanID: NewSpanID(),
 		parent: s,
 
-		name:  name,
-		attrs: attrs,
+		name: name,
 	}
+	if len(attrs) > 0 {
+		newSpan.attrs = attrs
+	}
+	return newSpan
 }
 
 // can't overwrite a span
@@ -94,20 +96,22 @@ func (s *span) End() {
 	if !s.canWrite() {
 		return
 	}
+	t := time.Now()
 
 	s.Lock()
-	defer s.Unlock()
 	s.end = new(time.Time)
-	*s.end = time.Now()
+	*s.end = t
 	s.rec = false
+	s.Unlock()
 
-	if s.parent == nil {
-		defer s.trace.Export()
-	}
+	s.trace.Processor().Handle(s.Extract())
 }
 
 // Add appends attributes (key-value pairs) to the Span
 func (s *span) Add(attrs ...attr.Attr) {
+	if len(attrs) == 0 {
+		return
+	}
 	if !s.canWrite() {
 		return
 	}
