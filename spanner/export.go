@@ -1,6 +1,8 @@
 package spanner
 
 import (
+	"context"
+	"fmt"
 	"io"
 )
 
@@ -8,53 +10,52 @@ import (
 type Exporter interface {
 	// Export pushes the input SpanData `spans` to its output, as a non-blocking
 	// function
-	Export(trace Trace)
+	Export(ctx context.Context, spans []SpanData) error
+	Shutdown(ctx context.Context) error
 }
 
 type noOpExporter struct{}
 
-func (noOpExporter) Export(trace Trace) {}
+func (noOpExporter) Export(ctx context.Context, spans []SpanData) error {
+	return nil
+}
+func (noOpExporter) Shutdown(ctx context.Context) error {
+	return nil
+}
 
 type writerExporter struct {
 	enc Encoder
 	w   io.Writer
 }
 
-func (e writerExporter) Export(trace Trace) {
-	tr := struct {
-		TraceID string     `json:"trace_id"`
-		Spans   []SpanData `json:"spans"`
-	}{
-		TraceID: trace.ID().String(),
-		Spans:   trace.Extract(),
+func (e writerExporter) Export(ctx context.Context, spans []SpanData) error {
+	var exportErr error
+	for _, span := range spans {
+		b, _ := span.MarshalJSON()
+		if _, err := e.w.Write(b); err != nil {
+			if exportErr == nil {
+				exportErr = err
+			} else {
+				exportErr = fmt.Errorf("%w -- %v", err, exportErr)
+			}
+		}
 	}
 
-	b, _ := e.enc.Encode(tr)
-	_, _ = e.w.Write(b)
+	return exportErr
+}
+
+func (e writerExporter) Shutdown(ctx context.Context) error {
+	if wc, ok := e.w.(interface {
+		Close() error
+	}); ok {
+		return wc.Close()
+	}
+	return nil
 }
 
 func Writer(w io.Writer) Exporter {
 	return writerExporter{
 		enc: jsonEnc{},
 		w:   w,
-	}
-}
-
-type rawExporter struct {
-	w io.Writer
-}
-
-func (e rawExporter) Export(trace Trace) {
-	sp := trace.Extract()
-
-	for _, s := range sp {
-		b, _ := s.MarshalJSON()
-		_, _ = e.w.Write(b)
-	}
-}
-
-func Raw(w io.Writer) Exporter {
-	return rawExporter{
-		w: w,
 	}
 }
