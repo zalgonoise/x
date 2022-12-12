@@ -2,6 +2,7 @@ package spanner
 
 import (
 	"context"
+	"sync/atomic"
 )
 
 // TraceContextKey is a unique type to use as key when storing traces in context
@@ -29,23 +30,10 @@ func GetTrace(ctx context.Context) Trace {
 	return nil
 }
 
-// GetTraceOrCreate returns the Trace from the input context `ctx`, or it will create one
-// if it doesn't exist. Returns the context with value and the Trace
-func GetTraceOrCreate(ctx context.Context, e Exporter) (context.Context, Trace) {
-	v := ctx.Value(ContextKey)
-	if v == nil {
-		return WithNewTrace(ctx, e)
-	}
-	if t, ok := v.(Trace); ok {
-		return WithTrace(ctx, t), t
-	}
-	return WithNewTrace(ctx, e)
-}
-
 // WithNewTrace wraps the input context `ctx` with a new Trace, returning both the
 // context with value and the Trace
-func WithNewTrace(ctx context.Context, e Exporter) (context.Context, Trace) {
-	t := newTrace(e)
+func WithNewTrace(ctx context.Context, processor atomic.Value) (context.Context, Trace) {
+	t := newTrace(processor)
 	return context.WithValue(ctx, ContextKey, t), t
 }
 
@@ -69,13 +57,4 @@ func GetSpan(ctx context.Context) Span {
 // WithSpan wraps the input context `ctx` with the Span `s`, returning the context with value
 func WithSpan(ctx context.Context, s Span) context.Context {
 	return context.WithValue(ctx, SpanContextKey, s)
-}
-
-// Extract returns the SpanData from the Trace within the context, if existing
-func Extract(ctx context.Context) []SpanData {
-	t := GetTrace(ctx)
-	if t == nil {
-		return nil
-	}
-	return t.Extract()
 }
