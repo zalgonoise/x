@@ -1,6 +1,8 @@
 package export
 
 import (
+	"context"
+
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/logx"
 	"github.com/zalgonoise/x/spanner"
@@ -12,10 +14,14 @@ type loggerExporter struct {
 	}
 }
 
-func (e loggerExporter) Export(trace spanner.Trace) {
-	e.log.Trace(trace.ID().String(),
-		attr.New("spans", trace.Extract()),
+func (e loggerExporter) Export(ctx context.Context, spans []spanner.SpanData) error {
+	e.log.Trace("spanner",
+		attr.New("spans", spans),
 	)
+	return nil
+}
+func (e loggerExporter) Shutdown(ctx context.Context) error {
+	return nil
 }
 
 func Logger(log logx.Logger) spanner.Exporter {
