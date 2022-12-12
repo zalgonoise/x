@@ -3,8 +3,10 @@ package spanner
 import (
 	"context"
 	"os"
+	"sync/atomic"
 
 	"github.com/zalgonoise/attr"
+	"github.com/zalgonoise/logx"
 )
 
 // Tracer will capture spans when its `Start()` method is called, by creating a new
@@ -21,11 +23,21 @@ type Tracer interface {
 }
 
 type baseTracer struct {
-	e Exporter
+	e    Exporter
+	proc atomic.Value
 }
 
-var tr Tracer = &baseTracer{
-	e: Writer(os.Stderr),
+var (
+	exp  Exporter = Writer(os.Stderr)
+	proc          = atomic.Value{}
+	tr   Tracer   = &baseTracer{
+		e:    exp,
+		proc: proc,
+	}
+)
+
+func init() {
+	tr.(*baseTracer).proc.Store(NewProcessor(tr.(*baseTracer).e))
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
@@ -38,16 +50,18 @@ var tr Tracer = &baseTracer{
 //
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
 func (t baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
-	var trace Trace
-	ctx, trace = GetTraceOrCreate(ctx, t.e)
+	var trace Trace = GetTrace(ctx)
+	if trace == nil {
+		ctx, trace = WithNewTrace(ctx, t.proc)
+	}
 	parent := GetSpan(ctx)
 
 	s := newSpan(trace, name, attrs...)
-	trace.Add(s)
+	sid := s.ID()
 
 	ctx = WithTrace(ctx, trace)
 	ctx = WithSpan(ctx, parent)
-	trace.Register(s)
+	trace.Register(&sid)
 	newCtx := WithSpan(ctx, s)
 
 	s.Start()
@@ -59,6 +73,14 @@ func (t *baseTracer) To(e Exporter) {
 		t.e = noOpExporter{}
 	}
 	t.e = e
+	p := t.proc.Load().(SpanProcessor)
+
+	err := p.Shutdown(context.Background())
+	if err != nil {
+		logx.Error("failed to stop processor", attr.String("error", err.Error()))
+	}
+
+	t.proc.Store(NewProcessor(e))
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
