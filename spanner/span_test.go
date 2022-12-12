@@ -1,12 +1,19 @@
 package spanner
 
 import (
-	"os"
+	"bytes"
+	"context"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/zalgonoise/attr"
+)
+
+var (
+	testProc = atomic.Value{}
+	buf      = new(bytes.Buffer)
 )
 
 func TestNewSpan(t *testing.T) {
@@ -16,9 +23,11 @@ func TestNewSpan(t *testing.T) {
 			attr.String("attr", "attr"),
 			attr.Int("idx", 0),
 		}
-		tr = newTrace(nil)
+		tr = newTrace(testProc)
 		sp = newSpan(tr, name)
 	)
+	testProc.Store(NewProcessor(Writer(buf)))
+	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
 
 	t.Run("Simple", func(t *testing.T) {
 		newSpan := newSpan(tr, name)
@@ -97,7 +106,8 @@ func TestNewSpan(t *testing.T) {
 		}
 	})
 	t.Run("WithParent", func(t *testing.T) {
-		tr.Register(sp)
+		sid := sp.ID()
+		tr.Register(&sid)
 		newSpan := newSpan(tr, name)
 		s, ok := (newSpan).(*span)
 		if !ok {
@@ -143,8 +153,13 @@ func TestNewSpan(t *testing.T) {
 func TestSpanIDMethod(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace(Writer(os.Stderr))
+		tr   = newTrace(testProc)
 	)
+
+	testProc.Store(NewProcessor(Writer(buf)))
+	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
+
+	testProc.Store(NewProcessor(Writer(buf)))
 	t.Run("Success", func(t *testing.T) {
 		s := newSpan(tr, name)
 		id := s.ID()
@@ -158,8 +173,11 @@ func TestSpanIDMethod(t *testing.T) {
 func TestSpanStart(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace(Writer(os.Stderr))
+		tr   = newTrace(testProc)
 	)
+	testProc.Store(NewProcessor(Writer(buf)))
+	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
+
 	t.Run("Success", func(t *testing.T) {
 		newSpan := newSpan(tr, name)
 		s, ok := (newSpan).(*span)
@@ -193,10 +211,13 @@ func TestSpanAllMethods(t *testing.T) {
 			attr.String("attr", "attr"),
 			attr.Int("idx", 0),
 		}
-		tr  = newTrace(Writer(os.Stderr))
+		tr  = newTrace(testProc)
 		sp  = newSpan(tr, name)
 		pid = sp.ID()
 	)
+
+	testProc.Store(NewProcessor(Writer(buf)))
+	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
 	t.Run("Success", func(t *testing.T) {
 		newSpan := newSpan(tr, name)
 		s, ok := (newSpan).(*span)

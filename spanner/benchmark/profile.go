@@ -29,7 +29,7 @@ func main() {
 
 	buf := new(bytes.Buffer)
 	w := new(bytes.Buffer)
-	spanner.To(spanner.Raw(buf))
+	spanner.To(spanner.Writer(buf))
 
 	app := NewApp(w)
 	for i := 0; i < 10_000; i++ {

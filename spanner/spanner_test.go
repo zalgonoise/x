@@ -17,8 +17,8 @@ func runtime() {
 	logger := logx.New(jsonh.New(os.Stderr))
 	ctx := logx.InContext(context.Background(), logger)
 	spanner.To(export.Logger(logger))
+
 	ctx, startS := spanner.Start(ctx, "Runtime:Main")
-	defer spanner.GetTrace(ctx).Export()
 	defer startS.End()
 
 	_, s := spanner.Start(ctx, "Runtime:Start:A")
@@ -82,10 +82,7 @@ func TestFunctionsWithSpan(t *testing.T) {
 func TestMainSpan(t *testing.T) {
 	ctx := logx.InContext(context.Background(), logx.Default())
 	ctx, s := spanner.Start(ctx, "main")
-	defer func() {
-		s.End()
-		logx.From(ctx).Trace("trace", attr.New("spans", spanner.Extract(ctx)))
-	}()
+	s.End()
 
 	t.Error()
 }

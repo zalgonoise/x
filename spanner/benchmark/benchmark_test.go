@@ -13,7 +13,7 @@ const input string = "3"
 func BenchmarkRuntime(b *testing.B) {
 	buf := new(bytes.Buffer)
 	w := new(bytes.Buffer)
-	spanner.To(spanner.Raw(buf))
+	spanner.To(spanner.Writer(buf))
 
 	//app
 	app := NewApp(w)
@@ -40,7 +40,7 @@ func BenchmarkRuntime(b *testing.B) {
 func TestRuntime(t *testing.T) {
 	buf := &bytes.Buffer{}
 	w := &bytes.Buffer{}
-	spanner.To(spanner.Raw(buf))
+	spanner.To(spanner.Writer(buf))
 
 	//app
 	app := NewApp(w)
