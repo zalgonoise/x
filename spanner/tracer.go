@@ -23,7 +23,7 @@ type Tracer interface {
 }
 
 type baseTracer struct {
-	e    Exporter
+	p    SpanProcessor
 	proc atomic.Value
 }
 
@@ -31,14 +31,14 @@ var (
 	exp  Exporter = Writer(os.Stderr)
 	proc          = atomic.Value{}
 	tr   Tracer   = &baseTracer{
-		e:    exp,
+		p:    NewProcessor(exp),
 		proc: proc,
 	}
 )
 
-func init() {
-	tr.(*baseTracer).proc.Store(NewProcessor(tr.(*baseTracer).e))
-}
+// func init() {
+// 	tr.(*baseTracer).proc.Store(NewProcessor(tr.(*baseTracer).e))
+// }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
 // creates the Span for the action, with string name `name` and Attr attributes `attrs`
@@ -70,17 +70,17 @@ func (t baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) 
 
 func (t *baseTracer) To(e Exporter) {
 	if e == nil {
-		t.e = noOpExporter{}
-	}
-	t.e = e
-	p := t.proc.Load().(SpanProcessor)
-
-	err := p.Shutdown(context.Background())
-	if err != nil {
-		logx.Error("failed to stop processor", attr.String("error", err.Error()))
+		e = noOpExporter{}
 	}
 
-	t.proc.Store(NewProcessor(e))
+	if t.p != nil {
+		err := t.p.Shutdown(context.Background())
+		if err != nil {
+			logx.Error("failed to stop processor", attr.String("error", err.Error()))
+		}
+	}
+	t.p = NewProcessor(e)
+	t.proc.Store(t.p)
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also

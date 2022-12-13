@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"testing"
+	"time"
 
 	"github.com/zalgonoise/x/spanner"
 )
@@ -20,15 +21,16 @@ func BenchmarkRuntime(b *testing.B) {
 	//test
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		// Each execution of the run loop, we should get a new "root" span and context.
 		ctx, span := spanner.Start(context.Background(), "Main")
+
+		// Each execution of the run loop, we should get a new "root" span and context.
 		w.WriteString(input)
 		err := app.Run(ctx)
 		if err != nil {
 			b.Errorf("execution failed: %v", err)
 		}
-		span.End()
 		w.Reset()
+		span.End()
 	}
 
 	// b.StopTimer()
@@ -44,19 +46,23 @@ func TestRuntime(t *testing.T) {
 
 	//app
 	app := NewApp(w)
+	start := time.Now()
+
 	//test
-	// Each execution of the run loop, we should get a new "root" span and context.
-	ctx, span := spanner.Start(context.Background(), "Main")
-	w.Reset()
-	w.WriteString(input)
-	err := app.Run(ctx)
-	if err != nil {
-		t.Errorf("execution failed: %v", err)
+	for i := 0; i < 50_000; i++ {
+		// Each execution of the run loop, we should get a new "root" span and context.
+		ctx, span := spanner.Start(context.Background(), "Main")
+		w.Reset()
+		w.WriteString(input)
+		err := app.Run(ctx)
+		if err != nil {
+			t.Errorf("execution failed: %v", err)
+		}
+		span.End()
+		w.Reset()
 	}
-	span.End()
-	w.Reset()
 
 	t.Log(buf.Len())
 	t.Log(buf.String())
-	t.Error()
+	t.Error(time.Since(start))
 }

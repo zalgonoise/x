@@ -13,7 +13,7 @@ import (
 
 var (
 	testProc = atomic.Value{}
-	buf      = new(bytes.Buffer)
+	testBuf  = new(bytes.Buffer)
 )
 
 func TestNewSpan(t *testing.T) {
@@ -26,7 +26,7 @@ func TestNewSpan(t *testing.T) {
 		tr = newTrace(testProc)
 		sp = newSpan(tr, name)
 	)
-	testProc.Store(NewProcessor(Writer(buf)))
+	testProc.Store(NewProcessor(Writer(testBuf)))
 	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
 
 	t.Run("Simple", func(t *testing.T) {
@@ -156,10 +156,10 @@ func TestSpanIDMethod(t *testing.T) {
 		tr   = newTrace(testProc)
 	)
 
-	testProc.Store(NewProcessor(Writer(buf)))
+	testProc.Store(NewProcessor(Writer(testBuf)))
 	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
 
-	testProc.Store(NewProcessor(Writer(buf)))
+	testProc.Store(NewProcessor(Writer(testBuf)))
 	t.Run("Success", func(t *testing.T) {
 		s := newSpan(tr, name)
 		id := s.ID()
@@ -175,7 +175,7 @@ func TestSpanStart(t *testing.T) {
 		name = "test"
 		tr   = newTrace(testProc)
 	)
-	testProc.Store(NewProcessor(Writer(buf)))
+	testProc.Store(NewProcessor(Writer(testBuf)))
 	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
 
 	t.Run("Success", func(t *testing.T) {
@@ -216,7 +216,7 @@ func TestSpanAllMethods(t *testing.T) {
 		pid = sp.ID()
 	)
 
-	testProc.Store(NewProcessor(Writer(buf)))
+	testProc.Store(NewProcessor(Writer(testBuf)))
 	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
 	t.Run("Success", func(t *testing.T) {
 		newSpan := newSpan(tr, name)
@@ -343,7 +343,10 @@ func TestSpanAllMethods(t *testing.T) {
 		wants.EndTime = s.end
 		wants.Events[0].Timestamp = s.events[0].timestamp
 
-		if wants.String() != spanData.String() {
+		wantsBuf, _ := wants.MarshalJSON()
+		spanDataBuf, _ := spanData.MarshalJSON()
+
+		if string(wantsBuf) != string(spanDataBuf) {
 			t.Errorf("unexpected output error: wanted %v ; got %v", wants, spanData)
 		}
 	})

@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	maxBatchSize  = 100
-	maxExportSize = 50
+	maxBatchSize  = 1024
+	maxExportSize = 512
 	defaultDelay  = 5 * time.Second
 	maxTimeout    = 30 * time.Second
 )
@@ -47,10 +47,7 @@ func NewProcessor(e Exporter) SpanProcessor {
 		batch:    make([]SpanData, 0, maxBatchSize),
 	}
 
-	go func() {
-		// start processor runtime
-		p.runtime()
-	}()
+	go p.runtime()
 	p.rec = true
 
 	return p
