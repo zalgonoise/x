@@ -51,27 +51,16 @@ type span struct {
 }
 
 func newSpan(trace Trace, name string, attrs ...attr.Attr) Span {
-	var s *SpanID = nil
-	if trace.Parent() != nil {
-		s = trace.Parent()
-	}
-
 	newSpan := &span{
 		trace:  trace,
 		spanID: NewSpanID(),
-		parent: s,
-
-		name: name,
+		parent: trace.Parent(),
+		name:   name,
 	}
 	if len(attrs) > 0 {
 		newSpan.attrs = attrs
 	}
 	return newSpan
-}
-
-// can't overwrite a span
-func (s *span) canWrite() bool {
-	return s.end == nil
 }
 
 // ID returns the SpanID of the Span
@@ -81,7 +70,7 @@ func (s *span) ID() SpanID {
 
 // Start sets the span to record
 func (s *span) Start() {
-	if !s.canWrite() {
+	if s.end != nil {
 		return
 	}
 
@@ -93,26 +82,23 @@ func (s *span) Start() {
 
 // End stops the span, returning the collected SpanData in the action
 func (s *span) End() {
-	if !s.canWrite() {
+	if s.end != nil {
 		return
 	}
 	t := time.Now()
+	s.end = new(time.Time)
 
 	s.Lock()
-	s.end = new(time.Time)
 	*s.end = t
 	s.rec = false
 	s.Unlock()
 
-	s.trace.Processor().Handle(s.Extract())
+	s.trace.Processor().Handle(s)
 }
 
 // Add appends attributes (key-value pairs) to the Span
 func (s *span) Add(attrs ...attr.Attr) {
-	if len(attrs) == 0 {
-		return
-	}
-	if !s.canWrite() {
+	if len(attrs) == 0 || s.end != nil {
 		return
 	}
 
@@ -128,8 +114,7 @@ func (s *span) IsRecording() bool {
 
 // SetName overwrites the Span's name field with the string `name`
 func (s *span) SetName(name string) {
-
-	if !s.canWrite() {
+	if s.end != nil {
 		return
 	}
 
@@ -140,18 +125,18 @@ func (s *span) SetName(name string) {
 
 // SetParent overwrites the Span's parent_id field with the SpanID `id`
 func (s *span) SetParent(span Span) {
-	if !s.canWrite() {
+	if s.end != nil {
 		return
 	}
 
 	s.Lock()
 	defer s.Unlock()
+	s.parent = nil
 	if span != nil {
 		sid := span.ID()
 		s.parent = &sid
-		return
 	}
-	s.parent = nil
+	return
 }
 
 // Attrs returns the Span's stored attributes
@@ -161,7 +146,7 @@ func (s *span) Attrs() []attr.Attr {
 
 // Replace will flush the Span's attributes and store the input attributes `attrs` in place
 func (s *span) Replace(attrs ...attr.Attr) {
-	if !s.canWrite() {
+	if s.end != nil {
 		return
 	}
 
@@ -172,7 +157,7 @@ func (s *span) Replace(attrs ...attr.Attr) {
 
 // Extract returns the current SpanData for the Span, regardless of its status
 func (s *span) Extract() SpanData {
-	if s.canWrite() && s.rec {
+	if s.end != nil && s.rec {
 		s.Lock()
 		defer s.Unlock()
 	}
@@ -191,7 +176,7 @@ func (s *span) Extract() SpanData {
 
 // Event creates a new event within the Span
 func (s *span) Event(name string, attrs ...attr.Attr) {
-	if !s.canWrite() {
+	if s.end != nil || name == "" && len(attrs) == 0 {
 		return
 	}
 
@@ -202,18 +187,18 @@ func (s *span) Event(name string, attrs ...attr.Attr) {
 
 // Events returns the events in the Span
 func (s *span) Events() []EventData {
-	if s.canWrite() && s.rec {
+	if s.end != nil && s.rec {
 		s.Lock()
 		defer s.Unlock()
 	}
 
-	eventData := make([]EventData, 0, len(s.events))
-	for _, e := range s.events {
-		eventData = append(eventData, EventData{
+	eventData := make([]EventData, len(s.events), len(s.events))
+	for idx, e := range s.events {
+		eventData[idx] = EventData{
 			Name:       e.name,
 			Timestamp:  e.timestamp,
 			Attributes: e.attrs,
-		})
+		}
 	}
 	return eventData
 }

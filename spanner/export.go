@@ -27,7 +27,10 @@ func (noOpExporter) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-var writerBuffer = new(bytes.Buffer)
+var (
+	writerBuffer  = new(bytes.Buffer)
+	encoderBuffer = []byte{}
+)
 
 type writerExporter struct {
 	rcv  chan []SpanData
@@ -51,14 +54,13 @@ func (e writerExporter) process() {
 			}
 		}
 	}
-
 }
 
 func (e writerExporter) writeSpans(batch []SpanData) (err error) {
 	defer writerBuffer.Reset()
 	for _, span := range batch {
-		b, _ := span.MarshalJSON()
-		writerBuffer.Write(b)
+		encoderBuffer, _ = span.MarshalJSON()
+		writerBuffer.Write(encoderBuffer)
 	}
 	if _, err = e.w.Write(writerBuffer.Bytes()); err != nil {
 		return err

@@ -1,13 +1,19 @@
 package spanner
 
 import (
+	"bytes"
+	"sync"
 	"time"
 
 	json "github.com/goccy/go-json"
 	"github.com/zalgonoise/attr"
 )
 
-// var buf = new(bytes.Buffer)
+var bufPool = sync.Pool{
+	New: func() any {
+		return new(bytes.Buffer)
+	},
+}
 
 // SpanData is the output data that was recorded by a Span
 //
@@ -21,78 +27,47 @@ type SpanData struct {
 	StartTime  time.Time
 	EndTime    *time.Time
 	Attributes attr.Attrs
-	Events     []EventData
+	Events     EventsData
 }
 
 // MarshalJSON encodes the SpanData into a byte slice, returning it and an error
 func (s SpanData) MarshalJSON() ([]byte, error) {
-	// buf.Reset()
-	// buf.WriteString(`{"name":"`)
-	// buf.WriteString(s.Name)
-	// buf.WriteString(`","context":{"trace_id":"`)
-	// buf.WriteString(s.TraceID.String())
-	// buf.WriteString(`","span_id":"`)
-	// buf.WriteString(s.SpanID.String())
-	// buf.WriteString(`"},"parent_id":`)
-	// if s.ParentID == nil {
-	// 	buf.WriteString(`null`)
-	// } else {
-	// 	buf.WriteString(s.ParentID.String())
-	// }
-	// buf.WriteString(`,"start_time":"`)
-	// buf.WriteString(s.StartTime.Format(time.RFC3339Nano))
-	// buf.WriteString(`","end_time":`)
-	// if s.ParentID == nil {
-	// 	buf.WriteString(`null`)
-	// } else {
-	// 	buf.WriteString(s.EndTime.Format(time.RFC3339Nano))
-	// }
-	// if len(s.Attributes) > 0 {
-	// 	buf.WriteString(`,"attributes":`)
-	// 	attr, _ := json.Marshal(s.Attributes)
-	// 	buf.Write(attr)
-	// }
-	// if len(s.Events) > 0 {
-	// 	buf.WriteString(`,"events":`)
-	// 	evt, _ := json.Marshal(s.Events)
-	// 	buf.Write(evt)
-	// }
-	// return buf.Bytes(), nil
-
-	type exportedContext struct {
-		TraceID TraceID `json:"trace_id"`
-		SpanID  SpanID  `json:"span_id"`
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(buf)
+	defer buf.Reset()
+	buf.WriteString(`{"name":"`)
+	buf.WriteString(s.Name)
+	buf.WriteString(`","context":{"trace_id":"`)
+	buf.WriteString(s.TraceID.String())
+	buf.WriteString(`","span_id":"`)
+	buf.WriteString(s.SpanID.String())
+	buf.WriteString(`"},"parent_id":`)
+	if s.ParentID == nil {
+		buf.WriteString(`null`)
+	} else {
+		buf.WriteString(s.ParentID.String())
 	}
-
-	type exportedSpanData struct {
-		Name       string          `json:"name"`
-		Context    exportedContext `json:"context"`
-		ParentID   *SpanID         `json:"parent_id"`
-		StartTime  time.Time       `json:"start_time"`
-		EndTime    *time.Time      `json:"end_time"`
-		Attributes attr.Attrs      `json:"attributes,omitempty"`
-		Events     []EventData     `json:"events,omitempty"`
+	buf.WriteString(`,"start_time":"`)
+	buf.WriteString(s.StartTime.Format(time.RFC3339Nano))
+	buf.WriteString(`","end_time":`)
+	if s.EndTime == nil {
+		buf.WriteString(`null`)
+	} else {
+		buf.WriteString(s.EndTime.Format(time.RFC3339Nano))
 	}
-
-	return json.Marshal(exportedSpanData{
-		Name: s.Name,
-		Context: exportedContext{
-			TraceID: s.TraceID,
-			SpanID:  s.SpanID,
-		},
-		ParentID:   s.ParentID,
-		StartTime:  s.StartTime,
-		EndTime:    s.EndTime,
-		Attributes: s.Attributes,
-		Events:     s.Events,
-	})
+	if len(s.Attributes) > 0 {
+		buf.WriteString(`,"attributes":`)
+		attr, _ := s.Attributes.MarshalJSON()
+		buf.Write(attr)
+	}
+	if len(s.Events) > 0 {
+		buf.WriteString(`,"events":`)
+		evt, _ := s.Events.MarshalJSON()
+		buf.Write(evt)
+	}
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
 }
-
-// String implements fmt.Stringer
-// func (s SpanData) String() string {
-// 	b, _ := s.MarshalJSON()
-// 	return string(b)
-// }
 
 type EventData struct {
 	Name       string     `json:"name"`
@@ -100,22 +75,37 @@ type EventData struct {
 	Attributes attr.Attrs `json:"attributes"`
 }
 
+type EventsData []EventData
+
 // MarshalJSON encodes the EventData into a byte slice, returning it and an error
 func (e EventData) MarshalJSON() ([]byte, error) {
-	type exportedEvent struct {
-		Name       string     `json:"name"`
-		Timestamp  string     `json:"timestamp"`
-		Attributes attr.Attrs `json:"attributes,omitempty"`
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(buf)
+	defer buf.Reset()
+	buf.WriteString(`{"name":"`)
+	buf.WriteString(e.Name)
+	buf.WriteString(`","timestamp":`)
+	buf.WriteString(e.Timestamp.Format(time.RFC3339Nano))
+	if len(e.Attributes) > 0 {
+		buf.WriteString(`,"attributes":`)
+		attr, _ := json.Marshal(e.Attributes)
+		buf.Write(attr)
 	}
-	return json.Marshal(exportedEvent{
-		Name:       e.Name,
-		Timestamp:  e.Timestamp.Format(time.RFC3339Nano),
-		Attributes: e.Attributes,
-	})
+	return buf.Bytes(), nil
 }
 
-// String implements fmt.Stringer
-func (e EventData) String() string {
-	b, _ := e.MarshalJSON()
-	return string(b)
+func (e EventsData) MarshalJSON() ([]byte, error) {
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(buf)
+	defer buf.Reset()
+	buf.WriteByte('[')
+	for idx, event := range e {
+		if idx != 0 {
+			buf.WriteByte(',')
+		}
+		b, _ := event.MarshalJSON()
+		buf.Write(b)
+	}
+	buf.WriteByte(']')
+	return buf.Bytes(), nil
 }

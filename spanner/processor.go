@@ -22,7 +22,7 @@ var (
 )
 
 type SpanProcessor interface {
-	Handle(span SpanData)
+	Handle(span Span)
 	Shutdown(ctx context.Context) error
 	Flush(ctx context.Context) error
 }
@@ -33,7 +33,7 @@ type processor struct {
 	rec      bool
 	exporter Exporter
 	stopCh   chan struct{}
-	queue    chan SpanData
+	queue    chan Span
 	timer    *time.Timer
 	batch    []SpanData
 }
@@ -42,7 +42,7 @@ func NewProcessor(e Exporter) SpanProcessor {
 	p := &processor{
 		exporter: e,
 		stopCh:   make(chan struct{}),
-		queue:    make(chan SpanData),
+		queue:    make(chan Span),
 		timer:    time.NewTimer(defaultDelay),
 		batch:    make([]SpanData, 0, maxBatchSize),
 	}
@@ -53,10 +53,7 @@ func NewProcessor(e Exporter) SpanProcessor {
 	return p
 }
 
-func (p *processor) Handle(span SpanData) {
-	if span.StartTime == zeroTime {
-		return
-	}
+func (p *processor) Handle(span Span) {
 	if p.rec {
 		p.queue <- span
 	}
@@ -120,8 +117,9 @@ func (p *processor) runtime() {
 			}
 		// span enqueued
 		case span := <-p.queue:
+			sd := span.Extract()
 			p.Lock()
-			p.batch = append(p.batch, span)
+			p.batch = append(p.batch, sd)
 			toExport := len(p.batch) >= maxExportSize
 			p.Unlock()
 
