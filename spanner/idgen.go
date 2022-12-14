@@ -32,20 +32,18 @@ type stdIDGenerator struct {
 // NewTraceID creates a new TraceID
 func (g *stdIDGenerator) NewTraceID() TraceID {
 	g.Lock()
-	defer g.Unlock()
-
 	tid := TraceID{}
 	_, _ = g.random.Read(tid[:])
+	g.Unlock()
 	return tid
 }
 
 // NewSpanID creates a new SpanID
 func (g *stdIDGenerator) NewSpanID() SpanID {
 	g.Lock()
-	defer g.Unlock()
-
 	sid := SpanID{}
 	_, _ = g.random.Read(sid[:])
+	g.Unlock()
 	return sid
 }
 

@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	maxBatchSize  = 1024
-	maxExportSize = 512
+	maxBatchSize  = 2048
+	maxExportSize = 1024
 	defaultDelay  = 5 * time.Second
 	maxTimeout    = 30 * time.Second
 )
