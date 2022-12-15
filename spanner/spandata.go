@@ -2,6 +2,7 @@ package spanner
 
 import (
 	"bytes"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,7 +36,8 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 	defer bufPool[1].Put(buf)
 	buf.Reset()
 	buf.WriteString(`{"name":"`)
-	buf.WriteString(s.Name)
+
+	buf.WriteString(strings.Replace(s.Name, `"`, `\"`, -1))
 	buf.WriteString(`","context":{"trace_id":"`)
 	buf.WriteString(s.TraceID.String())
 	buf.WriteString(`","span_id":"`)
@@ -64,9 +66,15 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 		buf.Write(attr)
 	}
 	if len(s.Events) > 0 {
-		buf.WriteString(`,"events":`)
-		evt, _ := json.Marshal(s.Events)
-		buf.Write(evt)
+		buf.WriteString(`,"events":[`)
+		for idx, evt := range s.Events {
+			if idx > 0 {
+				buf.WriteByte(',')
+			}
+			e, _ := evt.MarshalJSON()
+			buf.Write(e)
+		}
+		buf.WriteByte(']')
 	}
 	buf.WriteByte('}')
 	return buf.Bytes(), nil
@@ -84,13 +92,15 @@ func (e EventData) MarshalJSON() ([]byte, error) {
 	defer bufPool[0].Put(buf)
 	buf.Reset()
 	buf.WriteString(`{"name":"`)
-	buf.WriteString(e.Name)
-	buf.WriteString(`","timestamp":`)
+	buf.WriteString(strings.Replace(e.Name, `"`, `\"`, -1))
+	buf.WriteString(`","timestamp":"`)
 	buf.WriteString(e.Timestamp.Format(time.RFC3339Nano))
+	buf.WriteByte('"')
 	if len(e.Attributes) > 0 {
 		buf.WriteString(`,"attributes":`)
 		attr, _ := json.Marshal(e.Attributes)
 		buf.Write(attr)
 	}
+	buf.WriteByte('}')
 	return buf.Bytes(), nil
 }

@@ -5,20 +5,19 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/logx"
-	"github.com/zalgonoise/logx/handlers/jsonh"
 	"github.com/zalgonoise/x/spanner"
-	"github.com/zalgonoise/x/spanner/export"
 )
 
 func runtime() {
-	logger := logx.New(jsonh.New(os.Stderr))
-	ctx := logx.InContext(context.Background(), logger)
-	spanner.To(export.Logger(logger))
+	// logger := logx.New(jsonh.New(os.Stderr))
+	// ctx := logx.InContext(context.Background(), logger)
+	spanner.To(spanner.Writer(os.Stdout))
 
-	ctx, startS := spanner.Start(ctx, "Runtime:Main")
+	ctx, startS := spanner.Start(context.Background(), `Runtime:"Main"`)
 	defer startS.End()
 
 	_, s := spanner.Start(ctx, "Runtime:Start:A")
@@ -75,14 +74,17 @@ func runtimeE(ctx context.Context, text string, i int) {
 }
 func TestFunctionsWithSpan(t *testing.T) {
 	runtime()
+	time.Sleep(8 * time.Second)
 
 	t.Error()
 }
 
 func TestMainSpan(t *testing.T) {
+	spanner.To(spanner.Writer(os.Stdout))
 	ctx := logx.InContext(context.Background(), logx.Default())
 	ctx, s := spanner.Start(ctx, "main")
 	s.End()
+	time.Sleep(6 * time.Second)
 
 	t.Error()
 }
