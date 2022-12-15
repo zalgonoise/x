@@ -23,7 +23,7 @@ func TestNewSpan(t *testing.T) {
 			attr.String("attr", "attr"),
 			attr.Int("idx", 0),
 		}
-		tr = newTrace(testProc)
+		tr = newTrace()
 		sp = newSpan(tr, name)
 	)
 	testProc.Store(NewProcessor(Writer(testBuf)))
@@ -68,7 +68,8 @@ func TestNewSpan(t *testing.T) {
 		}
 	})
 	t.Run("WithAttrs", func(t *testing.T) {
-		newSpan := newSpan(tr, name, attrs...)
+		newSpan := newSpan(tr, name)
+		newSpan.Add(attrs...)
 		s, ok := (newSpan).(*span)
 		if !ok {
 			t.Errorf("failed to cast Span as *span")
@@ -153,7 +154,7 @@ func TestNewSpan(t *testing.T) {
 func TestSpanIDMethod(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace(testProc)
+		tr   = newTrace()
 	)
 
 	testProc.Store(NewProcessor(Writer(testBuf)))
@@ -173,7 +174,7 @@ func TestSpanIDMethod(t *testing.T) {
 func TestSpanStart(t *testing.T) {
 	var (
 		name = "test"
-		tr   = newTrace(testProc)
+		tr   = newTrace()
 	)
 	testProc.Store(NewProcessor(Writer(testBuf)))
 	defer testProc.Load().(SpanProcessor).Shutdown(context.Background())
@@ -211,7 +212,7 @@ func TestSpanAllMethods(t *testing.T) {
 			attr.String("attr", "attr"),
 			attr.Int("idx", 0),
 		}
-		tr  = newTrace(testProc)
+		tr  = newTrace()
 		sp  = newSpan(tr, name)
 		pid = sp.ID()
 	)
@@ -339,15 +340,16 @@ func TestSpanAllMethods(t *testing.T) {
 		if s.rec || s.IsRecording() {
 			t.Errorf("expected the Span not to be recording since it already ended")
 		}
+		spanDataBuf, _ := spanData.MarshalJSON()
+
 		wants.StartTime = s.start
 		wants.EndTime = s.end
 		wants.Events[0].Timestamp = s.events[0].timestamp
 
 		wantsBuf, _ := wants.MarshalJSON()
-		spanDataBuf, _ := spanData.MarshalJSON()
 
 		if string(wantsBuf) != string(spanDataBuf) {
-			t.Errorf("unexpected output error: wanted %v ; got %v", wants, spanData)
+			t.Errorf("unexpected output error: wanted %s ; got %s", wantsBuf, spanDataBuf)
 		}
 	})
 }

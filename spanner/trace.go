@@ -1,7 +1,5 @@
 package spanner
 
-import "sync/atomic"
-
 // Trace records and stores the set of Spans, as actions in a transaction
 //
 // It exposes methods for retrieving the slice of Spans, adding a new Span,
@@ -14,19 +12,17 @@ type Trace interface {
 	// Parent returns the parent SpanID, or nil if unset
 	Parent() *SpanID
 	// Tracer returns the configured Tracer in the Trace
-	Processor() SpanProcessor
+	// Processor() SpanProcessor
 }
 
 type trace struct {
-	processor atomic.Value
-	trace     TraceID
-	ref       *SpanID
+	trace TraceID
+	ref   *SpanID
 }
 
-func newTrace(processor atomic.Value) Trace {
+func newTrace() Trace {
 	newTr := &trace{
-		processor: processor,
-		trace:     NewTraceID(),
+		trace: NewTraceID(),
 	}
 	return newTr
 }
@@ -48,8 +44,4 @@ func (t trace) ID() TraceID {
 // PID returns the parent SpanID, or nil if unset
 func (t trace) Parent() *SpanID {
 	return t.ref
-}
-
-func (t *trace) Processor() SpanProcessor {
-	return t.processor.Load().(SpanProcessor)
 }

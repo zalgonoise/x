@@ -2,7 +2,6 @@ package spanner
 
 import (
 	"context"
-	"sync/atomic"
 )
 
 // TraceContextKey is a unique type to use as key when storing traces in context
@@ -32,8 +31,8 @@ func GetTrace(ctx context.Context) Trace {
 
 // WithNewTrace wraps the input context `ctx` with a new Trace, returning both the
 // context with value and the Trace
-func WithNewTrace(ctx context.Context, processor atomic.Value) (context.Context, Trace) {
-	t := newTrace(processor)
+func WithNewTrace(ctx context.Context) (context.Context, Trace) {
+	t := newTrace()
 	return context.WithValue(ctx, ContextKey, t), t
 }
 

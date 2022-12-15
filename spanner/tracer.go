@@ -19,26 +19,20 @@ import (
 //
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
 type Tracer interface {
-	Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span)
+	Start(ctx context.Context, name string) (context.Context, Span)
 }
 
-type baseTracer struct {
-	p    SpanProcessor
-	proc atomic.Value
-}
+type baseTracer struct{}
 
 var (
 	exp  Exporter = Writer(os.Stderr)
 	proc          = atomic.Value{}
-	tr   Tracer   = &baseTracer{
-		p:    NewProcessor(exp),
-		proc: proc,
-	}
+	tr   Tracer   = &baseTracer{}
 )
 
-// func init() {
-// 	tr.(*baseTracer).proc.Store(NewProcessor(tr.(*baseTracer).e))
-// }
+func init() {
+	proc.Store(NewProcessor(exp))
+}
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
 // creates the Span for the action, with string name `name` and Attr attributes `attrs`
@@ -49,14 +43,14 @@ var (
 // created Span, which is returned alongside this context.
 //
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
-func (t baseTracer) Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
+func (t baseTracer) Start(ctx context.Context, name string) (context.Context, Span) {
 	var trace Trace = GetTrace(ctx)
 	if trace == nil {
-		ctx, trace = WithNewTrace(ctx, t.proc)
+		ctx, trace = WithNewTrace(ctx)
 	}
 	parent := GetSpan(ctx)
 
-	s := newSpan(trace, name, attrs...)
+	s := newSpan(trace, name)
 	sid := s.ID()
 
 	ctx = WithTrace(ctx, trace)
@@ -73,14 +67,13 @@ func (t *baseTracer) To(e Exporter) {
 		e = noOpExporter{}
 	}
 
-	if t.p != nil {
-		err := t.p.Shutdown(context.Background())
-		if err != nil {
-			logx.Error("failed to stop processor", attr.String("error", err.Error()))
-		}
+	p := proc.Load().(SpanProcessor)
+	err := p.Shutdown(context.Background())
+	if err != nil {
+		logx.Error("failed to stop processor", attr.String("error", err.Error()))
 	}
-	t.p = NewProcessor(e)
-	t.proc.Store(t.p)
+
+	proc.Store(NewProcessor(e))
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
@@ -92,8 +85,8 @@ func (t *baseTracer) To(e Exporter) {
 // created Span, which is returned alongside this context.
 //
 // The returned Span is required, even if to defer its closure, with `defer s.End()`
-func Start(ctx context.Context, name string, attrs ...attr.Attr) (context.Context, Span) {
-	return tr.Start(ctx, name, attrs...)
+func Start(ctx context.Context, name string) (context.Context, Span) {
+	return tr.Start(ctx, name)
 }
 
 // To globally sets the Span exporter to Exporter `e`

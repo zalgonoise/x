@@ -3,7 +3,6 @@ package spanner
 import (
 	"bytes"
 	"encoding/hex"
-	"sync"
 )
 
 // ID interface describes the common actions an ID object should have
@@ -12,12 +11,6 @@ type ID interface {
 	IsValid() bool
 	// String implements fmt.Stringer
 	String() string
-}
-
-var bufPool = sync.Pool{
-	New: func() any {
-		return new(bytes.Buffer)
-	},
 }
 
 // TraceID is a unique identifier for the trace, or,
@@ -36,16 +29,6 @@ func (t TraceID) String() string {
 	return hex.EncodeToString(t[:])
 }
 
-func (t TraceID) MarshalJSON() ([]byte, error) {
-	b := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(b)
-	defer b.Reset()
-	b.WriteByte('"')
-	b.WriteString(hex.EncodeToString(t[:]))
-	b.WriteByte('"')
-	return b.Bytes(), nil
-}
-
 // SpanID is a unique identifier for a span, or,
 // a unique identifier for a single action across a request-response,
 // sharing the same TraceID with other spans across the same transaction
@@ -61,14 +44,4 @@ func (s SpanID) IsValid() bool {
 // String implements fmt.Stringer
 func (s SpanID) String() string {
 	return hex.EncodeToString(s[:])
-}
-
-func (s SpanID) MarshalJSON() ([]byte, error) {
-	b := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(b)
-	defer b.Reset()
-	b.WriteByte('"')
-	b.WriteString(hex.EncodeToString(s[:]))
-	b.WriteByte('"')
-	return b.Bytes(), nil
 }

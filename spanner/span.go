@@ -50,15 +50,12 @@ type span struct {
 	events []*event
 }
 
-func newSpan(trace Trace, name string, attrs ...attr.Attr) Span {
+func newSpan(trace Trace, name string) Span {
 	newSpan := &span{
 		trace:  trace,
 		spanID: NewSpanID(),
 		parent: trace.Parent(),
 		name:   name,
-	}
-	if len(attrs) > 0 {
-		newSpan.attrs = attrs
 	}
 	return newSpan
 }
@@ -93,7 +90,8 @@ func (s *span) End() {
 	s.rec = false
 	s.Unlock()
 
-	s.trace.Processor().Handle(s)
+	p := proc.Load().(SpanProcessor)
+	p.Handle(s)
 }
 
 // Add appends attributes (key-value pairs) to the Span

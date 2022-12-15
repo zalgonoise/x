@@ -9,10 +9,9 @@ import (
 	"github.com/zalgonoise/attr"
 )
 
-var bufPool = sync.Pool{
-	New: func() any {
-		return new(bytes.Buffer)
-	},
+var bufPool = []sync.Pool{
+	{New: func() any { return bytes.NewBuffer(make([]byte, 0, 1<<8)) }},
+	{New: func() any { return bytes.NewBuffer(make([]byte, 0, 1<<10)) }},
 }
 
 // SpanData is the output data that was recorded by a Span
@@ -27,14 +26,14 @@ type SpanData struct {
 	StartTime  time.Time
 	EndTime    *time.Time
 	Attributes attr.Attrs
-	Events     EventsData
+	Events     []EventData
 }
 
 // MarshalJSON encodes the SpanData into a byte slice, returning it and an error
 func (s SpanData) MarshalJSON() ([]byte, error) {
-	buf := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(buf)
-	defer buf.Reset()
+	buf := bufPool[1].Get().(*bytes.Buffer)
+	defer bufPool[1].Put(buf)
+	buf.Reset()
 	buf.WriteString(`{"name":"`)
 	buf.WriteString(s.Name)
 	buf.WriteString(`","context":{"trace_id":"`)
@@ -45,7 +44,9 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 	if s.ParentID == nil {
 		buf.WriteString(`null`)
 	} else {
+		buf.WriteByte('"')
 		buf.WriteString(s.ParentID.String())
+		buf.WriteByte('"')
 	}
 	buf.WriteString(`,"start_time":"`)
 	buf.WriteString(s.StartTime.Format(time.RFC3339Nano))
@@ -53,7 +54,9 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 	if s.EndTime == nil {
 		buf.WriteString(`null`)
 	} else {
+		buf.WriteByte('"')
 		buf.WriteString(s.EndTime.Format(time.RFC3339Nano))
+		buf.WriteByte('"')
 	}
 	if len(s.Attributes) > 0 {
 		buf.WriteString(`,"attributes":`)
@@ -62,7 +65,7 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 	}
 	if len(s.Events) > 0 {
 		buf.WriteString(`,"events":`)
-		evt, _ := s.Events.MarshalJSON()
+		evt, _ := json.Marshal(s.Events)
 		buf.Write(evt)
 	}
 	buf.WriteByte('}')
@@ -75,13 +78,11 @@ type EventData struct {
 	Attributes attr.Attrs `json:"attributes"`
 }
 
-type EventsData []EventData
-
 // MarshalJSON encodes the EventData into a byte slice, returning it and an error
 func (e EventData) MarshalJSON() ([]byte, error) {
-	buf := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(buf)
-	defer buf.Reset()
+	buf := bufPool[0].Get().(*bytes.Buffer)
+	defer bufPool[0].Put(buf)
+	buf.Reset()
 	buf.WriteString(`{"name":"`)
 	buf.WriteString(e.Name)
 	buf.WriteString(`","timestamp":`)
@@ -91,21 +92,5 @@ func (e EventData) MarshalJSON() ([]byte, error) {
 		attr, _ := json.Marshal(e.Attributes)
 		buf.Write(attr)
 	}
-	return buf.Bytes(), nil
-}
-
-func (e EventsData) MarshalJSON() ([]byte, error) {
-	buf := bufPool.Get().(*bytes.Buffer)
-	defer bufPool.Put(buf)
-	defer buf.Reset()
-	buf.WriteByte('[')
-	for idx, event := range e {
-		if idx != 0 {
-			buf.WriteByte(',')
-		}
-		b, _ := event.MarshalJSON()
-		buf.Write(b)
-	}
-	buf.WriteByte(']')
 	return buf.Bytes(), nil
 }
