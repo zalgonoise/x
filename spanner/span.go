@@ -8,14 +8,12 @@ import (
 )
 
 // Span is a single action within a Trace, which holds metadata about
-// the action's execution, as well as optional attributes
+// the action's execution, as well as optional attributes and events
 type Span interface {
 	// Start sets the span to record
 	Start()
 	// End stops the span, returning the collected SpanData in the action
 	End()
-	// Extract returns the current SpanData for the Span, regardless of its status
-	Extract() SpanData
 	// ID returns the SpanID of the Span
 	ID() SpanID
 	// IsRecording returns a boolean on whether the Span is currently recording
@@ -32,6 +30,8 @@ type Span interface {
 	Replace(attrs ...attr.Attr)
 	// Event creates a new event within the Span
 	Event(name string, attrs ...attr.Attr)
+	// Extract returns the current SpanData for the Span, regardless of its status
+	Extract() SpanData
 	// Events returns the events in the Span
 	Events() []EventData
 }
@@ -58,11 +58,6 @@ func newSpan(trace Trace, name string) Span {
 		name:   name,
 	}
 	return newSpan
-}
-
-// ID returns the SpanID of the Span
-func (s *span) ID() SpanID {
-	return s.spanID
 }
 
 // Start sets the span to record
@@ -94,15 +89,9 @@ func (s *span) End() {
 	p.Handle(s)
 }
 
-// Add appends attributes (key-value pairs) to the Span
-func (s *span) Add(attrs ...attr.Attr) {
-	if len(attrs) == 0 || s.end != nil {
-		return
-	}
-
-	s.Lock()
-	defer s.Unlock()
-	s.attrs = append(s.attrs, attrs...)
+// ID returns the SpanID of the Span
+func (s *span) ID() SpanID {
+	return s.spanID
 }
 
 // IsRecording returns a boolean on whether the Span is currently recording
@@ -137,6 +126,17 @@ func (s *span) SetParent(span Span) {
 	return
 }
 
+// Add appends attributes (key-value pairs) to the Span
+func (s *span) Add(attrs ...attr.Attr) {
+	if len(attrs) == 0 || s.end != nil {
+		return
+	}
+
+	s.Lock()
+	defer s.Unlock()
+	s.attrs = append(s.attrs, attrs...)
+}
+
 // Attrs returns the Span's stored attributes
 func (s *span) Attrs() []attr.Attr {
 	return s.attrs
@@ -151,6 +151,17 @@ func (s *span) Replace(attrs ...attr.Attr) {
 	s.Lock()
 	defer s.Unlock()
 	s.attrs = attrs
+}
+
+// Event creates a new event within the Span
+func (s *span) Event(name string, attrs ...attr.Attr) {
+	if s.end != nil || name == "" && len(attrs) == 0 {
+		return
+	}
+
+	s.Lock()
+	defer s.Unlock()
+	s.events = append(s.events, newEvent(name, attrs...))
 }
 
 // Extract returns the current SpanData for the Span, regardless of its status
@@ -170,17 +181,6 @@ func (s *span) Extract() SpanData {
 		Attributes: s.attrs,
 		Events:     s.Events(),
 	}
-}
-
-// Event creates a new event within the Span
-func (s *span) Event(name string, attrs ...attr.Attr) {
-	if s.end != nil || name == "" && len(attrs) == 0 {
-		return
-	}
-
-	s.Lock()
-	defer s.Unlock()
-	s.events = append(s.events, newEvent(name, attrs...))
 }
 
 // Events returns the events in the Span

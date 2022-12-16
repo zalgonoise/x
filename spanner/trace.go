@@ -1,18 +1,16 @@
 package spanner
 
-// Trace records and stores the set of Spans, as actions in a transaction
+// Trace represents a single transaction which creates a set of Spans, as single-event actions.
 //
-// It exposes methods for retrieving the slice of Spans, adding a new Span,
-// retrieving the TraceID, and retrieving the next span's parent SpanID if set
+// It exposes methods for registering and retrieving the parent SpanID to use in the next
+// Tracer's `Start()` call, and for returning its TraceID.
 type Trace interface {
-	// Register sets the input Span `s`'s SpanID as this Trace's reference parent_id
-	Register(s *SpanID)
 	// ID returns the TraceID
 	ID() TraceID
+	// Register sets the input pointer to a SpanID `s` as this Trace's reference parent_id
+	Register(s *SpanID)
 	// Parent returns the parent SpanID, or nil if unset
 	Parent() *SpanID
-	// Tracer returns the configured Tracer in the Trace
-	// Processor() SpanProcessor
 }
 
 type trace struct {
@@ -27,11 +25,7 @@ func newTrace() Trace {
 	return newTr
 }
 
-// Add takes in two Spans, the first one which is appended to the list of Spans
-// and the second one which is used as a reference for the parent SpanID in the
-// next Trace
-//
-// Traces are immutable, and adding a Span returns a new Trace
+// Register sets the input pointer to a SpanID `s` as this Trace's reference parent_id
 func (t *trace) Register(s *SpanID) {
 	t.ref = s
 }
@@ -41,7 +35,7 @@ func (t trace) ID() TraceID {
 	return t.trace
 }
 
-// PID returns the parent SpanID, or nil if unset
+// Parent returns the parent SpanID, or nil if unset
 func (t trace) Parent() *SpanID {
 	return t.ref
 }

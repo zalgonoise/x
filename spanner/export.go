@@ -20,9 +20,13 @@ type Exporter interface {
 
 type noOpExporter struct{}
 
+// Export pushes the input SpanData `spans` to its output, as a non-blocking
+// function
 func (noOpExporter) Export(ctx context.Context, spans []SpanData) error {
 	return nil
 }
+
+// Shutdown gracefully terminates the Exporter
 func (noOpExporter) Shutdown(ctx context.Context) error {
 	return nil
 }
@@ -38,6 +42,8 @@ type writerExporter struct {
 	w    io.Writer
 }
 
+// Export pushes the input SpanData `spans` to its output, as a non-blocking
+// function
 func (e writerExporter) Export(ctx context.Context, spans []SpanData) error {
 	e.rcv <- spans
 	return nil
@@ -79,6 +85,8 @@ func (e writerExporter) Shutdown(ctx context.Context) error {
 	return nil
 }
 
+// Writer returns an Exporter that is configured to write SpanData as
+// text (JSON) to an io.Writer
 func Writer(w io.Writer) Exporter {
 	we := writerExporter{
 		rcv:  make(chan []SpanData),

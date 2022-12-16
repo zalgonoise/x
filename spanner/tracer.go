@@ -9,17 +9,20 @@ import (
 	"github.com/zalgonoise/logx"
 )
 
-// Tracer will capture spans when its `Start()` method is called, by creating a new
-// Trace or reusing the existing one in the input context `ctx`
-//
-// # Each call creates a Span which is appended to the Trace, and the Trace keeps running until the firstmost Span has ended
-//
-// The input context will not create a new SpanID, but reuse the previous. The returned context will use a new SpanID for the
-// created Span, which is returned alongside this context.
-//
-// The returned Span is required, even if to defer its closure, with `defer s.End()`
+// Tracer is responsible of creating new Traces and Spans, but it also allows to define the Exporter
+// it should use
 type Tracer interface {
+	// Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
+	// creates the Span for the action, with string name `name`. Each call creates a new Span.
+	//
+	// After calling Start, the input context will still reference the parent Span's ID, nil if it's a new Trace.
+	// The returned context will reference the returned Span's ID, to be used as the next call's parent.
+	//
+	// The returned Span is required, even if to defer its closure, with `defer s.End()`. The caller MUST close the
+	// returned Span.
 	Start(ctx context.Context, name string) (context.Context, Span)
+	// To sets the Span exporter to Exporter `e`
+	To(e Exporter)
 }
 
 type baseTracer struct{}
@@ -31,18 +34,18 @@ var (
 )
 
 func init() {
+	// initialize a Span Exporter to os.Stderr
 	proc.Store(NewProcessor(exp))
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
-// creates the Span for the action, with string name `name` and Attr attributes `attrs`
+// creates the Span for the action, with string name `name`. Each call creates a new Span.
 //
-// # Each call creates a Span which is appended to the Trace, and the Trace keeps running until the firstmost Span has ended
+// After calling Start, the input context will still reference the parent Span's ID, nil if it's a new Trace.
+// The returned context will reference the returned Span's ID, to be used as the next call's parent.
 //
-// The input context will not create a new SpanID, but reuse the previous. The returned context will use a new SpanID for the
-// created Span, which is returned alongside this context.
-//
-// The returned Span is required, even if to defer its closure, with `defer s.End()`
+// The returned Span is required, even if to defer its closure, with `defer s.End()`. The caller MUST close the
+// returned Span.
 func (t baseTracer) Start(ctx context.Context, name string) (context.Context, Span) {
 	var trace Trace = GetTrace(ctx)
 	if trace == nil {
@@ -62,6 +65,7 @@ func (t baseTracer) Start(ctx context.Context, name string) (context.Context, Sp
 	return newCtx, s
 }
 
+// To sets the Span exporter to Exporter `e`
 func (t *baseTracer) To(e Exporter) {
 	if e == nil {
 		e = noOpExporter{}
@@ -77,14 +81,13 @@ func (t *baseTracer) To(e Exporter) {
 }
 
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
-// creates the Span for the action, with string name `name` and Attr attributes `attrs`
+// creates the Span for the action, with string name `name`. Each call creates a new Span.
 //
-// # The created Span is appended to the Trace, and the Trace keeps running until the firstmost Span has ended
+// After calling Start, the input context will still reference the parent Span's ID, nil if it's a new Trace.
+// The returned context will reference the returned Span's ID, to be used as the next call's parent.
 //
-// The input context will not create a new SpanID, but reuse the previous. The returned context will use a new SpanID for the
-// created Span, which is returned alongside this context.
-//
-// The returned Span is required, even if to defer its closure, with `defer s.End()`
+// The returned Span is required, even if to defer its closure, with `defer s.End()`. The caller MUST close the
+// returned Span.
 func Start(ctx context.Context, name string) (context.Context, Span) {
 	return tr.Start(ctx, name)
 }

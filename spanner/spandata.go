@@ -17,8 +17,8 @@ var bufPool = []sync.Pool{
 
 // SpanData is the output data that was recorded by a Span
 //
-// It contains all the details stored in the Span, and it is returned either
-// with the `Extract()` method, or when `End()` is called (and its returned value captured)
+// It contains all the details stored in the Span, and it is returned
+// with the `Extract()` method
 type SpanData struct {
 	TraceID    TraceID
 	SpanID     SpanID
@@ -80,6 +80,7 @@ func (s SpanData) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// EventData describes the structure of an exported Span Event
 type EventData struct {
 	Name       string     `json:"name"`
 	Timestamp  time.Time  `json:"timestamp"`
