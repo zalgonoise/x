@@ -23,6 +23,8 @@ type Tracer interface {
 	Start(ctx context.Context, name string) (context.Context, Span)
 	// To sets the Span exporter to Exporter `e`
 	To(e Exporter)
+	// Processor returns the configured SpanProcessor in the Tracer
+	Processor() SpanProcessor
 }
 
 type baseTracer struct{}
@@ -80,6 +82,10 @@ func (t *baseTracer) To(e Exporter) {
 	proc.Store(NewProcessor(e))
 }
 
+func (t *baseTracer) Processor() SpanProcessor {
+	return proc.Load().(SpanProcessor)
+}
+
 // Start reuses the Trace in the input context `ctx`, or creates one if it doesn't exist. It also
 // creates the Span for the action, with string name `name`. Each call creates a new Span.
 //
@@ -95,4 +101,8 @@ func Start(ctx context.Context, name string) (context.Context, Span) {
 // To globally sets the Span exporter to Exporter `e`
 func To(e Exporter) {
 	tr.(*baseTracer).To(e)
+}
+
+func Processor() SpanProcessor {
+	return tr.Processor()
 }
