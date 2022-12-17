@@ -22,7 +22,7 @@ type IDGenerator interface {
 	NewSpanID() SpanID
 }
 
-var idGen IDGenerator = &stdIDGenerator{}
+var idGen IDGenerator
 
 type stdIDGenerator struct {
 	sync.Mutex
