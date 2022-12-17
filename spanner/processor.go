@@ -21,9 +21,14 @@ var (
 	zeroTime time.Time
 )
 
+// SpanProcessor will handle routing ended Spans to an Exporter
 type SpanProcessor interface {
+	// Handle routes the input Span `span` to the SpanProcessor's Exporter
 	Handle(span Span)
+	// Shutdown gracefully stops the SpanProcessor, returning an error
 	Shutdown(ctx context.Context) error
+	// Flush will force-push the existing SpanData in the SpanProcessor's batch into the
+	// Exporter, even if not yet scheduled to do so
 	Flush(ctx context.Context) error
 }
 
@@ -38,6 +43,7 @@ type processor struct {
 	batch    []SpanData
 }
 
+// NewProcessor creates a new SpanProcessor configured with the input Exporter `e`
 func NewProcessor(e Exporter) SpanProcessor {
 	p := &processor{
 		exporter: e,
@@ -53,12 +59,14 @@ func NewProcessor(e Exporter) SpanProcessor {
 	return p
 }
 
+// Handle routes the input Span `span` to the SpanProcessor's Exporter
 func (p *processor) Handle(span Span) {
 	if p.rec {
 		p.queue <- span
 	}
 }
 
+// Shutdown gracefully stops the SpanProcessor, returning an error
 func (p *processor) Shutdown(ctx context.Context) error {
 	p.Lock()
 	p.rec = false
@@ -94,6 +102,8 @@ func (p *processor) Shutdown(ctx context.Context) error {
 	return err
 }
 
+// Flush will force-push the existing SpanData in the SpanProcessor's batch into the
+// Exporter, even if not yet scheduled to do so
 func (p *processor) Flush(ctx context.Context) error {
 	return p.export(ctx)
 }
