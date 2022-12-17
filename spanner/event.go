@@ -13,9 +13,14 @@ type event struct {
 }
 
 func newEvent(name string, attrs ...attr.Attr) *event {
-	return &event{
+	e := &event{
 		name:      name,
 		timestamp: time.Now(),
-		attrs:     attrs,
 	}
+
+	if len(attrs) > 0 {
+		e.attrs = attrs
+	}
+
+	return e
 }
