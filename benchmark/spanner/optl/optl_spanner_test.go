@@ -59,7 +59,7 @@ func BenchmarkRuntime(b *testing.B) {
 	}
 	tp.ForceFlush(context.Background())
 	b.StopTimer()
-	b.Log(buf.String())
+	b.Log(buf.String()[:256])
 }
 
 func TestRuntime(t *testing.T) {
@@ -96,7 +96,7 @@ func TestRuntime(t *testing.T) {
 	w.Reset()
 
 	tp.ForceFlush(context.Background())
-	t.Log(b.String())
+	t.Log(b.String()[:256])
 
 	t.Error()
 }

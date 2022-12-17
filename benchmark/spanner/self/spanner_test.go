@@ -36,6 +36,7 @@ func BenchmarkRuntime(b *testing.B) {
 		w.Reset()
 		span.End()
 	}
+	b.StopTimer()
 }
 
 func TestRuntime(t *testing.T) {
@@ -58,7 +59,7 @@ func TestRuntime(t *testing.T) {
 
 	spanner.Processor().Flush(context.Background())
 	time.Sleep(10 * time.Millisecond) // safety sleep after flushing
-	t.Log(b.String())
+	t.Log(b.String()[:256])
 
 	t.Error()
 }
