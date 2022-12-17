@@ -38,6 +38,10 @@ import (
 
 ### Trace
 
+A Trace represents a single transaction in a system. It has a unique ID (16-byte-long, hex-encoded) that is present in all Spans spawned within this Trace. It also registers a Span's unique ID for reference when creating a new Span; as it will point to its parent Span.
+
+Traces are created when the `Tracer.Start()` method is called, and the input context does not have a Trace already.
+
 ```go
 type Trace interface {
 	// ID returns the TraceID
@@ -50,6 +54,14 @@ type Trace interface {
 ```
 
 ### Span
+
+A Span represents a single action within a transaction, in a system. It has a unique ID (8-byte-long, hex-encoded) and keeps track of the parent Span's ID, `nil` if it's the root Span.
+
+While `Tracer.Start()` kicks off a Span's beginning, it is the responsibility of the caller to end it with its `Span.End()` method, deferred if needed be.
+
+A Span may also store metadata besides a name and beginning / end timestamps. As covered below, a Span is also able to store key-value-pair attributes and events.
+
+Lastly, a Span exposes methods of extracting both its SpanData and its EventData.
 
 ```go
 type Span interface {
@@ -82,9 +94,25 @@ type Span interface {
 
 #### Span Attributes
 
+A Span stores key-value-pair attributes as metadata to the action in question. These key-value-pair attributes have a `string`-type key and `any`-type value, leveraging the [`zalgonoise/attr`](https://github.com/zalgonoise/attr) library.
+
 #### Span Events
 
+A Span also records events, which are one-shot entries with a `string` *name* and optionally any amount of attributes, leveraging the [`zalgonoise/attr`](https://github.com/zalgonoise/attr) library.
+
+Span Events will store the Span Event name, attributes and also a timestamp of when the Event was recorded.
+
 ### Tracer
+
+A Tracer creates a Traces and Spans within the input context, as well as setting Exporters to write the output SpanData.
+
+It's main method `Tracer.Start()` reads the input context to create a Trace if it does not exist which is then stored in the context.
+
+It also spawns a new Span with the input `string` *name*, that is returned to the caller.
+
+The returned context will store the returned Span's ID, so that it is referenced when creating a new Span as a child. The input context, however, will not store the returned Span's ID, and when creating a new Span it will keep the previous parent Span's ID -- making it seem like the next call was done side-by-side with the parent (and not a child of it).
+
+Its `Tracer.To()` method sets the Span exporter to the input Exporter.
 
 ```go
 type Tracer interface {
@@ -104,6 +132,7 @@ type Tracer interface {
 
 ### Processor
 
+A SpanProcessor will ingest the ended Spans when their `Span.End()` method is called, extract their SpanData, and push batches of SpanData to the configured Exporter. The SpanProcessor will be responsible of any post-recording processing that the Span needs, and it runs in a go routine.
 
 ```go
 type SpanProcessor interface {
@@ -118,6 +147,8 @@ type SpanProcessor interface {
 ```
 ### Exporter
 
+An Exporter will write a batch of SpanData to a certain output, as implemented in its `Exporter.Export()` method.
+
 ```go
 type Exporter interface {
 	// Export pushes the input SpanData `spans` to its output, as a non-blocking
@@ -129,6 +160,12 @@ type Exporter interface {
 ```
 
 ### ID Generator
+
+An ID Generator creates both Trace IDs and Span IDs, using a `crypto/rand` RNG. 
+
+TraceIDs are 16-byte-long, hex-encoded values that implement the `fmt.Stringer` interface.
+
+SpanIDs are 8-byte-long, hex-encoded values that implement the `fmt.Stringer` interface.
 
 ```go
 type IDGenerator interface {
