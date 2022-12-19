@@ -50,22 +50,65 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 	}
 	if c.Cur().Tok == token.LPAREN {
 		inputParam := extractParams(ExtractCursor(c, TypeFuncParam))
-		for _, p := range inputParam {
-			fmt.Println(*p.Type)
-		}
-
 		lb.InputParams = inputParam
-		c.Next()
 	}
 
-	// for c.Cur().Tok != token.LBRACE {
-	// 	switch c.Cur().Tok {
-	// 	case token.LPAREN:
-	// 		// output param group
-	// 	case token.IDENT:
-	// 		// output param
-	// 	}
-	// }
+	for c.Next().Tok != token.LBRACE {
+		fmt.Println(c.Cur().Tok.String(), c.PeekOffset(1).Tok.String(), c.PeekOffset(2).Tok.String(), c.PeekOffset(3).Tok.String())
+
+		switch c.Cur().Tok {
+		case token.MUL:
+			if c.Peek().Tok == token.IDENT &&
+				c.PeekOffset(2).Tok == token.PERIOD &&
+				c.PeekOffset(3).Tok == token.IDENT {
+				if lb.ReturnParams == nil {
+					lb.ReturnParams = []*LogicBlock{}
+				}
+				lb.ReturnParams = append(lb.ReturnParams, &LogicBlock{
+					IsPointer: ptr.To(true),
+					Package:   c.Peek().Lit,
+					Type:      ptr.To(c.Offset(3).Lit),
+				})
+				continue
+			}
+			if c.Peek().Tok == token.IDENT {
+				if lb.ReturnParams == nil {
+					lb.ReturnParams = []*LogicBlock{}
+				}
+				lb.ReturnParams = append(lb.ReturnParams, &LogicBlock{
+					IsPointer: ptr.To(true),
+					Type:      ptr.To(c.Next().Lit),
+				})
+				continue
+			}
+
+		case token.IDENT:
+			if c.Peek().Tok == token.PERIOD &&
+				c.PeekOffset(2).Tok == token.IDENT {
+				if lb.ReturnParams == nil {
+					lb.ReturnParams = []*LogicBlock{}
+				}
+				lb.ReturnParams = append(lb.ReturnParams, &LogicBlock{
+					Package: c.Cur().Lit,
+					Type:    ptr.To(c.Offset(2).Lit),
+				})
+				continue
+			}
+			if c.Cur().Lit != "" {
+				if lb.ReturnParams == nil {
+					lb.ReturnParams = []*LogicBlock{}
+				}
+				lb.ReturnParams = append(lb.ReturnParams, &LogicBlock{
+					Type: ptr.To(c.Cur().Lit),
+				})
+				continue
+			}
+
+		case token.LPAREN:
+			returnParams := extractParams(ExtractCursor(c, TypeFuncParam))
+			lb.ReturnParams = returnParams
+		}
+	}
 
 	return lb
 }
