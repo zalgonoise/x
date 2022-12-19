@@ -1,7 +1,6 @@
 package codegraph
 
 import (
-	"fmt"
 	"go/token"
 
 	cur "github.com/zalgonoise/cur"
@@ -55,8 +54,6 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 	}
 
 	for c.Next().Tok != token.LBRACE {
-		fmt.Println(c.Cur().Tok.String(), c.PeekOffset(1).Tok.String(), c.PeekOffset(2).Tok.String(), c.PeekOffset(3).Tok.String())
-
 		switch c.Cur().Tok {
 		case token.MUL:
 			if c.Peek().Tok == token.IDENT &&
@@ -173,6 +170,20 @@ func extractGenerics(c cur.Cursor[GoToken]) []*Identifier {
 				})
 			}
 			nameIDs = nameIDs[:0]
+			ids = append(ids, &Identifier{
+				Name: ptr.To(c.Cur().Lit),
+				Type: c.Peek().Lit,
+				Kind: TypeGenericParam,
+			})
+			c.Next()
+			continue
+		}
+		if c.Cur().Tok == token.IDENT &&
+			c.Peek().Tok == token.RBRACK {
+			ids = append(ids, &Identifier{
+				Type: c.Cur().Lit,
+				Kind: TypeGenericParam,
+			})
 			c.Next()
 			continue
 		}

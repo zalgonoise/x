@@ -22,7 +22,7 @@ type LogicBlock struct {
 	Name         *string        `json:"name,omitempty"`
 	Type         *string        `json:"type,omitempty"`
 	Kind         LogicBlockKind `json:"kind,omitempty"`
-	Generics     []*Identifier  `json:"typeConstraints,omitempty"`
+	Generics     []*Identifier  `json:"generic_types,omitempty"`
 	InputParams  []*LogicBlock  `json:"inputs,omitempty"`
 	ReturnParams []*LogicBlock  `json:"returns,omitempty"`
 	Receiver     *Identifier    `json:"receiver,omitempty"`

@@ -10,8 +10,9 @@ var (
 )
 
 const (
-	path = "./testing/testdata.go"
+	// path = "./testing/testdata.go"
 	// path = "./testing/testdata/testdata_short.go"
+	path = "./testing/testdata/testdata_generic.go"
 )
 
 func TestExtract(t *testing.T) {
