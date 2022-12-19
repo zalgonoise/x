@@ -2,3 +2,7 @@ github.com/goccy/go-json v0.10.0 h1:mXKd9Qw4NuzShiRlOXKews24ufknHO7gx30lsDyokKA=
 github.com/goccy/go-json v0.10.0/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
 github.com/zalgonoise/cur v0.0.0-20221219004105-209a41aa8a41 h1:hiQ4ENlqEk+kNO98Lgkge4+a2SexIV93lhAw6cjxHVs=
 github.com/zalgonoise/cur v0.0.0-20221219004105-209a41aa8a41/go.mod h1:nCikzsmXk+xXZS7tk0Q4wA6H5rYMqopV8C5dM0DuUeE=
+github.com/zalgonoise/cur v0.0.0-20221219165328-e2c5939e583c h1:nUJ6aGWmH3raye2NgAc+0/5LZ/g69ta8HSqM3M9zRVs=
+github.com/zalgonoise/cur v0.0.0-20221219165328-e2c5939e583c/go.mod h1:nCikzsmXk+xXZS7tk0Q4wA6H5rYMqopV8C5dM0DuUeE=
+github.com/zalgonoise/x/ptr v0.0.0-20221219011107-0d6c8f30ab68 h1:dpCgN5r48zsiFm15h3oABMFkRDHdSK1dagh/bu2Xtgc=
+github.com/zalgonoise/x/ptr v0.0.0-20221219011107-0d6c8f30ab68/go.mod h1:8FJE6g42HqjHLVszmfbt6M25Rl5FdIKg93w+ob7bFWw=

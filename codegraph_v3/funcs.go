@@ -2,94 +2,217 @@ package codegraph
 
 import (
 	"go/token"
+
+	cur "github.com/zalgonoise/cur"
+	"github.com/zalgonoise/x/ptr"
 )
 
 func (wt *WithTokens) Func() error {
 	if wt.LogicBlocks == nil {
 		wt.LogicBlocks = []*LogicBlock{}
 	}
-	count := len(wt.LogicBlocks)
 
 	for i := wt.Tokens.Pos(); i < wt.Tokens.Len(); i++ {
-		if wt.Tokens.Next().Tok == token.FUNC {
-			err := extractFunc(wt, count)
-			if err != nil {
-				return err
-			}
-			count++
+		if wt.Tokens.Cur().Tok == token.FUNC {
+			fn := ExtractCursor(wt.Tokens, TypeFunction)
+			lb := extractFunc(fn)
+			wt.LogicBlocks = append(wt.LogicBlocks, &lb)
 		}
+		wt.Tokens.Next()
 	}
 	return nil
 }
-func extractFunc(wt *WithTokens, count int) error {
-	fn := &LogicBlock{
+
+func extractFunc(c cur.Cursor[GoToken]) LogicBlock {
+	lb := &LogicBlock{
 		Kind: TypeFunction,
 	}
-	if wt.Tokens.Cur().Tok == token.FUNC &&
-		wt.Tokens.Peek().Tok == token.IDENT {
-		fn.Name = wt.Tokens.Next().Lit
-	}
 
-	switch wt.Tokens.Next().Tok {
-	// TODO: add generics handler
-	case token.LPAREN:
-		extractInput(wt, fn)
-	}
-	if wt.GoFile.LogicBlocks == nil {
-		wt.GoFile.LogicBlocks = []*LogicBlock{}
-	}
-	wt.GoFile.LogicBlocks = append(wt.GoFile.LogicBlocks, fn)
-
-	return nil
-}
-
-func extractInput(wt *WithTokens, lb *LogicBlock) {
-	var (
-		parenLvl = 0
-	)
-	if lb.InputParams == nil {
-		lb.InputParams = []*Identifier{}
-	}
-
-	if wt.Tokens.Cur().Tok != token.LPAREN {
-		return // not an input parameter
-	}
-	parenLvl++
-
-	for wt.Tokens.Next().Tok != token.RPAREN {
-		switch wt.Tokens.Cur().Tok {
-		case token.IDENT:
-			if wt.Tokens.PeekOffset(1).Tok == token.PERIOD &&
-				wt.Tokens.PeekOffset(2).Tok == token.IDENT {
-				lb.InputParams = append(lb.InputParams, &Identifier{
-					Package: wt.Tokens.Cur().Lit,
-					Type:    wt.Tokens.PeekOffset(2).Lit,
-				})
-				wt.Tokens.Offset(2)
-				continue
-			}
-			if wt.Tokens.PeekOffset(1).Tok == token.IDENT &&
-				wt.Tokens.PeekOffset(2).Tok == token.PERIOD &&
-				wt.Tokens.PeekOffset(3).Tok == token.IDENT {
-				lb.InputParams = append(lb.InputParams, &Identifier{
-					Name:    wt.Tokens.Cur().Lit,
-					Package: wt.Tokens.Peek().Lit,
-					Type:    wt.Tokens.PeekOffset(3).Lit,
-				})
-				wt.Tokens.Offset(3)
-				continue
-			}
-			if wt.Tokens.PeekOffset(1).Tok == token.IDENT {
-				lb.InputParams = append(lb.InputParams, &Identifier{
-					Name: wt.Tokens.Cur().Lit,
-					Type: wt.Tokens.PeekOffset(1).Lit,
-				})
-				wt.Tokens.Offset(1)
-				continue
-			}
-			lb.InputParams = append(lb.InputParams, &Identifier{
-				Type: wt.Tokens.Cur().Lit,
-			})
+	if c.Cur().Tok == token.FUNC &&
+		c.Peek().Tok == token.IDENT {
+		lb.Name = c.Next().Lit
+	} else if c.Cur().Tok == token.FUNC &&
+		c.Peek().Tok == token.LPAREN {
+		c.Next()
+		recv := extractReceiver(ExtractCursor(c, TypeFuncParam))
+		lb.Receiver = recv
+		if c.Peek().Tok == token.IDENT {
+			lb.Name = c.Next().Lit
 		}
 	}
+
+	c.Next()
+	if c.Cur().Tok == token.LBRACK {
+		gen := extractGenerics(ExtractCursor(c, TypeGenericParam))
+		lb.Generics = gen
+		c.Next()
+	}
+	if c.Cur().Tok == token.LPAREN {
+		inputParam := extractParams(ExtractCursor(c, TypeFuncParam))
+
+		lb.InputParams = inputParam
+		c.Next()
+	}
+
+	// for c.Cur().Tok != token.LBRACE {
+	// 	switch c.Cur().Tok {
+	// 	case token.LPAREN:
+	// 		// output param group
+	// 	case token.IDENT:
+	// 		// output param
+	// 	}
+	// }
+
+	return *lb
+}
+
+func extractReceiver(c cur.Cursor[GoToken]) Identifier {
+	var id = &Identifier{}
+
+	if c.PeekOffset(1).Tok == token.IDENT &&
+		c.PeekOffset(2).Tok == token.IDENT {
+		id.Name = c.Next().Lit
+		id.Type = c.Next().Lit
+	} else if c.PeekOffset(1).Tok == token.IDENT &&
+		c.PeekOffset(2).Tok == token.MUL &&
+		c.PeekOffset(3).Tok == token.IDENT {
+		id.Name = c.Next().Lit
+		c.Next()
+		id.IsPointer = ptr.To(true)
+		id.Type = c.Next().Lit
+	} else if c.PeekOffset(1).Tok == token.MUL &&
+		c.PeekOffset(2).Tok == token.IDENT {
+		c.Next()
+		id.IsPointer = ptr.To(true)
+		id.Type = c.Next().Lit
+	} else {
+		id.Type = c.Next().Lit
+	}
+
+	if c.Peek().Tok == token.LBRACK {
+		c.Next()
+		gen := extractGenerics(ExtractCursor(c, TypeGenericParam))
+		id.GenericTypes = gen
+	}
+	return *id
+}
+
+func extractGenerics(c cur.Cursor[GoToken]) []Identifier {
+	var ids = []Identifier{}
+	var nameIDs = []string{}
+
+	for i := c.Pos(); i < c.Len(); i++ {
+		c.Next()
+		if c.Cur().Tok == token.IDENT &&
+			c.Peek().Tok == token.COMMA {
+			nameIDs = append(nameIDs, c.Cur().Lit)
+			c.Next()
+			continue
+		}
+		if c.Cur().Tok == token.IDENT &&
+			c.Peek().Tok == token.IDENT {
+			for _, name := range nameIDs {
+				ids = append(ids, Identifier{
+					Name: name,
+					Type: c.Peek().Lit,
+				})
+			}
+			nameIDs = nameIDs[:0]
+			c.Next()
+			continue
+		}
+		if c.Cur().Tok == token.COMMA {
+			c.Next()
+		}
+	}
+
+	return ids
+}
+
+func extractParams(c cur.Cursor[GoToken]) []LogicBlock {
+	var lb = []LogicBlock{}
+
+	for i := c.Pos(); i < c.Len(); i++ {
+		c.Next()
+
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.PERIOD &&
+			c.PeekOffset(2).Tok == token.IDENT {
+
+			lb = append(lb, LogicBlock{
+				Package: c.Cur().Lit,
+				Type:    c.Offset(2).Lit,
+			})
+			i += 2
+			continue
+		}
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.IDENT &&
+			c.PeekOffset(2).Tok == token.PERIOD &&
+			c.PeekOffset(3).Tok == token.IDENT {
+			lb = append(lb, LogicBlock{
+				Name:    c.Cur().Lit,
+				Package: c.Peek().Lit,
+				Type:    c.Offset(3).Lit,
+			})
+			i += 3
+			continue
+		}
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.IDENT {
+			lb = append(lb, LogicBlock{
+				Name: c.Cur().Lit,
+				Type: c.Offset(1).Lit,
+			})
+			i += 1
+			continue
+		}
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.MUL &&
+			c.PeekOffset(2).Tok == token.IDENT &&
+			c.PeekOffset(3).Tok == token.PERIOD &&
+			c.PeekOffset(4).Tok == token.IDENT {
+			lb = append(lb, LogicBlock{
+				Name:      c.Cur().Lit,
+				Package:   c.PeekOffset(2).Lit,
+				Type:      c.Offset(4).Lit,
+				IsPointer: ptr.To(true),
+			})
+			i += 4
+			continue
+		}
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.MUL &&
+			c.PeekOffset(2).Tok == token.IDENT {
+			lb = append(lb, LogicBlock{
+				Name:      c.Cur().Lit,
+				Type:      c.Offset(2).Lit,
+				IsPointer: ptr.To(true),
+			})
+			i += 2
+			continue
+		}
+		if c.Cur().Tok == token.MUL &&
+			c.PeekOffset(1).Tok == token.IDENT {
+			lb = append(lb, LogicBlock{
+				Type:      c.Offset(1).Lit,
+				IsPointer: ptr.To(true),
+			})
+			i += 1
+			continue
+		}
+		if c.Cur().Tok == token.COMMA {
+			continue
+		}
+		if c.Cur().Tok == token.FUNC {
+			fn := extractFunc(ExtractCursor(c, TypeFunction))
+			lb = append(lb, fn)
+			continue
+		}
+		lb = append(lb, LogicBlock{
+			Type: c.Cur().Lit,
+		})
+	}
+
+	return lb
 }
