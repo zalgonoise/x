@@ -37,6 +37,7 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 		c.Next()
 		recv := extractReceiver(ExtractCursor(c, TypeFuncParam))
 		lb.Receiver = recv
+		lb.Kind = TypeMethod
 		if c.Peek().Tok == token.IDENT {
 			lb.Name = ptr.To(c.Next().Lit)
 		}
@@ -49,7 +50,7 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 		c.Next()
 	}
 	if c.Cur().Tok == token.LPAREN {
-		inputParam := extractParams(ExtractCursor(c, TypeFuncParam))
+		inputParam := extractParams(ExtractCursor(c, TypeFuncParam), true)
 		lb.InputParams = inputParam
 	}
 
@@ -68,6 +69,7 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 					IsPointer: ptr.To(true),
 					Package:   c.Peek().Lit,
 					Type:      ptr.To(c.Offset(3).Lit),
+					Kind:      TypeFuncReturn,
 				})
 				continue
 			}
@@ -78,6 +80,7 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 				lb.ReturnParams = append(lb.ReturnParams, &LogicBlock{
 					IsPointer: ptr.To(true),
 					Type:      ptr.To(c.Next().Lit),
+					Kind:      TypeFuncReturn,
 				})
 				continue
 			}
@@ -91,6 +94,7 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 				lb.ReturnParams = append(lb.ReturnParams, &LogicBlock{
 					Package: c.Cur().Lit,
 					Type:    ptr.To(c.Offset(2).Lit),
+					Kind:    TypeFuncReturn,
 				})
 				continue
 			}
@@ -100,12 +104,13 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 				}
 				lb.ReturnParams = append(lb.ReturnParams, &LogicBlock{
 					Type: ptr.To(c.Cur().Lit),
+					Kind: TypeFuncReturn,
 				})
 				continue
 			}
 
 		case token.LPAREN:
-			returnParams := extractParams(ExtractCursor(c, TypeFuncParam))
+			returnParams := extractParams(ExtractCursor(c, TypeFuncParam), false)
 			lb.ReturnParams = returnParams
 		}
 	}
@@ -114,7 +119,9 @@ func extractFunc(c cur.Cursor[GoToken]) *LogicBlock {
 }
 
 func extractReceiver(c cur.Cursor[GoToken]) *Identifier {
-	var id = &Identifier{}
+	var id = &Identifier{
+		Kind: TypeReceiver,
+	}
 
 	if c.PeekOffset(1).Tok == token.IDENT &&
 		c.PeekOffset(2).Tok == token.IDENT {
@@ -162,6 +169,7 @@ func extractGenerics(c cur.Cursor[GoToken]) []*Identifier {
 				ids = append(ids, &Identifier{
 					Name: &name,
 					Type: c.Peek().Lit,
+					Kind: TypeGenericParam,
 				})
 			}
 			nameIDs = nameIDs[:0]
@@ -176,8 +184,14 @@ func extractGenerics(c cur.Cursor[GoToken]) []*Identifier {
 	return ids
 }
 
-func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
-	var lb = []*LogicBlock{}
+func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
+	var (
+		lb                    = []*LogicBlock{}
+		paramT LogicBlockKind = TypeFuncReturn
+	)
+	if isInput {
+		paramT = TypeFuncParam
+	}
 
 	for i := c.Pos(); i < c.Len(); i++ {
 		c.Next()
@@ -189,6 +203,7 @@ func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
 			lb = append(lb, &LogicBlock{
 				Package: c.Cur().Lit,
 				Type:    ptr.To(c.Offset(2).Lit),
+				Kind:    paramT,
 			})
 			i += 2
 			continue
@@ -201,6 +216,7 @@ func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
 				Name:    ptr.To(c.Cur().Lit),
 				Package: c.Peek().Lit,
 				Type:    ptr.To(c.Offset(3).Lit),
+				Kind:    paramT,
 			})
 			i += 3
 			continue
@@ -210,6 +226,7 @@ func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
 			lb = append(lb, &LogicBlock{
 				Name: ptr.To(c.Cur().Lit),
 				Type: ptr.To(c.Offset(1).Lit),
+				Kind: paramT,
 			})
 			i += 1
 			continue
@@ -224,6 +241,7 @@ func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
 				Package:   c.PeekOffset(2).Lit,
 				Type:      ptr.To(c.Offset(4).Lit),
 				IsPointer: ptr.To(true),
+				Kind:      paramT,
 			})
 			i += 4
 			continue
@@ -235,6 +253,7 @@ func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
 				Name:      ptr.To(c.Cur().Lit),
 				Type:      ptr.To(c.Offset(2).Lit),
 				IsPointer: ptr.To(true),
+				Kind:      paramT,
 			})
 			i += 2
 			continue
@@ -244,6 +263,7 @@ func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
 			lb = append(lb, &LogicBlock{
 				Type:      ptr.To(c.Offset(1).Lit),
 				IsPointer: ptr.To(true),
+				Kind:      paramT,
 			})
 			i += 1
 			continue
@@ -253,12 +273,14 @@ func extractParams(c cur.Cursor[GoToken]) []*LogicBlock {
 		}
 		if c.Cur().Tok == token.FUNC {
 			fn := extractFunc(ExtractCursor(c, TypeFunction))
+			fn.Kind = paramT
 			lb = append(lb, fn)
 			continue
 		}
 		if c.Cur().Tok == token.IDENT && c.Cur().Lit != "" {
 			lb = append(lb, &LogicBlock{
 				Type: ptr.To(c.Cur().Lit),
+				Kind: paramT,
 			})
 		}
 	}
