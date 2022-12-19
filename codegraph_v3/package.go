@@ -2,6 +2,8 @@ package codegraph
 
 import (
 	"go/token"
+
+	"github.com/zalgonoise/x/ptr"
 )
 
 func (w *WithTokens) Package() error {
@@ -9,7 +11,7 @@ func (w *WithTokens) Package() error {
 		packageTok := w.Tokens.Next()
 		w.GoFile.PackageName = packageTok.Lit
 		if w.GoFile.PackageName == "main" {
-			w.GoFile.IsMain = true
+			w.GoFile.IsMain = ptr.To(true)
 		}
 		return nil
 	}
