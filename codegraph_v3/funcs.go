@@ -207,6 +207,7 @@ func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
 	for i := c.Pos(); i < c.Len(); i++ {
 		c.Next()
 
+		// "context.Context"
 		if c.Cur().Tok == token.IDENT &&
 			c.PeekOffset(1).Tok == token.PERIOD &&
 			c.PeekOffset(2).Tok == token.IDENT {
@@ -219,6 +220,7 @@ func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
 			i += 2
 			continue
 		}
+		// "ctx context.Context"
 		if c.Cur().Tok == token.IDENT &&
 			c.PeekOffset(1).Tok == token.IDENT &&
 			c.PeekOffset(2).Tok == token.PERIOD &&
@@ -232,6 +234,8 @@ func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
 			i += 3
 			continue
 		}
+
+		// "n int"
 		if c.Cur().Tok == token.IDENT &&
 			c.PeekOffset(1).Tok == token.IDENT {
 			lb = append(lb, &LogicBlock{
@@ -242,6 +246,8 @@ func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
 			i += 1
 			continue
 		}
+
+		// "v *atomic.Value"
 		if c.Cur().Tok == token.IDENT &&
 			c.PeekOffset(1).Tok == token.MUL &&
 			c.PeekOffset(2).Tok == token.IDENT &&
@@ -257,6 +263,8 @@ func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
 			i += 4
 			continue
 		}
+
+		// "n *int"
 		if c.Cur().Tok == token.IDENT &&
 			c.PeekOffset(1).Tok == token.MUL &&
 			c.PeekOffset(2).Tok == token.IDENT {
@@ -269,6 +277,7 @@ func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
 			i += 2
 			continue
 		}
+		// "*int"
 		if c.Cur().Tok == token.MUL &&
 			c.PeekOffset(1).Tok == token.IDENT {
 			lb = append(lb, &LogicBlock{
@@ -279,21 +288,258 @@ func extractParams(c cur.Cursor[GoToken], isInput bool) []*LogicBlock {
 			i += 1
 			continue
 		}
+
+		// "vs []*atomic.Value"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.LBRACK &&
+			c.PeekOffset(2).Tok == token.RBRACK &&
+			c.PeekOffset(3).Tok == token.MUL &&
+			c.PeekOffset(4).Tok == token.IDENT &&
+			c.PeekOffset(5).Tok == token.PERIOD &&
+			c.PeekOffset(6).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:      ptr.To(c.Cur().Lit),
+				Package:   c.PeekOffset(4).Lit,
+				Type:      ptr.To(c.Offset(6).Lit),
+				IsPointer: ptr.To(true),
+				IsSlice:   ptr.To(true),
+				Kind:      paramT,
+			})
+			i += 6
+			continue
+		}
+		// "vs []atomic.Value"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.LBRACK &&
+			c.PeekOffset(2).Tok == token.RBRACK &&
+			c.PeekOffset(3).Tok == token.IDENT &&
+			c.PeekOffset(4).Tok == token.PERIOD &&
+			c.PeekOffset(5).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:    ptr.To(c.Cur().Lit),
+				Package: c.PeekOffset(3).Lit,
+				Type:    ptr.To(c.Offset(5).Lit),
+				IsSlice: ptr.To(true),
+				Kind:    paramT,
+			})
+			i += 5
+			continue
+		}
+		// "[]atomic.Value"
+		if c.Cur().Tok == token.LBRACK &&
+			c.PeekOffset(1).Tok == token.RBRACK &&
+			c.PeekOffset(2).Tok == token.IDENT &&
+			c.PeekOffset(3).Tok == token.PERIOD &&
+			c.PeekOffset(4).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Package: c.PeekOffset(2).Lit,
+				Type:    ptr.To(c.Offset(4).Lit),
+				IsSlice: ptr.To(true),
+				Kind:    paramT,
+			})
+			i += 5
+			continue
+		}
+		// "vs []*int"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.LBRACK &&
+			c.PeekOffset(2).Tok == token.RBRACK &&
+			c.PeekOffset(3).Tok == token.MUL &&
+			c.PeekOffset(4).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:      ptr.To(c.Cur().Lit),
+				Type:      ptr.To(c.Offset(4).Lit),
+				IsSlice:   ptr.To(true),
+				IsPointer: ptr.To(true),
+				Kind:      paramT,
+			})
+			i += 4
+			continue
+		}
+		// "vs []int"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.LBRACK &&
+			c.PeekOffset(2).Tok == token.RBRACK &&
+			c.PeekOffset(3).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:    ptr.To(c.Cur().Lit),
+				Type:    ptr.To(c.Offset(3).Lit),
+				IsSlice: ptr.To(true),
+				Kind:    paramT,
+			})
+			i += 3
+			continue
+		}
+		// "[]int"
+		if c.Cur().Tok == token.LBRACK &&
+			c.PeekOffset(1).Tok == token.RBRACK &&
+			c.PeekOffset(2).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Type:    ptr.To(c.Offset(2).Lit),
+				IsSlice: ptr.To(true),
+				Kind:    paramT,
+			})
+			i += 2
+			continue
+		}
+		// "[]*int"
+		if c.Cur().Tok == token.LBRACK &&
+			c.PeekOffset(1).Tok == token.RBRACK &&
+			c.PeekOffset(2).Tok == token.MUL &&
+			c.PeekOffset(3).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Type:      ptr.To(c.Offset(3).Lit),
+				IsSlice:   ptr.To(true),
+				IsPointer: ptr.To(true),
+				Kind:      paramT,
+			})
+			i += 3
+			continue
+		}
+		// "n ...int"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.ELLIPSIS &&
+			c.PeekOffset(2).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:       ptr.To(c.Cur().Lit),
+				Type:       ptr.To(c.Offset(2).Lit),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 2
+			continue
+		}
+		// "n ...*int"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.ELLIPSIS &&
+			c.PeekOffset(2).Tok == token.MUL &&
+			c.PeekOffset(3).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:       ptr.To(c.Cur().Lit),
+				Type:       ptr.To(c.Offset(3).Lit),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				IsPointer:  ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 3
+			continue
+		}
+		// "...int"
+		if c.Cur().Tok == token.ELLIPSIS &&
+			c.PeekOffset(1).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Type:       ptr.To(c.Offset(1).Lit),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 1
+			continue
+		}
+		// "...*int"
+		if c.Cur().Tok == token.ELLIPSIS &&
+			c.PeekOffset(1).Tok == token.MUL &&
+			c.PeekOffset(2).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Type:       ptr.To(c.Offset(2).Lit),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				IsPointer:  ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 2
+			continue
+		}
+		// "vs ...atomic.Value"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.ELLIPSIS &&
+			c.PeekOffset(2).Tok == token.IDENT &&
+			c.PeekOffset(3).Tok == token.PERIOD &&
+			c.PeekOffset(4).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:       ptr.To(c.Cur().Lit),
+				Package:    c.Offset(2).Lit,
+				Type:       ptr.To(c.Offset(4).Lit),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 4
+			continue
+		}
+		// "vs ...*atomic.Value"
+		if c.Cur().Tok == token.IDENT &&
+			c.PeekOffset(1).Tok == token.ELLIPSIS &&
+			c.PeekOffset(2).Tok == token.MUL &&
+			c.PeekOffset(3).Tok == token.IDENT &&
+			c.PeekOffset(4).Tok == token.PERIOD &&
+			c.PeekOffset(5).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Name:       ptr.To(c.Cur().Lit),
+				Package:    c.Offset(3).Lit,
+				Type:       ptr.To(c.Offset(5).Lit),
+				IsPointer:  ptr.To(true),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 5
+			continue
+		}
+		// "...atomic.Value"
+		if c.Cur().Tok == token.ELLIPSIS &&
+			c.PeekOffset(1).Tok == token.IDENT &&
+			c.PeekOffset(2).Tok == token.PERIOD &&
+			c.PeekOffset(3).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Package:    c.Offset(1).Lit,
+				Type:       ptr.To(c.Offset(3).Lit),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 3
+			continue
+		}
+		// "...*atomic.Value"
+		if c.Cur().Tok == token.ELLIPSIS &&
+			c.PeekOffset(1).Tok == token.MUL &&
+			c.PeekOffset(2).Tok == token.IDENT &&
+			c.PeekOffset(3).Tok == token.PERIOD &&
+			c.PeekOffset(4).Tok == token.IDENT {
+			lb = append(lb, &LogicBlock{
+				Package:    c.Offset(2).Lit,
+				Type:       ptr.To(c.Offset(4).Lit),
+				IsPointer:  ptr.To(true),
+				IsSlice:    ptr.To(true),
+				IsVariadic: ptr.To(true),
+				Kind:       paramT,
+			})
+			i += 4
+			continue
+		}
+
+		// ","
 		if c.Cur().Tok == token.COMMA {
 			continue
 		}
+		// "func (...)"
 		if c.Cur().Tok == token.FUNC {
 			fn := extractFunc(ExtractCursor(c, TypeFunction))
 			fn.Kind = paramT
 			lb = append(lb, fn)
 			continue
 		}
+		// "string"
 		if c.Cur().Tok == token.IDENT && c.Cur().Lit != "" {
 			lb = append(lb, &LogicBlock{
 				Type: ptr.To(c.Cur().Lit),
 				Kind: paramT,
 			})
 		}
+
 	}
 
 	return lb

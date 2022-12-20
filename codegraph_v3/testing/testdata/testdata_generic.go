@@ -4,7 +4,7 @@ func First[T any](slice []T) T {
 	return slice[0]
 }
 
-func FirstAndLast[T any](slice []T) (T, T) {
+func FirstAndLast[T any](slice ...T) (T, T) {
 	return slice[0], slice[len(slice)-1]
 }
 

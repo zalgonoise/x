@@ -19,6 +19,8 @@ func NewImport() *Import {
 
 type LogicBlock struct {
 	IsPointer    *bool          `json:"is_pointer,omitempty"`
+	IsSlice      *bool          `json:"is_slice,omitempty"`
+	IsVariadic   *bool          `json:"is_variadic,omitempty"`
 	Name         *string        `json:"name,omitempty"`
 	Type         *string        `json:"type,omitempty"`
 	Kind         LogicBlockKind `json:"kind,omitempty"`
