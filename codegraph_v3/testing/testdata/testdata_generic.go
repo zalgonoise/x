@@ -26,3 +26,11 @@ func (s *slicer[T]) First() T {
 func (s *slicer[T]) FirstAndLast() (T, T) {
 	return s.slice[0], s.slice[s.len-1]
 }
+
+func Last[T, V int, C any]([]C) (T, V) {
+	return 0, 0
+}
+
+func Middle[A int, B, C, D int]() (A, B, C, D) {
+	return 0, 0, 0, 0
+}

@@ -42,6 +42,10 @@ func ExtractCursor(c cur.Cursor[GoToken], target LogicBlockKind) cur.Cursor[GoTo
 	return extractCursor(c, filterMap[target])
 }
 
+func ExtractReverseCursor(c cur.Cursor[GoToken], target LogicBlockKind) cur.Cursor[GoToken] {
+	return extractReverseCursor(c, filterMap[target])
+}
+
 func extractCursor(c cur.Cursor[GoToken], filter *extractorFilter) cur.Cursor[GoToken] {
 	if filter == nil {
 		return nil
@@ -68,6 +72,40 @@ func extractCursor(c cur.Cursor[GoToken], filter *extractorFilter) cur.Cursor[Go
 			}
 			if lvl == 0 {
 				end = c.Pos()
+				slice := c.Extract(start, end)
+				return cur.NewCursor(slice)
+			}
+		}
+	}
+	return nil
+}
+
+func extractReverseCursor(c cur.Cursor[GoToken], filter *extractorFilter) cur.Cursor[GoToken] {
+	if filter == nil {
+		return nil
+	}
+
+	if c.Cur().Tok != filter.closer {
+		return nil
+	}
+
+	var (
+		lvl   int = 0
+		end   int = c.Pos()
+		start int
+	)
+
+	for i := end; i > 0; i-- {
+		c.Prev()
+		switch c.Cur().Tok {
+		case filter.closer:
+			lvl++
+		case filter.init:
+			if lvl > 0 {
+				lvl--
+			}
+			if lvl == 0 {
+				start = c.Pos()
 				slice := c.Extract(start, end)
 				return cur.NewCursor(slice)
 			}

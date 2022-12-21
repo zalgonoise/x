@@ -17,6 +17,34 @@ func NewImport() *Import {
 	return &Import{}
 }
 
+type Type struct {
+	IsPointer *bool          `json:"is_pointer,omitempty"`
+	IsMap     *bool          `json:"is_map,omitempty"`
+	Name      *string        `json:"name,omitempty"`
+	Type      string         `json:"type,omitempty"`
+	Package   *string        `json:"package,omitempty"`
+	Kind      LogicBlockKind `json:"kind,omitempty"`
+	Slice     *RSlice        `json:"slice,omitempty"`
+	Map       *RMap          `json:"map,omitempty"`
+	Generics  *RGeneric      `json:"type_params,omitempty"`
+}
+
+type RSlice struct {
+	IsPointer  *bool
+	IsVariadic *bool
+	Len        *int
+	LenName    *string
+}
+
+type RMap struct {
+	IsPointer *bool
+	Key       string
+	Value     Type
+}
+type RGeneric struct {
+	Generics []*Type
+}
+
 type LogicBlock struct {
 	IsPointer    *bool          `json:"is_pointer,omitempty"`
 	IsSlice      *bool          `json:"is_slice,omitempty"`
@@ -24,10 +52,10 @@ type LogicBlock struct {
 	Name         *string        `json:"name,omitempty"`
 	Type         *string        `json:"type,omitempty"`
 	Kind         LogicBlockKind `json:"kind,omitempty"`
-	Generics     []*Identifier  `json:"generic_types,omitempty"`
-	InputParams  []*LogicBlock  `json:"inputs,omitempty"`
-	ReturnParams []*LogicBlock  `json:"returns,omitempty"`
-	Receiver     *Identifier    `json:"receiver,omitempty"`
+	Generics     []*Type        `json:"type_params,omitempty"`
+	InputParams  []*Type        `json:"inputs,omitempty"`
+	ReturnParams []*Type        `json:"returns,omitempty"`
+	Receiver     *Type          `json:"receiver,omitempty"`
 	Package      string         `json:"package,omitempty"`
 	parent       *GoFile
 }
