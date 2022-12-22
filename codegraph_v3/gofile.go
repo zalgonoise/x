@@ -20,13 +20,13 @@ func NewImport() *Import {
 type Type struct {
 	IsPointer *bool          `json:"is_pointer,omitempty"`
 	IsMap     *bool          `json:"is_map,omitempty"`
-	Name      *string        `json:"name,omitempty"`
+	Name      string         `json:"name,omitempty"`
 	Type      string         `json:"type,omitempty"`
 	Package   *string        `json:"package,omitempty"`
 	Kind      LogicBlockKind `json:"kind,omitempty"`
 	Slice     *RSlice        `json:"slice,omitempty"`
 	Map       *RMap          `json:"map,omitempty"`
-	Generics  *RGeneric      `json:"type_params,omitempty"`
+	Generics  []*Type        `json:"type_params,omitempty"`
 }
 
 type RSlice struct {
@@ -40,9 +40,6 @@ type RMap struct {
 	IsPointer *bool
 	Key       string
 	Value     Type
-}
-type RGeneric struct {
-	Generics []*Type
 }
 
 type LogicBlock struct {

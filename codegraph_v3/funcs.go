@@ -150,30 +150,33 @@ func (wt *WithTokens) Func() error {
 
 func ExtractGenericType(c cur.Cursor[GoToken]) []*Type {
 	generics := []*Type{}
+	gen := &Type{}
 
 	c.Tail()
-	for c.Prev().Tok != token.LBRACK {
-		var rtype string
-
-		if c.Cur().Tok == token.COMMA {
-			if c.PeekOffset(-1).Tok == token.IDENT &&
-				(c.PeekOffset(-2).Tok == token.COMMA || c.PeekOffset(-2).Tok == token.LBRACK) {
-				generics = append(generics, &Type{
-					Type: rtype,
-					Name: ptr.To(c.Prev().Lit),
-				})
-				continue
+	for c.Pos() > 0 {
+		c.Prev()
+		switch c.Cur().Tok {
+		case token.IDENT:
+			if gen.Type == "" {
+				gen.Type = c.Cur().Lit
+			} else {
+				gen.Name = c.Cur().Lit
 			}
-			continue
-		}
 
-		if c.Cur().Tok == token.IDENT &&
-			c.PeekOffset(-1).Tok == token.IDENT {
-			rtype = c.Cur().Lit
-			generics = append(generics, &Type{
-				Type: c.Cur().Lit,
-				Name: ptr.To(c.PeekOffset(-1).Lit),
-			})
+		case token.COMMA:
+			generics = append(generics, ptr.Copy(gen))
+			if c.PeekOffset(-1).Tok == token.IDENT {
+				if c.PeekOffset(-2).Tok == token.COMMA || c.PeekOffset(-2).Tok == token.LBRACK {
+					gen.Name = c.Prev().Lit
+				} else {
+					*gen = Type{}
+				}
+			}
+		case token.LBRACK:
+			zero := &Type{}
+			if gen != zero {
+				generics = append(generics, gen)
+			}
 		}
 	}
 

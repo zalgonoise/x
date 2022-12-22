@@ -28,7 +28,11 @@ func ExtractParams(c cur.Cursor[GoToken]) []*Type {
 	t := &Type{}
 
 	c.Tail()
-	if c.PeekOffset(-1).Tok == token.LPAREN {
+	// rewind cursor until it hits the end of the parenthesis
+	for c.Prev().Tok != token.RPAREN && c.Pos() != 0 {
+		continue
+	}
+	if c.PeekOffset(-1).Tok == token.LPAREN || c.Pos() == 0 {
 		return nil
 	}
 	for c.Pos() > 0 {
@@ -38,9 +42,9 @@ func ExtractParams(c cur.Cursor[GoToken]) []*Type {
 			// generics: ...CreateFunc[T]
 			if t.Type == "" {
 				if t.Generics == nil {
-					t.Generics = &RGeneric{}
+					t.Generics = []*Type{}
 				}
-				t.Generics.Generics = ExtractGenericType(ExtractReverseCursor(c, TypeGenericParam))
+				t.Generics = ExtractGenericType(ExtractReverseCursor(c, TypeGenericParam))
 				continue
 			}
 			// slices: []int
@@ -56,17 +60,19 @@ func ExtractParams(c cur.Cursor[GoToken]) []*Type {
 				continue
 			}
 			// arrays: [3]int
-			if c.PeekOffset(-1).Tok == token.IDENT &&
+			if (c.PeekOffset(-1).Tok == token.IDENT || c.PeekOffset(-1).Tok == token.INT) &&
 				c.PeekOffset(-2).Tok == token.LBRACK &&
 				c.PeekOffset(-3).Tok != token.MAP {
 				if t.Slice == nil {
 					t.Slice = &RSlice{}
 				}
-				v := c.Prev().Lit
-				if n, err := strconv.Atoi(v); err != nil {
-					t.Slice.Len = ptr.To(n)
+				if c.Prev().Tok == token.INT {
+					n, err := strconv.Atoi(c.Cur().Lit)
+					if err == nil {
+						t.Slice.Len = ptr.To(n)
+					}
 				} else {
-					t.Slice.LenName = ptr.To(v)
+					t.Slice.LenName = ptr.To(c.Cur().Lit)
 				}
 				c.Prev()
 				if c.PeekOffset(-1).Tok == token.MUL {
@@ -85,11 +91,15 @@ func ExtractParams(c cur.Cursor[GoToken]) []*Type {
 						Value: *t,
 					}
 					t.Map = m
+					t.Type = "map"
 				}
-				c.Offset(-3)
+				c.Offset(-2)
 				if c.PeekOffset(-1).Tok == token.MUL {
-					t.Slice.IsPointer = ptr.To(true)
+					t.Map.IsPointer = ptr.To(true)
 					c.Offset(-1)
+				}
+				if c.PeekOffset(-1).Tok == token.IDENT {
+					t.Name = c.Prev().Lit
 				}
 			}
 		case token.ELLIPSIS:
@@ -100,15 +110,20 @@ func ExtractParams(c cur.Cursor[GoToken]) []*Type {
 		case token.IDENT:
 			if t.Type == "" {
 				t.Type = c.Cur().Lit
+			} else if t.Name == "" {
+				t.Name = c.Cur().Lit // adds name for slices and maps
 			}
 			switch c.PeekOffset(-1).Tok {
+			case token.IDENT:
+				// named type
+				t.Name = c.Offset(-1).Lit
 			case token.PERIOD:
 				// package
 				if c.PeekOffset(-2).Tok == token.IDENT {
 					t.Package = ptr.To(c.Offset(-2).Lit)
 				}
 				if c.PeekOffset(-1).Tok == token.IDENT {
-					t.Name = ptr.To(c.Prev().Lit)
+					t.Name = c.Prev().Lit
 				}
 			case token.MUL:
 				t.IsPointer = ptr.To(true)
@@ -120,16 +135,29 @@ func ExtractParams(c cur.Cursor[GoToken]) []*Type {
 		case token.RPAREN:
 			// functions: func(arg1, arg2, arg3) (ret1, ret2)
 		case token.COMMA:
-			// next argument
 			types = append(types, ptr.Copy(t))
-			t = &Type{}
+			if c.PeekOffset(-1).Tok == token.IDENT {
+				if c.PeekOffset(-2).Tok == token.COMMA || c.PeekOffset(-2).Tok == token.LPAREN {
+					t.Name = c.Prev().Lit
+				} else {
+					*t = Type{}
+				}
+			}
+
+		case token.LPAREN:
+			zero := &Type{}
+			if t != zero {
+				types = append(types, t)
+			}
 		}
 	}
 
-	zero := &Type{}
-	if t != zero {
-		types = append(types, t)
+	if len(types) > 1 {
+		output := make([]*Type, len(types), len(types))
+		for idx, t := range types {
+			output[len(types)-1-idx] = t
+		}
+		return output
 	}
-
 	return types
 }
