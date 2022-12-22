@@ -89,8 +89,9 @@ func TestParams(t *testing.T) {
 		[]byte(`(a, b, c int, data []byte)`),
 		[]byte(`()`),
 		[]byte(`(A, B, C, D)`), // span of generic types
+		[]byte(`(testFn func(s string) (bool, error))`),
+		[]byte(`(testFn func(s string) error)`),
 		// []byte(`(json map[string]interface{})`),
-		// []byte(`(testFn func(s string) (bool, error))`),
 	}
 	t.Run("int", func(t *testing.T) {
 		wants := &Type{
@@ -103,7 +104,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -127,7 +128,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -158,7 +159,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -190,7 +191,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -233,7 +234,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 2 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -274,7 +275,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -311,7 +312,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -353,7 +354,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -396,7 +397,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -437,7 +438,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -476,7 +477,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -514,7 +515,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -552,7 +553,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 1 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -604,7 +605,7 @@ func TestParams(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 4 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -650,7 +651,7 @@ func TestParams(t *testing.T) {
 		c := cur.NewCursor(tokens)
 
 		t.Log(tokens)
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if types != nil {
 			t.Errorf("expected nil output; got %v", types)
 		}
@@ -676,7 +677,7 @@ func TestParams(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 		c := cur.NewCursor(tokens)
-		types := ExtractParams(c)
+		types := ExtractParamsReverse(c)
 		if len(types) != 4 {
 			t.Errorf("unexpected length: %d", len(types))
 			return
@@ -686,6 +687,85 @@ func TestParams(t *testing.T) {
 			if types[idx].Type != w.Type {
 				t.Errorf("unexpected type on idx %v: wanted %v ; got %v", idx, w.Type, *types[idx])
 			}
+		}
+	})
+
+	t.Run("(testFn func(s string) (bool, error))", func(t *testing.T) {
+		wants := &Type{
+			Name: "testFn",
+			Type: "func",
+			Func: &RFunc{
+				IsFunc: ptr.To(true),
+				InputParams: []*Type{
+					{
+						Name: "s",
+						Type: "string",
+					},
+				},
+				Returns: []*Type{
+					{
+						Type: "bool",
+					},
+					{
+						Type: "error",
+					},
+				},
+			},
+		}
+		tokens, err := Explore(paramSet[16])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+		types := ExtractParamsReverse(c)
+		if len(types) != 1 {
+			t.Errorf("unexpected length: %d", len(types))
+			for _, tp := range types {
+				t.Log(*tp)
+			}
+			return
+		}
+
+		if types[0].Name != wants.Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+	})
+
+	t.Run("(testFn func(s string) error)", func(t *testing.T) {
+		wants := &Type{
+			Name: "testFn",
+			Type: "func",
+			Func: &RFunc{
+				IsFunc: ptr.To(true),
+				InputParams: []*Type{
+					{
+						Name: "s",
+						Type: "string",
+					},
+				},
+				Returns: []*Type{
+					{
+						Type: "error",
+					},
+				},
+			},
+		}
+		tokens, err := Explore(paramSet[17])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+		types := ExtractParamsReverse(c)
+		if len(types) != 1 {
+			t.Errorf("unexpected length: %d", len(types))
+			for _, tp := range types {
+				t.Log(*tp)
+			}
+			return
+		}
+
+		if types[0].Name != wants.Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
 		}
 	})
 }
@@ -723,7 +803,7 @@ func TestFuncs(t *testing.T) {
 		}
 		c := cur.NewCursor(tokens)
 
-		fnType := ExtractFuncType(c)
+		fnType := ExtractFunc(c)
 
 		if fnType == nil {
 			t.Errorf("expected type not to be nil")
@@ -759,4 +839,90 @@ func TestFuncs(t *testing.T) {
 			t.Errorf("unexpected return element: wanted %v ; got %v", *wants.Func.Returns[0], *fnType.Func.Returns[0])
 		}
 	})
+}
+
+func TestFuncAsParam(t *testing.T) {
+	tokens, err := Explore([]byte(`func Sort(a, b int, func(a, b int) bool) bool`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	for _, tok := range tokens {
+		t.Log(tok.Tok.String(), tok.Lit)
+	}
+	t.Error()
+}
+
+func TestInterface(t *testing.T) {
+	tokens, err := Explore([]byte(`type ReadWriter interface {
+	Read([]byte) func(byte) error
+	Write([]byte) (int, error)
+}`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	for _, tok := range tokens {
+		t.Log(tok.Tok.String(), tok.Lit)
+	}
+	t.Error()
+}
+
+func TestStruct(t *testing.T) {
+	wants := &Type{
+		Name: "Person",
+		Kind: TypeStruct,
+		Struct: &RStruct{
+			IsStruct: ptr.To(true),
+			Elems: []*Type{
+				{
+					Name: "Name",
+					Type: "string",
+				},
+				{
+					Name: "Age",
+					Type: "int",
+				},
+				{
+					Type: "Job",
+				},
+				{
+					Name: "action",
+					Type: "func",
+					Func: &RFunc{
+						IsFunc: ptr.To(true),
+						InputParams: []*Type{
+							{
+								Name: "s",
+								Type: "string",
+							},
+						},
+						Returns: []*Type{
+							{
+								Type: "error",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	tokens, err := Explore([]byte(`type Person struct {
+	Name string
+	Age int
+	Job
+}`))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	c := cur.NewCursor(tokens)
+
+	strType := ExtractStructType(c)
+
+	if strType == nil {
+		t.Errorf("expected type not to be nil")
+		return
+	}
+	if strType.Name != wants.Name {
+		t.Errorf("unexpected name: wanted :%v ; got %v", *wants, *strType)
+	}
+
 }

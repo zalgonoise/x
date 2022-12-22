@@ -16,14 +16,14 @@ func (wt *WithTokens) Func() error {
 
 	for i := wt.Tokens.Pos(); i < wt.Tokens.Len(); i++ {
 		if wt.Tokens.Cur().Tok == token.FUNC {
-			wt.LogicBlocks = append(wt.LogicBlocks, ExtractFuncType(wt.Tokens))
+			wt.LogicBlocks = append(wt.LogicBlocks, ExtractFunc(wt.Tokens))
 		}
 		wt.Tokens.Next()
 	}
 	return nil
 }
 
-func ExtractFuncType(c cur.Cursor[GoToken]) *Type {
+func ExtractFunc(c cur.Cursor[GoToken]) *Type {
 	name, receiver, generic, input, returns, logic := ExtractFuncCursors(c)
 	if name == "" || logic == nil {
 		return nil
@@ -37,7 +37,7 @@ func ExtractFuncType(c cur.Cursor[GoToken]) *Type {
 		},
 	}
 	if receiver != nil {
-		rcvTypes := ExtractParams(receiver)
+		rcvTypes := ExtractParamsReverse(receiver)
 		fn.Func.Receiver = rcvTypes[0]
 		fn.Kind = TypeMethod
 	}
@@ -45,12 +45,31 @@ func ExtractFuncType(c cur.Cursor[GoToken]) *Type {
 		fn.Generics = ExtractGenericType(generic)
 	}
 	if input != nil {
-		fn.Func.InputParams = ExtractParams(input)
+		fn.Func.InputParams = ExtractParamsReverse(input)
 	}
 	if returns != nil {
-		fn.Func.Returns = ExtractParams(returns)
+		fn.Func.Returns = ExtractParamsReverse(returns)
 	}
 	return fn
+}
+
+func ExtractFuncType(c cur.Cursor[GoToken]) *Type {
+	var returnParams []*Type = nil
+	name, input, returns := ExtractFuncTypeCursors(c)
+	if returns != nil {
+		returnParams = ExtractParamsReverse(returns)
+	}
+
+	fnType := &Type{
+		Kind: TypeFunction,
+		Name: name,
+		Func: &RFunc{
+			IsFunc:      ptr.To(true),
+			InputParams: ExtractParamsReverse(input),
+			Returns:     returnParams,
+		},
+	}
+	return fnType
 }
 
 func ExtractFuncCursors(c cur.Cursor[GoToken]) (
@@ -95,24 +114,22 @@ func ExtractFuncCursors(c cur.Cursor[GoToken]) (
 		input = cur.NewCursor(c.Extract(inputParamStart, c.Pos()))
 	}
 	c.Next()
-	if c.Cur().Tok == token.IDENT {
-		returnStart := c.Pos()
-		for c.Next().Tok != token.LBRACE {
-			continue
-		}
-		c.Prev()
-		var slice = []GoToken{
-			{Tok: token.LPAREN},
-		}
-		slice = append(slice, c.Extract(returnStart, c.Pos())...)
-		slice = append(slice, GoToken{Tok: token.RPAREN})
-		returns = cur.NewCursor(slice)
-	} else if c.Cur().Tok == token.LPAREN {
+
+	if c.Cur().Tok == token.LPAREN {
 		returnStart := c.Pos()
 		for c.Next().Tok != token.RPAREN {
 			continue
 		}
 		returns = cur.NewCursor(c.Extract(returnStart, c.Pos()))
+	} else {
+		switch c.Cur().Tok {
+		case token.IDENT, token.MUL, token.MAP, token.FUNC, token.STRUCT, token.INTERFACE, token.LBRACK:
+			returnStart := c.Pos()
+			for t := c.Peek().Tok; t != token.LBRACE && t != token.SEMICOLON && t != token.EOF; {
+				c.Next()
+			}
+			returns = cur.NewCursor(WrapType(c.Extract(returnStart, c.Pos()), TypeFuncParam))
+		}
 	}
 	if c.Next().Tok == token.LBRACE {
 		fnLogicStart = c.Pos()
@@ -126,6 +143,62 @@ func ExtractFuncCursors(c cur.Cursor[GoToken]) (
 	logic = cur.NewCursor(c.Extract(fnLogicStart, c.Pos()))
 
 	return
+}
+
+func ExtractFuncTypeCursors(c cur.Cursor[GoToken]) (
+	name string,
+	input, returns cur.Cursor[GoToken],
+) {
+	// rewind to func start
+	rollback := c.Pos()
+	for c.Cur().Tok != token.FUNC && c.Pos() >= 0 {
+		c.Prev()
+	}
+	if c.Cur().Tok != token.FUNC ||
+		(c.Cur().Tok == token.IDENT && c.Peek().Tok == token.FUNC) {
+		c.Idx(rollback)
+		return "", nil, nil
+	}
+
+	s := c.Pos()
+	defer c.Idx(s)
+	if c.Cur().Tok == token.IDENT {
+		name = c.Cur().Lit
+		c.Next()
+	}
+	if c.Cur().Tok == token.FUNC && c.Peek().Tok == token.LPAREN {
+		c.Next()
+		inputStart := c.Pos()
+		for c.Cur().Tok != token.RPAREN {
+			c.Next()
+		}
+		input = cur.NewCursor(c.Extract(inputStart, c.Pos()))
+		c.Next()
+	}
+
+	// switch c.Cur().Tok {
+	// case token.LPAREN:
+	if c.Cur().Tok == token.LPAREN {
+		returnStart := c.Pos()
+		for c.Cur().Tok != token.RPAREN {
+			c.Next()
+		}
+		returns = cur.NewCursor(c.Extract(returnStart, c.Pos()))
+	}
+	return
+
+	// case token.IDENT, token.MUL, token.MAP, token.FUNC, token.STRUCT, token.INTERFACE, token.LBRACK:
+	// 	returnStart := c.Pos()
+	// 	for t := c.Peek().Tok; t != token.LBRACE && t != token.SEMICOLON && t != token.EOF; {
+	// 		fmt.Println(c.Cur().Tok.String(), c.Cur().Lit, c.Peek().Tok.String())
+
+	// 		c.Next()
+	// 	}
+	// 	c.Prev()
+	// 	returns = cur.NewCursor(WrapType(c.Extract(returnStart, c.Pos()), TypeFuncParam))
+	// }
+
+	// return
 }
 
 func ExtractGenericType(c cur.Cursor[GoToken]) []*Type {

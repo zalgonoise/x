@@ -1,6 +1,7 @@
 package codegraph
 
 import (
+	"fmt"
 	"go/token"
 	"strconv"
 
@@ -10,6 +11,7 @@ import (
 
 // int
 // *int
+// n int
 // context.Context
 // *atomic.Value
 // []int
@@ -19,8 +21,70 @@ import (
 // map[*string][]int
 // map[string]map[string]map[string]any
 // []map[string]any
+// func(s string) error
+// func(x, y int) (int, error)
+// func(x) func(x) bool
 
-func ExtractParams(c cur.Cursor[GoToken]) []*Type {
+// func ExtractParams(c cur.Cursor[GoToken]) []*Type {
+// 	c.Head()
+// 	// roll cursor until it hits the start of the parenthesis
+// 	for c.Cur().Tok != token.LPAREN && c.Pos() != c.Len()-1 {
+// 		c.Next()
+// 	}
+// 	if c.Peek().Tok == token.RPAREN || c.Pos() == c.Len()-1 {
+// 		return nil
+// 	}
+
+// 	var (
+// 		types = []*Type{}
+// 		t     = &Type{}
+// 	)
+
+// 	for c.Pos() < c.Len() {
+// 		c.Next()
+// 		switch c.Cur().Tok {
+// 		case token.IDENT:
+// 			tokenIDENT(c, t)
+// 		case token.MUL:
+// 			tokenMUL(c, t)
+// 		case token.LBRACK:
+// 			tokenLBRACK(c, t)
+// 		case token.MAP:
+// 		case token.FUNC:
+// 		case token.STRUCT:
+// 		case token.INTERFACE:
+// 		case token.COMMA:
+// 		}
+// 	}
+// }
+
+// func tokenIDENT(c cur.Cursor[GoToken], t *Type) {
+// 	// check if it's a name or a type
+// 	if c.Peek().Tok == token.IDENT {
+// 		t.Name = c.Cur().Lit
+// 		t.Type = c.Next().Lit
+// 	} else {
+// 		t.Type = c.Cur().Lit
+// 	}
+// 	if c.Peek().Tok == token.PERIOD &&
+// 	c.PeekOffset(2).Tok == token.IDENT {
+// 		t.Package = t.Type
+// 		t.Type = c.Offset(2).Lit
+// 	}
+// }
+
+// func tokenMUL(c cur.Cursor[GoToken], t *Type) {
+// 	t.IsPointer = ptr.To(true)
+// }
+
+// func tokenLBRACK(c cur.Cursor[GoToken], t *Type) {
+// 	switch c.Peek().Tok {
+// 	case token.RBRACK:
+// 		if t.Type != "" {}
+// 	}
+// }
+
+func ExtractParamsReverse(c cur.Cursor[GoToken]) []*Type {
 	c.Tail()
 	// rewind cursor until it hits the end of the parenthesis
 	for c.Cur().Tok != token.RPAREN && c.Pos() != 0 {
@@ -50,7 +114,9 @@ func ExtractParams(c cur.Cursor[GoToken]) []*Type {
 			handleIDENT(c, t)
 		case token.RPAREN:
 			// functions: func(arg1, arg2, arg3) (ret1, ret2)
-			// handleFUNC(c, t, &types)
+			fmt.Println(c.Pos())
+			handleFUNC(c, t, &types)
+			fmt.Println(c.Pos(), c.PeekOffset(-1).Lit, c.PeekOffset(-1).Tok.String())
 		case token.RBRACE:
 			// structs, interfaces: struct{} ; interface{ String() string }
 			// handleSTRUCTorINTERFACE
@@ -189,8 +255,20 @@ func handleCOMMA(c cur.Cursor[GoToken], t *Type, types *[]*Type) {
 }
 
 func handleLPAREN(c cur.Cursor[GoToken], t *Type, types *[]*Type) {
-	zero := &Type{}
-	if t != zero {
+	if t.Type != "" {
 		*types = append(*types, t)
 	}
+}
+
+func handleFUNC(c cur.Cursor[GoToken], t *Type, types *[]*Type) {
+	fn := ExtractFuncType(c)
+	if t.Type != "" || t.Name != "" {
+		fn.Func.Returns = []*Type{ptr.Copy(t)}
+	}
+	fn.Type = "func"
+	if c.PeekOffset(-1).Tok == token.IDENT {
+		fn.Name = c.Prev().Lit
+	}
+	*types = append(*types, fn)
+	*t = Type{}
 }

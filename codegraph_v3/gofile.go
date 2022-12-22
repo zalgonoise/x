@@ -23,6 +23,8 @@ type Type struct {
 	Map       *RMap          `json:"map,omitempty"`
 	Generics  []*Type        `json:"type_params,omitempty"`
 	Func      *RFunc         `json:"func,omitempty"`
+	Struct    *RStruct       `json:"struct,omitempty"`
+	Interface *RInterface    `json:"interface,omitempty"`
 }
 
 type RSlice struct {
@@ -45,6 +47,16 @@ type RFunc struct {
 	Receiver    *Type   `json:"receiver,omitempty"`
 	InputParams []*Type `json:"input_params,omitempty"`
 	Returns     []*Type `json:"returns,omitempty"`
+}
+
+type RStruct struct {
+	IsStruct *bool   `json:"is_struct,omitempty"`
+	Elems    []*Type `json:"elements"`
+}
+
+type RInterface struct {
+	IsInterface *bool   `json:"is_interface,omitempty"`
+	Methods     []*Type `json:"methods"`
 }
 
 type LogicBlockKind uint
