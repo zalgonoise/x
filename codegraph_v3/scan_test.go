@@ -88,6 +88,7 @@ func TestParams(t *testing.T) {
 		[]byte(`(*map[any]any)`),
 		[]byte(`(a, b, c int, data []byte)`),
 		[]byte(`()`),
+		[]byte(`(A, B, C, D)`), // span of generic types
 		// []byte(`(json map[string]interface{})`),
 		// []byte(`(testFn func(s string) (bool, error))`),
 	}
@@ -652,6 +653,110 @@ func TestParams(t *testing.T) {
 		types := ExtractParams(c)
 		if types != nil {
 			t.Errorf("expected nil output; got %v", types)
+		}
+	})
+
+	t.Run("(A, B, C, D)", func(t *testing.T) {
+		wants := []*Type{
+			{
+				Type: "A",
+			},
+			{
+				Type: "B",
+			},
+			{
+				Type: "C",
+			},
+			{
+				Type: "D",
+			},
+		}
+		tokens, err := Explore(paramSet[15])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+		types := ExtractParams(c)
+		if len(types) != 4 {
+			t.Errorf("unexpected length: %d", len(types))
+			return
+		}
+
+		for idx, w := range wants {
+			if types[idx].Type != w.Type {
+				t.Errorf("unexpected type on idx %v: wanted %v ; got %v", idx, w.Type, *types[idx])
+			}
+		}
+	})
+}
+
+func TestFuncs(t *testing.T) {
+	fnSet := [][]byte{
+		[]byte(`func Add(x, y int) int { return x + y }`),
+	}
+
+	t.Run("Simple", func(t *testing.T) {
+		wants := &Type{
+			Name: "Add",
+			Kind: TypeFunction,
+			Func: &RFunc{
+				InputParams: []*Type{
+					{
+						Name: "x",
+						Type: "int",
+					},
+					{
+						Name: "y",
+						Type: "int",
+					},
+				},
+				Returns: []*Type{
+					{
+						Type: "int",
+					},
+				},
+			},
+		}
+		tokens, err := Explore(fnSet[0])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+
+		fnType := ExtractFuncType(c)
+
+		if fnType == nil {
+			t.Errorf("expected type not to be nil")
+			return
+		}
+
+		if wants.Name != fnType.Name {
+			t.Errorf("unexpected name: wanted %v ; got %v", *wants, *fnType)
+		}
+		if wants.Kind != fnType.Kind {
+			t.Errorf("unexpected kind: wanted %v ; got %v", *wants, *fnType)
+		}
+		if fnType.Func == nil {
+			t.Errorf("unexpected nil Func element: wanted %v ; got %v", *wants, *fnType)
+		}
+		if len(fnType.Func.InputParams) != 2 {
+			t.Errorf("unexpected input param length: wanted %v ; got %v", 2, len(fnType.Func.InputParams))
+			return
+		}
+		if wants.Func.InputParams[0].Name != fnType.Func.InputParams[0].Name ||
+			wants.Func.InputParams[0].Type != fnType.Func.InputParams[0].Type {
+			t.Errorf("unexpected input param: wanted %v ; got %v", *wants.Func.InputParams[0], *fnType.Func.InputParams[0])
+		}
+		if wants.Func.InputParams[1].Name != fnType.Func.InputParams[1].Name ||
+			wants.Func.InputParams[1].Type != fnType.Func.InputParams[1].Type {
+			t.Errorf("unexpected input param: wanted %v ; got %v", *wants.Func.InputParams[1], *fnType.Func.InputParams[1])
+		}
+		if len(fnType.Func.Returns) != 1 {
+			t.Errorf("unexpected returns length: wanted %v ; got %v", 1, len(fnType.Func.Returns))
+			return
+		}
+		if wants.Func.Returns[0].Type != fnType.Func.Returns[0].Type {
+			t.Errorf("unexpected return element: wanted %v ; got %v", *wants.Func.Returns[0], *fnType.Func.Returns[0])
 		}
 	})
 }

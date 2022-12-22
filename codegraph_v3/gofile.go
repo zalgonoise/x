@@ -1,11 +1,11 @@
 package codegraph
 
 type GoFile struct {
-	IsMain      *bool         `json:"isMain,omitempty"`
-	PackageName string        `json:"package,omitempty"`
-	Imports     []*Import     `json:"imports,omitempty"`
-	LogicBlocks []*LogicBlock `json:"logicBlocks,omitempty"`
-	Path        string        `json:"path,omitempty"`
+	IsMain      *bool     `json:"isMain,omitempty"`
+	PackageName string    `json:"package,omitempty"`
+	Imports     []*Import `json:"imports,omitempty"`
+	LogicBlocks []*Type   `json:"logic_blocks,omitempty"`
+	Path        string    `json:"path,omitempty"`
 }
 
 type Import struct {
@@ -13,13 +13,8 @@ type Import struct {
 	Package string  `json:"package,omitempty"`
 }
 
-func NewImport() *Import {
-	return &Import{}
-}
-
 type Type struct {
 	IsPointer *bool          `json:"is_pointer,omitempty"`
-	IsMap     *bool          `json:"is_map,omitempty"`
 	Name      string         `json:"name,omitempty"`
 	Type      string         `json:"type,omitempty"`
 	Package   *string        `json:"package,omitempty"`
@@ -27,53 +22,29 @@ type Type struct {
 	Slice     *RSlice        `json:"slice,omitempty"`
 	Map       *RMap          `json:"map,omitempty"`
 	Generics  []*Type        `json:"type_params,omitempty"`
+	Func      *RFunc         `json:"func,omitempty"`
 }
 
 type RSlice struct {
-	IsPointer  *bool
-	IsVariadic *bool
-	Len        *int
-	LenName    *string
+	IsSlice    *bool   `json:"is_slice,omitempty"`
+	IsPointer  *bool   `json:"is_pointer,omitempty"`
+	IsVariadic *bool   `json:"is_variadic,omitempty"`
+	Len        *int    `json:"len,omitempty"`
+	LenName    *string `json:"len_var_name,omitempty"`
 }
 
 type RMap struct {
-	IsPointer *bool
-	Key       string
-	Value     Type
+	IsMap     *bool  `json:"is_map,omitempty"`
+	IsPointer *bool  `json:"is_pointer,omitempty"`
+	Key       string `json:"key,omitempty"`
+	Value     Type   `json:"value,omitempty"`
 }
 
-type LogicBlock struct {
-	IsPointer    *bool          `json:"is_pointer,omitempty"`
-	IsSlice      *bool          `json:"is_slice,omitempty"`
-	IsVariadic   *bool          `json:"is_variadic,omitempty"`
-	Name         *string        `json:"name,omitempty"`
-	Type         *string        `json:"type,omitempty"`
-	Kind         LogicBlockKind `json:"kind,omitempty"`
-	Generics     []*Type        `json:"type_params,omitempty"`
-	InputParams  []*Type        `json:"inputs,omitempty"`
-	ReturnParams []*Type        `json:"returns,omitempty"`
-	Receiver     *Type          `json:"receiver,omitempty"`
-	Package      string         `json:"package,omitempty"`
-	parent       *GoFile
-}
-
-func NewLogicBlock(kind LogicBlockKind) *LogicBlock {
-	return &LogicBlock{
-		Kind: kind,
-	}
-}
-
-type Identifier struct {
-	IsPointer    *bool          `json:"is_pointer,omitempty"`
-	Package      string         `json:"package,omitempty"`
-	Name         *string        `json:"name,omitempty"`
-	Type         string         `json:"type,omitempty"`
-	GenericTypes []*Identifier  `json:"generic_types,omitempty"`
-	Kind         LogicBlockKind `json:"kind,omitempty"`
-}
-
-func NewIdentifier() *Identifier {
-	return &Identifier{}
+type RFunc struct {
+	IsFunc      *bool   `json:"is_func,omitempty"`
+	Receiver    *Type   `json:"receiver,omitempty"`
+	InputParams []*Type `json:"input_params,omitempty"`
+	Returns     []*Type `json:"returns,omitempty"`
 }
 
 type LogicBlockKind uint
