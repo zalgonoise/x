@@ -187,7 +187,9 @@ func handleRBRACK(c cur.Cursor[GoToken], t *Type) {
 		if t.Map == nil {
 			m := &RMap{
 				IsMap: ptr.To(true),
-				Key:   c.Prev().Lit,
+				Key: Type{
+					Type: c.Prev().Lit,
+				},
 				Value: *t,
 			}
 			t.Map = m

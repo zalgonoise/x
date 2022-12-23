@@ -97,7 +97,10 @@ func TestParams(t *testing.T) {
 	name string
 	age int
 })`),
-		// []byte(`(json map[string]interface{})`),
+		[]byte(`(json map[string]interface{})`),
+		[]byte(`(encoder interface {
+	Encode(any) ([]byte, error)
+})`),
 	}
 	t.Run("int", func(t *testing.T) {
 		wants := &Type{
@@ -390,7 +393,9 @@ func TestParams(t *testing.T) {
 			Name: "json",
 			Type: "map",
 			Map: &RMap{
-				Key: "string",
+				Key: Type{
+					Type: "string",
+				},
 				Value: Type{
 					Type: "any",
 				},
@@ -418,7 +423,7 @@ func TestParams(t *testing.T) {
 			return
 		}
 
-		if types[0].Map == nil || types[0].Map.Key != wants.Map.Key {
+		if types[0].Map == nil || types[0].Map.Key.Type != wants.Map.Key.Type {
 			t.Errorf("unexpected output error: wanted %v ; got %v", types[0].Map, wants.Map.Key)
 			return
 		}
@@ -546,7 +551,9 @@ func TestParams(t *testing.T) {
 			Type: "map",
 			Map: &RMap{
 				IsPointer: ptr.To(true),
-				Key:       "any",
+				Key: Type{
+					Type: "any",
+				},
 				Value: Type{
 					Type: "any",
 				},
@@ -569,7 +576,7 @@ func TestParams(t *testing.T) {
 			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
 		}
 
-		if types[0].Map == nil || types[0].Map.Key != wants.Map.Key {
+		if types[0].Map == nil || types[0].Map.Key.Type != wants.Map.Key.Type {
 			t.Errorf("unexpected output error: wanted %v ; got %v", types[0].Map, wants.Map.Key)
 			return
 		}
@@ -1000,6 +1007,155 @@ func TestParams(t *testing.T) {
 			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
 		}
 	})
+
+	t.Run(`(json map[string]interface{})`, func(t *testing.T) {
+		wants := &Type{
+			Type: "map",
+			Name: "json",
+			Map: &RMap{
+				IsMap: ptr.To(true),
+				Key: Type{
+					Type: "string",
+				},
+				Value: Type{
+					Type: "interface",
+					Kind: TypeInterface,
+					Interface: &RInterface{
+						IsInterface: ptr.To(true),
+					},
+				},
+			},
+		}
+
+		tokens, err := Explore(paramSet[21])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+
+		types := ExtractParamsReverse(c)
+		if len(types) != 1 {
+			t.Errorf("unexpected length: %d", len(types))
+			return
+		}
+
+		if types[0].Type != wants.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Name != wants.Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Map == nil {
+			t.Error("unexpected nil map element")
+		}
+		if types[0].Map.Key.Type != wants.Map.Key.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Map.Value.Type != wants.Map.Value.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Map.Value.Kind != wants.Map.Value.Kind {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Map.Value.Interface == nil {
+			t.Error("unexpected nil interface element")
+		}
+
+	})
+
+	t.Run(`(encoder interface { Encode(any) ([]byte, error) ; })`, func(t *testing.T) {
+		wants := &Type{
+			Type: "interface",
+			Name: "encoder",
+			Interface: &RInterface{
+				IsInterface: ptr.To(true),
+				Methods: []*Type{
+					{
+						Type: "method",
+						Kind: TypeMethod,
+						Name: "Encode",
+						Func: &RFunc{
+							IsFunc: ptr.To(true),
+							InputParams: []*Type{
+								{
+									Type: "any",
+								},
+							},
+							Returns: []*Type{
+								{
+									Type: "byte",
+									Slice: &RSlice{
+										IsSlice: ptr.To(true),
+									},
+								},
+								{
+									Type: "error",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		tokens, err := Explore(paramSet[22])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+
+		types := ExtractParamsReverse(c)
+		if len(types) != 1 {
+			t.Errorf("unexpected length: %d", len(types))
+			return
+		}
+
+		if types[0].Type != wants.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Name != wants.Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Interface == nil {
+			t.Error("unexpected nil interface element")
+		}
+		if len(types[0].Interface.Methods) != len(wants.Interface.Methods) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Interface.Methods[0].Type != wants.Interface.Methods[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Interface.Methods[0].Kind != wants.Interface.Methods[0].Kind {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Interface.Methods[0].Name != wants.Interface.Methods[0].Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants.Interface.Methods[0].Name, types[0].Interface.Methods[0].Name)
+		}
+		if types[0].Interface.Methods[0].Func == nil {
+			t.Error("unexpected nil interface method element")
+		}
+		if len(types[0].Interface.Methods[0].Func.InputParams) != len(wants.Interface.Methods[0].Func.InputParams) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", len(wants.Interface.Methods[0].Func.InputParams), len(types[0].Interface.Methods[0].Func.InputParams))
+			for _, p := range types[0].Interface.Methods[0].Func.InputParams {
+				t.Error(p.Type, p.Name)
+			}
+		}
+		if types[0].Interface.Methods[0].Func.InputParams[0].Type != wants.Interface.Methods[0].Func.InputParams[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if len(types[0].Interface.Methods[0].Func.Returns) != len(wants.Interface.Methods[0].Func.Returns) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Interface.Methods[0].Func.Returns[0].Type != wants.Interface.Methods[0].Func.Returns[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+		if types[0].Interface.Methods[0].Func.Returns[0].Slice == nil {
+			t.Error("unexpected nil interface method return slice element")
+		}
+		if types[0].Interface.Methods[0].Func.Returns[1].Type != wants.Interface.Methods[0].Func.Returns[1].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants, types[0])
+		}
+	})
 }
 
 func TestFuncs(t *testing.T) {
@@ -1085,17 +1241,148 @@ func TestFuncAsParam(t *testing.T) {
 }
 
 func TestInterface(t *testing.T) {
+	wants := &Type{
+		Name: "ReadWriter",
+		Type: "interface",
+		Kind: TypeInterface,
+		Interface: &RInterface{
+			IsInterface: ptr.To(true),
+			Methods: []*Type{
+				{
+					Name: "Read",
+					Type: "method",
+					Kind: TypeMethod,
+					Func: &RFunc{
+						IsFunc: ptr.To(true),
+						InputParams: []*Type{
+							{
+								Type: "byte",
+								Slice: &RSlice{
+									IsSlice: ptr.To(true),
+								},
+							},
+						},
+						Returns: []*Type{
+							{
+								Type: "error",
+							},
+						},
+					},
+				},
+				{
+					Name: "Write",
+					Type: "method",
+					Kind: TypeMethod,
+					Func: &RFunc{
+						IsFunc: ptr.To(true),
+						InputParams: []*Type{
+							{
+								Type: "byte",
+								Slice: &RSlice{
+									IsSlice: ptr.To(true),
+								},
+							},
+						},
+						Returns: []*Type{
+							{
+								Type: "int",
+							},
+							{
+								Type: "error",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	tokens, err := Explore([]byte(`type ReadWriter interface {
-	Read([]byte) func(byte) error
+	Read([]byte) error
 	Write([]byte) (int, error)
 }`))
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	for _, tok := range tokens {
-		t.Log(tok.Tok.String(), tok.Lit)
+
+	c := cur.NewCursor(tokens)
+	itf := ExtractInterface(c)
+
+	if wants.Name != itf.Name {
+		t.Errorf("unexpected name: wanted %v ; got %v", *wants, *itf)
 	}
-	t.Error()
+	if wants.Type != itf.Type {
+		t.Errorf("unexpected type: wanted %v ; got %v", *wants, *itf)
+	}
+	if wants.Kind != itf.Kind {
+		t.Errorf("unexpected kind: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface == nil {
+		t.Errorf("unexpected nil interface element")
+	}
+	if len(itf.Interface.Methods) != len(wants.Interface.Methods) {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+
+	if itf.Interface.Methods[0].Name != wants.Interface.Methods[0].Name {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[0].Type != wants.Interface.Methods[0].Type {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[0].Kind != wants.Interface.Methods[0].Kind {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[0].Func == nil {
+		t.Errorf("unexpected nil method func element")
+	}
+	if len(itf.Interface.Methods[0].Func.InputParams) != len(wants.Interface.Methods[0].Func.InputParams) {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[0].Func.InputParams[0].Type != wants.Interface.Methods[0].Func.InputParams[0].Type {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[0].Func.InputParams[0].Slice == nil {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if len(itf.Interface.Methods[0].Func.Returns) != len(wants.Interface.Methods[0].Func.Returns) {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[0].Func.Returns[0].Type != wants.Interface.Methods[0].Func.Returns[0].Type {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+
+	if itf.Interface.Methods[1].Name != wants.Interface.Methods[1].Name {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[1].Type != wants.Interface.Methods[1].Type {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[1].Kind != wants.Interface.Methods[1].Kind {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[1].Func == nil {
+		t.Errorf("unexpected nil method func element")
+	}
+	if len(itf.Interface.Methods[1].Func.InputParams) != len(wants.Interface.Methods[1].Func.InputParams) {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[1].Func.InputParams[0].Type != wants.Interface.Methods[1].Func.InputParams[0].Type {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[1].Func.InputParams[0].Slice == nil {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if len(itf.Interface.Methods[1].Func.Returns) != len(wants.Interface.Methods[1].Func.Returns) {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[1].Func.Returns[0].Type != wants.Interface.Methods[1].Func.Returns[0].Type {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+	if itf.Interface.Methods[1].Func.Returns[1].Type != wants.Interface.Methods[1].Func.Returns[1].Type {
+		t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *itf)
+	}
+
 }
 
 func TestStruct(t *testing.T) {

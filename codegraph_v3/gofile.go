@@ -36,10 +36,10 @@ type RSlice struct {
 }
 
 type RMap struct {
-	IsMap     *bool  `json:"is_map,omitempty"`
-	IsPointer *bool  `json:"is_pointer,omitempty"`
-	Key       string `json:"key,omitempty"`
-	Value     Type   `json:"value,omitempty"`
+	IsMap     *bool `json:"is_map,omitempty"`
+	IsPointer *bool `json:"is_pointer,omitempty"`
+	Key       Type  `json:"key,omitempty"`
+	Value     Type  `json:"value,omitempty"`
 }
 
 type RFunc struct {
