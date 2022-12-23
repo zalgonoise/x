@@ -91,6 +91,7 @@ func TestParams(t *testing.T) {
 		[]byte(`(A, B, C, D)`), // span of generic types
 		[]byte(`(testFn func(s string) (bool, error))`),
 		[]byte(`(testFn func(s string) error)`),
+		[]byte(`(testFn func(s string) func(int) error)`),
 		// []byte(`(json map[string]interface{})`),
 	}
 	t.Run("int", func(t *testing.T) {
@@ -729,6 +730,30 @@ func TestParams(t *testing.T) {
 		if types[0].Name != wants.Name {
 			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
 		}
+		if types[0].Type != wants.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func == nil {
+			t.Errorf("unexpected nil function element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.InputParams) != len(wants.Func.InputParams) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.InputParams[0].Name != wants.Func.InputParams[0].Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.InputParams[0].Type != wants.Func.InputParams[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.Returns) != len(wants.Func.Returns) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.Returns[0].Type != wants.Func.Returns[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.Returns[1].Type != wants.Func.Returns[1].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
 	})
 
 	t.Run("(testFn func(s string) error)", func(t *testing.T) {
@@ -766,6 +791,114 @@ func TestParams(t *testing.T) {
 
 		if types[0].Name != wants.Name {
 			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Type != wants.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func == nil {
+			t.Errorf("unexpected nil function element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.InputParams) != len(wants.Func.InputParams) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.InputParams[0].Name != wants.Func.InputParams[0].Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.InputParams[0].Type != wants.Func.InputParams[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.Returns) != len(wants.Func.Returns) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.Returns[0].Type != wants.Func.Returns[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+	})
+
+	t.Run("(testFn func(s string) func(int) error)", func(t *testing.T) {
+		wants := &Type{
+			Name: "testFn",
+			Type: "func",
+			Func: &RFunc{
+				IsFunc: ptr.To(true),
+				InputParams: []*Type{
+					{
+						Name: "s",
+						Type: "string",
+					},
+				},
+				Returns: []*Type{
+					{
+						Type: "func",
+						Func: &RFunc{
+							IsFunc: ptr.To(true),
+							InputParams: []*Type{
+								{
+									Type: "int",
+								},
+							},
+							Returns: []*Type{
+								{
+									Type: "error",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		tokens, err := Explore(paramSet[18])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+		types := ExtractParamsReverse(c)
+		if len(types) != 1 {
+			t.Errorf("unexpected length: %d", len(types))
+			for _, tp := range types {
+				t.Log(*tp)
+			}
+			return
+		}
+
+		if types[0].Name != wants.Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Type != wants.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func == nil {
+			t.Errorf("unexpected nil function element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.InputParams) != len(wants.Func.InputParams) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.InputParams[0].Name != wants.Func.InputParams[0].Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.InputParams[0].Type != wants.Func.InputParams[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.Returns) != len(wants.Func.Returns) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.Returns[0].Type != wants.Func.Returns[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.Returns[0].Func == nil {
+			t.Errorf("unexpected nil return function element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.Returns[0].Func.InputParams) != len(wants.Func.Returns[0].Func.InputParams) {
+			t.Errorf("unexpected nil return function element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.Returns[0].Func.InputParams[0].Type != wants.Func.Returns[0].Func.InputParams[0].Type {
+			t.Errorf("unexpected nil return function element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Func.Returns[0].Func.Returns) != len(wants.Func.Returns[0].Func.Returns) {
+			t.Errorf("unexpected nil return function element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Func.Returns[0].Func.Returns[0].Type != wants.Func.Returns[0].Func.Returns[0].Type {
+			t.Errorf("unexpected nil return function element: wanted %v ; got %v", *wants, *types[0])
 		}
 	})
 }

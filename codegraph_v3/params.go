@@ -114,9 +114,7 @@ func ExtractParamsReverse(c cur.Cursor[GoToken]) []*Type {
 			handleIDENT(c, t)
 		case token.RPAREN:
 			// functions: func(arg1, arg2, arg3) (ret1, ret2)
-			fmt.Println(c.Pos())
-			handleFUNC(c, t, &types)
-			fmt.Println(c.Pos(), c.PeekOffset(-1).Lit, c.PeekOffset(-1).Tok.String())
+			handleFUNC(c, t)
 		case token.RBRACE:
 			// structs, interfaces: struct{} ; interface{ String() string }
 			// handleSTRUCTorINTERFACE
@@ -260,15 +258,15 @@ func handleLPAREN(c cur.Cursor[GoToken], t *Type, types *[]*Type) {
 	}
 }
 
-func handleFUNC(c cur.Cursor[GoToken], t *Type, types *[]*Type) {
+func handleFUNC(c cur.Cursor[GoToken], t *Type) {
 	fn := ExtractFuncType(c)
-	if t.Type != "" || t.Name != "" {
+	if t.Type != "" || t.Name != "" || t.Func != nil || t.Map != nil || t.Slice != nil {
 		fn.Func.Returns = []*Type{ptr.Copy(t)}
 	}
 	fn.Type = "func"
 	if c.PeekOffset(-1).Tok == token.IDENT {
 		fn.Name = c.Prev().Lit
 	}
-	*types = append(*types, fn)
-	*t = Type{}
+	fmt.Println(fn)
+	*t = *fn
 }
