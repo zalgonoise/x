@@ -92,6 +92,11 @@ func TestParams(t *testing.T) {
 		[]byte(`(testFn func(s string) (bool, error))`),
 		[]byte(`(testFn func(s string) error)`),
 		[]byte(`(testFn func(s string) func(int) error)`),
+		[]byte(`(exists struct{})`),
+		[]byte(`(person struct {
+	name string
+	age int
+})`),
 		// []byte(`(json map[string]interface{})`),
 	}
 	t.Run("int", func(t *testing.T) {
@@ -901,6 +906,100 @@ func TestParams(t *testing.T) {
 			t.Errorf("unexpected nil return function element: wanted %v ; got %v", *wants, *types[0])
 		}
 	})
+
+	t.Run("(exists struct{})", func(t *testing.T) {
+		wants := &Type{
+			Name: "exists",
+			Type: "struct",
+			Struct: &RStruct{
+				IsStruct: ptr.To(true),
+				Elems:    []*Type{},
+			},
+		}
+
+		tokens, err := Explore(paramSet[19])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+
+		types := ExtractParamsReverse(c)
+		if len(types) != 1 {
+			t.Errorf("unexpected length: %d", len(types))
+			return
+		}
+
+		if types[0].Name != wants.Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants.Name, types[0].Name)
+		}
+		if types[0].Type != wants.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants.Type, types[0].Type)
+		}
+		if types[0].Struct == nil {
+			t.Errorf("unexpected nil struct element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Struct.Elems) != len(wants.Struct.Elems) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+	})
+
+	t.Run("(person struct { name string ; age int ;})", func(t *testing.T) {
+		wants := &Type{
+			Name: "person",
+			Type: "struct",
+			Struct: &RStruct{
+				IsStruct: ptr.To(true),
+				Elems: []*Type{
+					{
+						Name: "name",
+						Type: "string",
+					},
+					{
+						Name: "age",
+						Type: "int",
+					},
+				},
+			},
+		}
+
+		tokens, err := Explore(paramSet[20])
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		c := cur.NewCursor(tokens)
+
+		types := ExtractParamsReverse(c)
+		if len(types) != 1 {
+			t.Errorf("unexpected length: %d", len(types))
+			return
+		}
+
+		if types[0].Name != wants.Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants.Name, types[0].Name)
+		}
+		if types[0].Type != wants.Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", wants.Type, types[0].Type)
+		}
+		if types[0].Struct == nil {
+			t.Errorf("unexpected nil struct element: wanted %v ; got %v", *wants, *types[0])
+		}
+		if len(types[0].Struct.Elems) != len(wants.Struct.Elems) {
+			t.Errorf("unexpected output error: wanted %v ; got %v", len(wants.Struct.Elems), len(types[0].Struct.Elems))
+			return
+		}
+		if types[0].Struct.Elems[0].Name != wants.Struct.Elems[0].Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Struct.Elems[0].Type != wants.Struct.Elems[0].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Struct.Elems[1].Name != wants.Struct.Elems[1].Name {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+		if types[0].Struct.Elems[1].Type != wants.Struct.Elems[1].Type {
+			t.Errorf("unexpected output error: wanted %v ; got %v", *wants, *types[0])
+		}
+	})
 }
 
 func TestFuncs(t *testing.T) {
@@ -1048,7 +1147,7 @@ func TestStruct(t *testing.T) {
 	}
 	c := cur.NewCursor(tokens)
 
-	strType := ExtractStructType(c)
+	strType := ExtractStruct(c)
 
 	if strType == nil {
 		t.Errorf("expected type not to be nil")

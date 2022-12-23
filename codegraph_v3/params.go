@@ -1,7 +1,6 @@
 package codegraph
 
 import (
-	"fmt"
 	"go/token"
 	"strconv"
 
@@ -117,7 +116,7 @@ func ExtractParamsReverse(c cur.Cursor[GoToken]) []*Type {
 			handleFUNC(c, t)
 		case token.RBRACE:
 			// structs, interfaces: struct{} ; interface{ String() string }
-			// handleSTRUCTorINTERFACE
+			handleSTRUCTorINTERFACE(c, t)
 		case token.COMMA:
 			handleCOMMA(c, t, &types)
 		case token.LPAREN:
@@ -267,6 +266,13 @@ func handleFUNC(c cur.Cursor[GoToken], t *Type) {
 	if c.PeekOffset(-1).Tok == token.IDENT {
 		fn.Name = c.Prev().Lit
 	}
-	fmt.Println(fn)
 	*t = *fn
+}
+
+func handleSTRUCTorINTERFACE(c cur.Cursor[GoToken], t *Type) {
+	obj := ExtractObjectType(c)
+	if c.PeekOffset(-1).Tok == token.IDENT {
+		obj.Name = c.Prev().Lit
+	}
+	*t = *obj
 }
