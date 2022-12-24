@@ -5,8 +5,7 @@ import "testing"
 func TestRun(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		wants := "string with >>template<< in it"
-		input := `string with {template} in it
-`
+		input := `string with {template} in it`
 		out, err := Run(input)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)

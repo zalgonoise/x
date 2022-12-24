@@ -15,7 +15,6 @@ type Lexer[C comparable, T any, I Item[C, T]] interface {
 }
 
 type lexer[C comparable, T any, I Item[C, T]] struct {
-	name  string
 	input []T
 	start int
 	pos   int
@@ -25,12 +24,10 @@ type lexer[C comparable, T any, I Item[C, T]] struct {
 }
 
 func NewLexer[C comparable, T any, I Item[C, T]](
-	name string,
 	initFn StateFn[C, T, I],
 	input []T,
 ) Lexer[C, T, I] {
 	l := &lexer[C, T, I]{
-		name:  name,
 		input: input,
 		state: initFn,
 		items: make(chan I, 2),
@@ -64,7 +61,7 @@ func (l *lexer[C, T, I]) Backup() {
 func (l *lexer[C, T, I]) Emit(itemType C) {
 	l.items <- I{
 		Typ: itemType,
-		Val: l.input[l.start:l.pos],
+		Val: l.input[l.start : l.pos+1],
 	}
 	l.start = l.pos
 }
