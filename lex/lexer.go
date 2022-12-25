@@ -50,6 +50,7 @@ type lexer[C comparable, T any, I Item[C, T]] struct {
 	items chan I
 }
 
+// New creates a new lexer with the base / starting StateFn and input data
 func New[C comparable, T any, I Item[C, T]](
 	initFn StateFn[C, T, I],
 	input []T,
