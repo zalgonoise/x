@@ -118,16 +118,14 @@ func (l *lexer[C, T, I]) Accept(verifFn func(item T) bool) bool {
 	if ok := verifFn(l.Next()); ok {
 		return true
 	}
+	l.Prev()
 	return false
 }
 
 // Check passes the current token through the input `verifFn` function as a validator, returning
 // its result
 func (l *lexer[C, T, I]) Check(verifFn func(item T) bool) bool {
-	if ok := verifFn(l.Cur()); ok {
-		return true
-	}
-	return false
+	return verifFn(l.Cur())
 }
 
 // AcceptRun iterates through all following tokens, passing them through the input `verifFn`
