@@ -166,8 +166,8 @@ func (l *lexer[C, T, I]) Start() int {
 // Next returns the next item in the slice, or the last index if already
 // at the tail
 func (l *lexer[C, T, I]) Next() T {
-	if l.pos+1 > len(l.input) {
-		l.start = l.pos // zero width on eof
+	if l.pos >= len(l.input) {
+		// l.start = l.pos // zero width on eof
 		var eof T
 		return eof
 	}

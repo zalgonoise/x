@@ -27,11 +27,11 @@ recLoop:
 	for {
 		switch l.Next() {
 		case '.':
-			l.Prev()
-			if l.Width() > 0 {
+			if l.Width()-1 > 0 {
+				l.Prev()
 				l.Emit((C)(tokenIdent))
+				l.Next()
 			}
-			l.Next()
 			return statePeriod[C, T, I]
 		case 0:
 			break recLoop
@@ -49,7 +49,7 @@ recLoop:
 func statePeriod[C uint, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex.StateFn[C, T, I] {
 	l.Emit((C)(tokenPeriod))
 	// look into the current rune
-	switch l.Peek() {
+	switch l.Next() {
 	case 0:
 		l.Emit((C)(tokenEOF))
 		return nil
@@ -242,8 +242,8 @@ func TestPositionMethods(t *testing.T) {
 	if zero != 0 {
 		t.Errorf("unexpected rune value: wanted `%s` ; got `%s`", "", string(zero))
 	}
-	if l.Pos() != 12 || l.Width() != 0 {
-		t.Errorf("unexpected pos/width value: wanted %d ; got %d / %d", 0, l.Pos(), l.Width())
+	if l.Pos() != 12 || l.Width() != 1 {
+		t.Errorf("unexpected pos/width value: wanted %d ; got %d / %d", 1, l.Pos(), l.Width())
 	}
 	zero = l.Peek()
 	if zero != 0 {
@@ -358,6 +358,7 @@ func acceptanceState[C uint, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex
 	if l.Width() > 0 {
 		l.Emit((C)(tokenIdent))
 	}
+
 	switch l.Next() {
 	case '.':
 		l.Prev()
@@ -398,7 +399,7 @@ func acceptPeriod[C uint, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex.St
 		l.Emit((C)(tokenPeriod))
 	}
 
-	// look into the current rune
+	// look into the next rune
 	switch l.Peek() {
 	case 0:
 		l.Emit((C)(tokenEOF))
