@@ -4,7 +4,7 @@ import "testing"
 
 func TestRun(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
-		wants := "string with >>template<< in it"
+		wants := `string with >>template<< in it`
 		input := `string with {template} in it`
 		out, err := Run(input)
 		if err != nil {
@@ -15,7 +15,7 @@ func TestRun(t *testing.T) {
 		}
 	})
 	t.Run("errored", func(t *testing.T) {
-		wants := "string with "
+		wants := "string with :ERR:"
 		input := `string with {template in it
 `
 		out, err := Run(input)

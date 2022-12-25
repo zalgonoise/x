@@ -24,6 +24,8 @@ type Lexer[C comparable, T any, I Item[C, T]] interface {
 	Ignore()
 	// Backup will rewind the index for the width of the current item
 	Backup()
+	// Width returns the size for the set of tokens
+	Width() int
 	// Emit pushes the set of tokens from the starting point to the current position to the
 	// receiver, identified by C `itemType`
 	Emit(itemType C)
@@ -70,6 +72,7 @@ func (l *lexer[C, T, I]) NextItem() I {
 				l.state = l.state(l)
 				continue
 			}
+			close(l.items)
 			return I{}
 		}
 	}
@@ -83,6 +86,11 @@ func (l *lexer[C, T, I]) Ignore() {
 // Backup will rewind the index for the width of the current item
 func (l *lexer[C, T, I]) Backup() {
 	l.pos -= l.width
+}
+
+// Width returns the size for the set of tokens
+func (l *lexer[C, T, I]) Width() int {
+	return l.width
 }
 
 // Emit pushes the set of tokens from the starting point to the current position to the
@@ -108,9 +116,15 @@ func (l *lexer[C, T, I]) Accept(verifFn func(item T) bool) bool {
 // AcceptRun iterates through all following tokens, passing them through the input `verifFn`
 // function as a validator, returning its result while also rewinding to the current position
 func (l *lexer[C, T, I]) AcceptRun(verifFn func(item T) bool) {
-	for ok := verifFn(l.Next()); ok; {
+	var ok bool
+	for l.Pos()+1 < l.Len() {
+		ok = verifFn(l.Peek())
+		if !ok {
+			return
+		}
+		l.Next()
 	}
-	l.Backup()
+	return
 }
 
 // Cur returns the same indexed item in the slice
@@ -131,10 +145,10 @@ func (l *lexer[C, T, I]) Len() int {
 // Next returns the next item in the slice, or the last index if already
 // at the tail
 func (l *lexer[C, T, I]) Next() T {
-	if l.pos >= len(l.input) {
+	if l.pos+1 >= len(l.input) {
 		l.width = 0
-		var zero T
-		return zero
+		var eof T
+		return eof
 	}
 	l.pos++
 	l.width++
@@ -151,9 +165,12 @@ func (l *lexer[C, T, I]) Prev() T {
 
 // Peek returns the next indexed item without advancing the cursor
 func (l *lexer[C, T, I]) Peek() T {
-	next := l.Next()
-	l.Prev()
-	return next
+	if l.pos+1 >= len(l.input) {
+		l.width = 0
+		var eof T
+		return eof
+	}
+	return l.input[l.pos+1]
 }
 
 // Head returns to the beginning of the slice
