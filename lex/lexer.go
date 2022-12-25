@@ -194,10 +194,14 @@ func (l *lexer[C, T, I]) Tail() T {
 // is returned
 func (l *lexer[C, T, I]) Idx(idx int) T {
 	if idx < 0 {
-		return l.Head()
+		l.width = 0
+		var eof T
+		return eof
 	}
 	if idx >= len(l.input) {
-		return l.Tail()
+		l.width = 0
+		var eof T
+		return eof
 	}
 	l.pos = idx
 	if idx < l.start {
@@ -214,10 +218,14 @@ func (l *lexer[C, T, I]) Idx(idx int) T {
 // is returned
 func (l *lexer[C, T, I]) Offset(amount int) T {
 	if l.pos+amount < 0 {
-		return l.Head()
+		l.width = 0
+		var eof T
+		return eof
 	}
 	if l.pos+amount >= len(l.input) {
-		return l.Tail()
+		l.width = 0
+		var eof T
+		return eof
 	}
 	l.pos += amount
 	if l.start-l.pos < 0 {
@@ -230,10 +238,14 @@ func (l *lexer[C, T, I]) Offset(amount int) T {
 // with the index `idx`
 func (l *lexer[C, T, I]) PeekIdx(idx int) T {
 	if idx >= len(l.input) {
-		return l.Tail()
+		l.width = 0
+		var eof T
+		return eof
 	}
 	if idx < 0 {
-		return l.Head()
+		l.width = 0
+		var eof T
+		return eof
 	}
 	return l.input[idx]
 }
@@ -243,8 +255,8 @@ func (l *lexer[C, T, I]) PeekIdx(idx int) T {
 func (l *lexer[C, T, I]) PeekOffset(amount int) T {
 	if l.pos+amount >= len(l.input) || l.pos+amount < 0 {
 		l.width = 0
-		var zero T
-		return zero
+		var eof T
+		return eof
 	}
 	return l.input[l.pos+amount]
 }
