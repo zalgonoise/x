@@ -166,7 +166,6 @@ func (l *lexer[C, T, I]) Start() int {
 // at the tail
 func (l *lexer[C, T, I]) Next() T {
 	if l.pos >= len(l.input) {
-		// l.start = l.pos // zero width on eof
 		var eof T
 		return eof
 	}
