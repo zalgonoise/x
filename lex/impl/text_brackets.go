@@ -15,8 +15,8 @@ const (
 	TokenError
 	TokenIDENT
 	TokenTEMPL
-	TokenLBRACK
-	TokenRBRACK
+	TokenLBRACE
+	TokenRBRACE
 )
 
 // TemplateItem represents the lex.Item for a runes lexer based on TextToken identifiers
@@ -50,7 +50,7 @@ func (t TemplateItem[C, I]) String() string {
 	return ""
 }
 
-// initState describes the StateFn to kick off the lexer / parser. It is also the default fallback StateFn
+// initState describes the StateFn to kick off the lexer. It is also the default fallback StateFn
 // for any other StateFn
 func initState[C TextToken, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex.StateFn[C, T, I] {
 	l.AcceptRun(func(item T) bool {
@@ -64,7 +64,7 @@ func initState[C TextToken, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex.
 			l.Emit((C)(TokenIDENT))
 		}
 		l.Ignore()
-		return stateLBRACK[C, T, I]
+		return stateLBRACE[C, T, I]
 	default:
 		if l.Width() > 0 {
 			l.Emit((C)(TokenIDENT))
@@ -74,8 +74,8 @@ func initState[C TextToken, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex.
 	}
 }
 
-// stateLBRACK describes the StateFn to read the template content, emitting it as a template item
-func stateLBRACK[C TextToken, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex.StateFn[C, T, I] {
+// stateLBRACE describes the StateFn to read the template content, emitting it as a template item
+func stateLBRACE[C TextToken, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex.StateFn[C, T, I] {
 	if l.Check(func(item T) bool {
 		return item == '{'
 	}) {
@@ -108,23 +108,23 @@ func stateError[C TextToken, T rune, I lex.Item[C, T]](l lex.Lexer[C, T, I]) lex
 	return initState[C, T, I]
 }
 
-// NewTextTmplLexer creates a text template lexer based on the input slice of runes
-func NewTextTmplLexer[C TextToken, T rune, I lex.Item[C, T]](input []T) lex.Lexer[C, T, I] {
+// TextTemplateLexer creates a text template lexer based on the input slice of runes
+func TextTemplateLexer[C TextToken, T rune, I lex.Item[C, T]](input []T) lex.Lexer[C, T, I] {
 	return lex.New(initState[C, T, I], input)
 }
 
 // Run takes in a string `s`, processes it for templates, and returns the processed string and an error
 func Run(s string) (string, error) {
-	l := NewTextTmplLexer([]rune(s))
+	l := TextTemplateLexer([]rune(s))
 	var sb = new(strings.Builder)
 	for {
 		i := l.NextItem()
 		sb.WriteString(toTemplateItem(i).String())
 
-		if i.Type == 0 {
+		switch i.Type {
+		case 0:
 			return sb.String(), nil
-		}
-		if i.Type == TokenError {
+		case TokenError:
 			return sb.String(), fmt.Errorf("failed to parse token")
 		}
 	}
