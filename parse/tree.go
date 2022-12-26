@@ -37,12 +37,22 @@ type Node[T comparable, V any] struct {
 	id     uint
 }
 
-// LinkFn is a function that joins two nodes together, where Node `a` is parent of
-// Node `b`, with the link value `v` of type T.
-//
-// It is a defined function type that is unimplemented to allow the developer to
-// choose how Nodes are linked -- limits; thresholds; checks; etc.
-type LinkFn[T comparable, V any] func(a, b *Node[T, V], link T)
+// Link is a function that joins two nodes together, where Node `a` is parent of
+// Node `b`, with the link value `v` of type T
+func Link[T comparable, V any](parent, node *Node[T, V], link T) {
+	if node == nil || parent == nil {
+		return
+	}
+	if node.id == parent.id {
+		return
+	}
+	for _, n := range parent.Nodes[link] {
+		if n.id == node.id {
+			return
+		}
+	}
+	parent.Nodes[link] = append(parent.Nodes[link], node)
+}
 
 // ParseFn is similar to the Lexer's StateFn, as a recursive function that the Parser
 // will keep calling during runtime until it runs out of items received from the Lexer
