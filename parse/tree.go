@@ -16,6 +16,7 @@ type Tree[T comparable, V any] struct {
 	Items []lex.Item[T, V]
 
 	parseFn ParseFn[T, V]
+	nextID  uint
 }
 
 // Node is a generic tree data structure unit. It is presented as a bidirectional
@@ -30,8 +31,10 @@ type Tree[T comparable, V any] struct {
 // a weight or an index), but mainly to serve as a relationship indicator
 type Node[T comparable, V any] struct {
 	Parent *Node[T, V]
+	Type   T
 	Value  []V
 	Nodes  map[T][]*Node[T, V]
+	id     uint
 }
 
 // LinkFn is a function that joins two nodes together, where Node `a` is parent of
