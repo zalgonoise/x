@@ -37,13 +37,13 @@ var (
 // A Tree exposes methods of accessing the root and the current node, as well as
 // the current `ParseFn` analyzing the incoming items
 type Tree[T comparable, V any] struct {
-	Pos   int
 	Nodes map[int]*Node[T, V]
 	Items []lex.Item[T, V]
 
+	pos     int
+	nextID  int
 	recv    chan lex.Item[T, V]
 	backup  map[BackupSlot]int
-	nextID  int
 	parseFn ParseFn[T, V]
 }
 
@@ -61,9 +61,19 @@ type Tree[T comparable, V any] struct {
 //	    rcv <- i
 //	  }
 //	}
+//
+// ...or, if you're feeling wild:
+//
+//	func Run(s string) (string, error) {
+//	  l := lex.New(initFn, []rune(s))
+//	  p, rcv := parse.New(initParse, mytoken.TreeRoot)
+//	  for {
+//		   rcv <- l.NextItem()
+//	  }
+//	}
 func New[T comparable, V any](initParse ParseFn[T, V], typ T, values ...V) (*Tree[T, V], chan lex.Item[T, V]) {
 	t := &Tree[T, V]{
-		Pos:   0,
+		pos:   0,
 		Nodes: map[int]*Node[T, V]{},
 		Items: []lex.Item[T, V]{},
 
@@ -76,27 +86,6 @@ func New[T comparable, V any](initParse ParseFn[T, V], typ T, values ...V) (*Tre
 
 	go t.run()
 	return t, t.recv
-}
-
-// run keeps receiving lex.Items and stores them in the tree (as the lexer runs), while at the same time
-// keeps processing the stored items via the configured ParseFn
-func (t *Tree[T, V]) run() {
-	var eof T
-	for {
-		select {
-		case i := <-t.recv:
-			t.Items = append(t.Items, i)
-			if i.Type == eof {
-				close(t.recv)
-			}
-		default:
-			if t.parseFn != nil {
-				t.parseFn = t.parseFn(t)
-			}
-			return
-		}
-	}
-
 }
 
 // Node is a generic tree data structure unit. It is presented as a bidirectional
@@ -114,7 +103,8 @@ type Node[T comparable, V any] struct {
 	Type   T
 	Value  []V
 	Edges  map[T][]*Node[T, V]
-	id     int
+
+	id int
 }
 
 // Store places the current node in the input BackupSlot `slot`, in the parse.Tree
@@ -125,7 +115,7 @@ func (t *Tree[T, V]) Store(slot BackupSlot) error {
 	var id int = -1
 
 	// try current
-	if n := t.Nodes[t.Pos]; n == nil {
+	if n := t.Nodes[t.pos]; n == nil {
 		// try root on idx zero
 		if n := t.Nodes[0]; n != nil {
 			id = n.id
@@ -166,18 +156,18 @@ func (t *Tree[T, V]) Jump(slot BackupSlot) (bool, error) {
 	if n == nil {
 		return false, fmt.Errorf("failed to load node with ID %d: %w", id, ErrNotFound)
 	}
-	t.Pos = id
+	t.pos = id
 	return true, nil
 }
 
 // Cur returns the node at the current position in the tree
 func (t *Tree[T, V]) Cur() *Node[T, V] {
-	return t.Nodes[t.Pos]
+	return t.Nodes[t.pos]
 }
 
 // Parent returns the node that is parent to the one at the current position in the tree
 func (t *Tree[T, V]) Parent() *Node[T, V] {
-	n := t.Nodes[t.Pos]
+	n := t.Nodes[t.pos]
 	if n == nil {
 		return nil
 	}
@@ -187,7 +177,7 @@ func (t *Tree[T, V]) Parent() *Node[T, V] {
 // Listt returns the child nodes for the one at the current position in the tree, identified by
 // link token T `link`
 func (t *Tree[T, V]) List(link T) []*Node[T, V] {
-	n := t.Nodes[t.Pos]
+	n := t.Nodes[t.pos]
 	if n == nil {
 		return nil
 	}
@@ -206,7 +196,7 @@ func (t *Tree[T, V]) Node(typ T, val ...V) int {
 		id:    t.nextID,
 	}
 	t.Nodes[n.id] = n
-	t.Pos = n.id
+	t.pos = n.id
 	t.nextID++
 	return n.id
 }
@@ -242,6 +232,26 @@ func (t *Tree[T, V]) Link(from, to int, link T) error {
 	fromNode.Edges[link] = append(fromNode.Edges[link], toNode)
 	toNode.Parent = fromNode
 	return nil
+}
+
+// run keeps receiving lex.Items and stores them in the tree (as the lexer runs), while at the same time
+// keeps processing the stored items via the configured ParseFn
+func (t *Tree[T, V]) run() {
+	var eof T
+	for {
+		select {
+		case i := <-t.recv:
+			t.Items = append(t.Items, i)
+			if i.Type == eof {
+				close(t.recv)
+			}
+		default:
+			if t.parseFn != nil {
+				t.parseFn = t.parseFn(t)
+			}
+			return
+		}
+	}
 }
 
 // get returns the node with ID `id`, or nil if it does not exist
