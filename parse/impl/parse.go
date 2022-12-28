@@ -5,11 +5,16 @@ import (
 	"github.com/zalgonoise/x/parse"
 )
 
-func TextTemplateParser[T TextToken, V rune]() (*parse.Tree[T, V], chan lex.Item[T, V]) {
-	return parse.New(initParse[T, V], (T)(TokenRoot))
+func TextTemplateParser[C TextToken, T rune](l lex.Lexer[C, T, lex.Item[C, T]]) *parse.Tree[C, T] {
+	return parse.New(l, initParse[C, T], (C)(TokenRoot))
 }
 
-func initParse[T TextToken, V rune](t *parse.Tree[T, V]) parse.ParseFn[T, V] {
+func initParse[C TextToken, T rune](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
 
 	return nil
+}
+
+func processFn[C TextToken, T rune, R string](t *parse.Tree[C, T]) R {
+
+	return ""
 }

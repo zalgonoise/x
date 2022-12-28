@@ -2,9 +2,7 @@ package parse
 
 import (
 	"errors"
-	"fmt"
 
-	"github.com/zalgonoise/cur"
 	"github.com/zalgonoise/lex"
 )
 
@@ -37,16 +35,17 @@ var (
 //
 // A Tree exposes methods of accessing the root and the current node, as well as
 // the current `ParseFn` analyzing the incoming items
-type Tree[T comparable, V any] struct {
-	Nodes  map[int]*Node[T, V]
-	Cursor cur.Cursor[lex.Item[T, V]]
+type Tree[C comparable, T any] struct {
+	Nodes map[int]*Node[C, T]
 
-	items   *[]lex.Item[T, V]
+	items   []lex.Item[C, T]
+	lex     lex.Lexer[C, T, lex.Item[C, T]]
+	peek    int
 	pos     int
 	nextID  int
-	recv    chan lex.Item[T, V]
+	recv    chan lex.Item[C, T]
 	backup  map[BackupSlot]int
-	parseFn ParseFn[T, V]
+	parseFn ParseFn[C, T]
 }
 
 // New creates a parse.Tree with the input ParseFn `initParse`, initialized with a root node with type T `typ` and
@@ -73,183 +72,67 @@ type Tree[T comparable, V any] struct {
 //		   rcv <- l.NextItem()
 //	  }
 //	}
-func New[T comparable, V any](initParse ParseFn[T, V], typ T, values ...V) (*Tree[T, V], chan lex.Item[T, V]) {
-	items := &[]lex.Item[T, V]{}
-	t := &Tree[T, V]{
-		pos:    0,
-		Nodes:  map[int]*Node[T, V]{},
-		Cursor: cur.Ptr(items),
+func New[C comparable, T any](
+	l lex.Lexer[C, T, lex.Item[C, T]],
+	initParse ParseFn[C, T],
+	typ C,
+	values ...T,
+) *Tree[C, T] {
+	t := &Tree[C, T]{
+		pos:   0,
+		Nodes: map[int]*Node[C, T]{},
 
-		items:   items,
-		recv:    make(chan lex.Item[T, V]),
+		items:   make([]lex.Item[C, T], 0, 5),
+		lex:     l,
+		peek:    0,
 		backup:  map[BackupSlot]int{},
 		nextID:  0,
 		parseFn: initParse,
 	}
 	_ = t.Node(typ, values...)
-
-	go t.run()
-	return t, t.recv
+	return t
 }
 
-// Node is a generic tree data structure unit. It is presented as a bidirectional
-// tree knowledge graph that starts with a root Node (one without a parent) that
-// can have zero-to-many children.
+// Next returns the next Item
+func (t *Tree[C, T]) Next() lex.Item[C, T] {
+	if t.peek > 0 {
+		t.peek--
+	} else {
+		t.items[0] = t.lex.NextItem()
+	}
+	return t.items[t.peek]
+}
+
+// Peek returns but does not consume the next Item
+func (t *Tree[C, T]) Peek() lex.Item[C, T] {
+	if t.peek > 0 {
+		return t.items[t.peek-1]
+	}
+	t.peek = 1
+	t.items[0] = t.lex.NextItem()
+	return t.items[0]
+}
+
+// Backup backs the stream up `n` Items
 //
-// It holds a reference to its parent (so that ParseFns can return to the correct
-// point in the tree), the item's (joined) lexemes, and children nodes (if any)
-//
-// Children nodes are defined in a map identified by comparable token T that holds
-// a list of zero-to-many Nodes. This allows many approaches (such as using T for
-// a weight or an index), but mainly to serve as a relationship indicator
-type Node[T comparable, V any] struct {
-	Parent *Node[T, V]
-	Type   T
-	Value  []V
-	Edges  map[T][]*Node[T, V]
-
-	id int
+// The zeroth Item is already there. Order must be most recent -> oldest
+func (t *Tree[C, T]) Backup(items ...lex.Item[C, T]) {
+	for idx, item := range items {
+		t.items[idx+1] = item
+	}
+	t.peek = len(items)
 }
 
-// Store places the current node in the input BackupSlot `slot`, in the parse.Tree
-//
-// If the current position is invalid, the root node (index zero) will be placed instead;
-// if that fails too, an error is returned
-func (t *Tree[T, V]) Store(slot BackupSlot) error {
-	var n *Node[T, V]
-
-	if n = t.Nodes[t.pos]; n != nil {
-		t.backup[slot] = n.id
-		return nil
-	}
-	if n = t.Nodes[0]; n != nil {
-		t.backup[slot] = n.id
-		return nil
-	}
-	return fmt.Errorf("failed to load node on current position and on position zero: %w", ErrNotFound)
-}
-
-// Load returns the node stored in the input BackupSlot `slot`, or nil if either its ID is
-// invalid or if the slot is empty
-func (t *Tree[T, V]) Load(slot BackupSlot) *Node[T, V] {
-	id, ok := t.backup[slot]
-	if !ok || id < 0 {
-		return nil
-	}
-	return t.get(id)
-}
-
-// Jump sets the current position in the tree to the node ID loaded from the BackupSlot `slot`,
-// returning an OK boolean and an error in case the node does not exist
-func (t *Tree[T, V]) Jump(slot BackupSlot) (bool, error) {
-	id, ok := t.backup[slot]
-	if !ok || id < 0 {
-		return false, fmt.Errorf("failed to find any nodes in this backup slot: %w", ErrNotFound)
-	}
-	n := t.get(id)
-	if n == nil {
-		return false, fmt.Errorf("failed to load node with ID %d: %w", id, ErrNotFound)
-	}
-	t.pos = id
-	return true, nil
-}
-
-// Cur returns the node at the current position in the tree
-func (t *Tree[T, V]) Cur() *Node[T, V] {
-	return t.Nodes[t.pos]
-}
-
-// Parent returns the node that is parent to the one at the current position in the tree
-func (t *Tree[T, V]) Parent() *Node[T, V] {
-	n := t.Nodes[t.pos]
-	if n == nil {
-		return nil
-	}
-	return n.Parent
-}
-
-// Listt returns the child nodes for the one at the current position in the tree, identified by
-// link token T `link`
-func (t *Tree[T, V]) List(link T) []*Node[T, V] {
-	n := t.Nodes[t.pos]
-	if n == nil {
-		return nil
-	}
-	return n.Edges[link]
-}
-
-// Node creates a new node with type T `typ` and values V `val`, returning its ID
-//
-// This action updates the tree's position the the new node's ID, and increments the
-// tree's `nextID` reference number
-func (t *Tree[T, V]) Node(typ T, val ...V) int {
-	n := &Node[T, V]{
-		Type:  typ,
-		Value: val,
-		Edges: map[T][]*Node[T, V]{},
-		id:    t.nextID,
-	}
-	t.Nodes[n.id] = n
-	t.pos = n.id
-	t.nextID++
-	return n.id
-}
-
-// Link creates an edge between two nodes, identified by link token T `link`
-//
-// It returns an error if either node does not exist; or if the action tries to introduce
-// a cyclical edge in the graph
-func (t *Tree[T, V]) Link(from, to int, link T) error {
-	var (
-		fromNode *Node[T, V]
-		toNode   *Node[T, V]
-	)
-	if fromNode = t.get(from); fromNode == nil {
-		return fmt.Errorf("failed to get from-node: %w", ErrNotFound)
-	}
-	if toNode = t.get(to); toNode == nil {
-		return fmt.Errorf("failed to get to-node: %w", ErrNotFound)
-	}
-	for p := fromNode.Parent; p != nil; {
-		if p.id == to {
-			return ErrCyclicalEdge
-		}
-	}
-
-	fromEdges := fromNode.Edges[link]
-	for _, e := range fromEdges {
-		if e.id == to {
-			// no action required; already is an edge
-			return nil
-		}
-	}
-	fromNode.Edges[link] = append(fromNode.Edges[link], toNode)
-	toNode.Parent = fromNode
-	return nil
-}
-
-// run keeps receiving lex.Items and stores them in the tree (as the lexer runs), while at the same time
-// keeps processing the stored items via the configured ParseFn
-func (t *Tree[T, V]) run() {
-	var eof T
-	for {
-		select {
-		case i := <-t.recv:
-			*t.items = append(*t.items, i)
-			if i.Type == eof {
-				close(t.recv)
-			}
-		default:
-			if t.parseFn != nil {
-				t.parseFn = t.parseFn(t)
-			}
-			return
-		}
+// Parse iterates through the incoming lex Items, by calling its `ParseFn`s, until all tokens
+// and actions are completed
+func (t *Tree[C, T]) Parse() {
+	for t.parseFn != nil {
+		t.parseFn = t.parseFn(t)
 	}
 }
 
 // get returns the node with ID `id`, or nil if it does not exist
-func (t *Tree[T, V]) get(id int) *Node[T, V] {
+func (t *Tree[C, T]) get(id int) *Node[C, T] {
 	if n, ok := t.Nodes[id]; ok {
 		return n
 	}
@@ -262,9 +145,9 @@ func (t *Tree[T, V]) get(id int) *Node[T, V] {
 // The ParseFn will return another ParseFn that will keep processing the items; which
 // could be done in a number of ways (switch statements, helper functions, etc). When
 // `nil` is returned, the parser will stop processing lex items
-type ParseFn[T comparable, V any] func(t *Tree[T, V]) ParseFn[T, V]
+type ParseFn[C comparable, T any] func(t *Tree[C, T]) ParseFn[C, T]
 
 // ProcessFn is a function that can be executed after parsing all the items, and will
 // return a known-good type for the developer to work on. This is a step taken after a
 // Tree is built
-type ProcessFn[T comparable, V any, R any] func(t *Tree[T, V]) R
+type ProcessFn[C comparable, T any, R any] func(t *Tree[C, T]) R

@@ -1,9 +1,6 @@
 package impl
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/zalgonoise/lex"
 )
 
@@ -106,16 +103,19 @@ func TextTemplateLexer[C TextToken, T rune, I lex.Item[C, T]](input []T) lex.Lex
 // Run takes in a string `s`, processes it for templates, and returns the processed string and an error
 func Run(s string) (string, error) {
 	l := TextTemplateLexer([]rune(s))
-	var sb = new(strings.Builder)
-	for {
-		i := l.NextItem()
-		sb.WriteString(toTemplateItem(i).String())
+	p := TextTemplateParser(l)
+	p.Parse()
+	return processFn(p), nil
+	// var sb = new(strings.Builder)
+	// for {
+	// 	i := l.NextItem()
+	// 	sb.WriteString(toTemplateItem(i).String())
 
-		switch i.Type {
-		case 0:
-			return sb.String(), nil
-		case TokenError:
-			return sb.String(), fmt.Errorf("failed to parse token")
-		}
-	}
+	// 	switch i.Type {
+	// 	case 0:
+	// 		return sb.String(), nil
+	// 	case TokenError:
+	// 		return sb.String(), fmt.Errorf("failed to parse token")
+	// 	}
+	// }
 }
