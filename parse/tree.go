@@ -4,7 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zalgonoise/x/lex"
+	"github.com/zalgonoise/cur"
+	"github.com/zalgonoise/lex"
 )
 
 var (
@@ -37,9 +38,10 @@ var (
 // A Tree exposes methods of accessing the root and the current node, as well as
 // the current `ParseFn` analyzing the incoming items
 type Tree[T comparable, V any] struct {
-	Nodes map[int]*Node[T, V]
-	Items []lex.Item[T, V]
+	Nodes  map[int]*Node[T, V]
+	Cursor cur.Cursor[lex.Item[T, V]]
 
+	items   *[]lex.Item[T, V]
 	pos     int
 	nextID  int
 	recv    chan lex.Item[T, V]
@@ -72,11 +74,13 @@ type Tree[T comparable, V any] struct {
 //	  }
 //	}
 func New[T comparable, V any](initParse ParseFn[T, V], typ T, values ...V) (*Tree[T, V], chan lex.Item[T, V]) {
+	items := &[]lex.Item[T, V]{}
 	t := &Tree[T, V]{
-		pos:   0,
-		Nodes: map[int]*Node[T, V]{},
-		Items: []lex.Item[T, V]{},
+		pos:    0,
+		Nodes:  map[int]*Node[T, V]{},
+		Cursor: cur.Ptr(items),
 
+		items:   items,
 		recv:    make(chan lex.Item[T, V]),
 		backup:  map[BackupSlot]int{},
 		nextID:  0,
@@ -112,27 +116,17 @@ type Node[T comparable, V any] struct {
 // If the current position is invalid, the root node (index zero) will be placed instead;
 // if that fails too, an error is returned
 func (t *Tree[T, V]) Store(slot BackupSlot) error {
-	var id int = -1
+	var n *Node[T, V]
 
-	// try current
-	if n := t.Nodes[t.pos]; n == nil {
-		// try root on idx zero
-		if n := t.Nodes[0]; n != nil {
-			id = n.id
-		}
-		// failed to find a node, exit with error
-		return fmt.Errorf("failed to load node on current position and on position zero: %w", ErrNotFound)
-	} else {
-		id = n.id
+	if n = t.Nodes[t.pos]; n != nil {
+		t.backup[slot] = n.id
+		return nil
 	}
-
-	if id < 0 {
-		// id was not changed; but no error was returned earlier
-		// exit with invalid ID
-		return fmt.Errorf("ID cannot be below zero: got %d -- %w", id, ErrInvalidID)
+	if n = t.Nodes[0]; n != nil {
+		t.backup[slot] = n.id
+		return nil
 	}
-	t.backup[slot] = id
-	return nil
+	return fmt.Errorf("failed to load node on current position and on position zero: %w", ErrNotFound)
 }
 
 // Load returns the node stored in the input BackupSlot `slot`, or nil if either its ID is
@@ -241,7 +235,7 @@ func (t *Tree[T, V]) run() {
 	for {
 		select {
 		case i := <-t.recv:
-			t.Items = append(t.Items, i)
+			*t.items = append(*t.items, i)
 			if i.Type == eof {
 				close(t.recv)
 			}
