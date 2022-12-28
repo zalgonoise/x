@@ -1,4 +1,8 @@
 github.com/zalgonoise/cur v0.0.0-20221219165328-e2c5939e583c h1:nUJ6aGWmH3raye2NgAc+0/5LZ/g69ta8HSqM3M9zRVs=
 github.com/zalgonoise/cur v0.0.0-20221219165328-e2c5939e583c/go.mod h1:nCikzsmXk+xXZS7tk0Q4wA6H5rYMqopV8C5dM0DuUeE=
-github.com/zalgonoise/x/lex v0.0.0-20221226005018-ec2ddacc23fa h1:V6st4sIBrKhY3ceZjcEl0JPUUcl4Sx1Mi3lYuXgpq3I=
-github.com/zalgonoise/x/lex v0.0.0-20221226005018-ec2ddacc23fa/go.mod h1:eI6hDmEBql8DTvdgX+CtGtxbRaf69zY2+zmHwlGuAgo=
+github.com/zalgonoise/cur v0.0.0-20221228005650-2e18e152d194 h1:JZAQCJiBFvBCcmLrC37Rgzk5v+aS5Y5OcLfVqhb1DZQ=
+github.com/zalgonoise/cur v0.0.0-20221228005650-2e18e152d194/go.mod h1:nCikzsmXk+xXZS7tk0Q4wA6H5rYMqopV8C5dM0DuUeE=
+github.com/zalgonoise/cur v0.0.0-20221228011751-cdba7832420f h1:E8Jhx3jt20u6OZ9CNgoz/h1OfuxinQDashwlA0/yxOk=
+github.com/zalgonoise/cur v0.0.0-20221228011751-cdba7832420f/go.mod h1:nCikzsmXk+xXZS7tk0Q4wA6H5rYMqopV8C5dM0DuUeE=
+github.com/zalgonoise/lex v0.0.0-20221226234729-2fbe49e71a2f h1:DUw++/fiWQ+tYhnR8/HIW5lgKMBQlh8JQSEHlHNCJes=
+github.com/zalgonoise/lex v0.0.0-20221226234729-2fbe49e71a2f/go.mod h1:94cLz5MAPMpz3TQSm7QpqFOAg91pmhsyQWN1SXvEkBg=
