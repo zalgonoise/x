@@ -6,7 +6,7 @@ func TestRun(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		wants := `string with >>template<< in it even >> in >>twice<< out << in a row.`
 		input := `string with {template} in it even { in {twice} out } in a row.`
-		out, err := Run(input)
+		out, err := Run([]rune(input))
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -15,18 +15,18 @@ func TestRun(t *testing.T) {
 		}
 	})
 	t.Run("errored", func(t *testing.T) {
-		wants := "parse error on line: 12"
-		input := `string with {template in it
-	`
+		wants := "string with "
+		wantsErr := "parse error on line: 12"
+		input := `string with {template in it`
 
-		out, err := Run(input)
+		out, err := Run([]rune(input))
 		if err == nil {
 			t.Errorf("expected error not to be nil")
 		}
-		if wants != err.Error() {
-			t.Errorf("unexpected output error: wanted %s ; got %s", wants, err.Error())
+		if wantsErr != err.Error() {
+			t.Errorf("unexpected output error: wanted %s ; got %s", wantsErr, err.Error())
 		}
-		if out != "" {
+		if wants != out {
 			t.Errorf("unexpected output error: wanted %s ; got %s", wants, out)
 		}
 	})
