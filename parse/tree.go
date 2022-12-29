@@ -34,18 +34,26 @@ var (
 // Tree is a generic tree data structure to represent a lexical tree
 //
 // The Tree will buffer tokens of type T from a Lexer, identified by the same
-// type of comparable tokens. Ideally, the parser will use diffent tokens when
-// classifying an item in the tree -- however the type should be the same
+// type of comparable tokens. The parser runs in tandem with a lexer -- as the
+// parser advances to the next token, it is actually consuming a token from the lexer
+// by calling its `lexer.NextItem()` method.
 //
-// A Tree exposes methods of accessing the root and the current node, as well as
-// the current `ParseFn` analyzing the incoming items
+// A Tree exposes methods for creating and moving around Nodes, and to consume, buffer and
+// backup lex Items as it converts them into nodes in the Tree.
+//
+// A Tree will store every node it contains, identified by a unique int ID. To navigate through
+// the nodes in a Tree, the Tree stores (and exports) a Root element, pointing to the Root node.
+//
+// The Root node contains all top-level items, which may or may not have edges themselves.
+// It is the responsibility of the caller to ensure that the Tree is navigated through entirely,
+// when processing it.
 type Tree[C comparable, T any] struct {
 	Root   *Node[C, T]
 	nodes  []*Node[C, T]
 	parent *Node[C, T]
 
 	items   []lex.Item[C, T]
-	lex     lex.Lexer[C, T, lex.Item[C, T]]
+	lex     lex.Lexer[C, T]
 	peek    int
 	pos     int
 	nextID  int
@@ -53,32 +61,10 @@ type Tree[C comparable, T any] struct {
 	parseFn ParseFn[C, T]
 }
 
-// New creates a parse.Tree with the input ParseFn `initParse`, initialized with a root node with type T `typ` and
-// values V `values`.
-//
-// It returns the parse.Tree and a channel of lex.Item to receive tokens from a lexer. e.g.:
-//
-//	func Run(s string) (string, error) {
-//	  l := lex.New(initFn, []rune(s))
-//	  p, rcv := parse.New(initParse, mytoken.TreeRoot)
-//	  for {
-//		   i := l.NextItem()
-//	    switch i.Type { (...) } // check for errors or EOF
-//	    rcv <- i
-//	  }
-//	}
-//
-// ...or, if you're feeling wild:
-//
-//	func Run(s string) (string, error) {
-//	  l := lex.New(initFn, []rune(s))
-//	  p, rcv := parse.New(initParse, mytoken.TreeRoot)
-//	  for {
-//		   rcv <- l.NextItem()
-//	  }
-//	}
+// New creates a parse.Tree with the input lex.Lexer `l` and ParseFn `initParse`,
+// initialized with a root node with type T `typ` and values V `values`, on position `-1`.
 func New[C comparable, T any](
-	l lex.Lexer[C, T, lex.Item[C, T]],
+	l lex.Lexer[C, T],
 	initParse ParseFn[C, T],
 	typ C,
 	values ...T,
@@ -95,11 +81,11 @@ func New[C comparable, T any](
 		nextID:  0,
 		parseFn: initParse,
 	}
-	t.Root = t.Node(0, typ, values...)
+	t.Root = t.Node(lex.NewItem(-1, typ, values...))
 	return t
 }
 
-// Next returns the next Item
+// Next consumes and returns the next Item from the lexer
 func (t *Tree[C, T]) Next() lex.Item[C, T] {
 	if t.peek > 0 {
 		t.peek--
@@ -109,7 +95,7 @@ func (t *Tree[C, T]) Next() lex.Item[C, T] {
 	return t.items[t.peek]
 }
 
-// Peek returns but does not consume the next Item
+// Peek returns but does not consume the next Item from the lexer
 func (t *Tree[C, T]) Peek() lex.Item[C, T] {
 	if t.peek > 0 {
 		return t.items[t.peek-1]
@@ -134,26 +120,9 @@ func (t *Tree[C, T]) Backup(items ...lex.Item[C, T]) {
 }
 
 // Parse iterates through the incoming lex Items, by calling its `ParseFn`s, until all tokens
-// and actions are completed
+// are consumed and parsed into the Tree
 func (t *Tree[C, T]) Parse() {
 	for t.parseFn != nil {
 		t.parseFn = t.parseFn(t)
 	}
 }
-
-// ParseFn is similar to the Lexer's StateFn, as a recursive function that the Parser
-// will keep calling during runtime until it runs out of items received from the Lexer
-//
-// The ParseFn will return another ParseFn that will keep processing the items; which
-// could be done in a number of ways (switch statements, helper functions, etc). When
-// `nil` is returned, the parser will stop processing lex items
-type ParseFn[C comparable, T any] func(t *Tree[C, T]) ParseFn[C, T]
-
-// ProcessFn is a function that can be executed after parsing all the items, and will
-// return a known-good type for the developer to work on. This is a step taken after a
-// Tree is built
-type ProcessFn[C comparable, T any, R any] func(t *Tree[C, T]) (R, error)
-
-// NodeFn is a function that can be executed against a single node, when processing the
-// parse.Tree
-type NodeFn[C comparable, T any, R any] func(n *Node[C, T]) (R, error)
