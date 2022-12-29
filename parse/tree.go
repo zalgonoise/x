@@ -152,4 +152,8 @@ type ParseFn[C comparable, T any] func(t *Tree[C, T]) ParseFn[C, T]
 // ProcessFn is a function that can be executed after parsing all the items, and will
 // return a known-good type for the developer to work on. This is a step taken after a
 // Tree is built
-type ProcessFn[C comparable, T any, R any] func(n *Node[C, T]) R
+type ProcessFn[C comparable, T any, R any] func(t *Tree[C, T]) (R, error)
+
+// NodeFn is a function that can be executed against a single node, when processing the
+// parse.Tree
+type NodeFn[C comparable, T any, R any] func(n *Node[C, T]) (R, error)
