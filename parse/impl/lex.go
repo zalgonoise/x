@@ -105,7 +105,7 @@ func Run(s string) (string, error) {
 	l := TextTemplateLexer([]rune(s))
 	p := TextTemplateParser(l)
 	p.Parse()
-	return processFn(p), nil
+	return processFn(p)
 	// var sb = new(strings.Builder)
 	// for {
 	// 	i := l.NextItem()

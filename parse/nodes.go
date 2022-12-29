@@ -13,10 +13,12 @@ import "fmt"
 // a list of zero-to-many Nodes. This allows many approaches (such as using T for
 // a weight or an index), but mainly to serve as a relationship indicator
 type Node[C comparable, T any] struct {
-	Parent *Node[C, T]
-	Type   C
-	Value  []T
-	Edges  map[C][]*Node[C, T]
+	Parent  *Node[C, T]
+	Pos     int
+	Type    C
+	Value   []T
+	Edges   []*Node[C, T]
+	Weights map[*Node[C, T]]C
 
 	id int
 }
@@ -25,50 +27,26 @@ type Node[C comparable, T any] struct {
 //
 // This action updates the tree's position the the new node's ID, and increments the
 // tree's `nextID` reference number
-func (t *Tree[C, T]) Node(typ C, val ...T) int {
-	n := &Node[C, T]{
-		Type:  typ,
-		Value: val,
-		Edges: map[C][]*Node[C, T]{},
-		id:    t.nextID,
+func (t *Tree[C, T]) Node(pos int, typ C, val ...T) *Node[C, T] {
+	var p *Node[C, T] = nil
+	if len(t.nodes) > 0 {
+		p = t.nodes[t.pos]
 	}
-	t.Nodes[n.id] = n
+	n := &Node[C, T]{
+		Pos:     pos,
+		Type:    typ,
+		Parent:  p,
+		Value:   val,
+		Edges:   []*Node[C, T]{},
+		Weights: map[*Node[C, T]]C{},
+		id:      t.nextID,
+	}
+	t.nodes = append(t.nodes, n)
+	t.nodes[t.pos].Edges = append(t.nodes[t.pos].Edges, n)
+	t.nodes[t.pos].Weights[n] = typ
 	t.pos = n.id
 	t.nextID++
-	return n.id
-}
-
-// Link creates an edge between two nodes, identified by link token T `link`
-//
-// It returns an error if either node does not exist; or if the action tries to introduce
-// a cyclical edge in the graph
-func (t *Tree[C, T]) Link(from, to int, link C) error {
-	var (
-		fromNode *Node[C, T]
-		toNode   *Node[C, T]
-	)
-	if fromNode = t.get(from); fromNode == nil {
-		return fmt.Errorf("failed to get from-node: %w", ErrNotFound)
-	}
-	if toNode = t.get(to); toNode == nil {
-		return fmt.Errorf("failed to get to-node: %w", ErrNotFound)
-	}
-	for p := fromNode.Parent; p != nil; {
-		if p.id == to {
-			return ErrCyclicalEdge
-		}
-	}
-
-	fromEdges := fromNode.Edges[link]
-	for _, e := range fromEdges {
-		if e.id == to {
-			// no action required; already is an edge
-			return nil
-		}
-	}
-	fromNode.Edges[link] = append(fromNode.Edges[link], toNode)
-	toNode.Parent = fromNode
-	return nil
+	return n
 }
 
 // Store places the current node in the input BackupSlot `slot`, in the parse.Tree
@@ -78,11 +56,11 @@ func (t *Tree[C, T]) Link(from, to int, link C) error {
 func (t *Tree[C, T]) Store(slot BackupSlot) error {
 	var n *Node[C, T]
 
-	if n = t.Nodes[t.pos]; n != nil {
+	if n = t.nodes[t.pos]; n != nil {
 		t.backup[slot] = n.id
 		return nil
 	}
-	if n = t.Nodes[0]; n != nil {
+	if n = t.nodes[0]; n != nil {
 		t.backup[slot] = n.id
 		return nil
 	}
@@ -114,26 +92,47 @@ func (t *Tree[C, T]) Jump(slot BackupSlot) (bool, error) {
 	return true, nil
 }
 
+// Set places the input node's position as the current one in the Tree
+func (t *Tree[C, T]) Set(n *Node[C, T]) error {
+	if !t.exists(n) {
+		return ErrNotFound
+	}
+	t.pos = n.id
+	return nil
+}
+
+func (t *Tree[C, T]) List() []*Node[C, T] {
+	return t.Root.Edges
+}
+
 // Cur returns the node at the current position in the tree
 func (t *Tree[C, T]) Cur() *Node[C, T] {
-	return t.Nodes[t.pos]
+	if t.pos >= len(t.nodes) {
+		return nil
+	}
+	return t.nodes[t.pos]
 }
 
 // Parent returns the node that is parent to the one at the current position in the tree
 func (t *Tree[C, T]) Parent() *Node[C, T] {
-	n := t.Nodes[t.pos]
+	if t.pos >= len(t.nodes) {
+		return nil
+	}
+	n := t.nodes[t.pos]
 	if n == nil {
 		return nil
 	}
 	return n.Parent
 }
 
-// Listt returns the child nodes for the one at the current position in the tree, identified by
-// link token T `link`
-func (t *Tree[C, T]) List(link C) []*Node[C, T] {
-	n := t.Nodes[t.pos]
-	if n == nil {
+// get returns the node with ID `id`, or nil if it does not exist
+func (t *Tree[C, T]) get(id int) *Node[C, T] {
+	if id < 0 || id >= len(t.nodes) {
 		return nil
 	}
-	return n.Edges[link]
+	return t.nodes[id]
+}
+
+func (t *Tree[C, T]) exists(n *Node[C, T]) bool {
+	return n != nil && n.id >= 0 && n.id <= len(t.nodes)-1
 }

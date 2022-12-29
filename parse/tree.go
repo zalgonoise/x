@@ -6,6 +6,10 @@ import (
 	"github.com/zalgonoise/lex"
 )
 
+const (
+	maxBackup = 5
+)
+
 var (
 	// ErrInvalidID is a preset error for invalid node IDs
 	ErrInvalidID = errors.New("invalid node ID")
@@ -36,14 +40,15 @@ var (
 // A Tree exposes methods of accessing the root and the current node, as well as
 // the current `ParseFn` analyzing the incoming items
 type Tree[C comparable, T any] struct {
-	Nodes map[int]*Node[C, T]
+	Root   *Node[C, T]
+	nodes  []*Node[C, T]
+	parent *Node[C, T]
 
 	items   []lex.Item[C, T]
 	lex     lex.Lexer[C, T, lex.Item[C, T]]
 	peek    int
 	pos     int
 	nextID  int
-	recv    chan lex.Item[C, T]
 	backup  map[BackupSlot]int
 	parseFn ParseFn[C, T]
 }
@@ -79,17 +84,18 @@ func New[C comparable, T any](
 	values ...T,
 ) *Tree[C, T] {
 	t := &Tree[C, T]{
-		pos:   0,
-		Nodes: map[int]*Node[C, T]{},
+		pos:    0,
+		nodes:  []*Node[C, T]{},
+		parent: nil,
 
-		items:   make([]lex.Item[C, T], 0, 5),
+		items:   make([]lex.Item[C, T], maxBackup, maxBackup),
 		lex:     l,
 		peek:    0,
 		backup:  map[BackupSlot]int{},
 		nextID:  0,
 		parseFn: initParse,
 	}
-	_ = t.Node(typ, values...)
+	t.Root = t.Node(0, typ, values...)
 	return t
 }
 
@@ -109,6 +115,7 @@ func (t *Tree[C, T]) Peek() lex.Item[C, T] {
 		return t.items[t.peek-1]
 	}
 	t.peek = 1
+
 	t.items[0] = t.lex.NextItem()
 	return t.items[0]
 }
@@ -118,6 +125,9 @@ func (t *Tree[C, T]) Peek() lex.Item[C, T] {
 // The zeroth Item is already there. Order must be most recent -> oldest
 func (t *Tree[C, T]) Backup(items ...lex.Item[C, T]) {
 	for idx, item := range items {
+		if idx+1 >= maxBackup {
+			break
+		}
 		t.items[idx+1] = item
 	}
 	t.peek = len(items)
@@ -131,14 +141,6 @@ func (t *Tree[C, T]) Parse() {
 	}
 }
 
-// get returns the node with ID `id`, or nil if it does not exist
-func (t *Tree[C, T]) get(id int) *Node[C, T] {
-	if n, ok := t.Nodes[id]; ok {
-		return n
-	}
-	return nil
-}
-
 // ParseFn is similar to the Lexer's StateFn, as a recursive function that the Parser
 // will keep calling during runtime until it runs out of items received from the Lexer
 //
@@ -150,4 +152,4 @@ type ParseFn[C comparable, T any] func(t *Tree[C, T]) ParseFn[C, T]
 // ProcessFn is a function that can be executed after parsing all the items, and will
 // return a known-good type for the developer to work on. This is a step taken after a
 // Tree is built
-type ProcessFn[C comparable, T any, R any] func(t *Tree[C, T]) R
+type ProcessFn[C comparable, T any, R any] func(n *Node[C, T]) R

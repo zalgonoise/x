@@ -14,17 +14,20 @@ func TestRun(t *testing.T) {
 			t.Errorf("unexpected output error: wanted %s ; got %s", wants, out)
 		}
 	})
-	// t.Run("errored", func(t *testing.T) {
-	// 	wants := "string with [error on line: 12]"
-	// 	input := `string with {template in it
-	// `
+	t.Run("errored", func(t *testing.T) {
+		wants := "parse error on line: 12"
+		input := `string with {template in it
+	`
 
-	// 	out, err := Run(input)
-	// 	if err == nil {
-	// 		t.Errorf("expected error not to be nil")
-	// 	}
-	// 	if wants != out {
-	// 		t.Errorf("unexpected output error: wanted %s ; got %s", wants, out)
-	// 	}
-	// })
+		out, err := Run(input)
+		if err == nil {
+			t.Errorf("expected error not to be nil")
+		}
+		if wants != err.Error() {
+			t.Errorf("unexpected output error: wanted %s ; got %s", wants, err.Error())
+		}
+		if out != "" {
+			t.Errorf("unexpected output error: wanted %s ; got %s", wants, out)
+		}
+	})
 }

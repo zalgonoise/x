@@ -13,13 +13,13 @@ const (
 	TokenEOF TextToken = iota
 	TokenError
 	TokenIDENT
-	TokenTEMPL
 	TokenLBRACE
 	TokenRBRACE
 
 	TokenRoot
 	TokenText
-	Token
+	TokenTemplate
+	TokenTemplateEnd
 )
 
 // TemplateItem represents the lex.Item for a runes lexer based on TextToken identifiers
