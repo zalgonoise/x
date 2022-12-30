@@ -1,8 +1,6 @@
 package parse
 
 import (
-	"fmt"
-
 	"github.com/zalgonoise/lex"
 )
 
@@ -20,8 +18,6 @@ type Node[C comparable, T any] struct {
 	lex.Item[C, T]
 	Parent *Node[C, T]
 	Edges  []*Node[C, T]
-
-	id int
 }
 
 // Node creates a new node from the input Item `item`, returning the created Node
@@ -35,20 +31,15 @@ type Node[C comparable, T any] struct {
 // Note: since creating a Node nests it under the previous Node, it is the responsibility
 // of the caller to move back to the parent if that is the intention
 func (t *Tree[C, T]) Node(item lex.Item[C, T]) *Node[C, T] {
-	var p *Node[C, T] = nil
-	if len(t.nodes) > 0 {
-		p = t.nodes[t.pos]
-	}
 	n := &Node[C, T]{
 		Item:   item,
-		Parent: p,
+		Parent: t.node,
 		Edges:  []*Node[C, T]{},
-		id:     t.nextID,
 	}
-	t.nodes = append(t.nodes, n)
-	t.nodes[t.pos].Edges = append(t.nodes[t.pos].Edges, n)
-	t.pos = n.id
-	t.nextID++
+	if t.node != nil {
+		t.node.Edges = append(t.node.Edges, n)
+	}
+	t.node = n
 	return n
 }
 
@@ -56,31 +47,18 @@ func (t *Tree[C, T]) Node(item lex.Item[C, T]) *Node[C, T] {
 //
 // If the current position is invalid, the root node (index zero) will be placed instead;
 // if that fails too, an error is returned
-func (t *Tree[C, T]) Store(slot BackupSlot) error {
-	var n *Node[C, T]
-
-	if n = t.nodes[t.pos]; n != nil {
-		t.backup[slot] = n.id
-		return nil
-	}
-	if n = t.nodes[0]; n != nil {
-		t.backup[slot] = n.id
-		return nil
-	}
-	return fmt.Errorf("failed to load node on current position and on position zero: %w", ErrNotFound)
+func (t *Tree[C, T]) Store(slot BackupSlot) {
+	t.backup[slot] = t.node
 }
 
 // Load returns the node stored in the input BackupSlot `slot`, or nil if either its ID is
 // invalid or if the slot is empty
 //
-// If successful, this action will also clear the BackupSlot `slot`
+// If siduccessful, this action will also clear the BackupSlot `slot`
 func (t *Tree[C, T]) Load(slot BackupSlot) *Node[C, T] {
-	id, ok := t.backup[slot]
-	if !ok || id < 0 {
-		return nil
-	}
+	n := t.backup[slot]
 	delete(t.backup, slot)
-	return t.get(id)
+	return n
 }
 
 // Jump sets the current position in the tree to the node ID loaded from the BackupSlot `slot`,
@@ -88,15 +66,7 @@ func (t *Tree[C, T]) Load(slot BackupSlot) *Node[C, T] {
 //
 // If successful, this action will also clear the BackupSlot `slot`
 func (t *Tree[C, T]) Jump(slot BackupSlot) (bool, error) {
-	id, ok := t.backup[slot]
-	if !ok || id < 0 {
-		return false, fmt.Errorf("failed to find any nodes in this backup slot: %w", ErrNotFound)
-	}
-	n := t.get(id)
-	if n == nil {
-		return false, fmt.Errorf("failed to load node with ID %d: %w", id, ErrNotFound)
-	}
-	t.pos = id
+	t.node = t.backup[slot]
 	delete(t.backup, slot)
 	return true, nil
 }
@@ -106,7 +76,7 @@ func (t *Tree[C, T]) Set(n *Node[C, T]) error {
 	if !t.exists(n) {
 		return ErrNotFound
 	}
-	t.pos = n.id
+	t.node = n
 	return nil
 }
 
@@ -117,32 +87,21 @@ func (t *Tree[C, T]) List() []*Node[C, T] {
 
 // Cur returns the node at the current position in the tree
 func (t *Tree[C, T]) Cur() *Node[C, T] {
-	if t.pos >= len(t.nodes) {
-		return nil
-	}
-	return t.nodes[t.pos]
+	return t.node
 }
 
 // Parent returns the node that is parent to the one at the current position in the tree
 func (t *Tree[C, T]) Parent() *Node[C, T] {
-	if t.pos >= len(t.nodes) {
-		return nil
-	}
-	n := t.nodes[t.pos]
-	if n == nil {
-		return nil
-	}
-	return n.Parent
-}
-
-// get returns the node with ID `id`, or nil if it does not exist
-func (t *Tree[C, T]) get(id int) *Node[C, T] {
-	if id < 0 || id >= len(t.nodes) {
-		return nil
-	}
-	return t.nodes[id]
+	return t.node.Parent
 }
 
 func (t *Tree[C, T]) exists(n *Node[C, T]) bool {
-	return n != nil && n.id >= 0 && n.id <= len(t.nodes)-1
+	if n == nil {
+		return false
+	}
+	var p = n
+	for p.Parent != nil {
+		p = p.Parent
+	}
+	return p == t.Root
 }
