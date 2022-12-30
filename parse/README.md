@@ -213,6 +213,7 @@ const (
 
 After defining the type, a (set of) `StateFn`(s) need to be created, in context of the input data and how it should be tokenized. Each `StateFn` will hold the responsibility of tokenizing a certain lexeme, and each `StateFn` will have a different flow and responsibility.
 
+### Lexer and state functions
 
 > `initState` switches on the next lexable unit's value, to either emit an item or simply return a new state. This state should be able to listen to all types of (supported) symbols since this example supports so (a user could start a template in the very first char, and end it on the last one)
 >
@@ -220,7 +221,6 @@ After defining the type, a (set of) `StateFn`(s) need to be created, in context 
 > advancing to the next token in a different procedure (e.g., consider all identifier tokens
 > before going into the `stateBRACE` routine)
 
-### Lexer and state functions
 
 ```go
 // initState describes the StateFn to kick off the lexer. It is also the default fallback StateFn
