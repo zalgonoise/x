@@ -2,7 +2,7 @@ package parse
 
 import "github.com/zalgonoise/lex"
 
-// ParseFn is similar to the Lexer's StateFn, as a recursive function that the Parser
+// ParseFn is similar to the Lexer's StateFn, as a recursive function that the Tree
 // will keep calling during runtime until it runs out of items received from the Lexer
 //
 // The ParseFn will return another ParseFn that will keep processing the items; which
