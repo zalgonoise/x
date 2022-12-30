@@ -41,23 +41,20 @@ var (
 // A Tree exposes methods for creating and moving around Nodes, and to consume, buffer and
 // backup lex Items as it converts them into nodes in the Tree.
 //
-// A Tree will store every node it contains, identified by a unique int ID. To navigate through
-// the nodes in a Tree, the Tree stores (and exports) a Root element, pointing to the Root node.
+// A Tree will store every node it contains, nested within the Root node. To navigate through
+// the nodes in a Tree, the Tree stores (and exports) a Root element, pointing to this Root node.
 //
-// The Root node contains all top-level items, which may or may not have edges themselves.
-// It is the responsibility of the caller to ensure that the Tree is navigated through entirely,
-// when processing it.
+// The Root node contains all top-level items in lexical order, which may or may not have
+// edges themselves. It is the responsibility of the caller to ensure that the Tree is
+// navigated through entirely, when processing it.
 type Tree[C comparable, T any] struct {
-	Root   *Node[C, T]
-	nodes  []*Node[C, T]
-	parent *Node[C, T]
+	Root *Node[C, T]
 
+	node    *Node[C, T]
 	items   []lex.Item[C, T]
 	lex     lex.Lexer[C, T]
 	peek    int
-	pos     int
-	nextID  int
-	backup  map[BackupSlot]int
+	backup  map[BackupSlot]*Node[C, T]
 	parseFn ParseFn[C, T]
 }
 
@@ -70,18 +67,14 @@ func New[C comparable, T any](
 	values ...T,
 ) *Tree[C, T] {
 	t := &Tree[C, T]{
-		pos:    0,
-		nodes:  []*Node[C, T]{},
-		parent: nil,
-
-		items:   make([]lex.Item[C, T], maxBackup, maxBackup),
+		items:   make([]lex.Item[C, T], maxBackup),
 		lex:     l,
 		peek:    0,
-		backup:  map[BackupSlot]int{},
-		nextID:  0,
+		backup:  map[BackupSlot]*Node[C, T]{},
 		parseFn: initParse,
 	}
 	t.Root = t.Node(lex.NewItem(-1, typ, values...))
+	t.node = t.Root
 	return t
 }
 
