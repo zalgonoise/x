@@ -13,11 +13,6 @@ const (
 	TokenIDENT
 	TokenLBRACE
 	TokenRBRACE
-
-	TokenRoot
-	TokenText
-	TokenTemplate
-	TokenTemplateEnd
 )
 
 // TemplateItem represents the lex.Item for a runes lexer based on TextToken identifiers

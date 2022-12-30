@@ -1,10 +1,11 @@
 package impl
 
 import (
-	"github.com/zalgonoise/lex"
 	"github.com/zalgonoise/x/parse"
 )
 
+// initParse describes the ParseFn to kick off the parser. It is also the default fallback
+// for any other ParseFn
 func initParse[C TextToken, T rune](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
 	for t.Peek().Type != C(TokenEOF) {
 		switch t.Peek().Type {
@@ -17,24 +18,26 @@ func initParse[C TextToken, T rune](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
 	return nil
 }
 
+// parseText consumes the next item as a text token, creating a node for it under the
+// current one in the tree.
 func parseText[C TextToken, T rune](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
-	if t.Peek().Type == (C)(TokenIDENT) {
-		t.Node(t.Next())
-	}
-	t.Set(t.Parent())
+	t.Node(t.Next())
 	return initParse[C, T]
 }
 
+// parseTemplate creates a node for a template item, for which it expects both a text item edge
+// that which also needs to contain an end-template edge.
+//
+// If it encounters a `}` token to close the template, it sets the position up three levels
+// (back to the template's parent)
 func parseTemplate[C TextToken, T rune](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
 	switch t.Peek().Type {
 	case (C)(TokenLBRACE):
+		t.Set(t.Parent())
 		t.Node(t.Next())
-		return initParse[C, T]
 	case (C)(TokenRBRACE):
 		t.Node(t.Next())
-		t.Set(t.Parent().Parent)
-	case (C)(TokenEOF):
-		t.Node(lex.NewItem[C, T](t.Cur().Pos, (C)(TokenError)))
+		t.Set(t.Parent().Parent.Parent)
 	}
 	return initParse[C, T]
 }
