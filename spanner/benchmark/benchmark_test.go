@@ -32,11 +32,6 @@ func BenchmarkRuntime(b *testing.B) {
 		w.Reset()
 		span.End()
 	}
-
-	// b.StopTimer()
-	// time.Sleep(time.Millisecond * 8000)
-
-	// t.Error()
 }
 
 func TestRuntime(t *testing.T) {
