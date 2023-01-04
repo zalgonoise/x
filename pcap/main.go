@@ -62,8 +62,11 @@ func main() {
 			// use the handle as a packet source to process all packets
 			packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 			for packet := range packetSource.Packets() {
-				// process packet here
-				_, _ = w.WriteString(packet.Dump())
+				// process packet concurrently
+				go func(packet gopacket.Packet) {
+					// process packet here
+					_, _ = w.WriteString(packet.Dump())
+				}(packet)
 			}
 		}()
 	}
