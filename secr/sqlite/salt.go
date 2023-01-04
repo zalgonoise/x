@@ -1,4 +1,4 @@
-package users
+package sqlite
 
 import (
 	cryptorand "crypto/rand"
@@ -31,4 +31,8 @@ func (g *saltGenerator) NewSalt() [128]byte {
 	_, _ = g.random.Read(salt[:])
 	g.Unlock()
 	return salt
+}
+
+func NewSalt() [128]byte {
+	return saltGen.NewSalt()
 }

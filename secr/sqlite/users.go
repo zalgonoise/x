@@ -1,4 +1,4 @@
-package users
+package sqlite
 
 import (
 	"context"
@@ -36,35 +36,45 @@ type userRepository struct {
 	db *sql.DB
 }
 
-func (ur *userRepository) Create(ctx context.Context, username, password, name string) (uint64, error) {
-	if username == "" {
+func NewUserRepository(db *sql.DB) user.Repository {
+	return &userRepository{db}
+}
+
+func (ur *userRepository) Create(ctx context.Context, u *user.User) (uint64, error) {
+	if u.Username == "" {
 		return 0, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
 	}
-	if password == "" {
+	if u.Password == "" {
 		return 0, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
 	}
-	if name == "" {
+	if u.Name == "" {
 		return 0, fmt.Errorf("%w: name cannot be empty", ErrNoName)
 	}
 
-	salt := saltGen.NewSalt()
-	hashedPassword := sha256.Sum256(append([]byte(password), salt[:]...))
+	salt := NewSalt()
+	hashedPassword := sha256.Sum256(append([]byte(u.Password), salt[:]...))
+
+	u.Salt = string(salt[:])
+	u.Hash = string(hashedPassword[:])
+	u.Password = ""
+
+	dbu := newDBUser(u)
 
 	res, err := ur.db.ExecContext(ctx, `
 INSERT INTO users (username, name, hash, salt)
 VALUES (?, ?, ?, ?)
-`, username, name, hashedPassword, string(salt[:]))
+`, dbu.Username, dbu.Name, dbu.Hash, dbu.Salt)
 
 	if err != nil {
-		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, username, err)
+		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, u.Username, err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, username, err)
+		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, u.Username, err)
 	}
 	if id == 0 {
-		return 0, fmt.Errorf("%w: user was not created %s", ErrDBError, username)
+		return 0, fmt.Errorf("%w: user was not created %s", ErrDBError, u.Username)
 	}
 	return uint64(id), nil
 }
@@ -75,13 +85,13 @@ func (ur *userRepository) Update(ctx context.Context, username string, updated *
 	if updated.Name == "" {
 		return fmt.Errorf("%w: new name cannot be empty", ErrNoName)
 	}
-	u := newDBUser(updated)
+	dbu := newDBUser(updated)
 
 	res, err := ur.db.ExecContext(ctx, `
 UPDATE users
 SET name = ?
 WHERE u.username = ?
-`, u.Name, ToSQLString(username))
+`, dbu.Name, ToSQLString(username))
 
 	if err != nil {
 		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
@@ -106,7 +116,7 @@ func (ur *userRepository) Get(ctx context.Context, username string) (*user.User,
 SELECT u.id, u.username, u.name, u.hash, u.salt, u.created_at, u.updated_at
 FROM users AS u
 WHERE u.username = ?
-	`, username)
+	`, ToSQLString(username))
 
 	user, err := ur.scanUser(row)
 	if err != nil {
@@ -140,7 +150,7 @@ func (ur *userRepository) Delete(ctx context.Context, username string) error {
 	DELETE u
 	FROM users AS u
 	WHERE u.username = ?
-	`, username)
+	`, ToSQLString(username))
 
 	if err != nil {
 		return fmt.Errorf("%w: failed to delete user %s: %v", ErrDBError, username, err)
@@ -162,18 +172,18 @@ func (ur *userRepository) scanUser(r Scanner) (u *user.User, err error) {
 	}
 	dbu := new(dbUser)
 	err = r.Scan(
-		&u.ID,
-		&u.Username,
-		&u.Name,
-		&u.Hash,
-		&u.Salt,
-		&u.CreatedAt,
-		&u.UpdatedAt,
+		&dbu.ID,
+		&dbu.Username,
+		&dbu.Name,
+		&dbu.Hash,
+		&dbu.Salt,
+		&dbu.CreatedAt,
+		&dbu.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to scan DB row: %v", ErrDBError, err)
 	}
-	return toDomainEntity(dbu), nil
+	return dbu.toDomainEntity(), nil
 }
 
 func (ur *userRepository) scanUsers(rs *sql.Rows) ([]*user.User, error) {
@@ -190,7 +200,7 @@ func (ur *userRepository) scanUsers(rs *sql.Rows) ([]*user.User, error) {
 	return users, nil
 }
 
-func toDomainEntity(u *dbUser) *user.User {
+func (u *dbUser) toDomainEntity() *user.User {
 	return &user.User{
 		ID:        uint64(u.ID.Int64),
 		Username:  u.Username.String,
