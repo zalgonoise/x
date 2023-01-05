@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/zalgonoise/x/secr/crypt"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -51,7 +52,7 @@ func (ur *userRepository) Create(ctx context.Context, u *user.User) (uint64, err
 		return 0, fmt.Errorf("%w: name cannot be empty", ErrNoName)
 	}
 
-	salt := NewSalt()
+	salt := crypt.NewSalt()
 	hashedPassword := sha256.Sum256(append([]byte(u.Password), salt[:]...))
 
 	u.Salt = string(salt[:])

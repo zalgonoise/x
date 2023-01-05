@@ -9,7 +9,7 @@ import (
 	"github.com/zalgonoise/x/secr/secret"
 )
 
-var _ secret.Repository = &secretRepository{nil}
+var _ secret.Repository = &secretRepository{nil, nil}
 
 var (
 	ErrNoKey          = errors.New("no secret key provided")
@@ -26,16 +26,16 @@ type dbSecret struct {
 
 type secretRepository struct {
 	db *sql.DB
+	kv secret.Repository
 }
 
-func NewSecretRepository(db *sql.DB) secret.Repository {
-	return &secretRepository{db}
+func NewSecretRepository(db *sql.DB, kv secret.Repository) secret.Repository {
+	return &secretRepository{db, kv}
 }
 
 func newDBSecret(s *secret.Secret) *dbSecret {
 	return &dbSecret{
-		Name:  ToSQLString(s.Key),
-		Value: ToSQLString(string(s.Value)),
+		Name: ToSQLString(s.Key),
 	}
 }
 
@@ -50,24 +50,36 @@ func (sr *secretRepository) Create(ctx context.Context, username string, s *secr
 		return fmt.Errorf("%w: value cannot be empty", ErrNoValue)
 	}
 
+	// create secret in bbolt
+	err := sr.kv.Create(ctx, username, s)
+	if err != nil {
+		return err
+	}
+	rollback := func() {
+		sr.kv.Delete(ctx, username, s.Key)
+	}
+
 	dbs := newDBSecret(s)
 
 	res, err := sr.db.ExecContext(ctx, `
-INSERT INTO secrets (user_id, name, value)
+INSERT INTO secrets (user_id, name)
 VALUES (
 	(SELECT u.id FROM users AS u WHERE u.username = ?), 
 	?, ?)
 `, username, dbs.Name, dbs.Value)
 
 	if err != nil {
+		rollback()
 		return fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
+		rollback()
 		return fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
 	}
 	if id == 0 {
+		rollback()
 		return fmt.Errorf("%w: secret was not created %s", ErrDBError, s.Key)
 	}
 	return nil
@@ -81,20 +93,27 @@ func (sr *secretRepository) Get(ctx context.Context, username string, key string
 		return nil, fmt.Errorf("%w: key cannot be empty", ErrNoKey)
 	}
 
+	scr, err := sr.kv.Get(ctx, username, key)
+	if err != nil {
+		return nil, err
+	}
+
 	row := sr.db.QueryRowContext(ctx, `
-SELECT s.id, s.name, s.value, s.created_at
+SELECT s.id, s.name, s.created_at
 FROM secrets AS s
 	JOIN users AS u ON u.id = s.user_id
 WHERE u.username = ?
 	AND s.name = ?
 	`, ToSQLString(username), ToSQLString(key))
 
-	secret, err := sr.scanSecret(row)
+	s, err := sr.scanSecret(row)
 	if err != nil {
 		return nil, err
 	}
 
-	return secret, nil
+	s.Value = scr.Value
+
+	return s, nil
 
 }
 func (sr *secretRepository) List(ctx context.Context, username string) ([]*secret.Secret, error) {
@@ -102,8 +121,13 @@ func (sr *secretRepository) List(ctx context.Context, username string) ([]*secre
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
 	}
 
+	ss, err := sr.kv.List(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
 	rows, err := sr.db.QueryContext(ctx, `
-SELECT s.id, s.name, s.value, s.created_at
+SELECT s.id, s.name, s.created_at
 FROM secrets AS s
 	JOIN users AS u ON u.id = s.user_id
 WHERE u.username = ?
@@ -113,7 +137,7 @@ WHERE u.username = ?
 		return nil, fmt.Errorf("%w: failed to list secrets: %v", ErrDBError, err)
 	}
 
-	secrets, err := sr.scanSecrets(rows)
+	secrets, err := sr.scanSecrets(rows, ss)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to list secrets: %v", ErrDBError, err)
 	}
@@ -126,6 +150,19 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 	if key == "" {
 		return fmt.Errorf("%w: secret key cannot be empty", ErrNoKey)
 	}
+
+	s, err := sr.kv.Get(ctx, username, key)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrNotFoundSecret, err)
+	}
+	err = sr.kv.Delete(ctx, username, key)
+	if err != nil {
+		return err
+	}
+	rollback := func() {
+		sr.kv.Create(ctx, username, s)
+	}
+
 	res, err := sr.db.ExecContext(ctx, `
 	DELETE s
 	FROM secrets AS s
@@ -135,13 +172,16 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 	`, username)
 
 	if err != nil {
+		rollback()
 		return fmt.Errorf("%w: failed to delete secret %s: %v", ErrDBError, key, err)
 	}
 	n, err := res.RowsAffected()
 	if err != nil {
+		rollback()
 		return fmt.Errorf("%w: failed to delete secret %s: %v", ErrDBError, key, err)
 	}
 	if n == 0 {
+		rollback()
 		return fmt.Errorf("%w: secret was not deleted %s", ErrDBError, key)
 	}
 
@@ -156,7 +196,6 @@ func (sr *secretRepository) scanSecret(r Scanner) (s *secret.Secret, err error) 
 	err = r.Scan(
 		&dbs.ID,
 		&dbs.Name,
-		&dbs.Value,
 		&dbs.CreatedAt,
 	)
 	if err != nil {
@@ -165,7 +204,12 @@ func (sr *secretRepository) scanSecret(r Scanner) (s *secret.Secret, err error) 
 	return dbs.toDomainEntity(), nil
 }
 
-func (sr *secretRepository) scanSecrets(rs *sql.Rows) ([]*secret.Secret, error) {
+func (sr *secretRepository) scanSecrets(rs *sql.Rows, values []*secret.Secret) ([]*secret.Secret, error) {
+	var valueMap = map[string][]byte{}
+	for _, s := range values {
+		valueMap[s.Key] = s.Value
+	}
+
 	var secrets = []*secret.Secret{}
 
 	defer rs.Close()
@@ -174,6 +218,7 @@ func (sr *secretRepository) scanSecrets(rs *sql.Rows) ([]*secret.Secret, error) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan row: %v", err)
 		}
+		s.Value = valueMap[s.Key]
 		secrets = append(secrets, s)
 	}
 	return secrets, nil
