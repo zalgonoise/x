@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zalgonoise/x/secr/bolt"
+	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/secret"
 )
 
@@ -27,10 +27,10 @@ type dbSecret struct {
 
 type secretRepository struct {
 	db *sql.DB
-	kv secret.Repository
+	kv keys.Repository
 }
 
-func NewSecretRepository(db *sql.DB, kv *bolt.SecretRepository) secret.Repository {
+func NewSecretRepository(db *sql.DB, kv keys.Repository) secret.Repository {
 	return &secretRepository{db, kv}
 }
 
@@ -52,7 +52,7 @@ func (sr *secretRepository) Create(ctx context.Context, username string, s *secr
 	}
 
 	// create secret in bbolt
-	err := sr.kv.Create(ctx, username, s)
+	err := sr.kv.Set(ctx, username, s.Key, s.Value)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ WHERE u.username = ?
 		return nil, err
 	}
 
-	s.Value = scr.Value
+	s.Value = scr
 
 	return s, nil
 
@@ -120,11 +120,6 @@ WHERE u.username = ?
 func (sr *secretRepository) List(ctx context.Context, username string) ([]*secret.Secret, error) {
 	if username == "" {
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
-	}
-
-	ss, err := sr.kv.List(ctx, username)
-	if err != nil {
-		return nil, err
 	}
 
 	rows, err := sr.db.QueryContext(ctx, `
@@ -138,10 +133,17 @@ WHERE u.username = ?
 		return nil, fmt.Errorf("%w: failed to list secrets: %v", ErrDBError, err)
 	}
 
-	secrets, err := sr.scanSecrets(rows, ss)
+	secrets, err := sr.scanSecrets(rows)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to list secrets: %v", ErrDBError, err)
 	}
+	for _, s := range secrets {
+		s.Value, err = sr.kv.Get(ctx, username, s.Key)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return secrets, nil
 }
 func (sr *secretRepository) Delete(ctx context.Context, username string, key string) error {
@@ -161,7 +163,7 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 		return err
 	}
 	rollback := func() {
-		sr.kv.Create(ctx, username, s)
+		sr.kv.Set(ctx, username, key, s)
 	}
 
 	res, err := sr.db.ExecContext(ctx, `
@@ -205,12 +207,7 @@ func (sr *secretRepository) scanSecret(r Scanner) (s *secret.Secret, err error) 
 	return dbs.toDomainEntity(), nil
 }
 
-func (sr *secretRepository) scanSecrets(rs *sql.Rows, values []*secret.Secret) ([]*secret.Secret, error) {
-	var valueMap = map[string][]byte{}
-	for _, s := range values {
-		valueMap[s.Key] = s.Value
-	}
-
+func (sr *secretRepository) scanSecrets(rs *sql.Rows) ([]*secret.Secret, error) {
 	var secrets = []*secret.Secret{}
 
 	defer rs.Close()
@@ -219,7 +216,6 @@ func (sr *secretRepository) scanSecrets(rs *sql.Rows, values []*secret.Secret) (
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan row: %v", err)
 		}
-		s.Value = valueMap[s.Key]
 		secrets = append(secrets, s)
 	}
 	return secrets, nil
