@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/zalgonoise/x/secr/bolt"
 	"github.com/zalgonoise/x/secr/secret"
 )
 
@@ -29,7 +30,7 @@ type secretRepository struct {
 	kv secret.Repository
 }
 
-func NewSecretRepository(db *sql.DB, kv secret.Repository) secret.Repository {
+func NewSecretRepository(db *sql.DB, kv *bolt.SecretRepository) secret.Repository {
 	return &secretRepository{db, kv}
 }
 

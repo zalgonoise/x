@@ -17,10 +17,6 @@ var (
 	ErrEmptyKey      = errors.New("key cannot be empty")
 	ErrEmptyUsername = errors.New("username cannot be empty")
 	ErrEmptyBucket   = errors.New("user's secrets must be initialized with the user's unique key")
-
-	ErrEmptySecretKey   = errors.New("secret key cannot be empty")
-	ErrEmptySecretValue = errors.New("secret value cannot be empty")
-	ErrSecretUnset      = errors.New("secret is not set")
 )
 
 type userKeysRepository struct {

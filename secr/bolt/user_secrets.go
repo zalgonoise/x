@@ -2,6 +2,7 @@ package bolt
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.etcd.io/bbolt"
@@ -9,15 +10,21 @@ import (
 	"github.com/zalgonoise/x/secr/secret"
 )
 
-type secretRepository struct {
+var (
+	ErrEmptySecretKey   = errors.New("secret key cannot be empty")
+	ErrEmptySecretValue = errors.New("secret value cannot be empty")
+	ErrSecretUnset      = errors.New("secret is not set")
+)
+
+type SecretRepository struct {
 	db *bbolt.DB
 }
 
-func NewSecretStoreRepository(db *bbolt.DB) secret.Repository {
-	return &secretRepository{db}
+func NewSecretStoreRepository(db *bbolt.DB) *SecretRepository {
+	return &SecretRepository{db}
 }
 
-func (sr *secretRepository) Create(ctx context.Context, username string, s *secret.Secret) error {
+func (sr *SecretRepository) Create(ctx context.Context, username string, s *secret.Secret) error {
 	if username == "" {
 		return ErrEmptyUsername
 	}
@@ -48,7 +55,7 @@ func (sr *secretRepository) Create(ctx context.Context, username string, s *secr
 	return nil
 }
 
-func (sr *secretRepository) Get(ctx context.Context, username string, key string) (*secret.Secret, error) {
+func (sr *SecretRepository) Get(ctx context.Context, username string, key string) (*secret.Secret, error) {
 	if username == "" {
 		return nil, ErrEmptyUsername
 	}
@@ -77,7 +84,7 @@ func (sr *secretRepository) Get(ctx context.Context, username string, key string
 	return s, nil
 }
 
-func (sr *secretRepository) List(ctx context.Context, username string) ([]*secret.Secret, error) {
+func (sr *SecretRepository) List(ctx context.Context, username string) ([]*secret.Secret, error) {
 	if username == "" {
 		return nil, ErrEmptyUsername
 	}
@@ -110,7 +117,7 @@ func (sr *secretRepository) List(ctx context.Context, username string) ([]*secre
 
 	return s, nil
 }
-func (sr *secretRepository) Delete(ctx context.Context, username string, key string) error {
+func (sr *SecretRepository) Delete(ctx context.Context, username string, key string) error {
 	if username == "" {
 		return ErrEmptyUsername
 	}
