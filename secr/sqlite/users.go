@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/zalgonoise/x/secr/crypt"
+	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -21,7 +22,7 @@ var (
 	ErrNoName            = errors.New("no name provided")
 )
 
-var _ user.Repository = &userRepository{nil}
+var _ user.Repository = &userRepository{nil, nil}
 
 type dbUser struct {
 	ID        sql.NullInt64
@@ -35,10 +36,11 @@ type dbUser struct {
 
 type userRepository struct {
 	db *sql.DB
+	kv keys.Repository
 }
 
-func NewUserRepository(db *sql.DB) user.Repository {
-	return &userRepository{db}
+func NewUserRepository(db *sql.DB, k keys.Repository) user.Repository {
+	return &userRepository{db, k}
 }
 
 func (ur *userRepository) Create(ctx context.Context, u *user.User) (uint64, error) {
@@ -59,8 +61,14 @@ func (ur *userRepository) Create(ctx context.Context, u *user.User) (uint64, err
 	u.Hash = string(hashedPassword[:])
 	u.Password = ""
 
-	dbu := newDBUser(u)
+	// needs to go to service
+	key := crypt.NewKey()
+	err := ur.kv.Set(ctx, u.Username, keys.UniqueID, key[:])
+	if err != nil {
+		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, u.Username, err)
+	}
 
+	dbu := newDBUser(u)
 	res, err := ur.db.ExecContext(ctx, `
 INSERT INTO users (username, name, hash, salt)
 VALUES (?, ?, ?, ?)
@@ -145,6 +153,12 @@ FROM users AS u
 func (ur *userRepository) Delete(ctx context.Context, username string) error {
 	if username == "" {
 		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	}
+
+	// needs to go to service
+	err := ur.kv.Delete(ctx, username, keys.UniqueID)
+	if err != nil {
+		return fmt.Errorf("%w: failed to delete user %s: %v", ErrDBError, username, err)
 	}
 
 	res, err := ur.db.ExecContext(ctx, `

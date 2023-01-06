@@ -113,6 +113,7 @@ func (ukr *keysRepository) Purge(ctx context.Context, bucket string) error {
 		return ErrEmptyBucket
 	}
 	if bucket == keys.ServerID {
+		// cannot delete the server's signing keys
 		return ErrForbidden
 	}
 
