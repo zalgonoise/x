@@ -15,9 +15,6 @@ var (
 	ErrIncorrectPassword = errors.New("incorrect username or password")
 	ErrNotFoundUser      = errors.New("user not found")
 	ErrAlreadyExistsUser = errors.New("user already exists")
-	ErrNoUser            = errors.New("no user provided")
-	ErrNoPassword        = errors.New("no password provided")
-	ErrNoName            = errors.New("no name provided")
 )
 
 var _ user.Repository = &userRepository{nil, nil}
