@@ -2,11 +2,13 @@ package session
 
 import (
 	"context"
+
+	"github.com/zalgonoise/x/secr/user"
 )
 
 type Repository interface {
-	Login(ctx context.Context, username, password string) (*Session, error)
-	Logout(ctx context.Context, username string) error
-	ChangePassword(ctx context.Context, username, password, newPassword string) error
-	Refresh(ctx context.Context, username, token string) (*Session, error)
+	Login(ctx context.Context, u *user.User, password string) (*Session, error)
+	Logout(ctx context.Context, u *user.User) error
+	ChangePassword(ctx context.Context, u *user.User, password, newPassword string) error
+	Refresh(ctx context.Context, u *user.User, token string) (*Session, error)
 }

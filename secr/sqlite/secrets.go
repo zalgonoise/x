@@ -52,6 +52,7 @@ func (sr *secretRepository) Create(ctx context.Context, username string, s *secr
 	}
 
 	// create secret in bbolt
+	// will go to service when impl
 	err := sr.kv.Set(ctx, username, s.Key, s.Value)
 	if err != nil {
 		return err
@@ -94,6 +95,7 @@ func (sr *secretRepository) Get(ctx context.Context, username string, key string
 		return nil, fmt.Errorf("%w: key cannot be empty", ErrNoKey)
 	}
 
+	// will go to service when impl
 	scr, err := sr.kv.Get(ctx, username, key)
 	if err != nil {
 		return nil, err
@@ -154,6 +156,7 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 		return fmt.Errorf("%w: secret key cannot be empty", ErrNoKey)
 	}
 
+	// will go to service when impl
 	s, err := sr.kv.Get(ctx, username, key)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrNotFoundSecret, err)
