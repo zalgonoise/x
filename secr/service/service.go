@@ -32,26 +32,23 @@ type Service interface {
 }
 
 type service struct {
-	users    user.Repository
-	secrets  secret.Repository
-	keys     keys.Repository
-	sessions session.Repository
-	auth     authz.Authorizer
+	users   user.Repository
+	secrets secret.Repository
+	keys    keys.Repository
+	auth    authz.Authorizer
 }
 
 func NewService(
 	users user.Repository,
 	secrets secret.Repository,
 	keys keys.Repository,
-	sessions session.Repository,
 	auth authz.Authorizer,
 
 ) Service {
 	return service{
-		users:    users,
-		secrets:  secrets,
-		keys:     keys,
-		sessions: sessions,
-		auth:     auth,
+		users:   users,
+		secrets: secrets,
+		keys:    keys,
+		auth:    auth,
 	}
 }

@@ -62,9 +62,9 @@ func (ur *userRepository) Update(ctx context.Context, username string, updated *
 	dbu := newDBUser(updated)
 	res, err := ur.db.ExecContext(ctx, `
 UPDATE users
-SET name = ?
+SET name = ?, hash = ?
 WHERE u.username = ?
-`, dbu.Name, ToSQLString(username))
+`, dbu.Name, dbu.Hash, ToSQLString(username))
 
 	if err != nil {
 		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)

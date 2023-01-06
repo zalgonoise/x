@@ -2,11 +2,140 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"errors"
+	"fmt"
 
+	"github.com/zalgonoise/x/secr/authz"
+	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/session"
+	"github.com/zalgonoise/x/secr/user"
 )
 
-func (s service) Login(ctx context.Context, username, password string) (*session.Session, error)
-func (s service) Logout(ctx context.Context, username string) error
-func (s service) ChangePassword(ctx context.Context, username, password, newPassword string) error
-func (s service) Refresh(ctx context.Context, username, token string) (*session.Session, error)
+var (
+	ErrIncorrectPassword = errors.New("invalid username or password")
+)
+
+func (s service) login(ctx context.Context, u *user.User, password string) error {
+	// check password against its hash or as JWT
+	hashedPassword := sha256.Sum256(append([]byte(password), []byte(u.Salt)...))
+	if string(hashedPassword[:]) != u.Hash {
+		ok, err := s.auth.Validate(ctx, u, password)
+		if err != nil {
+			if errors.Is(authz.ErrExpired, err) {
+				derr := s.keys.Delete(ctx, u.Username, keys.TokenKey)
+				if derr != nil {
+					err = fmt.Errorf("%w: failed to remove old token: %v", err, derr)
+				}
+			}
+			return fmt.Errorf("failed to validate JWT: %v", err)
+		}
+		if !ok {
+			return fmt.Errorf("%w: couldn't login with username %s", ErrIncorrectPassword, u.Username)
+		}
+	}
+	return nil
+}
+
+func (s service) Login(ctx context.Context, username, password string) (*session.Session, error) {
+	if username == "" {
+		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	}
+	if password == "" {
+		return nil, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+	}
+
+	// fetch user
+	u, err := s.users.Get(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user %s: %v", username, err)
+	}
+
+	// validate credentials
+	if err := s.login(ctx, u, password); err != nil {
+		return nil, fmt.Errorf("%w: failed to validate user credentials: %v", ErrIncorrectPassword, err)
+	}
+
+	// issue token
+	token, err := s.auth.NewToken(ctx, u)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a new session token: %v", err)
+	}
+
+	err = s.keys.Set(ctx, u.Username, keys.TokenKey, []byte(token))
+	if err != nil {
+		return nil, fmt.Errorf("failed to store the new session token: %v", err)
+	}
+
+	return &session.Session{
+		User:  *u,
+		Token: token,
+	}, nil
+}
+func (s service) Logout(ctx context.Context, username string) error {
+	err := s.keys.Delete(ctx, username, keys.TokenKey)
+	if err != nil {
+		return fmt.Errorf("failed to log user out: %v", err)
+	}
+	return nil
+}
+
+func (s service) ChangePassword(ctx context.Context, username, password, newPassword string) error {
+	if username == "" {
+		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	}
+	if password == "" {
+		return fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+	}
+	if newPassword == "" {
+		return fmt.Errorf("%w: new password cannot be empty", ErrNoPassword)
+	}
+
+	// fetch user
+	u, err := s.users.Get(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to fetch user %s: %v", username, err)
+	}
+
+	if err := s.login(ctx, u, password); err != nil {
+		return fmt.Errorf("%w: failed to validate user credentials: %v", ErrIncorrectPassword, err)
+	}
+
+	hashedPassword := sha256.Sum256(append([]byte(newPassword), []byte(u.Salt)...))
+	u.Hash = string(hashedPassword[:])
+
+	err = s.users.Update(ctx, username, u)
+	if err != nil {
+		return fmt.Errorf("failed to update user %s's password: %v", username, err)
+	}
+	return nil
+}
+func (s service) Refresh(ctx context.Context, username, token string) (*session.Session, error) {
+	if username == "" {
+		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	}
+	if token == "" {
+		return nil, fmt.Errorf("%w: token cannot be empty", ErrNoPassword)
+	}
+
+	// fetch user
+	u, err := s.users.Get(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user %s: %v", username, err)
+	}
+
+	newToken, err := s.auth.Refresh(ctx, u, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to refresh token: %v", err)
+	}
+
+	err = s.keys.Set(ctx, u.Username, keys.TokenKey, []byte(newToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to store the new session token: %v", err)
+	}
+
+	return &session.Session{
+		User:  *u,
+		Token: newToken,
+	}, nil
+}

@@ -108,7 +108,7 @@ func (s service) UpdateUser(ctx context.Context, username string, updated *user.
 	if err != nil {
 		return fmt.Errorf("failed to fetch original user %s: %v", username, err)
 	}
-	if updated.Name == currentUser.Name {
+	if updated.Name == currentUser.Name && updated.Hash == currentUser.Hash {
 		// no changes to be made
 		return nil
 	}
