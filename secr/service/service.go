@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/secret"
 	"github.com/zalgonoise/x/secr/session"
@@ -35,18 +36,22 @@ type service struct {
 	secrets  secret.Repository
 	keys     keys.Repository
 	sessions session.Repository
+	auth     authz.Authorizer
 }
 
 func NewService(
-	u user.Repository,
-	s secret.Repository,
-	k keys.Repository,
-	ss session.Repository,
+	users user.Repository,
+	secrets secret.Repository,
+	keys keys.Repository,
+	sessions session.Repository,
+	auth authz.Authorizer,
+
 ) Service {
 	return service{
-		users:    u,
-		secrets:  s,
-		keys:     k,
-		sessions: ss,
+		users:    users,
+		secrets:  secrets,
+		keys:     keys,
+		sessions: sessions,
+		auth:     auth,
 	}
 }

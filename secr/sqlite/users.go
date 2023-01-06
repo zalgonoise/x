@@ -2,12 +2,10 @@ package sqlite
 
 import (
 	"context"
-	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
 
-	"github.com/zalgonoise/x/secr/crypt"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/user"
 )
@@ -44,30 +42,6 @@ func NewUserRepository(db *sql.DB, k keys.Repository) user.Repository {
 }
 
 func (ur *userRepository) Create(ctx context.Context, u *user.User) (uint64, error) {
-	if u.Username == "" {
-		return 0, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
-	}
-	if u.Password == "" {
-		return 0, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
-	}
-	if u.Name == "" {
-		return 0, fmt.Errorf("%w: name cannot be empty", ErrNoName)
-	}
-
-	salt := crypt.NewSalt()
-	hashedPassword := sha256.Sum256(append([]byte(u.Password), salt[:]...))
-
-	u.Salt = string(salt[:])
-	u.Hash = string(hashedPassword[:])
-	u.Password = ""
-
-	// needs to go to service
-	key := crypt.NewKey()
-	err := ur.kv.Set(ctx, u.Username, keys.UniqueID, key[:])
-	if err != nil {
-		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, u.Username, err)
-	}
-
 	dbu := newDBUser(u)
 	res, err := ur.db.ExecContext(ctx, `
 INSERT INTO users (username, name, hash, salt)
@@ -88,14 +62,7 @@ VALUES (?, ?, ?, ?)
 	return uint64(id), nil
 }
 func (ur *userRepository) Update(ctx context.Context, username string, updated *user.User) error {
-	if username == "" {
-		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
-	}
-	if updated.Name == "" {
-		return fmt.Errorf("%w: new name cannot be empty", ErrNoName)
-	}
 	dbu := newDBUser(updated)
-
 	res, err := ur.db.ExecContext(ctx, `
 UPDATE users
 SET name = ?
@@ -117,10 +84,6 @@ WHERE u.username = ?
 	return nil
 }
 func (ur *userRepository) Get(ctx context.Context, username string) (*user.User, error) {
-	if username == "" {
-		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
-	}
-
 	row := ur.db.QueryRowContext(ctx, `
 SELECT u.id, u.username, u.name, u.hash, u.salt, u.created_at, u.updated_at
 FROM users AS u
@@ -151,16 +114,6 @@ FROM users AS u
 }
 
 func (ur *userRepository) Delete(ctx context.Context, username string) error {
-	if username == "" {
-		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
-	}
-
-	// needs to go to service
-	err := ur.kv.Delete(ctx, username, keys.UniqueID)
-	if err != nil {
-		return fmt.Errorf("%w: failed to delete user %s: %v", ErrDBError, username, err)
-	}
-
 	res, err := ur.db.ExecContext(ctx, `
 	DELETE u
 	FROM users AS u
