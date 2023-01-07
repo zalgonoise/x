@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/secret"
 )
 
@@ -26,7 +25,7 @@ type secretRepository struct {
 	db *sql.DB
 }
 
-func NewSecretRepository(db *sql.DB, kv keys.Repository) secret.Repository {
+func NewSecretRepository(db *sql.DB) secret.Repository {
 	return &secretRepository{db}
 }
 

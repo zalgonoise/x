@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -17,7 +16,7 @@ var (
 	ErrAlreadyExistsUser = errors.New("user already exists")
 )
 
-var _ user.Repository = &userRepository{nil, nil}
+var _ user.Repository = &userRepository{nil}
 
 type dbUser struct {
 	ID        sql.NullInt64
@@ -31,11 +30,10 @@ type dbUser struct {
 
 type userRepository struct {
 	db *sql.DB
-	kv keys.Repository
 }
 
-func NewUserRepository(db *sql.DB, k keys.Repository) user.Repository {
-	return &userRepository{db, k}
+func NewUserRepository(db *sql.DB) user.Repository {
+	return &userRepository{db}
 }
 
 func (ur *userRepository) Create(ctx context.Context, u *user.User) (uint64, error) {
