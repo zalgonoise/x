@@ -33,10 +33,10 @@ type authz struct {
 }
 
 type jwtUser struct {
-	Username  string    `json:username`
-	Name      string    `json:name`
-	CreatedAt time.Time `json:created_at`
-	UpdatedAt time.Time `json:updated_at`
+	Username  string    `json:"username"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (a *authz) NewToken(ctx context.Context, u *user.User) (string, error) {

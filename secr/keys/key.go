@@ -2,8 +2,9 @@ package keys
 
 const (
 	UniqueID = "unique_identifier"
-	ServerID = "secr-server-id"
+	TokenKey = "active-token"
 
-	ServerJWTKey = "jwt-signing-key"
-	TokenKey     = "active-token"
+	// reserved: will be used encrypting user private keys
+	// TODO: implement this ^
+	ServerID = "secr-server-id"
 )
