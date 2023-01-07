@@ -6,16 +6,15 @@ import (
 	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/secret"
-	"github.com/zalgonoise/x/secr/session"
 	"github.com/zalgonoise/x/secr/user"
 )
 
 type Service interface {
 	// user sessions
-	Login(ctx context.Context, username, password string) (*session.Session, error)
+	Login(ctx context.Context, username, password string) (*user.Session, error)
 	Logout(ctx context.Context, username string) error
 	ChangePassword(ctx context.Context, username, password, newPassword string) error
-	Refresh(ctx context.Context, username, token string) (*session.Session, error)
+	Refresh(ctx context.Context, username, token string) (*user.Session, error)
 
 	// user directory
 	CreateUser(ctx context.Context, username, password, name string) (*user.User, error)

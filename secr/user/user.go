@@ -1,6 +1,8 @@
 package user
 
-import "time"
+import (
+	"time"
+)
 
 type User struct {
 	ID        uint64
@@ -11,4 +13,9 @@ type User struct {
 	Salt      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type Session struct {
+	User
+	Token string
 }

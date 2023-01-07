@@ -8,7 +8,6 @@ import (
 
 	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/keys"
-	"github.com/zalgonoise/x/secr/session"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -37,7 +36,7 @@ func (s service) login(ctx context.Context, u *user.User, password string) error
 	return nil
 }
 
-func (s service) Login(ctx context.Context, username, password string) (*session.Session, error) {
+func (s service) Login(ctx context.Context, username, password string) (*user.Session, error) {
 	if username == "" {
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
 	}
@@ -67,7 +66,7 @@ func (s service) Login(ctx context.Context, username, password string) (*session
 		return nil, fmt.Errorf("failed to store the new session token: %v", err)
 	}
 
-	return &session.Session{
+	return &user.Session{
 		User:  *u,
 		Token: token,
 	}, nil
@@ -110,7 +109,7 @@ func (s service) ChangePassword(ctx context.Context, username, password, newPass
 	}
 	return nil
 }
-func (s service) Refresh(ctx context.Context, username, token string) (*session.Session, error) {
+func (s service) Refresh(ctx context.Context, username, token string) (*user.Session, error) {
 	if username == "" {
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
 	}
@@ -134,7 +133,7 @@ func (s service) Refresh(ctx context.Context, username, token string) (*session.
 		return nil, fmt.Errorf("failed to store the new session token: %v", err)
 	}
 
-	return &session.Session{
+	return &user.Session{
 		User:  *u,
 		Token: newToken,
 	}, nil
