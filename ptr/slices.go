@@ -5,6 +5,8 @@ import (
 	"unsafe"
 )
 
+var ErrInvalidCap = errors.New("invalid slice capacity")
+
 const (
 	Cap1 int = 1 << iota
 	Cap2
@@ -108,6 +110,6 @@ func ToArray[T any](slice []T) (any, error) {
 	case 8192:
 		return *(*[Cap8192]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
 	default:
-		return nil, errors.New("invalid slice capacity")
+		return nil, ErrInvalidCap
 	}
 }
