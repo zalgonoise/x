@@ -12,7 +12,7 @@ import (
 type Cryptographer interface {
 	NewSalt() [128]byte
 	NewKey() [256]byte
-	NewCipher(key [256]byte) (cipher.Block, error)
+	NewCipher(key []byte) (cipher.Block, error)
 }
 
 func init() {
@@ -45,8 +45,8 @@ func (g *cryptographer) NewKey() [256]byte {
 	return key
 }
 
-func (g *cryptographer) NewCipher(key [256]byte) (cipher.Block, error) {
-	block, err := aes.NewCipher(key[:])
+func (g *cryptographer) NewCipher(key []byte) (cipher.Block, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +61,6 @@ func NewKey() [256]byte {
 	return crypt.NewKey()
 }
 
-func NewCipher(key [256]byte) (cipher.Block, error) {
+func NewCipher(key []byte) (cipher.Block, error) {
 	return crypt.NewCipher(key)
 }

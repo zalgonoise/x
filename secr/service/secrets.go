@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"unsafe"
 
 	"github.com/zalgonoise/x/secr/bolt"
 	"github.com/zalgonoise/x/secr/crypt"
@@ -30,13 +29,11 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 
 	// encrypt secret with user's key:
 	// fetch the key
-	upk, err := s.keys.Get(ctx, username, keys.UniqueID)
+	cipherKey, err := s.keys.Get(ctx, username, keys.UniqueID)
 	if err != nil {
 		return fmt.Errorf("failed to get user's private key: %v", err)
 	}
 
-	// quick convert []byte to [256]byte
-	cipherKey := *(*[256]byte)(unsafe.Pointer(&upk))
 	cipher, err := crypt.NewCipher(cipherKey)
 	if err != nil {
 		return fmt.Errorf("failed to create a cipher from the user's private key: %v", err)
@@ -82,13 +79,10 @@ func (s service) GetSecret(ctx context.Context, username string, key string) (*s
 	}
 
 	// fetch user's private key to decode encrypted secret
-	upk, err := s.keys.Get(ctx, username, keys.UniqueID)
+	cipherKey, err := s.keys.Get(ctx, username, keys.UniqueID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the user's private key: %v", err)
 	}
-
-	// quick convert []byte to [256]byte
-	cipherKey := *(*[256]byte)(unsafe.Pointer(&upk))
 	cipher, err := crypt.NewCipher(cipherKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a cipher from the user's private key: %v", err)
@@ -119,13 +113,10 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 	}
 
 	// fetch user's private key to decode encrypted secret
-	upk, err := s.keys.Get(ctx, username, keys.UniqueID)
+	cipherKey, err := s.keys.Get(ctx, username, keys.UniqueID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the user's private key: %v", err)
 	}
-
-	// quick convert []byte to [256]byte
-	cipherKey := *(*[256]byte)(unsafe.Pointer(&upk))
 	cipher, err := crypt.NewCipher(cipherKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a cipher from the user's private key: %v", err)
