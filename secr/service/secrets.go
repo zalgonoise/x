@@ -16,6 +16,8 @@ var (
 	ErrNoValue = errors.New("no secret value provided")
 )
 
+// CreateSecret creates a secret with key `key` and value `value` (as a slice of bytes), for the
+// user `username`. It returns an error
 func (s service) CreateSecret(ctx context.Context, username string, key string, value []byte) error {
 	if username == "" {
 		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
@@ -64,6 +66,8 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 	}
 	return nil
 }
+
+// GetSecret fetches the secret with key `key`, for user `username`. Returns a secret and an error
 func (s service) GetSecret(ctx context.Context, username string, key string) (*secret.Secret, error) {
 	if username == "" {
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
@@ -101,6 +105,8 @@ func (s service) GetSecret(ctx context.Context, username string, key string) (*s
 	secr.Value = decValue
 	return secr, nil
 }
+
+// ListSecrets retuns all secrets for user `username`. Returns a list of secrets and an error
 func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Secret, error) {
 	if username == "" {
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
@@ -139,6 +145,8 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 
 	return secrets, nil
 }
+
+// DeleteSecret removes a secret with key `key` from the user `username`. Returns an error
 func (s service) DeleteSecret(ctx context.Context, username string, key string) error {
 	if username == "" {
 		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)

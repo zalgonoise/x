@@ -25,6 +25,7 @@ type secretRepository struct {
 	db *sql.DB
 }
 
+// NewSecretRepository creates a secret.Repository from the SQL DB `db`
 func NewSecretRepository(db *sql.DB) secret.Repository {
 	return &secretRepository{db}
 }
@@ -35,6 +36,8 @@ func newDBSecret(s *secret.Secret) *dbSecret {
 	}
 }
 
+// Create will create (or overwrite) the secret identified by `s.Key`, for user `username`,
+// returning an error
 func (sr *secretRepository) Create(ctx context.Context, username string, s *secret.Secret) error {
 	dbs := newDBSecret(s)
 	res, err := sr.db.ExecContext(ctx, `
@@ -58,6 +61,7 @@ VALUES (
 	return nil
 }
 
+// Get fetches a secret identified by `key` for user `username`. Returns a secret and an error
 func (sr *secretRepository) Get(ctx context.Context, username string, key string) (*secret.Secret, error) {
 	row := sr.db.QueryRowContext(ctx, `
 SELECT s.id, s.name, s.created_at
@@ -74,6 +78,7 @@ WHERE u.username = ?
 	return s, nil
 }
 
+// List returns all secrets belonging to user `username`, and an error
 func (sr *secretRepository) List(ctx context.Context, username string) ([]*secret.Secret, error) {
 	rows, err := sr.db.QueryContext(ctx, `
 SELECT s.id, s.name, s.created_at
@@ -93,6 +98,8 @@ WHERE u.username = ?
 
 	return secrets, nil
 }
+
+// Delete removes the secret identified by `key`, for user `username`. Returns an error
 func (sr *secretRepository) Delete(ctx context.Context, username string, key string) error {
 	res, err := sr.db.ExecContext(ctx, `
 	DELETE s

@@ -32,10 +32,12 @@ type userRepository struct {
 	db *sql.DB
 }
 
+// NewUserRepository creates a user.Repository from the SQL DB `db`
 func NewUserRepository(db *sql.DB) user.Repository {
 	return &userRepository{db}
 }
 
+// Create will create a user `u`, returning its ID and an error
 func (ur *userRepository) Create(ctx context.Context, u *user.User) (uint64, error) {
 	dbu := newDBUser(u)
 	res, err := ur.db.ExecContext(ctx, `
@@ -56,6 +58,8 @@ VALUES (?, ?, ?, ?)
 	}
 	return uint64(id), nil
 }
+
+// Update will update the user `username` with its updated version `updated`. Returns an error
 func (ur *userRepository) Update(ctx context.Context, username string, updated *user.User) error {
 	dbu := newDBUser(updated)
 	res, err := ur.db.ExecContext(ctx, `
@@ -78,6 +82,8 @@ WHERE u.username = ?
 
 	return nil
 }
+
+// Get returns the user identified by `username`, and an error
 func (ur *userRepository) Get(ctx context.Context, username string) (*user.User, error) {
 	row := ur.db.QueryRowContext(ctx, `
 SELECT u.id, u.username, u.name, u.hash, u.salt, u.created_at, u.updated_at
@@ -92,6 +98,8 @@ WHERE u.username = ?
 
 	return user, nil
 }
+
+// List returns all the users, and an error
 func (ur *userRepository) List(ctx context.Context) ([]*user.User, error) {
 	rows, err := ur.db.QueryContext(ctx, `
 SELECT u.id, u.username, u.name, u.created_at, u.updated_at
@@ -108,6 +116,7 @@ FROM users AS u
 	return users, nil
 }
 
+// Delete removes the user identified by `username`, returning an error
 func (ur *userRepository) Delete(ctx context.Context, username string) error {
 	res, err := ur.db.ExecContext(ctx, `
 	DELETE u

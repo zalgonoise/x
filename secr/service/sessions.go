@@ -36,6 +36,7 @@ func (s service) login(ctx context.Context, u *user.User, password string) error
 	return nil
 }
 
+// Login verifies the user's credentials and returns a session and an error
 func (s service) Login(ctx context.Context, username, password string) (*user.Session, error) {
 	if username == "" {
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
@@ -71,6 +72,8 @@ func (s service) Login(ctx context.Context, username, password string) (*user.Se
 		Token: token,
 	}, nil
 }
+
+// Logout signs-out the user `username`
 func (s service) Logout(ctx context.Context, username string) error {
 	err := s.keys.Delete(ctx, username, keys.TokenKey)
 	if err != nil {
@@ -79,6 +82,7 @@ func (s service) Logout(ctx context.Context, username string) error {
 	return nil
 }
 
+// ChangePassword updates user `username`'s password after verifying the old one, returning an error
 func (s service) ChangePassword(ctx context.Context, username, password, newPassword string) error {
 	if username == "" {
 		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
@@ -109,6 +113,8 @@ func (s service) ChangePassword(ctx context.Context, username, password, newPass
 	}
 	return nil
 }
+
+// Refresh renews a user's JWT provided it is a valid one. Returns a session and an error
 func (s service) Refresh(ctx context.Context, username, token string) (*user.Session, error) {
 	if username == "" {
 		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
