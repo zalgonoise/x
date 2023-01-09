@@ -18,12 +18,18 @@ var (
 	ErrInvalidToken  = errors.New("invalid token")
 )
 
+// Authorizer is responsible for generating, refreshing and validating JWT
 type Authorizer interface {
+	// NewToken returns a new JWT for the user `u`, and an error
 	NewToken(ctx context.Context, u *user.User) (string, error)
+	// Refresh returns a new JWT for the user `u` based on token `token`, and an error
 	Refresh(ctx context.Context, u *user.User, token string) (string, error)
+	// Validate verifies if the JWT `token` is valid for the user `u`, returning a
+	// boolean and an error
 	Validate(ctx context.Context, u *user.User, token string) (bool, error)
 }
 
+// NewAuthorizer initializes an Authorizer with the signing key `signingKey`
 func NewAuthorizer(signingKey []byte) Authorizer {
 	return &authz{signingKey}
 }
@@ -39,6 +45,7 @@ type jwtUser struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// NewToken returns a new JWT for the user `u`, and an error
 func (a *authz) NewToken(ctx context.Context, u *user.User) (string, error) {
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"exp": time.Now().Add(time.Hour * 1).Unix(),
@@ -57,6 +64,7 @@ func (a *authz) NewToken(ctx context.Context, u *user.User) (string, error) {
 	return token, nil
 }
 
+// Refresh returns a new JWT for the user `u` based on token `token`, and an error
 func (a *authz) Refresh(ctx context.Context, u *user.User, token string) (string, error) {
 	ok, err := a.Validate(ctx, u, token)
 	if err != nil {
@@ -68,6 +76,8 @@ func (a *authz) Refresh(ctx context.Context, u *user.User, token string) (string
 	return a.NewToken(ctx, u)
 }
 
+// Validate verifies if the JWT `token` is valid for the user `u`, returning a
+// boolean and an error
 func (a *authz) Validate(ctx context.Context, u *user.User, token string) (bool, error) {
 	tok, err := jwt.Parse(token, a.parseToken)
 

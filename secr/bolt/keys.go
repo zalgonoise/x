@@ -22,10 +22,13 @@ type keysRepository struct {
 	db *bbolt.DB
 }
 
+// NewKeysRepository creates a keys.Repository from the Bolt DB `db`
 func NewKeysRepository(db *bbolt.DB) keys.Repository {
 	return &keysRepository{db}
 }
 
+// Get fetches the secret identified by `k` in the bucket `bucket`,
+// returning a slice of bytes for the value and an error
 func (ukr *keysRepository) Get(ctx context.Context, bucket, k string) ([]byte, error) {
 	if bucket == "" {
 		return nil, ErrEmptyBucket
@@ -51,6 +54,8 @@ func (ukr *keysRepository) Get(ctx context.Context, bucket, k string) ([]byte, e
 	return v, nil
 }
 
+// Set creates or overwrites a secret identified by `k` with value `v`, in
+// bucket `bucket`. Returns an error
 func (ukr *keysRepository) Set(ctx context.Context, bucket, k string, v []byte) error {
 	if bucket == "" {
 		return ErrEmptyBucket
@@ -81,6 +86,7 @@ func (ukr *keysRepository) Set(ctx context.Context, bucket, k string, v []byte) 
 	return nil
 }
 
+// Delete removes the secret identified by `k` in bucket `bucket`, returning an error
 func (ukr *keysRepository) Delete(ctx context.Context, bucket, k string) error {
 	if bucket == "" {
 		return ErrEmptyBucket
@@ -108,6 +114,7 @@ func (ukr *keysRepository) Delete(ctx context.Context, bucket, k string) error {
 	return nil
 }
 
+// Purge removes all the secrets in the bucket `bucket`, returning an error
 func (ukr *keysRepository) Purge(ctx context.Context, bucket string) error {
 	if bucket == "" {
 		return ErrEmptyBucket
