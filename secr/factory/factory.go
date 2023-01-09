@@ -2,6 +2,7 @@ package factory
 
 import "github.com/zalgonoise/x/secr/service"
 
+// Service creates a new service based on the signing key `key`
 func Service(key []byte) (service.Service, error) {
 	authorizer, err := Authorizer(key)
 	if err != nil {

@@ -12,6 +12,8 @@ const (
 	signingKeyPath = "/secr/server/key"
 )
 
+// Authorizer creates a new authorizer with the input key `key`, or creates a new
+// one under the preset folder if it doesn't yet exist and is not provided
 func Authorizer(key []byte) (authz.Authorizer, error) {
 	if len(key) > 0 {
 		return authz.NewAuthorizer(key), nil

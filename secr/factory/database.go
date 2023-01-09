@@ -15,8 +15,10 @@ import (
 
 const (
 	sqliteDbPath = "/secr/sqlite.db"
+	boltDbPath   = "/secr/keys.db"
 )
 
+// SQLite creates user and secret repositories based on the defined SQLite DB path
 func SQLite() (user.Repository, secret.Repository, error) {
 	fs, err := os.Stat(sqliteDbPath)
 	if (err != nil && os.IsNotExist(err)) || (fs != nil && fs.Size() == 0) {
@@ -34,16 +36,17 @@ func SQLite() (user.Repository, secret.Repository, error) {
 	return sqlite.NewUserRepository(db), sqlite.NewSecretRepository(db), nil
 }
 
+// Bolt creates a key repository based on the defined Bolt DB path
 func Bolt() (keys.Repository, error) {
-	fs, err := os.Stat(sqliteDbPath)
+	fs, err := os.Stat(boltDbPath)
 	if (err != nil && os.IsNotExist(err)) || (fs != nil && fs.Size() == 0) {
-		_, err := os.Create(sqliteDbPath)
+		_, err := os.Create(boltDbPath)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	db, err := bolt.Open(sqliteDbPath)
+	db, err := bolt.Open(boltDbPath)
 	if err != nil {
 		return nil, err
 	}
