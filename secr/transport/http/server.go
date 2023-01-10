@@ -26,11 +26,12 @@ func NewServer(api API, port int) Server {
 		Addr:    fmt.Sprintf(":%v", port),
 		Handler: mux,
 	}
-	srv := &server{
+	srv := server{
 		ep:   api,
 		port: port,
 		srv:  httpSrv,
 	}
+
 	// handlers
 	// TODO: implement dynamic URL paths (e.g.: /users/me/secrets/github)
 	mux.HandleFunc("/login", srv.ep.Login)
@@ -49,8 +50,8 @@ func NewServer(api API, port int) Server {
 	return srv
 }
 
-func (s *server) Start(ctx context.Context) error {
-	ctx, span := spanner.Start(ctx, "http.Start")
+func (s server) Start(ctx context.Context) error {
+	_, span := spanner.Start(ctx, "http.Start")
 	defer span.End()
 
 	err := s.srv.ListenAndServe()
@@ -61,7 +62,7 @@ func (s *server) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *server) Stop(ctx context.Context) error {
+func (s server) Stop(ctx context.Context) error {
 	ctx, span := spanner.Start(ctx, "http.Stop")
 	defer span.End()
 
