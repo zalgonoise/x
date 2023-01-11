@@ -30,20 +30,22 @@ type errResponse struct {
 }
 
 // okResponse creates a generic data structure for OK HTTP responses
-func OKResponse[T any](status int, message string, data *T) *okResponse[T] {
+func OKResponse[T any](status int, message string, data *T, headers map[string]string) *okResponse[T] {
 	return &okResponse[T]{
 		Message: message,
 		Data:    data,
 		Status:  status,
+		Headers: headers,
 	}
 }
 
 // errResponse creates a data structure for not-OK HTTP responses
-func ErrResponse(status int, message string, err error) *errResponse {
+func ErrResponse(status int, message string, err error, headers map[string]string) *errResponse {
 	return &errResponse{
 		Message: message,
 		Error:   err.Error(),
 		Status:  status,
+		Headers: headers,
 	}
 }
 

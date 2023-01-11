@@ -25,12 +25,12 @@ func NewHandler(path string, fn http.HandlerFunc, middleware ...MiddlewareFn) Ha
 type ParseFn[Q any] func(ctx context.Context, r *http.Request) (*Q, error)
 
 // QueryFn is a function that executes an action based on the input context `ctx` and query object `query`,
-// and returns the HTTP response's status, message, body object `answer`, and an error
-type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, err error)
+// and returns the HTTP response's status, message, body object `answer`, a headers map and an error
+type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, headers map[string]string, err error)
 
 // ExecFn is a function that executes an action based on the input context `ctx` and query object `query`,
-// and returns the HTTP response's status, message and an error
-type ExecFn[Q any] func(ctx context.Context, query *Q) (status int, msg string, err error)
+// and returns the HTTP response's status, message, a headers map and an error
+type ExecFn[Q any] func(ctx context.Context, query *Q) (status int, msg string, headers map[string]string, err error)
 
 // MiddlewareFn is a function that wraps a http.HandlerFunc, as HTTP middleware
 type MiddlewareFn func(next http.HandlerFunc) http.HandlerFunc
@@ -52,12 +52,12 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 
 		query, err := parseFn(ctx, r)
 		if err != nil {
-			res := ErrResponse(400, "failed to read request from body", err)
+			res := ErrResponse(400, "failed to read request from body", err, nil)
 			res.WriteHTTP(ctx, w)
 			return
 		}
 
-		status, msg, answer, err := queryFn(ctx, query)
+		status, msg, answer, headers, err := queryFn(ctx, query)
 		if err != nil {
 			if status < 400 {
 				status = 500
@@ -65,7 +65,7 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 			if msg == "" {
 				msg = "operation failed"
 			}
-			res := ErrResponse(status, msg, err)
+			res := ErrResponse(status, msg, err, headers)
 			res.WriteHTTP(ctx, w)
 			return
 		}
@@ -73,7 +73,7 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 		if status > 399 {
 			status = 200
 		}
-		res := OKResponse(status, msg, answer)
+		res := OKResponse(status, msg, answer, headers)
 		res.WriteHTTP(ctx, w)
 	}
 }
@@ -95,12 +95,12 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 
 		query, err := parseFn(ctx, r)
 		if err != nil {
-			res := ErrResponse(400, "failed to read request from body", err)
+			res := ErrResponse(400, "failed to read request from body", err, nil)
 			res.WriteHTTP(ctx, w)
 			return
 		}
 
-		status, msg, err := execFn(ctx, query)
+		status, msg, headers, err := execFn(ctx, query)
 		if err != nil {
 			if status < 400 {
 				status = 500
@@ -108,7 +108,7 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 			if msg == "" {
 				msg = "operation failed"
 			}
-			res := ErrResponse(status, msg, err)
+			res := ErrResponse(status, msg, err, headers)
 			res.WriteHTTP(ctx, w)
 			return
 		}
@@ -116,7 +116,7 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 			status = 200
 		}
 
-		res := OKResponse[Q](status, msg, nil)
+		res := OKResponse[Q](status, msg, nil, headers)
 		res.WriteHTTP(ctx, w)
 	}
 }
