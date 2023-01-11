@@ -21,6 +21,9 @@ func NewHandler(path string, fn http.HandlerFunc, middleware ...MiddlewareFn) Ha
 	}
 }
 
+// ParseFn is a function that converts a HTTP request into a request object of the caller's choice
+type ParseFn[Q any] func(ctx context.Context, r *http.Request) (*Q, error)
+
 // QueryFn is a function that executes an action based on the input context `ctx` and query object `query`,
 // and returns the HTTP response's status, message, body object `answer`, and an error
 type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, err error)
@@ -34,12 +37,20 @@ type MiddlewareFn func(next http.HandlerFunc) http.HandlerFunc
 
 // Query is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
 // a HTTP status, a response message, a response object and an error
-func Query[Q any, A any](name string, queryFn QueryFn[Q, A]) http.HandlerFunc {
+func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, s := NewCtxAndSpan(r, name)
 		defer s.End()
 
-		query, err := ReadBody[Q](ctx, r)
+		if queryFn == nil {
+			panic("a query function must be specified")
+		}
+
+		if parseFn == nil {
+			parseFn = ReadBody[Q]
+		}
+
+		query, err := parseFn(ctx, r)
 		if err != nil {
 			res := ErrResponse(400, "failed to read request from body", err)
 			res.WriteHTTP(ctx, w)
@@ -69,19 +80,27 @@ func Query[Q any, A any](name string, queryFn QueryFn[Q, A]) http.HandlerFunc {
 
 // Exec is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
 // a HTTP status, a response message and an error
-func Exec[Q any](name string, queryFn func(ctx context.Context, query *Q) (int, string, error)) http.HandlerFunc {
+func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, s := NewCtxAndSpan(r, name)
 		defer s.End()
 
-		query, err := ReadBody[Q](ctx, r)
+		if execFn == nil {
+			panic("an exec function must be specified")
+		}
+
+		if parseFn == nil {
+			parseFn = ReadBody[Q]
+		}
+
+		query, err := parseFn(ctx, r)
 		if err != nil {
 			res := ErrResponse(400, "failed to read request from body", err)
 			res.WriteHTTP(ctx, w)
 			return
 		}
 
-		status, msg, err := queryFn(ctx, query)
+		status, msg, err := execFn(ctx, query)
 		if err != nil {
 			if status < 400 {
 				status = 500
