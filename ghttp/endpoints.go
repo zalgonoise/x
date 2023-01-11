@@ -1,23 +1,21 @@
 package ghttp
 
-import "net/http"
-
 // Endpoints is a wrapper for a set of Handlers
 type Endpoints struct {
-	E map[string]http.HandlerFunc
+	E map[string]Handler
 }
 
 // NewEndpoints initializes an Endpoints object
 func NewEndpoints() *Endpoints {
 	return &Endpoints{
-		E: make(map[string]http.HandlerFunc),
+		E: make(map[string]Handler),
 	}
 }
 
 // Set adds the handlers to the Endpoints map
 func (e *Endpoints) Set(handlers ...Handler) {
 	for _, h := range handlers {
-		e.E[h.Path] = h.Fn
+		e.E[h.Path] = h
 	}
 }
 

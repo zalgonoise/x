@@ -7,21 +7,25 @@ import (
 
 // Handler is a basic path-to-HandlerFunc pair
 type Handler struct {
-	Path string
-	Fn   http.HandlerFunc
+	Path       string
+	Fn         http.HandlerFunc
+	Middleware []MiddlewareFn
 }
 
 // NewHandler joins a path with a HandlerFunc, returning a Handler
-func NewHandler(path string, fn http.HandlerFunc) Handler {
+func NewHandler(path string, fn http.HandlerFunc, middleware ...MiddlewareFn) Handler {
 	return Handler{
-		Path: path,
-		Fn:   fn,
+		Path:       path,
+		Fn:         fn,
+		Middleware: middleware,
 	}
 }
 
 type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, err error)
 
 type ExecFn[Q any] func(ctx context.Context, query *Q) (status int, msg string, err error)
+
+type MiddlewareFn func(next http.HandlerFunc) http.HandlerFunc
 
 // Query is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
 // a HTTP status, a response message, a response object and an error

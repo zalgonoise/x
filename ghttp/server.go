@@ -37,7 +37,11 @@ func NewServer(endpoints Endpoints, port int) Server {
 		srv:       httpSrv,
 	}
 
-	for p, fn := range endpoints.E {
+	for p, handler := range endpoints.E {
+		var fn = handler.Fn
+		for i := len(handler.Middleware) - 1; i >= 0; i-- {
+			fn = handler.Middleware[i](fn)
+		}
 		mux.HandleFunc(p, fn)
 	}
 
@@ -46,7 +50,7 @@ func NewServer(endpoints Endpoints, port int) Server {
 
 // Start initializes the HTTP server, returning an error. This is a blocking call
 func (s *server) Start(ctx context.Context) error {
-	ctx, span := spanner.Start(ctx, "http.Start")
+	_, span := spanner.Start(ctx, "http.Start")
 	defer span.End()
 
 	err := s.srv.ListenAndServe()
