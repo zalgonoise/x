@@ -19,9 +19,13 @@ func NewHandler(path string, fn http.HandlerFunc) Handler {
 	}
 }
 
+type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, err error)
+
+type ExecFn[Q any] func(ctx context.Context, query *Q) (status int, msg string, err error)
+
 // Query is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
 // a HTTP status, a response message, a response object and an error
-func Query[Q any, A any](name string, queryFn func(ctx context.Context, query *Q) (int, string, *A, error)) http.HandlerFunc {
+func Query[Q any, A any](name string, queryFn QueryFn[Q, A]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, s := NewCtxAndSpan(r, name)
 		defer s.End()
@@ -38,15 +42,18 @@ func Query[Q any, A any](name string, queryFn func(ctx context.Context, query *Q
 			if status < 400 {
 				status = 500
 			}
-			res := ErrResponse(status, "operation failed", err)
+			if msg == "" {
+				msg = "operation failed"
+			}
+			res := ErrResponse(status, msg, err)
 			res.WriteHTTP(ctx, w)
 			return
 		}
+
 		if status > 399 {
 			status = 200
 		}
-
-		res := OKResponse(200, msg, answer)
+		res := OKResponse(status, msg, answer)
 		res.WriteHTTP(ctx, w)
 	}
 }
@@ -55,7 +62,7 @@ func Query[Q any, A any](name string, queryFn func(ctx context.Context, query *Q
 // a HTTP status, a response message and an error
 func Exec[Q any](name string, queryFn func(ctx context.Context, query *Q) (int, string, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, s := NewCtxAndSpan(r, "http.AddRecord")
+		ctx, s := NewCtxAndSpan(r, name)
 		defer s.End()
 
 		query, err := ReadBody[Q](ctx, r)
@@ -70,7 +77,10 @@ func Exec[Q any](name string, queryFn func(ctx context.Context, query *Q) (int, 
 			if status < 400 {
 				status = 500
 			}
-			res := ErrResponse(status, "operation failed", err)
+			if msg == "" {
+				msg = "operation failed"
+			}
+			res := ErrResponse(status, msg, err)
 			res.WriteHTTP(ctx, w)
 			return
 		}
@@ -78,7 +88,7 @@ func Exec[Q any](name string, queryFn func(ctx context.Context, query *Q) (int, 
 			status = 200
 		}
 
-		res := OKResponse[Q](200, msg, nil)
+		res := OKResponse[Q](status, msg, nil)
 		res.WriteHTTP(ctx, w)
 	}
 }
