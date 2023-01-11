@@ -1,0 +1,10 @@
+github.com/goccy/go-json v0.10.0 h1:mXKd9Qw4NuzShiRlOXKews24ufknHO7gx30lsDyokKA=
+github.com/goccy/go-json v0.10.0/go.mod h1:6MelG93GURQebXPDq3khkgXZkazVtN9CRI+MGFi0w8I=
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d h1:FQmuKnqJefm/vZV0nYJ/cBElgros1Q9nRD41GflLULY=
+github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d/go.mod h1:AJnYvJHd3CA3CWDK/XTzHqENx1M6Jc+riBrp7myrm8o=
+github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be h1:ba6thk6xk6aWTGx0EshutbMf8bx6S20E3XQJBpvrQmk=
+github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be/go.mod h1:H1GvFfv7qC2rtnOLO49lHOHa8fsS6w0cjYhxw9/WamQ=
+github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6 h1:lEVAaRJSf7M4AL+Ye0bG83EuU5YyXJjgqkzc/RA9nUs=
+github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6/go.mod h1:zcjBm68rwWIPohFOeMhJWIlCvl3UZrSLn49hzAde99A=
