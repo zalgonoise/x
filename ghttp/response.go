@@ -16,15 +16,17 @@ type HTTPWriter interface {
 }
 
 type okResponse[T any] struct {
-	Message string `json:"message,omitempty"`
-	Data    *T     `json:"data,omitempty"`
-	Status  int    `json:"-"`
+	Message string            `json:"message,omitempty"`
+	Data    *T                `json:"data,omitempty"`
+	Status  int               `json:"-"`
+	Headers map[string]string `json:"-"`
 }
 
 type errResponse struct {
-	Message string `json:"message,omitempty"`
-	Error   string `json:"error,omitempty"`
-	Status  int    `json:"-"`
+	Message string            `json:"message,omitempty"`
+	Error   string            `json:"error,omitempty"`
+	Status  int               `json:"-"`
+	Headers map[string]string `json:"-"`
 }
 
 // okResponse creates a generic data structure for OK HTTP responses
@@ -62,6 +64,10 @@ func (r okResponse[T]) WriteHTTP(ctx context.Context, w http.ResponseWriter) {
 		s.Event("failed to encode response", attr.String("error", err.Error()))
 	}
 
+	for k, v := range r.Headers {
+		w.Header().Set(k, v)
+	}
+
 	n, err := w.Write(response)
 	if err != nil {
 		s.Event("failed to write response", attr.String("error", err.Error()))
@@ -85,6 +91,10 @@ func (r errResponse) WriteHTTP(ctx context.Context, w http.ResponseWriter) {
 	response, err := enc.Encode(r)
 	if err != nil {
 		s.Event("failed to encode response", attr.String("error", err.Error()))
+	}
+
+	for k, v := range r.Headers {
+		w.Header().Set(k, v)
 	}
 
 	n, err := w.Write(response)
