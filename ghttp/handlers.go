@@ -21,10 +21,15 @@ func NewHandler(path string, fn http.HandlerFunc, middleware ...MiddlewareFn) Ha
 	}
 }
 
+// QueryFn is a function that executes an action based on the input context `ctx` and query object `query`,
+// and returns the HTTP response's status, message, body object `answer`, and an error
 type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, err error)
 
+// ExecFn is a function that executes an action based on the input context `ctx` and query object `query`,
+// and returns the HTTP response's status, message and an error
 type ExecFn[Q any] func(ctx context.Context, query *Q) (status int, msg string, err error)
 
+// MiddlewareFn is a function that wraps a http.HandlerFunc, as HTTP middleware
 type MiddlewareFn func(next http.HandlerFunc) http.HandlerFunc
 
 // Query is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
