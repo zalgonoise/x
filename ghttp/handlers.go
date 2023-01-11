@@ -52,7 +52,7 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 
 		query, err := parseFn(ctx, r)
 		if err != nil {
-			res := ErrResponse(400, "failed to read request from body", err, nil)
+			res := ErrResponse(400, "failed to parse request", err, nil)
 			res.WriteHTTP(ctx, w)
 			return
 		}
@@ -95,7 +95,7 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 
 		query, err := parseFn(ctx, r)
 		if err != nil {
-			res := ErrResponse(400, "failed to read request from body", err, nil)
+			res := ErrResponse(400, "failed to parse request", err, nil)
 			res.WriteHTTP(ctx, w)
 			return
 		}
