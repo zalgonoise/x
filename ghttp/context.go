@@ -11,11 +11,10 @@ import (
 
 // NewCtxAndSpan creates a new context for service `service` with attributes `attrs`, scoped to
 // a "req" namespace that includes a UUID for the request and the service string `service`,
-// and creates a Span for the given request
+// and creates a Span for the given request.
+// The context is also wrapped with a JSON encoder so the response writer can use it
 //
-// # The context is also wrapped with a JSON encoder so the response writer can use it
-//
-// The input *http.Request `r` is used to registed the remote address and user agent in the root span
+// The input *http.Request `r` is used to register the remote address and user agent in the root span
 //
 // The resulting context is returned alongside the created Span
 func NewCtxAndSpan(r *http.Request, service string, attrs ...attr.Attr) (context.Context, spanner.Span) {

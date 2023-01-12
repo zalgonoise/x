@@ -52,8 +52,7 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 
 		query, err := parseFn(ctx, r)
 		if err != nil {
-			res := ErrResponse(400, "failed to parse request", err, nil)
-			res.WriteHTTP(ctx, w)
+			ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
 			return
 		}
 
@@ -65,16 +64,14 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 			if msg == "" {
 				msg = "operation failed"
 			}
-			res := ErrResponse(status, msg, err, headers)
-			res.WriteHTTP(ctx, w)
+			ErrResponse(status, msg, err, headers).WriteHTTP(ctx, w)
 			return
 		}
 
 		if status > 399 {
 			status = 200
 		}
-		res := OKResponse(status, msg, answer, headers)
-		res.WriteHTTP(ctx, w)
+		OKResponse(status, msg, answer, headers).WriteHTTP(ctx, w)
 	}
 }
 
@@ -95,8 +92,7 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 
 		query, err := parseFn(ctx, r)
 		if err != nil {
-			res := ErrResponse(400, "failed to parse request", err, nil)
-			res.WriteHTTP(ctx, w)
+			ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
 			return
 		}
 
@@ -108,15 +104,13 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 			if msg == "" {
 				msg = "operation failed"
 			}
-			res := ErrResponse(status, msg, err, headers)
-			res.WriteHTTP(ctx, w)
+			ErrResponse(status, msg, err, headers).WriteHTTP(ctx, w)
 			return
 		}
 		if status > 399 {
 			status = 200
 		}
 
-		res := OKResponse[Q](status, msg, nil, headers)
-		res.WriteHTTP(ctx, w)
+		OKResponse[Q](status, msg, nil, headers).WriteHTTP(ctx, w)
 	}
 }

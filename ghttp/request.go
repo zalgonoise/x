@@ -18,6 +18,9 @@ var (
 	ErrInvalidJSON = errors.New("body contains invalid JSON")
 )
 
+// validate ReadBody as a ParseFn
+var _ ParseFn[any] = ReadBody[any]
+
 // ReadBody reads the data in the Body of *http.Request `r` as a bytes buffer,
 // and attempts to decode it into an object of type T by creating a new pointer of
 // this type and decoding the buffer into it
