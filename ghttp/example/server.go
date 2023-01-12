@@ -22,31 +22,21 @@ var users = map[int]*User{
 }
 
 func listUsers() http.HandlerFunc {
-	qFn := func(ctx context.Context, q *string) (int, string, *[]*User, map[string]string, error) {
+	qFn := func(ctx context.Context, q *string) *ghttp.Response[[]*User] {
 		var u = make([]*User, len(users), len(users))
 		for idx, user := range users {
 			u[idx] = user
 		}
 
-		return 200, "users listed successfully", &u, nil, nil
+		res := ghttp.NewResponse[[]*User](http.StatusOK, "users listed successfully")
+		res.Data = &u
+		return res
 	}
+
 	return ghttp.Query("ListUsers", nil, qFn)
 }
 
 func getUser() http.HandlerFunc {
-	qFn := func(ctx context.Context, q *string) (int, string, *User, map[string]string, error) {
-		if q == nil || *q == "" {
-			return 400, "invalid username", nil, nil, errors.New("no user provided")
-		}
-
-		for _, user := range users {
-			if *q == user.Username {
-				return 200, "user fetched successfully", user, nil, nil
-			}
-		}
-		return 404, "user not found", nil, nil, errors.New("user not found")
-	}
-
 	pFn := func(ctx context.Context, r *http.Request) (*string, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
@@ -57,24 +47,48 @@ func getUser() http.HandlerFunc {
 		return &q, nil
 	}
 
+	qFn := func(ctx context.Context, q *string) *ghttp.Response[User] {
+		if q == nil || *q == "" {
+			return ghttp.NewResponse[User](http.StatusBadRequest, "invalid username")
+		}
+
+		for _, user := range users {
+			if *q == user.Username {
+				res := ghttp.NewResponse[User](http.StatusOK, "user fetched successfully")
+				res.Data = user
+				return res
+			}
+		}
+		return ghttp.NewResponse[User](http.StatusNotFound, "user not found")
+	}
+
 	return ghttp.Query("GetUser", pFn, qFn)
 }
 
 func createUser() http.HandlerFunc {
-	qFn := func(ctx context.Context, q *User) (int, string, *User, map[string]string, error) {
+	pFn := func(ctx context.Context, r *http.Request) (*User, error) {
+		u, err := ghttp.ReadBody[User](ctx, r)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve user data from request body: %v", err)
+		}
+
+		return u, nil
+	}
+
+	qFn := func(ctx context.Context, q *User) *ghttp.Response[User] {
 		if q == nil {
-			return 400, "empty request", nil, nil, errors.New("no user provided")
+			return ghttp.NewResponse[User](http.StatusBadRequest, "empty request")
 		}
 		if q.Name == "" {
-			return 400, "no name provided", nil, nil, errors.New("no name provided")
+			return ghttp.NewResponse[User](http.StatusBadRequest, "no name provided")
 		}
 		if q.Username == "" {
-			return 400, "no username provided", nil, nil, errors.New("no username provided")
+			return ghttp.NewResponse[User](http.StatusBadRequest, "no username provided")
 		}
 
 		for _, user := range users {
 			if q.Username == user.Username {
-				return 400, "username already taken", nil, nil, errors.New("username unavailable")
+				return ghttp.NewResponse[User](http.StatusUnauthorized, "username already taken")
 			}
 		}
 
@@ -87,37 +101,15 @@ func createUser() http.HandlerFunc {
 
 		q.ID = id
 
-		return 200, "user added successfully", q, nil, nil
-	}
-
-	pFn := func(ctx context.Context, r *http.Request) (*User, error) {
-		u, err := ghttp.ReadBody[User](ctx, r)
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve user data from request body: %v", err)
-		}
-
-		return u, nil
+		res := ghttp.NewResponse[User](http.StatusOK, "user added successfully")
+		res.Data = q
+		return res
 	}
 
 	return ghttp.Query("AddUser", pFn, qFn)
 }
 
 func deleteUser() http.HandlerFunc {
-	qFn := func(ctx context.Context, q *string) (int, string, map[string]string, error) {
-		if q == nil || *q == "" {
-			return 400, "empty request", nil, errors.New("no user provided")
-		}
-
-		for id, user := range users {
-			if *q == user.Username {
-				delete(users, id)
-				return 200, "user deleted successfully", nil, nil
-			}
-		}
-
-		return 404, "user not found", nil, errors.New("user not found")
-	}
-
 	pFn := func(ctx context.Context, r *http.Request) (*string, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
@@ -128,31 +120,25 @@ func deleteUser() http.HandlerFunc {
 		return &q, nil
 	}
 
+	qFn := func(ctx context.Context, q *string) *ghttp.Response[string] {
+		if q == nil || *q == "" {
+			return ghttp.NewResponse[string](http.StatusBadRequest, "empty request")
+		}
+
+		for id, user := range users {
+			if *q == user.Username {
+				delete(users, id)
+				return ghttp.NewResponse[string](http.StatusOK, "user deleted successfully")
+			}
+		}
+
+		return ghttp.NewResponse[string](http.StatusNotFound, "user not found")
+	}
+
 	return ghttp.Exec("DeleteUser", pFn, qFn)
 }
 
 func updateUser() http.HandlerFunc {
-	qFn := func(ctx context.Context, q *User) (int, string, *User, map[string]string, error) {
-		if q == nil {
-			return 400, "empty request", nil, nil, errors.New("no user provided")
-		}
-		if q.Name == "" {
-			return 400, "no name provided", nil, nil, errors.New("no name provided")
-		}
-
-		for _, user := range users {
-			if q.Username == user.Username {
-				if q.Name == user.Name {
-					return 200, "no changes required", user, nil, nil
-				}
-				user.Name = q.Name
-				return 200, "user updated successfully", user, nil, nil
-			}
-		}
-
-		return 404, "user not found", nil, nil, errors.New("user not found")
-	}
-
 	pFn := func(ctx context.Context, r *http.Request) (*User, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
@@ -172,6 +158,29 @@ func updateUser() http.HandlerFunc {
 		u.Username = q
 
 		return u, nil
+	}
+
+	qFn := func(ctx context.Context, q *User) *ghttp.Response[User] {
+		if q == nil {
+			return ghttp.NewResponse[User](http.StatusBadRequest, "empty request")
+		}
+		if q.Name == "" {
+			return ghttp.NewResponse[User](http.StatusBadRequest, "no name provided")
+		}
+
+		for _, user := range users {
+			if q.Username == user.Username {
+				if q.Name == user.Name {
+					return ghttp.NewResponse[User](http.StatusOK, "no changes required")
+				}
+				user.Name = q.Name
+				res := ghttp.NewResponse[User](http.StatusOK, "user updated successfully")
+				res.Data = user
+				return res
+			}
+		}
+
+		return ghttp.NewResponse[User](http.StatusNotFound, "user not found")
 	}
 
 	return ghttp.Query("UpdateUser", pFn, qFn)

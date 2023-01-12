@@ -68,11 +68,11 @@ type RouteFn func(w http.ResponseWriter, r *http.Request) http.HandlerFunc
 
 // QueryFn is a function that executes an action based on the input context `ctx` and query object `query`,
 // and returns the HTTP response's status, message, body object `answer`, a headers map and an error
-type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, headers map[string]string, err error)
+type QueryFn[Q any, A any] func(ctx context.Context, query *Q) *Response[A]
 
 // ExecFn is a function that executes an action based on the input context `ctx` and query object `query`,
 // and returns the HTTP response's status, message, a headers map and an error
-type ExecFn[Q any] func(ctx context.Context, query *Q) (status int, msg string, headers map[string]string, err error)
+type ExecFn[Q any] func(ctx context.Context, query *Q) *Response[Q]
 
 // MiddlewareFn is a function that wraps a http.HandlerFunc, as HTTP middleware
 type MiddlewareFn func(next http.HandlerFunc) http.HandlerFunc
@@ -94,27 +94,14 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 		if parseFn != nil {
 			query, err = parseFn(ctx, r)
 			if err != nil {
-				ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
+				res := NewResponse[A](http.StatusBadRequest, "failed to parse request")
+				res.Error = err.Error()
+				res.WriteHTTP(ctx, w)
 				return
 			}
 		}
 
-		status, msg, answer, headers, err := queryFn(ctx, query)
-		if err != nil {
-			if status < 400 {
-				status = 500
-			}
-			if msg == "" {
-				msg = "operation failed"
-			}
-			ErrResponse(status, msg, err, headers).WriteHTTP(ctx, w)
-			return
-		}
-
-		if status > 399 {
-			status = 200
-		}
-		OKResponse(status, msg, answer, headers).WriteHTTP(ctx, w)
+		queryFn(ctx, query).WriteHTTP(ctx, w)
 	}
 }
 
@@ -135,26 +122,13 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 		if parseFn != nil {
 			query, err = parseFn(ctx, r)
 			if err != nil {
-				ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
+				res := NewResponse[Q](http.StatusBadRequest, "failed to parse request")
+				res.Error = err.Error()
+				res.WriteHTTP(ctx, w)
 				return
 			}
 		}
 
-		status, msg, headers, err := execFn(ctx, query)
-		if err != nil {
-			if status < 400 {
-				status = 500
-			}
-			if msg == "" {
-				msg = "operation failed"
-			}
-			ErrResponse(status, msg, err, headers).WriteHTTP(ctx, w)
-			return
-		}
-		if status > 399 {
-			status = 200
-		}
-
-		OKResponse[Q](status, msg, nil, headers).WriteHTTP(ctx, w)
+		execFn(ctx, query).WriteHTTP(ctx, w)
 	}
 }
