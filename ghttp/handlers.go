@@ -5,16 +5,55 @@ import (
 	"net/http"
 )
 
+type mux struct {
+	Path   string
+	Routes map[string]http.HandlerFunc
+}
+
+func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if handler, ok := m.Routes[r.Method]; ok {
+		handler(w, r)
+		return
+	}
+	http.NotFound(w, r)
+}
+
+func NewMux(handlers ...Handler) http.Handler {
+	if len(handlers) == 0 {
+		return nil
+	}
+	p := handlers[0].Path
+	m := &mux{
+		Path:   p,
+		Routes: make(map[string]http.HandlerFunc),
+	}
+
+	for _, h := range handlers {
+		if h.Path != p {
+			continue
+		}
+		var fn = h.Fn
+		for i := len(h.Middleware) - 1; i >= 0; i-- {
+			fn = h.Middleware[i](fn)
+		}
+
+		m.Routes[h.Method] = fn
+	}
+	return m
+}
+
 // Handler is a basic path-to-HandlerFunc pair
 type Handler struct {
+	Method     string
 	Path       string
 	Fn         http.HandlerFunc
 	Middleware []MiddlewareFn
 }
 
 // NewHandler joins a path with a HandlerFunc, returning a Handler
-func NewHandler(path string, fn http.HandlerFunc, middleware ...MiddlewareFn) Handler {
+func NewHandler(method, path string, fn http.HandlerFunc, middleware ...MiddlewareFn) Handler {
 	return Handler{
+		Method:     method,
 		Path:       path,
 		Fn:         fn,
 		Middleware: middleware,

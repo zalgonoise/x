@@ -177,28 +177,35 @@ func updateUser() http.HandlerFunc {
 	return ghttp.Query("UpdateUser", pFn, qFn)
 }
 
-func usersHandler() ghttp.Handler {
+func usersHandler() []ghttp.Handler {
 	p := "/users/"
-	return ghttp.Handler{
-		Path: p,
-		Fn: func(w http.ResponseWriter, r *http.Request) {
-			switch r.Method {
-			case http.MethodGet:
+
+	return []ghttp.Handler{
+		{
+			Method: http.MethodGet,
+			Path:   p,
+			Fn: func(w http.ResponseWriter, r *http.Request) {
 				if len(r.URL.Path[len(p):]) == 0 {
 					listUsers()(w, r)
 					return
 				}
 				getUser()(w, r)
-				return
-			case http.MethodPost:
-				createUser()(w, r)
-			case http.MethodDelete:
-				deleteUser()(w, r)
-			case http.MethodPut:
-				updateUser()(w, r)
-			default:
-				ghttp.ErrResponse(404, "not found", errors.New("path not found"), nil).WriteHTTP(r.Context(), w)
-			}
+			},
+		},
+		{
+			Method: http.MethodPost,
+			Path:   p,
+			Fn:     createUser(),
+		},
+		{
+			Method: http.MethodDelete,
+			Path:   p,
+			Fn:     deleteUser(),
+		},
+		{
+			Method: http.MethodPut,
+			Path:   p,
+			Fn:     updateUser(),
 		},
 	}
 }
@@ -206,7 +213,7 @@ func usersHandler() ghttp.Handler {
 func endpoints() ghttp.Endpoints {
 	e := ghttp.NewEndpoints()
 
-	e.Set(usersHandler())
+	e.Set(usersHandler()...)
 
 	return e
 }
