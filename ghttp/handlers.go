@@ -24,6 +24,9 @@ func NewHandler(path string, fn http.HandlerFunc, middleware ...MiddlewareFn) Ha
 // ParseFn is a function that converts a HTTP request into a request object of the caller's choice
 type ParseFn[Q any] func(ctx context.Context, r *http.Request) (*Q, error)
 
+// RouteFn is a function that converts a HTTP request into a HandlerFunc (appropriate to this type of request)
+type RouteFn func(w http.ResponseWriter, r *http.Request) http.HandlerFunc
+
 // QueryFn is a function that executes an action based on the input context `ctx` and query object `query`,
 // and returns the HTTP response's status, message, body object `answer`, a headers map and an error
 type QueryFn[Q any, A any] func(ctx context.Context, query *Q) (status int, msg string, answer *A, headers map[string]string, err error)
@@ -46,14 +49,15 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 			panic("a query function must be specified")
 		}
 
-		if parseFn == nil {
-			parseFn = ReadBody[Q]
-		}
+		var query = new(Q)
+		var err error
 
-		query, err := parseFn(ctx, r)
-		if err != nil {
-			ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
-			return
+		if parseFn != nil {
+			query, err = parseFn(ctx, r)
+			if err != nil {
+				ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
+				return
+			}
 		}
 
 		status, msg, answer, headers, err := queryFn(ctx, query)
@@ -86,14 +90,15 @@ func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.Handler
 			panic("an exec function must be specified")
 		}
 
-		if parseFn == nil {
-			parseFn = ReadBody[Q]
-		}
+		var query = new(Q)
+		var err error
 
-		query, err := parseFn(ctx, r)
-		if err != nil {
-			ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
-			return
+		if parseFn != nil {
+			query, err = parseFn(ctx, r)
+			if err != nil {
+				ErrResponse(400, "failed to parse request", err, nil).WriteHTTP(ctx, w)
+				return
+			}
 		}
 
 		status, msg, headers, err := execFn(ctx, query)
