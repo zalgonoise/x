@@ -10,6 +10,7 @@ type mux struct {
 	Routes map[string]http.HandlerFunc
 }
 
+// ServeHTTP implements the http.Handler interface
 func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if handler, ok := m.Routes[r.Method]; ok {
 		handler(w, r)
@@ -18,6 +19,10 @@ func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
+// NewMux creates a http mux based off of a set of Handlers that share the
+// same path, but present different HandlerFuncs for different HTTP methods
+//
+// Middleware funcs are applied to the HandlerFunc, in the Routes map, in the mux.
 func NewMux(handlers ...Handler) http.Handler {
 	if len(handlers) == 0 {
 		return nil
