@@ -37,9 +37,9 @@ func NewServer(endpoints Endpoints, port int) Server {
 		srv:       httpSrv,
 	}
 
-	for p, handlers := range endpoints.E {
+	for path, handlers := range endpoints.E {
 		m := NewMux(handlers...)
-		mux.HandleFunc(p, m.ServeHTTP)
+		mux.HandleFunc(path, m.ServeHTTP)
 	}
 
 	return srv

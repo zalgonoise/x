@@ -28,12 +28,10 @@ func listUsers() http.HandlerFunc {
 			u[idx] = user
 		}
 
-		res := ghttp.NewResponse[[]*User](http.StatusOK, "users listed successfully")
-		res.Data = &u
-		return res
+		return ghttp.NewResponse[[]*User](http.StatusOK, "users listed successfully").WithData(&u)
 	}
 
-	return ghttp.Query("ListUsers", nil, qFn)
+	return ghttp.Do("ListUsers", nil, qFn)
 }
 
 func getUser() http.HandlerFunc {
@@ -54,15 +52,13 @@ func getUser() http.HandlerFunc {
 
 		for _, user := range users {
 			if *q == user.Username {
-				res := ghttp.NewResponse[User](http.StatusOK, "user fetched successfully")
-				res.Data = user
-				return res
+				return ghttp.NewResponse[User](http.StatusOK, "user fetched successfully").WithData(user)
 			}
 		}
 		return ghttp.NewResponse[User](http.StatusNotFound, "user not found")
 	}
 
-	return ghttp.Query("GetUser", pFn, qFn)
+	return ghttp.Do("GetUser", pFn, qFn)
 }
 
 func createUser() http.HandlerFunc {
@@ -101,12 +97,10 @@ func createUser() http.HandlerFunc {
 
 		q.ID = id
 
-		res := ghttp.NewResponse[User](http.StatusOK, "user added successfully")
-		res.Data = q
-		return res
+		return ghttp.NewResponse[User](http.StatusOK, "user added successfully").WithData(q)
 	}
 
-	return ghttp.Query("AddUser", pFn, qFn)
+	return ghttp.Do("AddUser", pFn, qFn)
 }
 
 func deleteUser() http.HandlerFunc {
@@ -135,7 +129,7 @@ func deleteUser() http.HandlerFunc {
 		return ghttp.NewResponse[string](http.StatusNotFound, "user not found")
 	}
 
-	return ghttp.Exec("DeleteUser", pFn, qFn)
+	return ghttp.Do("DeleteUser", pFn, qFn)
 }
 
 func updateUser() http.HandlerFunc {
@@ -174,16 +168,15 @@ func updateUser() http.HandlerFunc {
 					return ghttp.NewResponse[User](http.StatusOK, "no changes required")
 				}
 				user.Name = q.Name
-				res := ghttp.NewResponse[User](http.StatusOK, "user updated successfully")
-				res.Data = user
-				return res
+				return ghttp.NewResponse[User](http.StatusOK, "user updated successfully").WithData(user)
+
 			}
 		}
 
 		return ghttp.NewResponse[User](http.StatusNotFound, "user not found")
 	}
 
-	return ghttp.Query("UpdateUser", pFn, qFn)
+	return ghttp.Do("UpdateUser", pFn, qFn)
 }
 
 func usersHandler() []ghttp.Handler {

@@ -18,17 +18,29 @@ type Responder interface {
 type Response[T any] struct {
 	Status  int               `json:"-"`
 	Message string            `json:"message,omitempty"`
-	Error   string            `json:"error,omitempty"`
 	Data    *T                `json:"data,omitempty"`
 	Headers map[string]string `json:"-"`
 }
 
+// NewResponse creates a generic HTTP response, initialized with a status and body message
 func NewResponse[T any](status int, msg string) *Response[T] {
 	return &Response[T]{
 		Status:  status,
 		Message: msg,
 		Headers: make(map[string]string),
 	}
+}
+
+// WithData is a chaining method to add a data object to a response
+func (r *Response[T]) WithData(data *T) *Response[T] {
+	r.Data = data
+	return r
+}
+
+// WithHeaders is a chaining method to add headers to a response
+func (r *Response[T]) WithHeaders(headers map[string]string) *Response[T] {
+	r.Headers = headers
+	return r
 }
 
 // WriteHTTP writes the contents of the object to the http.ResponseWriter `w`

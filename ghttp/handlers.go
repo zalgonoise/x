@@ -67,19 +67,15 @@ type ParseFn[Q any] func(ctx context.Context, r *http.Request) (*Q, error)
 type RouteFn func(w http.ResponseWriter, r *http.Request) http.HandlerFunc
 
 // QueryFn is a function that executes an action based on the input context `ctx` and query object `query`,
-// and returns the HTTP response's status, message, body object `answer`, a headers map and an error
-type QueryFn[Q any, A any] func(ctx context.Context, query *Q) *Response[A]
-
-// ExecFn is a function that executes an action based on the input context `ctx` and query object `query`,
-// and returns the HTTP response's status, message, a headers map and an error
-type ExecFn[Q any] func(ctx context.Context, query *Q) *Response[Q]
+// and returns a pointer to a Response for the answer type
+type ExecFn[Q any, A any] func(ctx context.Context, query *Q) *Response[A]
 
 // MiddlewareFn is a function that wraps a http.HandlerFunc, as HTTP middleware
 type MiddlewareFn func(next http.HandlerFunc) http.HandlerFunc
 
-// Query is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
+// Do is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
 // a HTTP status, a response message, a response object and an error
-func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A]) http.HandlerFunc {
+func Do[Q any, A any](name string, parseFn ParseFn[Q], queryFn ExecFn[Q, A]) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, s := NewCtxAndSpan(r, name)
 		defer s.End()
@@ -94,41 +90,11 @@ func Query[Q any, A any](name string, parseFn ParseFn[Q], queryFn QueryFn[Q, A])
 		if parseFn != nil {
 			query, err = parseFn(ctx, r)
 			if err != nil {
-				res := NewResponse[A](http.StatusBadRequest, "failed to parse request")
-				res.Error = err.Error()
-				res.WriteHTTP(ctx, w)
+				NewResponse[A](http.StatusBadRequest, err.Error()).WriteHTTP(ctx, w)
 				return
 			}
 		}
 
 		queryFn(ctx, query).WriteHTTP(ctx, w)
-	}
-}
-
-// Exec is a generic function that creates a HandlerFunc which will take in a context and a query object, and returns
-// a HTTP status, a response message and an error
-func Exec[Q any](name string, parseFn ParseFn[Q], execFn ExecFn[Q]) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, s := NewCtxAndSpan(r, name)
-		defer s.End()
-
-		if execFn == nil {
-			panic("an exec function must be specified")
-		}
-
-		var query = new(Q)
-		var err error
-
-		if parseFn != nil {
-			query, err = parseFn(ctx, r)
-			if err != nil {
-				res := NewResponse[Q](http.StatusBadRequest, "failed to parse request")
-				res.Error = err.Error()
-				res.WriteHTTP(ctx, w)
-				return
-			}
-		}
-
-		execFn(ctx, query).WriteHTTP(ctx, w)
 	}
 }
