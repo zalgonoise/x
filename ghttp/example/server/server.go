@@ -1,7 +1,6 @@
-package main
+package server
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/zalgonoise/x/ghttp"
@@ -13,13 +12,13 @@ type User struct {
 	Username string
 }
 
-type server struct {
-	http  ghttp.Server
+type Server struct {
+	HTTP  ghttp.Server
 	users map[int]*User
 }
 
-func newServer() *server {
-	return &server{
+func New() *Server {
+	return &Server{
 		users: map[int]*User{
 			0: {ID: 0, Name: "Me", Username: "me"},
 			1: {ID: 1, Name: "The other", Username: "the_other"},
@@ -28,7 +27,7 @@ func newServer() *server {
 	}
 }
 
-func (s *server) usersHandler() []ghttp.Handler {
+func (s *Server) usersHandler() []ghttp.Handler {
 	p := "/users/"
 
 	return []ghttp.Handler{
@@ -55,18 +54,8 @@ func (s *server) usersHandler() []ghttp.Handler {
 	}
 }
 
-func (s *server) endpoints() ghttp.Endpoints {
+func (s *Server) Endpoints() ghttp.Endpoints {
 	e := ghttp.NewEndpoints()
 	e.Set(s.usersHandler()...)
 	return e
-}
-
-func main() {
-	srv := newServer()
-	srv.http = ghttp.NewServer(srv.endpoints(), 8080)
-
-	err := srv.http.Start(context.Background())
-	if err != nil {
-		panic(err)
-	}
 }

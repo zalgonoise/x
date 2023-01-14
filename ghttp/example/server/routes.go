@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/zalgonoise/x/ghttp"
 )
 
-func (s *server) usersGet() http.HandlerFunc {
+func (s *Server) usersGet() http.HandlerFunc {
 	pFn := func(ctx context.Context, r *http.Request) (*string, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
@@ -36,7 +36,7 @@ func (s *server) usersGet() http.HandlerFunc {
 	return ghttp.Do("GetUser", pFn, qFn)
 }
 
-func (s *server) usersList() http.HandlerFunc {
+func (s *Server) usersList() http.HandlerFunc {
 	qFn := func(ctx context.Context, q *string) *ghttp.Response[[]*User] {
 		var u = make([]*User, len(s.users))
 		for idx, user := range s.users {
@@ -49,7 +49,7 @@ func (s *server) usersList() http.HandlerFunc {
 	return ghttp.Do("ListUsers", nil, qFn)
 }
 
-func (s *server) usersGetListRoute(path string) http.HandlerFunc {
+func (s *Server) usersGetListRoute(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if len(r.URL.Path[len(path):]) == 0 {
 			s.usersList()(w, r)
@@ -59,7 +59,7 @@ func (s *server) usersGetListRoute(path string) http.HandlerFunc {
 	}
 }
 
-func (s *server) usersCreate() http.HandlerFunc {
+func (s *Server) usersCreate() http.HandlerFunc {
 	pFn := func(ctx context.Context, r *http.Request) (*User, error) {
 		u, err := ghttp.ReadBody[User](ctx, r)
 		if err != nil {
@@ -101,7 +101,7 @@ func (s *server) usersCreate() http.HandlerFunc {
 	return ghttp.Do("AddUser", pFn, qFn)
 }
 
-func (s *server) usersUpdate() http.HandlerFunc {
+func (s *Server) usersUpdate() http.HandlerFunc {
 	pFn := func(ctx context.Context, r *http.Request) (*User, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
@@ -148,7 +148,7 @@ func (s *server) usersUpdate() http.HandlerFunc {
 	return ghttp.Do("UpdateUser", pFn, qFn)
 }
 
-func (s *server) usersDelete() http.HandlerFunc {
+func (s *Server) usersDelete() http.HandlerFunc {
 	pFn := func(ctx context.Context, r *http.Request) (*string, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
