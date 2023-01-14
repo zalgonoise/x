@@ -11,7 +11,7 @@ type User struct {
 }
 
 type Server struct {
-	HTTP  ghttp.Server
+	HTTP  *ghttp.Server
 	users map[int]*User
 }
 
