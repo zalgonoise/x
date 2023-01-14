@@ -1,11 +1,26 @@
 package ghttp
 
 import (
+	"bytes"
 	"context"
 	stdjson "encoding/json"
+	"errors"
+	"io"
+	"sync"
 
 	json "github.com/goccy/go-json"
 )
+
+var bufferPool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(make([]byte, 0, 1024))
+	},
+}
+
+var ErrInvalidEncoder = errors.New("invalid encoder - no Encode(any) error method")
+var ErrInvalidDecoder = errors.New("invalid decoder - no Decode(any) error method")
+
+const bufferCap int = 4096
 
 // ContextResponseEncoder is a type used to identify encoders in Contexts
 type ContextResponseEncoder string
@@ -31,6 +46,56 @@ func Enc(ctx context.Context) EncodeDecoder {
 	return enc
 }
 
+type encDec struct {
+	enc func(io.Writer) any
+	dec func(io.Reader) any
+}
+
+func NewEncodeDecoder(
+	enc func(io.Writer) any,
+	dec func(io.Reader) any,
+) EncodeDecoder {
+	return encDec{enc, dec}
+}
+
+func (ed encDec) Encode(v any) ([]byte, error) {
+	buf := bufferPool.Get().(*bytes.Buffer)
+	enc := ed.enc(buf)
+	if e, ok := enc.(interface{ Encode(any) error }); ok {
+		err := e.Encode(v)
+		if err != nil {
+			return nil, err
+		}
+		b := buf.Bytes()
+		if buf.Cap() > bufferCap {
+			return b, nil
+		}
+		buf.Reset()
+		bufferPool.Put(buf)
+		return b, nil
+	}
+	if buf.Cap() > bufferCap {
+		return nil, ErrInvalidEncoder
+	}
+	buf.Reset()
+	bufferPool.Put(buf)
+	return nil, ErrInvalidEncoder
+
+}
+
+func (ed encDec) Decode(b []byte, v any) error {
+	buf := bytes.NewBuffer(b)
+	dec := ed.dec(buf)
+	if d, ok := dec.(interface{ Decode(any) error }); ok {
+		err := d.Decode(v)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return ErrInvalidDecoder
+}
+
 // Encoder encodes any item into a slice of bytes, returning also an error
 type Encoder interface {
 	Encode(any) ([]byte, error)
@@ -49,59 +114,41 @@ type EncodeDecoder interface {
 	Decoder
 }
 
-// RawEncodeDecoder is a MarshalUnmarshaler
-type RawEncodeDecoder interface {
+// MarshalUnmarshaler is a marshals and unmarshals data
+type MarshalUnmarshaler interface {
 	Marshal(v any) ([]byte, error)
 	Unmarshal(b []byte, v any) error
 }
 
-// New creates an EncodeDecoder from a RawEncodeDecoder
-func New(red RawEncodeDecoder) EncodeDecoder {
-	return encDec{red}
+// New creates an EncodeDecoder from a MarshalUnmarshaler
+func FromMarshaler(mu MarshalUnmarshaler) EncodeDecoder {
+	return muEncDec{mu}
 }
 
-type encDec struct {
-	e RawEncodeDecoder
+type muEncDec struct {
+	mu MarshalUnmarshaler
 }
 
 // Encoder encodes any item into a slice of bytes, returning also an error
-func (e encDec) Encode(v any) ([]byte, error) {
-	return e.e.Marshal(v)
+func (ed muEncDec) Encode(v any) ([]byte, error) {
+	return ed.mu.Marshal(v)
 }
 
 // Decoder converts the data in the slice of bytes into the input object, returning an error
-func (e encDec) Decode(b []byte, v any) error {
-	return e.e.Unmarshal(b, v)
+func (ed muEncDec) Decode(b []byte, v any) error {
+	return ed.mu.Unmarshal(b, v)
 }
 
 func JSON() EncodeDecoder {
-	return jsonEnc{}
-}
-
-type jsonEnc struct{}
-
-// Encoder encodes any item into a slice of bytes, returning also an error
-func (e jsonEnc) Encode(v any) ([]byte, error) {
-	return json.Marshal(v)
-}
-
-// Decoder converts the data in the slice of bytes into the input object, returning an error
-func (e jsonEnc) Decode(b []byte, v any) error {
-	return json.Unmarshal(b, v)
+	return encDec{
+		enc: func(w io.Writer) any { return json.NewEncoder(w) },
+		dec: func(w io.Reader) any { return json.NewDecoder(w) },
+	}
 }
 
 func StdJSON() EncodeDecoder {
-	return stdJsonEnc{}
-}
-
-type stdJsonEnc struct{}
-
-// Encoder encodes any item into a slice of bytes, returning also an error
-func (e stdJsonEnc) Encode(v any) ([]byte, error) {
-	return stdjson.Marshal(v)
-}
-
-// Decoder converts the data in the slice of bytes into the input object, returning an error
-func (e stdJsonEnc) Decode(b []byte, v any) error {
-	return stdjson.Unmarshal(b, v)
+	return encDec{
+		enc: func(w io.Writer) any { return stdjson.NewEncoder(w) },
+		dec: func(w io.Reader) any { return stdjson.NewDecoder(w) },
+	}
 }
