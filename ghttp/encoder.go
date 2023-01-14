@@ -17,10 +17,12 @@ var bufferPool = sync.Pool{
 	},
 }
 
-var ErrInvalidEncoder = errors.New("invalid encoder - no Encode(any) error method")
-var ErrInvalidDecoder = errors.New("invalid decoder - no Decode(any) error method")
-
 const bufferCap int = 4096
+
+var (
+	ErrInvalidEncoder = errors.New("invalid encoder - no Encode(any) error method")
+	ErrInvalidDecoder = errors.New("invalid decoder - no Decode(any) error method")
+)
 
 // ContextResponseEncoder is a type used to identify encoders in Contexts
 type ContextResponseEncoder string
@@ -51,6 +53,13 @@ type encDec struct {
 	dec func(io.Reader) any
 }
 
+// NewEncodeDecoder creates an EncodeDecoder based off of encoder and
+// decoders' init functions. As these functions return a pointer to their
+// own Encoder / Decoder types, they are cast as `any`.
+//
+// The EncodeDecoder will expect the respective Encode/Decode(any) error
+// interface to be available otherwise it will return an error when
+// performing that action
 func NewEncodeDecoder(
 	enc func(io.Writer) any,
 	dec func(io.Reader) any,
@@ -58,6 +67,7 @@ func NewEncodeDecoder(
 	return encDec{enc, dec}
 }
 
+// Encode encodes any item into a slice of bytes, returning also an error
 func (ed encDec) Encode(v any) ([]byte, error) {
 	buf := bufferPool.Get().(*bytes.Buffer)
 	enc := ed.enc(buf)
@@ -83,6 +93,7 @@ func (ed encDec) Encode(v any) ([]byte, error) {
 
 }
 
+// Decode converts the data in the slice of bytes into the input object, returning an error
 func (ed encDec) Decode(b []byte, v any) error {
 	buf := bytes.NewBuffer(b)
 	dec := ed.dec(buf)
@@ -98,11 +109,13 @@ func (ed encDec) Decode(b []byte, v any) error {
 
 // Encoder encodes any item into a slice of bytes, returning also an error
 type Encoder interface {
+	// Encode encodes any item into a slice of bytes, returning also an error
 	Encode(any) ([]byte, error)
 }
 
 // Decoder converts the data in the slice of bytes into the input object, returning an error
 type Decoder interface {
+	// Decode converts the data in the slice of bytes into the input object, returning an error
 	Decode([]byte, any) error
 }
 
@@ -129,16 +142,17 @@ type muEncDec struct {
 	mu MarshalUnmarshaler
 }
 
-// Encoder encodes any item into a slice of bytes, returning also an error
+// Encode encodes any item into a slice of bytes, returning also an error
 func (ed muEncDec) Encode(v any) ([]byte, error) {
 	return ed.mu.Marshal(v)
 }
 
-// Decoder converts the data in the slice of bytes into the input object, returning an error
+// Decode converts the data in the slice of bytes into the input object, returning an error
 func (ed muEncDec) Decode(b []byte, v any) error {
 	return ed.mu.Unmarshal(b, v)
 }
 
+// JSON returns a goccy/go-json EncodeDecoder
 func JSON() EncodeDecoder {
 	return encDec{
 		enc: func(w io.Writer) any { return json.NewEncoder(w) },
@@ -146,6 +160,7 @@ func JSON() EncodeDecoder {
 	}
 }
 
+// StdJSON returns an encoding/json std library EncodeDecoder
 func StdJSON() EncodeDecoder {
 	return encDec{
 		enc: func(w io.Writer) any { return stdjson.NewEncoder(w) },
