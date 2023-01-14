@@ -5,13 +5,13 @@ import (
 	"net/http"
 )
 
-type mux struct {
+type router struct {
 	Path   string
 	Routes map[string]http.HandlerFunc
 }
 
 // ServeHTTP implements the http.Handler interface
-func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if handler, ok := m.Routes[r.Method]; ok {
 		handler(w, r)
 		return
@@ -23,12 +23,12 @@ func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // same path, but present different HandlerFuncs for different HTTP methods
 //
 // Middleware funcs are applied to the HandlerFunc, in the Routes map, in the mux.
-func NewMux(handlers ...Handler) http.Handler {
+func NewRouter(handlers ...Handler) http.Handler {
 	if len(handlers) == 0 {
 		return nil
 	}
 	p := handlers[0].Path
-	m := &mux{
+	m := &router{
 		Path:   p,
 		Routes: make(map[string]http.HandlerFunc),
 	}

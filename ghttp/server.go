@@ -90,8 +90,8 @@ func WithServerAndMux(
 		srv.Addr = fmt.Sprintf(":%v", defaultPort)
 	}
 	for path, handlers := range endpoints {
-		m := NewMux(handlers...)
-		mux.HandleFunc(path, m.ServeHTTP)
+		r := NewRouter(handlers...)
+		mux.HandleFunc(path, r.ServeHTTP)
 	}
 	srv.Handler = mux.(http.Handler)
 
