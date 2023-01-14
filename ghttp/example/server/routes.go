@@ -9,6 +9,45 @@ import (
 	"github.com/zalgonoise/x/ghttp"
 )
 
+func (s *Server) usersHandler() []ghttp.Handler {
+	p := "/users/"
+
+	return []ghttp.Handler{
+		{
+			Method: http.MethodGet,
+			Path:   p,
+			Fn:     s.usersGetListRoute(p),
+			Middleware: []ghttp.MiddlewareFn{
+				ghttp.WithEncoder(ghttp.JSON()),
+			},
+		},
+		{
+			Method: http.MethodPost,
+			Path:   p,
+			Fn:     s.usersCreate(),
+			Middleware: []ghttp.MiddlewareFn{
+				ghttp.WithEncoder(ghttp.JSON()),
+			},
+		},
+		{
+			Method: http.MethodDelete,
+			Path:   p,
+			Fn:     s.usersDelete(),
+			Middleware: []ghttp.MiddlewareFn{
+				ghttp.WithEncoder(ghttp.JSON()),
+			},
+		},
+		{
+			Method: http.MethodPut,
+			Path:   p,
+			Fn:     s.usersUpdate(),
+			Middleware: []ghttp.MiddlewareFn{
+				ghttp.WithEncoder(ghttp.JSON()),
+			},
+		},
+	}
+}
+
 func (s *Server) usersGet() http.HandlerFunc {
 	pFn := func(ctx context.Context, r *http.Request) (*string, error) {
 		prefix := "/users/"

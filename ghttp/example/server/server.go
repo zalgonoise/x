@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/zalgonoise/x/ghttp"
 )
 
@@ -23,33 +21,6 @@ func New() *Server {
 			0: {ID: 0, Name: "Me", Username: "me"},
 			1: {ID: 1, Name: "The other", Username: "the_other"},
 			2: {ID: 2, Name: "Someone else", Username: "someone_else"},
-		},
-	}
-}
-
-func (s *Server) usersHandler() []ghttp.Handler {
-	p := "/users/"
-
-	return []ghttp.Handler{
-		{
-			Method: http.MethodGet,
-			Path:   p,
-			Fn:     s.usersGetListRoute(p),
-		},
-		{
-			Method: http.MethodPost,
-			Path:   p,
-			Fn:     s.usersCreate(),
-		},
-		{
-			Method: http.MethodDelete,
-			Path:   p,
-			Fn:     s.usersDelete(),
-		},
-		{
-			Method: http.MethodPut,
-			Path:   p,
-			Fn:     s.usersUpdate(),
 		},
 	}
 }
