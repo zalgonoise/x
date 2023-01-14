@@ -34,18 +34,13 @@ const ResponseEncoderKey ContextResponseEncoder = "encoder"
 // Enc returns the EncodeDecoder from the input Context `ctx`, or creates a new
 // JSON encoder if the context doesn't have one
 func Enc(ctx context.Context) EncodeDecoder {
-	var enc EncodeDecoder = nil
-
 	v := ctx.Value(ResponseEncoderKey)
 	if v != nil {
 		if e, ok := v.(EncodeDecoder); ok {
-			enc = e
+			return e
 		}
 	}
-	if enc == nil {
-		return JSON()
-	}
-	return enc
+	return JSON()
 }
 
 type encDec struct {
