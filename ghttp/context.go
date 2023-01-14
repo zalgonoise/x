@@ -18,8 +18,7 @@ import (
 //
 // The resulting context is returned alongside the created Span
 func NewCtxAndSpan(r *http.Request, service string, attrs ...attr.Attr) (context.Context, spanner.Span) {
-	ctx := context.WithValue(r.Context(), ResponseEncoderKey, JSON())
-	ctx, span := spanner.Start(ctx, service)
+	ctx, span := spanner.Start(r.Context(), service)
 	span.Add(
 		attr.New("req", attr.Attrs{
 			attr.String("module", service),
