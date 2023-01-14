@@ -9,48 +9,101 @@ import (
 	"github.com/zalgonoise/spanner"
 )
 
-// Server describes the functionalities of a HTTP server, once spawned
-type Server interface {
-	// Start initializes the HTTP server, returning an error. This is a blocking call
-	Start(ctx context.Context) error
-	// Stop gracefully shuts-down the HTTP server, returning an error
-	Stop(ctx context.Context) error
+const defaultPort = 8080
+
+type Server struct {
+	*http.Server
 }
 
-type server struct {
-	endpoints Endpoints
-	port      int
-	srv       *http.Server
-}
-
-// NewServer spawns a new HTTP server for port `port`, configured with Endpoints
-// `endpoints`
-func NewServer(endpoints Endpoints, port int) Server {
+// NewServer spawns a default HTTP server on port `port`, configured with endpoints `endpoints`
+func NewServer(port int, endpoints Endpoints) *Server {
+	if port <= 0 {
+		port = defaultPort
+	}
 	mux := http.NewServeMux()
-	httpSrv := &http.Server{
-		Addr:    fmt.Sprintf(":%v", port),
-		Handler: mux,
+	srv := &http.Server{
+		Addr: fmt.Sprintf(":%v", port),
 	}
-	srv := &server{
-		endpoints: endpoints,
-		port:      port,
-		srv:       httpSrv,
+	return WithServerAndMux(srv, mux, endpoints)
+}
+
+// WithServer wraps a standard library *http.Server with the input endpoints `endpoints`. The caller
+// must configure the server's address; otherwise it defaults to ":8080"
+func WithServer(srv *http.Server, endpoints Endpoints) *Server {
+	if srv == nil {
+		return NewServer(defaultPort, endpoints)
+	}
+	if srv.Addr == "" {
+		srv.Addr = fmt.Sprintf(":%v", defaultPort)
+	}
+	if srv.Handler == nil {
+		return WithServerAndMux(srv, http.NewServeMux(), endpoints)
 	}
 
+	if mux, ok := srv.Handler.(interface {
+		HandleFunc(string, func(http.ResponseWriter, *http.Request))
+	}); ok {
+		WithServerAndMux(srv, mux, endpoints)
+	}
+
+	return WithServerAndMux(srv, http.NewServeMux(), endpoints)
+}
+
+// WithMux creates a HTTP server based on the input multiplexer. The input `mux` has to implement
+// the HandleFunc(string, func(http.ResponseWriter, *http.Request)) method
+func WithMux(
+	port int,
+	mux interface {
+		HandleFunc(string, func(http.ResponseWriter, *http.Request))
+	},
+	endpoints Endpoints,
+) *Server {
+	if port <= 0 {
+		port = defaultPort
+	}
+	if mux == nil {
+		return NewServer(port, endpoints)
+	}
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%v", port),
+		Handler: mux.(http.Handler),
+	}
+	return WithServerAndMux(srv, mux, endpoints)
+}
+
+// WithServerAndMux wraps existing *http.Server and a mux, with the input endpoints `endpoints`.
+// The input `mux` has to implement the HandleFunc(string, func(http.ResponseWriter, *http.Request))
+// method
+//
+// The input server `srv`'s Handler will be replaced with the input mux `mux`
+func WithServerAndMux(
+	srv *http.Server,
+	mux interface {
+		HandleFunc(string, func(http.ResponseWriter, *http.Request))
+	},
+	endpoints Endpoints,
+) *Server {
+	if srv == nil {
+		return WithMux(defaultPort, mux, endpoints)
+	}
+	if srv.Addr == "" {
+		srv.Addr = fmt.Sprintf(":%v", defaultPort)
+	}
 	for path, handlers := range endpoints {
 		m := NewMux(handlers...)
 		mux.HandleFunc(path, m.ServeHTTP)
 	}
+	srv.Handler = mux.(http.Handler)
 
-	return srv
+	return &Server{srv}
 }
 
 // Start initializes the HTTP server, returning an error. This is a blocking call
-func (s *server) Start(ctx context.Context) error {
+func (s *Server) Start(ctx context.Context) error {
 	_, span := spanner.Start(ctx, "http.Start")
 	defer span.End()
 
-	err := s.srv.ListenAndServe()
+	err := s.ListenAndServe()
 	if err != nil {
 		span.Event("failed to start HTTP server", attr.New("error", err.Error()))
 		return err
@@ -59,11 +112,11 @@ func (s *server) Start(ctx context.Context) error {
 }
 
 // Stop gracefully shuts-down the HTTP server, returning an error
-func (s *server) Stop(ctx context.Context) error {
+func (s *Server) Stop(ctx context.Context) error {
 	ctx, span := spanner.Start(ctx, "http.Stop")
 	defer span.End()
 
-	err := s.srv.Shutdown(ctx)
+	err := s.Shutdown(ctx)
 	if err != nil {
 		span.Event("failed to stop HTTP server", attr.New("error", err.Error()))
 		return err
