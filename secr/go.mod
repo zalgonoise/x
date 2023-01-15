@@ -15,5 +15,6 @@ require (
 
 require (
 	github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be // indirect
+	github.com/zalgonoise/x/ghttp v0.0.0-20230114182139-01b85dedbf92 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 )

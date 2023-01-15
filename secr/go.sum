@@ -12,6 +12,8 @@ github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be h1:ba6thk6xk6aWTGx
 github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be/go.mod h1:H1GvFfv7qC2rtnOLO49lHOHa8fsS6w0cjYhxw9/WamQ=
 github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6 h1:lEVAaRJSf7M4AL+Ye0bG83EuU5YyXJjgqkzc/RA9nUs=
 github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6/go.mod h1:zcjBm68rwWIPohFOeMhJWIlCvl3UZrSLn49hzAde99A=
+github.com/zalgonoise/x/ghttp v0.0.0-20230114182139-01b85dedbf92 h1:zMPig9uN9vlGDu9y80L4iPyb2NWzz33Bw0qy52cZJA8=
+github.com/zalgonoise/x/ghttp v0.0.0-20230114182139-01b85dedbf92/go.mod h1:iA+9dXCQwQmUNxAjwMSxk9JNvaK6IgHHQpHRHip28oY=
 go.etcd.io/bbolt v1.3.6 h1:/ecaJf0sk1l4l6V4awd65v2C3ILy7MSj+s/x1ADCIMU=
 go.etcd.io/bbolt v1.3.6/go.mod h1:qXsaaIqmgQH0T+OPdb99Bf+PKfBBQVAdyD6TY9G8XM4=
 golang.org/x/exp v0.0.0-20221230185412-738e83a70c30 h1:m9O6OTJ627iFnN2JIWfdqlZCzneRO6EEBsHXI25P8ws=
