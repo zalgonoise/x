@@ -32,8 +32,9 @@ func (s *server) login() http.HandlerFunc {
 					return u, nil
 				}
 			}
+			return nil, errors.New("failed to read password or token in request")
 		}
-		return nil, errors.New("failed to read password or token in request")
+		return u, nil
 	}
 
 	var execFn = func(ctx context.Context, q *loginRequest) *ghttp.Response[user.Session] {
