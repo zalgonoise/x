@@ -12,8 +12,13 @@ import (
 )
 
 func (s *server) login() http.HandlerFunc {
-	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
-		u, err := ghttp.ReadBody[user.User](ctx, r)
+	type loginRequest struct {
+		Username string `json:"username,omitempty"`
+		Password string `json:"password,omitempty"`
+	}
+
+	var parseFn = func(ctx context.Context, r *http.Request) (*loginRequest, error) {
+		u, err := ghttp.ReadBody[loginRequest](ctx, r)
 		if err != nil {
 			return nil, err
 		}
@@ -31,7 +36,7 @@ func (s *server) login() http.HandlerFunc {
 		return nil, errors.New("failed to read password or token in request")
 	}
 
-	var execFn = func(ctx context.Context, q *user.User) *ghttp.Response[user.Session] {
+	var execFn = func(ctx context.Context, q *loginRequest) *ghttp.Response[user.Session] {
 		if q == nil {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
@@ -53,6 +58,20 @@ func (s *server) login() http.HandlerFunc {
 	return ghttp.Do("Login", parseFn, execFn)
 }
 func (s *server) logout() http.HandlerFunc {
+	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
+		token := r.Header.Get("Authorization")
+		if token != "" {
+			t := strings.TrimPrefix(token, "Bearer: ")
+			if t != "" {
+				u, err := s.s.ParseToken(ctx, t)
+				if err != nil {
+					return u, nil
+				}
+			}
+		}
+		return nil, errors.New("failed to read password or token in request")
+	}
+
 	var execFn = func(ctx context.Context, q *user.User) *ghttp.Response[user.Session] {
 		if q == nil || q.Username == "" {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
@@ -69,7 +88,7 @@ func (s *server) logout() http.HandlerFunc {
 		return ghttp.NewResponse[user.Session](http.StatusOK, "user logged out successfully")
 	}
 
-	return ghttp.Do("Logout", ghttp.ReadBody[user.User], execFn)
+	return ghttp.Do("Logout", parseFn, execFn)
 }
 
 func (s *server) changePassword() http.HandlerFunc {

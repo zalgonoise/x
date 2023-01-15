@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -12,8 +13,8 @@ const secrPath = "secrets"
 
 func (s *server) endpoints() ghttp.Endpoints {
 	e := ghttp.NewEndpoints()
-	e.Set(s.sessionsHandler()...)
 	e.Set(s.usersHandler()...)
+	e.Set(s.sessionsHandler()...)
 	return e
 }
 
@@ -43,7 +44,7 @@ func (s *server) sessionsHandler() []ghttp.Handler {
 }
 
 func (s *server) usersHandler() []ghttp.Handler {
-	p := "/users/"
+	p := "/users"
 
 	return []ghttp.Handler{
 		{
@@ -58,9 +59,6 @@ func (s *server) usersHandler() []ghttp.Handler {
 			Method: http.MethodPost,
 			Path:   p,
 			Fn:     s.usersPostRoute(),
-			Middleware: []ghttp.MiddlewareFn{
-				s.WithAuth(),
-			},
 		},
 		{
 			Method: http.MethodDelete,
@@ -83,26 +81,26 @@ func (s *server) usersHandler() []ghttp.Handler {
 
 func (s *server) usersGetRoute() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		splitPath := strings.Split(r.URL.Path, ",")
+		splitPath := strings.Split(r.URL.Path, "/")
 
 		switch len(splitPath) {
-		case 1:
-			if splitPath[0] == userPath {
+		case 2:
+			if splitPath[1] == userPath {
 				s.usersList()(w, r)
 				return
 			}
-		case 2:
-			if splitPath[0] == userPath {
+		case 3:
+			if splitPath[1] == userPath {
 				s.usersGet()(w, r)
 				return
 			}
-		case 3:
-			if splitPath[0] == userPath && splitPath[2] == secrPath {
+		case 4:
+			if splitPath[1] == userPath && splitPath[3] == secrPath {
 				s.secretsList()(w, r)
 				return
 			}
-		case 4:
-			if splitPath[0] == userPath && splitPath[2] == secrPath {
+		case 5:
+			if splitPath[1] == userPath && splitPath[3] == secrPath {
 				s.secretsGet()(w, r)
 				return
 			}
@@ -114,17 +112,19 @@ func (s *server) usersGetRoute() http.HandlerFunc {
 
 func (s *server) usersPostRoute() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		splitPath := strings.Split(r.URL.Path, ",")
+
+		splitPath := strings.Split(r.URL.Path, "/")
 
 		switch len(splitPath) {
-		case 1:
-			if splitPath[0] == userPath {
+		case 2:
+			if splitPath[1] == userPath {
+				fmt.Println("hit")
 				s.usersCreate()(w, r)
 				return
 			}
-		case 3:
-			if splitPath[0] == userPath && splitPath[2] == secrPath {
-				s.secretsCreate()(w, r)
+		case 4:
+			if splitPath[1] == userPath && splitPath[3] == secrPath {
+				s.WithAuth()(s.secretsCreate())(w, r)
 				return
 			}
 		default:
@@ -135,7 +135,7 @@ func (s *server) usersPostRoute() http.HandlerFunc {
 
 func (s *server) usersDeleteRoute() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		splitPath := strings.Split(r.URL.Path, ",")
+		splitPath := strings.Split(r.URL.Path, "/")
 
 		switch len(splitPath) {
 		case 1:
