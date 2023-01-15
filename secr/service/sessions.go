@@ -144,3 +144,25 @@ func (s service) Refresh(ctx context.Context, username, token string) (*user.Ses
 		Token: newToken,
 	}, nil
 }
+
+// Validate verifies if a user's JWT is a valid one, returning a boolean and an error
+func (s service) Validate(ctx context.Context, username, token string) (bool, error) {
+	if username == "" {
+		return false, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	}
+	if token == "" {
+		return false, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+	}
+
+	// fetch user
+	u, err := s.users.Get(ctx, username)
+	if err != nil {
+		return false, fmt.Errorf("failed to fetch user %s: %v", username, err)
+	}
+
+	// validate credentials
+	if err := s.login(ctx, u, token); err != nil {
+		return false, fmt.Errorf("%w: failed to validate user credentials: %v", ErrIncorrectPassword, err)
+	}
+	return true, nil
+}

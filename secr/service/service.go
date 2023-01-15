@@ -19,6 +19,8 @@ type Service interface {
 	ChangePassword(ctx context.Context, username, password, newPassword string) error
 	// Refresh renews a user's JWT provided it is a valid one. Returns a session and an error
 	Refresh(ctx context.Context, username, token string) (*user.Session, error)
+	// Validate verifies if a user's JWT is a valid one, returning a boolean and an error
+	Validate(ctx context.Context, username, token string) (bool, error)
 
 	// CreateUser creates the user under username `username`, with the provided password `password` and name `name`
 	// It returns a user and an error
