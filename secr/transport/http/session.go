@@ -26,7 +26,7 @@ func (s *server) login() http.HandlerFunc {
 		if u.Password == "" {
 			token := r.Header.Get("Authorization")
 			if token != "" {
-				t := strings.TrimPrefix(token, "Bearer: ")
+				t := strings.TrimPrefix(token, "Bearer ")
 				if t != "" {
 					u.Password = t
 					return u, nil
@@ -58,11 +58,12 @@ func (s *server) login() http.HandlerFunc {
 
 	return ghttp.Do("Login", parseFn, execFn)
 }
+
 func (s *server) logout() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
 		token := r.Header.Get("Authorization")
 		if token != "" {
-			t := strings.TrimPrefix(token, "Bearer: ")
+			t := strings.TrimPrefix(token, "Bearer ")
 			if t != "" {
 				u, err := s.s.ParseToken(ctx, t)
 				if err != nil {
@@ -93,12 +94,17 @@ func (s *server) logout() http.HandlerFunc {
 }
 
 func (s *server) changePassword() http.HandlerFunc {
-	var execFn = func(ctx context.Context, q *user.NewPassword) *ghttp.Response[user.Session] {
+	type changePasswordRequest struct {
+		Username    string `json:"username,omitempty"`
+		Password    string `json:"password,omitempty"`
+		NewPassword string `json:"new_password,omitempty"`
+	}
+	var execFn = func(ctx context.Context, q *changePasswordRequest) *ghttp.Response[user.Session] {
 		if q == nil {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
 
-		err := s.s.ChangePassword(ctx, q.User.Username, q.User.Password, q.Password)
+		err := s.s.ChangePassword(ctx, q.Username, q.Password, q.NewPassword)
 		if err != nil {
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
@@ -112,12 +118,16 @@ func (s *server) changePassword() http.HandlerFunc {
 		return ghttp.NewResponse[user.Session](http.StatusOK, "password changed successfully")
 	}
 
-	return ghttp.Do("ChangePassword", ghttp.ReadBody[user.NewPassword], execFn)
+	return ghttp.Do("ChangePassword", ghttp.ReadBody[changePasswordRequest], execFn)
 }
 
 func (s *server) refresh() http.HandlerFunc {
-	var parseFn = func(ctx context.Context, r *http.Request) (*user.Session, error) {
-		s, err := ghttp.ReadBody[user.Session](ctx, r)
+	type refreshRequest struct {
+		Username string `json:"username,omitempty"`
+		Token    string `json:"token,omitempty"`
+	}
+	var parseFn = func(ctx context.Context, r *http.Request) (*refreshRequest, error) {
+		s, err := ghttp.ReadBody[refreshRequest](ctx, r)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +135,7 @@ func (s *server) refresh() http.HandlerFunc {
 		if s.Token == "" {
 			token := r.Header.Get("Authorization")
 			if token != "" {
-				t := strings.TrimPrefix(token, "Bearer: ")
+				t := strings.TrimPrefix(token, "Bearer ")
 				if t != "" {
 					s.Token = t
 					return s, nil
@@ -135,7 +145,7 @@ func (s *server) refresh() http.HandlerFunc {
 		return nil, errors.New("failed to read user or token in request")
 	}
 
-	var execFn = func(ctx context.Context, q *user.Session) *ghttp.Response[user.Session] {
+	var execFn = func(ctx context.Context, q *refreshRequest) *ghttp.Response[user.Session] {
 		if q == nil {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
