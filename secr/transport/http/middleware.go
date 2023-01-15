@@ -7,7 +7,7 @@ import (
 	"github.com/zalgonoise/x/ghttp"
 )
 
-func (s server) WithAuth() ghttp.MiddlewareFn {
+func (s *server) WithAuth() ghttp.MiddlewareFn {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var username string

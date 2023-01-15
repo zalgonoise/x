@@ -10,7 +10,7 @@ import (
 	"github.com/zalgonoise/x/secr/user"
 )
 
-func (s server) usersGet() http.HandlerFunc {
+func (s *server) usersGet() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*string, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
@@ -40,7 +40,7 @@ func (s server) usersGet() http.HandlerFunc {
 	return ghttp.Do("UsersGet", parseFn, execFn)
 }
 
-func (s server) usersList() http.HandlerFunc {
+func (s *server) usersList() http.HandlerFunc {
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[[]*user.User] {
 		dbuser, err := s.s.ListUsers(ctx)
 		if err != nil {
@@ -53,7 +53,7 @@ func (s server) usersList() http.HandlerFunc {
 	return ghttp.Do("UsersList", nil, execFn)
 }
 
-func (s server) usersCreate() http.HandlerFunc {
+func (s *server) usersCreate() http.HandlerFunc {
 	var execFn = func(ctx context.Context, q *user.User) *ghttp.Response[user.User] {
 		if q == nil {
 			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid username")
@@ -73,7 +73,7 @@ func (s server) usersCreate() http.HandlerFunc {
 	return ghttp.Do("UsersCreate", ghttp.ReadBody[user.User], execFn)
 }
 
-func (s server) usersUpdate() http.HandlerFunc {
+func (s *server) usersUpdate() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
 		prefix := "/users/"
 		username := r.URL.Path[len(prefix):]
@@ -112,7 +112,7 @@ func (s server) usersUpdate() http.HandlerFunc {
 	return ghttp.Do("UsersUpdate", parseFn, execFn)
 }
 
-func (s server) usersDelete() http.HandlerFunc {
+func (s *server) usersDelete() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
 		prefix := "/users/"
 		username := r.URL.Path[len(prefix):]

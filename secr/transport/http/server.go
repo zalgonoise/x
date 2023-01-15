@@ -19,13 +19,13 @@ type server struct {
 	HTTP *ghttp.Server
 }
 
-func NewServer(s service.Service, port int) Server {
-	srv := server{}
+func NewServer(port int, s service.Service) Server {
+	srv := &server{s: s}
 	srv.HTTP = ghttp.NewServer(port, srv.endpoints())
 	return srv
 }
 
-func (s server) Start(ctx context.Context) error {
+func (s *server) Start(ctx context.Context) error {
 	_, span := spanner.Start(ctx, "http.Start")
 	defer span.End()
 
@@ -37,7 +37,7 @@ func (s server) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s server) Stop(ctx context.Context) error {
+func (s *server) Stop(ctx context.Context) error {
 	ctx, span := spanner.Start(ctx, "http.Stop")
 	defer span.End()
 

@@ -10,14 +10,14 @@ import (
 const userPath = "users"
 const secrPath = "secrets"
 
-func (s server) endpoints() ghttp.Endpoints {
+func (s *server) endpoints() ghttp.Endpoints {
 	e := ghttp.NewEndpoints()
 	e.Set(s.sessionsHandler()...)
 	e.Set(s.usersHandler()...)
 	return e
 }
 
-func (s server) sessionsHandler() []ghttp.Handler {
+func (s *server) sessionsHandler() []ghttp.Handler {
 	return []ghttp.Handler{
 		{
 			Method: http.MethodPost,
@@ -42,7 +42,7 @@ func (s server) sessionsHandler() []ghttp.Handler {
 	}
 }
 
-func (s server) usersHandler() []ghttp.Handler {
+func (s *server) usersHandler() []ghttp.Handler {
 	p := "/users/"
 
 	return []ghttp.Handler{
@@ -81,7 +81,7 @@ func (s server) usersHandler() []ghttp.Handler {
 	}
 }
 
-func (s server) usersGetRoute() http.HandlerFunc {
+func (s *server) usersGetRoute() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		splitPath := strings.Split(r.URL.Path, ",")
 
@@ -112,7 +112,7 @@ func (s server) usersGetRoute() http.HandlerFunc {
 	}
 }
 
-func (s server) usersPostRoute() http.HandlerFunc {
+func (s *server) usersPostRoute() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		splitPath := strings.Split(r.URL.Path, ",")
 
@@ -133,7 +133,7 @@ func (s server) usersPostRoute() http.HandlerFunc {
 	}
 }
 
-func (s server) usersDeleteRoute() http.HandlerFunc {
+func (s *server) usersDeleteRoute() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		splitPath := strings.Split(r.URL.Path, ",")
 

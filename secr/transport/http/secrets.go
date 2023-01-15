@@ -12,7 +12,7 @@ import (
 	"github.com/zalgonoise/x/secr/user"
 )
 
-func (s server) secretsGet() http.HandlerFunc {
+func (s *server) secretsGet() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*secret.WithOwner, error) {
 		splitPath := strings.Split(r.URL.Path, ",")
 		username, key := splitPath[1], splitPath[3]
@@ -45,7 +45,7 @@ func (s server) secretsGet() http.HandlerFunc {
 
 	return ghttp.Do("SecretsGet", parseFn, execFn)
 }
-func (s server) secretsList() http.HandlerFunc {
+func (s *server) secretsList() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*string, error) {
 		prefix := "/users/"
 		q := r.URL.Path[len(prefix):]
@@ -71,7 +71,7 @@ func (s server) secretsList() http.HandlerFunc {
 
 	return ghttp.Do("SecretsList", parseFn, execFn)
 }
-func (s server) secretsCreate() http.HandlerFunc {
+func (s *server) secretsCreate() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*secret.WithOwner, error) {
 		username := strings.Split(r.URL.Path, ",")[1]
 		secr, err := ghttp.ReadBody[secret.Secret](ctx, r)
@@ -103,7 +103,7 @@ func (s server) secretsCreate() http.HandlerFunc {
 	return ghttp.Do("SecretsCreate", parseFn, execFn)
 }
 
-func (s server) secretsDelete() http.HandlerFunc {
+func (s *server) secretsDelete() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*secret.WithOwner, error) {
 		splitPath := strings.Split(r.URL.Path, ",")
 		username, key := splitPath[1], splitPath[3]

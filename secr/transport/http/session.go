@@ -11,7 +11,7 @@ import (
 	"github.com/zalgonoise/x/secr/user"
 )
 
-func (s server) login() http.HandlerFunc {
+func (s *server) login() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
 		u, err := ghttp.ReadBody[user.User](ctx, r)
 		if err != nil {
@@ -52,7 +52,7 @@ func (s server) login() http.HandlerFunc {
 
 	return ghttp.Do("Login", parseFn, execFn)
 }
-func (s server) logout() http.HandlerFunc {
+func (s *server) logout() http.HandlerFunc {
 	var execFn = func(ctx context.Context, q *user.User) *ghttp.Response[user.Session] {
 		if q == nil || q.Username == "" {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
@@ -72,7 +72,7 @@ func (s server) logout() http.HandlerFunc {
 	return ghttp.Do("Logout", ghttp.ReadBody[user.User], execFn)
 }
 
-func (s server) changePassword() http.HandlerFunc {
+func (s *server) changePassword() http.HandlerFunc {
 	var execFn = func(ctx context.Context, q *user.NewPassword) *ghttp.Response[user.Session] {
 		if q == nil {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
@@ -95,7 +95,7 @@ func (s server) changePassword() http.HandlerFunc {
 	return ghttp.Do("ChangePassword", ghttp.ReadBody[user.NewPassword], execFn)
 }
 
-func (s server) refresh() http.HandlerFunc {
+func (s *server) refresh() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*user.Session, error) {
 		s, err := ghttp.ReadBody[user.Session](ctx, r)
 		if err != nil {
