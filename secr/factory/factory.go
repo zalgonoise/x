@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"github.com/zalgonoise/logx"
 	"github.com/zalgonoise/x/secr/cmd/config"
 	"github.com/zalgonoise/x/secr/service"
 	"github.com/zalgonoise/x/secr/transport/http"
@@ -24,9 +25,9 @@ func Service(authKeyPath, boltDBPath, sqliteDBPath string) (service.Service, err
 		return nil, err
 	}
 
-	return service.WithTrace(service.NewService(
+	return service.WithLogger(logx.Default(), service.WithTrace(service.NewService(
 		users, secrets, keys, authorizer,
-	)), nil
+	))), nil
 }
 
 // Server creates a new HTTP server based on the service created using the
@@ -53,9 +54,10 @@ func Server(port int, authKeyPath, boltDBPath, sqliteDBPath string) (http.Server
 
 	return http.NewServer(
 		port,
-		service.WithTrace(service.NewService(
-			users, secrets, keys, authorizer,
-		)),
+		service.WithLogger(logx.Default(),
+			service.WithTrace(service.NewService(
+				users, secrets, keys, authorizer,
+			))),
 	), nil
 }
 
@@ -76,9 +78,9 @@ func From(conf *config.Config) (http.Server, error) {
 		return nil, err
 	}
 
-	svc := service.WithTrace(service.NewService(
+	svc := service.WithLogger(logx.Default(), service.WithTrace(service.NewService(
 		users, secrets, keys, authorizer,
-	))
+	)))
 
 	return http.NewServer(conf.HTTPPort, svc), nil
 }
