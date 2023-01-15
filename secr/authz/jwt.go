@@ -100,9 +100,11 @@ func (a *authz) Validate(ctx context.Context, u *user.User, token string) (bool,
 	if !ok {
 		return false, ErrMissingUser
 	}
-	val := v.(jwtUser)
+	valmap := v.(map[string]interface{})
+	vUsername := valmap["username"].(string)
+	vName := valmap["name"].(string)
 
-	if val.Username != u.Username || val.Name != u.Name {
+	if vUsername != u.Username || vName != u.Name {
 		return false, ErrInvalidUser
 	}
 	return true, nil
@@ -135,10 +137,13 @@ func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
 	if !ok {
 		return nil, ErrMissingUser
 	}
-	val := v.(jwtUser)
+
+	valmap := v.(map[string]interface{})
+	vUsername := (valmap["username"]).(string)
+	vName := valmap["name"].(string)
 
 	return &user.User{
-		Name:     val.Name,
-		Username: val.Username,
+		Name:     vName,
+		Username: vUsername,
 	}, nil
 }
