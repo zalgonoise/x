@@ -37,50 +37,18 @@ func Server(port int, authKeyPath, boltDBPath, sqliteDBPath string) (http.Server
 		port = config.Default.HTTPPort
 	}
 
-	authorizer, err := Authorizer(authKeyPath)
-	if err != nil {
-		return nil, err
-	}
-
-	keys, err := Bolt(boltDBPath)
-	if err != nil {
-		return nil, err
-	}
-
-	users, secrets, err := SQLite(sqliteDBPath)
+	svc, err := Service(authKeyPath, boltDBPath, sqliteDBPath)
 	if err != nil {
 		return nil, err
 	}
 
 	return http.NewServer(
 		port,
-		service.WithLogger(logx.Default(),
-			service.WithTrace(service.NewService(
-				users, secrets, keys, authorizer,
-			))),
+		svc,
 	), nil
 }
 
 // From creates a HTTP server for the Secrets service based on the input config
 func From(conf *config.Config) (http.Server, error) {
-	authorizer, err := Authorizer(conf.SigningKeyPath)
-	if err != nil {
-		return nil, err
-	}
-
-	keys, err := Bolt(conf.BoltDBPath)
-	if err != nil {
-		return nil, err
-	}
-
-	users, secrets, err := SQLite(conf.SQLiteDBPath)
-	if err != nil {
-		return nil, err
-	}
-
-	svc := service.WithLogger(logx.Default(), service.WithTrace(service.NewService(
-		users, secrets, keys, authorizer,
-	)))
-
-	return http.NewServer(conf.HTTPPort, svc), nil
+	return Server(conf.HTTPPort, conf.SigningKeyPath, conf.BoltDBPath, conf.SQLiteDBPath)
 }
