@@ -166,3 +166,21 @@ func (s service) Validate(ctx context.Context, username, token string) (bool, er
 	}
 	return true, nil
 }
+
+func (s service) ParseToken(ctx context.Context, token string) (*user.User, error) {
+	if token == "" {
+		return nil, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+	}
+
+	t, err := s.auth.Parse(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %v", err)
+	}
+
+	u, err := s.users.Get(ctx, t.Username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user %s: %v", t.Username, err)
+	}
+
+	return u, nil
+}
