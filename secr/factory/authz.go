@@ -26,7 +26,7 @@ func Authorizer(path string) (auth authz.Authorizer, err error) {
 			return nil, fmt.Errorf("failed to load key from input path and from default path: %w ; %v", err, defErr)
 		}
 	}
-	return auth, nil
+	return authz.WithTrace(auth), nil
 }
 
 func loadKey(path string) (authz.Authorizer, error) {

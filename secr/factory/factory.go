@@ -24,9 +24,9 @@ func Service(authKeyPath, boltDBPath, sqliteDBPath string) (service.Service, err
 		return nil, err
 	}
 
-	return service.NewService(
+	return service.WithTrace(service.NewService(
 		users, secrets, keys, authorizer,
-	), nil
+	)), nil
 }
 
 // Server creates a new HTTP server based on the service created using the
@@ -52,9 +52,10 @@ func Server(port int, authKeyPath, boltDBPath, sqliteDBPath string) (http.Server
 	}
 
 	return http.NewServer(
-		port, service.NewService(
+		port,
+		service.WithTrace(service.NewService(
 			users, secrets, keys, authorizer,
-		),
+		)),
 	), nil
 }
 
@@ -75,9 +76,9 @@ func From(conf *config.Config) (http.Server, error) {
 		return nil, err
 	}
 
-	svc := service.NewService(
+	svc := service.WithTrace(service.NewService(
 		users, secrets, keys, authorizer,
-	)
+	))
 
 	return http.NewServer(conf.HTTPPort, svc), nil
 }

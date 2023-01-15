@@ -39,7 +39,7 @@ func SQLite(path string) (user.Repository, secret.Repository, error) {
 		return SQLite(sqliteDbPath)
 	}
 
-	return sqlite.NewUserRepository(db), sqlite.NewSecretRepository(db), nil
+	return user.WithTrace(sqlite.NewUserRepository(db)), secret.WithTrace(sqlite.NewSecretRepository(db)), nil
 }
 
 // Bolt creates a key repository based on the defined Bolt DB path
@@ -62,6 +62,6 @@ func Bolt(path string) (keys.Repository, error) {
 		}
 		return Bolt(boltDbPath)
 	}
-	return bolt.NewKeysRepository(db), nil
+	return keys.WithTrace(bolt.NewKeysRepository(db)), nil
 
 }
