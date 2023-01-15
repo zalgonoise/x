@@ -10,8 +10,10 @@ import (
 func (s *server) WithAuth() ghttp.MiddlewareFn {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+
 			var username string
-			splitPath := strings.Split(r.URL.Path, "/")
+			splitPath := getPath(r.URL.Path)
+
 			if len(splitPath) > 1 {
 				username = splitPath[1]
 			} else {
@@ -25,7 +27,7 @@ func (s *server) WithAuth() ghttp.MiddlewareFn {
 
 			token := r.Header.Get("Authorization")
 			if token != "" {
-				t := strings.TrimPrefix(token, "Bearer: ")
+				t := strings.TrimPrefix(token, "Bearer ")
 				if t != "" {
 					ok, err := s.s.Validate(r.Context(), username, t)
 					if err == nil && ok {
