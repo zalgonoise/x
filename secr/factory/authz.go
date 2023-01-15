@@ -2,6 +2,8 @@ package factory
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"os"
 
 	"github.com/zalgonoise/x/secr/authz"
@@ -14,45 +16,56 @@ const (
 
 // Authorizer creates a new authorizer with the input key `key`, or creates a new
 // one under the preset folder if it doesn't yet exist and is not provided
-func Authorizer(key []byte) (authz.Authorizer, error) {
-	if len(key) > 0 {
-		return authz.NewAuthorizer(key), nil
-	}
+func Authorizer(path string) (auth authz.Authorizer, err error) {
+	var defErr error
 
-	fs, err := os.Stat(signingKeyPath)
+	auth, err = loadKey(path)
+	if err != nil {
+		auth, defErr = loadKey(signingKeyPath)
+		if defErr != nil {
+			return nil, fmt.Errorf("failed to load key from input path and from default path: %w ; %v", err, defErr)
+		}
+	}
+	return auth, nil
+}
+
+func loadKey(path string) (authz.Authorizer, error) {
+	fs, err := os.Stat(path)
 	if (err != nil && os.IsNotExist(err)) || (fs != nil && fs.Size() == 0) {
-		// try to create local key
-		k := crypt.NewKey()
-		f, err := os.Create(signingKeyPath)
-		if err != nil {
-			return nil, err
-		}
-
-		n, err := f.Write(k[:])
-		if err != nil {
-			return nil, err
-		}
-		if n == 0 {
-			return nil, errors.New("zero bytes written")
-		}
-
-		return authz.NewAuthorizer(k[:]), nil
+		return createKey(path)
 	}
 
-	// try to load local key
-	f, err := os.Open(signingKeyPath)
+	f, err := os.Open(path)
+	if err != nil {
+
+		fmt.Println(path, err)
+		return nil, err
+	}
+	b, err := io.ReadAll(f)
+
 	if err != nil {
 		return nil, err
 	}
-	var k = make([]byte, 0, 256)
-	n, err := f.Read(k)
+	if len(b) == 0 {
+		return nil, errors.New("zero bytes written")
+	}
+
+	return authz.NewAuthorizer(b), nil
+}
+
+func createKey(path string) (authz.Authorizer, error) {
+	// try to create local key
+	k := crypt.NewKey()
+	f, err := os.Create(path)
+	if err != nil {
+		return nil, err
+	}
+	n, err := f.Write(k[:])
 	if err != nil {
 		return nil, err
 	}
 	if n == 0 {
 		return nil, errors.New("zero bytes written")
 	}
-
-	return authz.NewAuthorizer(k), nil
-
+	return authz.NewAuthorizer(k[:]), nil
 }

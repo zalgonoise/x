@@ -19,36 +19,48 @@ const (
 )
 
 // SQLite creates user and secret repositories based on the defined SQLite DB path
-func SQLite() (user.Repository, secret.Repository, error) {
-	fs, err := os.Stat(sqliteDbPath)
+func SQLite(path string) (user.Repository, secret.Repository, error) {
+	fs, err := os.Stat(path)
 	if (err != nil && os.IsNotExist(err)) || (fs != nil && fs.Size() == 0) {
-		_, err := os.Create(sqliteDbPath)
+		_, err := os.Create(path)
 		if err != nil {
-			return nil, nil, err
+			if path == sqliteDbPath {
+				return nil, nil, err
+			}
+			return SQLite(sqliteDbPath)
 		}
 	}
 
-	db, err := sqlite.Open(sqliteDbPath)
+	db, err := sqlite.Open(path)
 	if err != nil {
-		return nil, nil, err
+		if path == sqliteDbPath {
+			return nil, nil, err
+		}
+		return SQLite(sqliteDbPath)
 	}
 
 	return sqlite.NewUserRepository(db), sqlite.NewSecretRepository(db), nil
 }
 
 // Bolt creates a key repository based on the defined Bolt DB path
-func Bolt() (keys.Repository, error) {
-	fs, err := os.Stat(boltDbPath)
+func Bolt(path string) (keys.Repository, error) {
+	fs, err := os.Stat(path)
 	if (err != nil && os.IsNotExist(err)) || (fs != nil && fs.Size() == 0) {
-		_, err := os.Create(boltDbPath)
+		_, err := os.Create(path)
 		if err != nil {
-			return nil, err
+			if path == boltDbPath {
+				return nil, err
+			}
+			return Bolt(boltDbPath)
 		}
 	}
 
-	db, err := bolt.Open(boltDbPath)
+	db, err := bolt.Open(path)
 	if err != nil {
-		return nil, err
+		if path == boltDbPath {
+			return nil, err
+		}
+		return Bolt(boltDbPath)
 	}
 	return bolt.NewKeysRepository(db), nil
 
