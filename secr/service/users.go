@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -55,11 +56,14 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 		return s.keys.Delete(ctx, username, keys.UniqueID)
 	}
 
+	encSalt := base64.StdEncoding.EncodeToString(salt[:])
+	encHash := base64.StdEncoding.EncodeToString(hashedPassword[:])
+
 	// create the user
 	u := &user.User{
 		Username: username,
-		Hash:     string(hashedPassword[:]),
-		Salt:     string(salt[:]),
+		Hash:     encHash,
+		Salt:     encSalt,
 		Name:     name,
 	}
 	id, err := s.users.Create(ctx, u)

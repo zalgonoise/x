@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -17,8 +18,18 @@ var (
 
 func (s service) login(ctx context.Context, u *user.User, password string) error {
 	// check password against its hash or as JWT
-	hashedPassword := sha256.Sum256(append([]byte(password), []byte(u.Salt)...))
-	if string(hashedPassword[:]) != u.Hash {
+
+	hash, err := base64.StdEncoding.DecodeString(u.Hash)
+	if err != nil {
+		return fmt.Errorf("failed to decode hash: %v", err)
+	}
+	salt, err := base64.StdEncoding.DecodeString(u.Salt)
+	if err != nil {
+		return fmt.Errorf("failed to decode salt: %v", err)
+	}
+	hashedPassword := sha256.Sum256(append([]byte(password), salt...))
+
+	if string(hashedPassword[:]) != string(hash) {
 		ok, err := s.auth.Validate(ctx, u, password)
 		if err != nil {
 			if errors.Is(authz.ErrExpired, err) {
