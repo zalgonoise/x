@@ -27,6 +27,8 @@ type Authorizer interface {
 	// Validate verifies if the JWT `token` is valid for the user `u`, returning a
 	// boolean and an error
 	Validate(ctx context.Context, u *user.User, token string) (bool, error)
+	// Parse returns the data from a valid JWT
+	Parse(ctx context.Context, token string) (*user.User, error)
 }
 
 // NewAuthorizer initializes an Authorizer with the signing key `signingKey`
@@ -111,4 +113,32 @@ func (a *authz) parseToken(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 	}
 	return a.signingKey, nil
+}
+
+func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
+	tok, err := jwt.Parse(token, a.parseToken)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %v", err)
+	}
+	claims := tok.Claims.(jwt.MapClaims)
+
+	exp, ok := claims["exp"]
+	if !ok {
+		return nil, ErrMissingExpiry
+	}
+	expTime := time.Unix(int64(exp.(float64)), 0)
+	if time.Now().After(expTime) {
+		return nil, ErrExpired
+	}
+	v, ok := claims["user"]
+	if !ok {
+		return nil, ErrMissingUser
+	}
+	val := v.(jwtUser)
+
+	return &user.User{
+		Name:     val.Name,
+		Username: val.Username,
+	}, nil
 }
