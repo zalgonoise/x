@@ -37,8 +37,6 @@ func loadKey(path string) (authz.Authorizer, error) {
 
 	f, err := os.Open(path)
 	if err != nil {
-
-		fmt.Println(path, err)
 		return nil, err
 	}
 	b, err := io.ReadAll(f)
