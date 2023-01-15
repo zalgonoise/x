@@ -72,27 +72,28 @@ func (s *server) secretsList() http.HandlerFunc {
 	return ghttp.Do("SecretsList", parseFn, execFn)
 }
 func (s *server) secretsCreate() http.HandlerFunc {
-	var parseFn = func(ctx context.Context, r *http.Request) (*secret.WithOwner, error) {
+	type secretsCreateRequest struct {
+		Username string `json:"username,omitempty"`
+		Key      string `json:"key,omitempty"`
+		Value    string `json:"value,omitempty"`
+	}
+	var parseFn = func(ctx context.Context, r *http.Request) (*secretsCreateRequest, error) {
 		username := strings.Split(r.URL.Path, ",")[1]
-		secr, err := ghttp.ReadBody[secret.Secret](ctx, r)
+		secr, err := ghttp.ReadBody[secretsCreateRequest](ctx, r)
 		if err != nil {
 			return nil, err
 		}
 
-		return &secret.WithOwner{
-			User: user.User{
-				Username: username,
-			},
-			Secret: *secr,
-		}, nil
+		secr.Username = username
+		return secr, nil
 	}
 
-	var execFn = func(ctx context.Context, q *secret.WithOwner) *ghttp.Response[secret.Secret] {
+	var execFn = func(ctx context.Context, q *secretsCreateRequest) *ghttp.Response[secret.Secret] {
 		if q == nil {
 			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid username")
 		}
 
-		err := s.s.CreateSecret(ctx, q.Username, q.Key, q.Value)
+		err := s.s.CreateSecret(ctx, q.Username, q.Key, []byte(q.Value))
 		if err != nil {
 			return ghttp.NewResponse[secret.Secret](http.StatusInternalServerError, err.Error())
 		}
