@@ -95,7 +95,6 @@ WHERE u.username = ?
 	if err != nil {
 		return nil, err
 	}
-
 	return user, nil
 }
 
@@ -153,6 +152,9 @@ func (ur *userRepository) scanUser(r Scanner) (u *user.User, err error) {
 		&dbu.UpdatedAt,
 	)
 	if err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			return nil, ErrNotFoundUser
+		}
 		return nil, fmt.Errorf("%w: failed to scan DB row: %v", ErrDBError, err)
 	}
 	return dbu.toDomainEntity(), nil
@@ -178,7 +180,7 @@ func (u *dbUser) toDomainEntity() *user.User {
 		Username:  u.Username.String,
 		Name:      u.Name.String,
 		Hash:      u.Hash.String,
-		Salt:      u.Hash.String,
+		Salt:      u.Salt.String,
 		CreatedAt: u.CreatedAt.Time,
 		UpdatedAt: u.UpdatedAt.Time,
 	}
