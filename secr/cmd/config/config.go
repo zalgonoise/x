@@ -5,6 +5,8 @@ type Config struct {
 	BoltDBPath     string `json:"bolt_path,omitempty" yaml:"bolt_path,omitempty"`
 	SQLiteDBPath   string `json:"sqlite_path,omitempty" yaml:"sqlite_path,omitempty"`
 	SigningKeyPath string `json:"jwt_key_path,omitempty" yaml:"jwt_key_path,omitempty"`
+	LogFilePath    string `json:"logfile_path,omitempty" yaml:"logfile_path,omitempty"`
+	TraceFilePath  string `json:"tracefile_path,omitempty" yaml:"tracefile_path,omitempty"`
 }
 
 var Default = Config{
@@ -66,6 +68,9 @@ func Merge(main, input *Config) *Config {
 	}
 	if input.SigningKeyPath != "" {
 		main.SigningKeyPath = input.SigningKeyPath
+	}
+	if input.LogFilePath != "" {
+		main.LogFilePath = input.LogFilePath
 	}
 	return main
 }

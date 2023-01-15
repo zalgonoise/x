@@ -51,3 +51,29 @@ func Port(port int) ConfigOption {
 	}
 	return (httpPort)(port)
 }
+
+type logfilePath string
+
+func (p logfilePath) Apply(c *Config) {
+	c.LogFilePath = (string)(p)
+}
+
+func Logfile(path string) ConfigOption {
+	if path == "" {
+		return nil
+	}
+	return (logfilePath)(path)
+}
+
+type tracefilePath string
+
+func (p tracefilePath) Apply(c *Config) {
+	c.TraceFilePath = (string)(p)
+}
+
+func Tracefile(path string) ConfigOption {
+	if path == "" {
+		return nil
+	}
+	return (tracefilePath)(path)
+}
