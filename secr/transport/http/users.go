@@ -8,6 +8,7 @@ import (
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/spanner"
 	"github.com/zalgonoise/x/ghttp"
+	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/sqlite"
 	"github.com/zalgonoise/x/secr/user"
 )
@@ -20,7 +21,11 @@ func (s *server) usersGet() http.HandlerFunc {
 		if q == "" {
 			return nil, errors.New("no username provided")
 		}
-		return &q, nil
+
+		if u, ok := authz.GetCaller(r); ok && u == q {
+			return &q, nil
+		}
+		return nil, authz.ErrInvalidUser
 	}
 
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[user.User] {
@@ -115,7 +120,10 @@ func (s *server) usersUpdate() http.HandlerFunc {
 		}
 
 		u.Username = username
-		return u, nil
+		if caller, ok := authz.GetCaller(r); ok && caller == username {
+			return u, nil
+		}
+		return nil, authz.ErrInvalidUser
 	}
 
 	var execFn = func(ctx context.Context, q *usersUpdateRequest) *ghttp.Response[user.User] {
@@ -152,7 +160,10 @@ func (s *server) usersDelete() http.HandlerFunc {
 			return nil, errors.New("no username provided")
 		}
 
-		return &username, nil
+		if caller, ok := authz.GetCaller(r); ok && caller == username {
+			return &username, nil
+		}
+		return nil, authz.ErrInvalidUser
 	}
 
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[user.User] {

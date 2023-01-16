@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/zalgonoise/x/ghttp"
+	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/secret"
 	"github.com/zalgonoise/x/secr/sqlite"
 )
@@ -19,11 +20,13 @@ func (s *server) secretsGet() http.HandlerFunc {
 		splitPath := getPath(r.URL.Path)
 		username, key := splitPath[1], splitPath[3]
 
-		return &secretsGetRequest{
-			Username: username,
-			Key:      key,
-		}, nil
-
+		if u, ok := authz.GetCaller(r); ok && u == username {
+			return &secretsGetRequest{
+				Username: username,
+				Key:      key,
+			}, nil
+		}
+		return nil, authz.ErrInvalidUser
 	}
 
 	var execFn = func(ctx context.Context, q *secretsGetRequest) *ghttp.Response[secret.Secret] {
@@ -51,7 +54,11 @@ func (s *server) secretsList() http.HandlerFunc {
 		if username == "" {
 			return nil, errors.New("no username provided")
 		}
-		return &username, nil
+
+		if u, ok := authz.GetCaller(r); ok && u == username {
+			return &username, nil
+		}
+		return nil, authz.ErrInvalidUser
 	}
 
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[[]*secret.Secret] {
@@ -77,13 +84,17 @@ func (s *server) secretsCreate() http.HandlerFunc {
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*secretsCreateRequest, error) {
 		username := getPath(r.URL.Path)[1]
+
 		secr, err := ghttp.ReadBody[secretsCreateRequest](ctx, r)
 		if err != nil {
 			return nil, err
 		}
 
 		secr.Username = username
-		return secr, nil
+		if u, ok := authz.GetCaller(r); ok && u == username {
+			return secr, nil
+		}
+		return nil, authz.ErrInvalidUser
 	}
 
 	var execFn = func(ctx context.Context, q *secretsCreateRequest) *ghttp.Response[secret.Secret] {
@@ -111,10 +122,13 @@ func (s *server) secretsDelete() http.HandlerFunc {
 		splitPath := getPath(r.URL.Path)
 		username, key := splitPath[1], splitPath[3]
 
-		return &secretsDeleteRequest{
-			Username: username,
-			Key:      key,
-		}, nil
+		if u, ok := authz.GetCaller(r); ok && u == username {
+			return &secretsDeleteRequest{
+				Username: username,
+				Key:      key,
+			}, nil
+		}
+		return nil, authz.ErrInvalidUser
 	}
 
 	var execFn = func(ctx context.Context, q *secretsDeleteRequest) *ghttp.Response[secret.Secret] {

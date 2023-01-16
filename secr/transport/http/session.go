@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/zalgonoise/x/ghttp"
+	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/sqlite"
 	"github.com/zalgonoise/x/secr/user"
 )
@@ -99,6 +100,19 @@ func (s *server) changePassword() http.HandlerFunc {
 		Password    string `json:"password,omitempty"`
 		NewPassword string `json:"new_password,omitempty"`
 	}
+
+	var parseFn = func(ctx context.Context, r *http.Request) (*changePasswordRequest, error) {
+		req, err := ghttp.ReadBody[changePasswordRequest](ctx, r)
+		if err != nil {
+			return nil, err
+		}
+
+		if caller, ok := authz.GetCaller(r); ok && caller == req.Username {
+			return req, nil
+		}
+		return nil, authz.ErrInvalidUser
+	}
+
 	var execFn = func(ctx context.Context, q *changePasswordRequest) *ghttp.Response[user.Session] {
 		if q == nil {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
@@ -118,7 +132,7 @@ func (s *server) changePassword() http.HandlerFunc {
 		return ghttp.NewResponse[user.Session](http.StatusOK, "password changed successfully")
 	}
 
-	return ghttp.Do("ChangePassword", ghttp.ReadBody[changePasswordRequest], execFn)
+	return ghttp.Do("ChangePassword", parseFn, execFn)
 }
 
 func (s *server) refresh() http.HandlerFunc {
@@ -138,10 +152,14 @@ func (s *server) refresh() http.HandlerFunc {
 				t := strings.TrimPrefix(token, "Bearer ")
 				if t != "" {
 					s.Token = t
-					return s, nil
+					if caller, ok := authz.GetCaller(r); ok && caller == s.Username {
+						return s, nil
+					}
+					return nil, authz.ErrInvalidUser
 				}
 			}
 		}
+
 		return nil, errors.New("failed to read user or token in request")
 	}
 
