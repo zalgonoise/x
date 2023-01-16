@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zalgonoise/x/ghttp"
+	"github.com/zalgonoise/x/secr/authz"
 )
 
 func (s *server) WithAuth() ghttp.MiddlewareFn {
@@ -31,7 +32,8 @@ func (s *server) WithAuth() ghttp.MiddlewareFn {
 				if t != "" {
 					ok, err := s.s.Validate(r.Context(), username, t)
 					if err == nil && ok {
-						next(w, r)
+						// wrap caller info in context
+						next(w, authz.SignRequest(username, r))
 						return
 					}
 				}
