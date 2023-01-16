@@ -19,6 +19,8 @@ type Repository interface {
 	// // Share shares the secret identified by `secretName`, owned by `owner`, with
 	// // user `target`. Returns an error
 	// Share(ctx context.Context, owner, target, secretName string) error
-	// // ShareFor is similar to Share, but scopes the share until `until` time
-	// ShareFor(ctx context.Context, owner, target, secretName string, until time.Time) error
+	// // ShareUntil is similar to Share, but scopes the shared secret until `until` time
+	// ShareUntil(ctx context.Context, owner, target, secretName string, until time.Time) error
+	// // ShareFor is similar to ShareUntil, but scopes the shared secret for `dur` amount of time
+	// ShareUntil(ctx context.Context, owner, target, secretName string, dur time.Duration) error
 }
