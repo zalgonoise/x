@@ -14,23 +14,23 @@ import (
 )
 
 var (
-	ErrNoUser            = errors.New("no user provided")
-	ErrNoPassword        = errors.New("no password provided")
-	ErrNoName            = errors.New("no name provided")
+	ErrInvalidUser       = errors.New("error validating user")
+	ErrInvalidPassword   = errors.New("error validating password")
+	ErrInvalidName       = errors.New("error validating name")
 	ErrAlreadyExistsUser = errors.New("user already exists")
 )
 
 // CreateUser creates the user under username `username`, with the provided password `password` and name `name`
 // It returns a user and an error
 func (s service) CreateUser(ctx context.Context, username, password, name string) (*user.User, error) {
-	if username == "" {
-		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
-	if password == "" {
-		return nil, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+	if err := user.ValidatePassword(password); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidPassword, err)
 	}
-	if name == "" {
-		return nil, fmt.Errorf("%w: name cannot be empty", ErrNoName)
+	if err := user.ValidateName(name); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidName, err)
 	}
 
 	// check if user exists
@@ -81,8 +81,8 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 
 // GetUser fetches the user with username `username`. Returns a user and an error
 func (s service) GetUser(ctx context.Context, username string) (*user.User, error) {
-	if username == "" {
-		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 
 	u, err := s.users.Get(ctx, username)
@@ -103,14 +103,14 @@ func (s service) ListUsers(ctx context.Context) ([]*user.User, error) {
 
 // UpdateUser updates the user `username`'s name, found in `updated` user. Returns an error
 func (s service) UpdateUser(ctx context.Context, username string, updated *user.User) error {
-	if username == "" {
-		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 	if updated == nil {
-		return fmt.Errorf("%w: updated user cannot be nil", ErrNoUser)
+		return fmt.Errorf("%w: updated user cannot be nil", ErrInvalidUser)
 	}
-	if updated.Name == "" {
-		return fmt.Errorf("%w: new name cannot be empty", ErrNoName)
+	if err := user.ValidateName(updated.Name); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidName, err)
 	}
 
 	currentUser, err := s.users.Get(ctx, username)
@@ -132,8 +132,8 @@ func (s service) UpdateUser(ctx context.Context, username string, updated *user.
 
 // DeleteUser removes the user with username `username`. Returns an error
 func (s service) DeleteUser(ctx context.Context, username string) error {
-	if username == "" {
-		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 
 	_, err := s.users.Get(ctx, username)

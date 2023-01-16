@@ -49,11 +49,11 @@ func (s service) login(ctx context.Context, u *user.User, password string) error
 
 // Login verifies the user's credentials and returns a session and an error
 func (s service) Login(ctx context.Context, username, password string) (*user.Session, error) {
-	if username == "" {
-		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
-	if password == "" {
-		return nil, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+	if err := user.ValidatePassword(password); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidPassword, err)
 	}
 
 	// fetch user
@@ -86,6 +86,10 @@ func (s service) Login(ctx context.Context, username, password string) (*user.Se
 
 // Logout signs-out the user `username`
 func (s service) Logout(ctx context.Context, username string) error {
+	if err := user.ValidateUsername(username); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+
 	err := s.keys.Delete(ctx, username, keys.TokenKey)
 	if err != nil {
 		return fmt.Errorf("failed to log user out: %v", err)
@@ -95,14 +99,14 @@ func (s service) Logout(ctx context.Context, username string) error {
 
 // ChangePassword updates user `username`'s password after verifying the old one, returning an error
 func (s service) ChangePassword(ctx context.Context, username, password, newPassword string) error {
-	if username == "" {
-		return fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
-	if password == "" {
-		return fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+	if err := user.ValidatePassword(password); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidPassword, err)
 	}
-	if newPassword == "" {
-		return fmt.Errorf("%w: new password cannot be empty", ErrNoPassword)
+	if err := user.ValidatePassword(newPassword); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidPassword, err)
 	}
 
 	// fetch user
@@ -127,11 +131,11 @@ func (s service) ChangePassword(ctx context.Context, username, password, newPass
 
 // Refresh renews a user's JWT provided it is a valid one. Returns a session and an error
 func (s service) Refresh(ctx context.Context, username, token string) (*user.Session, error) {
-	if username == "" {
-		return nil, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 	if token == "" {
-		return nil, fmt.Errorf("%w: token cannot be empty", ErrNoPassword)
+		return nil, fmt.Errorf("%w: token cannot be empty", ErrInvalidPassword)
 	}
 
 	// fetch user
@@ -158,11 +162,11 @@ func (s service) Refresh(ctx context.Context, username, token string) (*user.Ses
 
 // Validate verifies if a user's JWT is a valid one, returning a boolean and an error
 func (s service) Validate(ctx context.Context, username, token string) (bool, error) {
-	if username == "" {
-		return false, fmt.Errorf("%w: username cannot be empty", ErrNoUser)
+	if err := user.ValidateUsername(username); err != nil {
+		return false, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 	if token == "" {
-		return false, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+		return false, fmt.Errorf("%w: token cannot be empty", ErrInvalidPassword)
 	}
 
 	// fetch user
@@ -180,7 +184,7 @@ func (s service) Validate(ctx context.Context, username, token string) (bool, er
 
 func (s service) ParseToken(ctx context.Context, token string) (*user.User, error) {
 	if token == "" {
-		return nil, fmt.Errorf("%w: password cannot be empty", ErrNoPassword)
+		return nil, fmt.Errorf("%w: token cannot be empty", ErrInvalidPassword)
 	}
 
 	t, err := s.auth.Parse(ctx, token)
