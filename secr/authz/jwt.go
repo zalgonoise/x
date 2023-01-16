@@ -86,30 +86,12 @@ func (a *authz) Refresh(ctx context.Context, u *user.User, token string) (string
 // Validate verifies if the JWT `token` is valid for the user `u`, returning a
 // boolean and an error
 func (a *authz) Validate(ctx context.Context, u *user.User, token string) (bool, error) {
-	tok, err := jwt.Parse(token, a.parseToken)
-
+	jwtUser, err := a.Parse(ctx, token)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse token: %v", err)
+		return false, err
 	}
-	claims := tok.Claims.(jwt.MapClaims)
 
-	exp, ok := claims["exp"]
-	if !ok {
-		return false, ErrMissingExpiry
-	}
-	expTime := time.Unix(int64(exp.(float64)), 0)
-	if time.Now().After(expTime) {
-		return false, ErrExpired
-	}
-	v, ok := claims["user"]
-	if !ok {
-		return false, ErrMissingUser
-	}
-	valmap := v.(map[string]interface{})
-	vUsername := valmap["username"].(string)
-	vName := valmap["name"].(string)
-
-	if vUsername != u.Username || vName != u.Name {
+	if jwtUser.Username != u.Username || jwtUser.Name != u.Name {
 		return false, ErrInvalidUser
 	}
 	return true, nil
@@ -144,7 +126,7 @@ func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
 	}
 
 	valmap := v.(map[string]interface{})
-	vUsername := (valmap["username"]).(string)
+	vUsername := valmap["username"].(string)
 	vName := valmap["name"].(string)
 
 	return &user.User{
