@@ -4,11 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/zalgonoise/x/secr/user"
 )
+
+type usernameIdentifier string
+
+const ContextUsername usernameIdentifier = "secr:username"
 
 var (
 	ErrMissingExpiry = errors.New("missing expiry claim")
@@ -146,4 +151,19 @@ func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
 		Name:     vName,
 		Username: vUsername,
 	}, nil
+}
+
+func SignRequest(u string, r *http.Request) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), ContextUsername, u))
+}
+
+func GetCaller(r *http.Request) (string, bool) {
+	v := r.Context().Value(ContextUsername)
+	if v == nil {
+		return "", false
+	}
+	if u, ok := v.(string); ok {
+		return u, true
+	}
+	return "", false
 }
