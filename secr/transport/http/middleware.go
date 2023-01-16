@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/zalgonoise/x/ghttp"
 	"github.com/zalgonoise/x/secr/authz"
@@ -26,18 +25,15 @@ func (s *server) WithAuth() ghttp.MiddlewareFn {
 				return
 			}
 
-			token := r.Header.Get("Authorization")
-			if token != "" {
-				t := strings.TrimPrefix(token, "Bearer ")
-				if t != "" {
-					ok, err := s.s.Validate(r.Context(), username, t)
-					if err == nil && ok {
-						// wrap caller info in context
-						next(w, authz.SignRequest(username, r))
-						return
-					}
+			if token, ok := getToken(r); ok {
+				ok, err := s.s.Validate(r.Context(), username, token)
+				if err == nil && ok {
+					// wrap caller info in context
+					next(w, authz.SignRequest(username, r))
+					return
 				}
 			}
+
 			http.Error(w, "not found", http.StatusNotFound)
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/zalgonoise/x/ghttp"
 	"github.com/zalgonoise/x/secr/authz"
@@ -25,13 +24,9 @@ func (s *server) login() http.HandlerFunc {
 		}
 
 		if u.Password == "" {
-			token := r.Header.Get("Authorization")
-			if token != "" {
-				t := strings.TrimPrefix(token, "Bearer ")
-				if t != "" {
-					u.Password = t
-					return u, nil
-				}
+			if token, ok := getToken(r); ok {
+				u.Password = token
+				return u, nil
 			}
 			return nil, errors.New("failed to read password or token in request")
 		}
@@ -62,15 +57,12 @@ func (s *server) login() http.HandlerFunc {
 
 func (s *server) logout() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
-		token := r.Header.Get("Authorization")
-		if token != "" {
-			t := strings.TrimPrefix(token, "Bearer ")
-			if t != "" {
-				u, err := s.s.ParseToken(ctx, t)
-				if err != nil {
-					return u, nil
-				}
+		if token, ok := getToken(r); ok {
+			u, err := s.s.ParseToken(ctx, token)
+			if err != nil {
+				return u, nil
 			}
+
 		}
 		return nil, errors.New("failed to read password or token in request")
 	}
@@ -147,16 +139,12 @@ func (s *server) refresh() http.HandlerFunc {
 		}
 
 		if s.Token == "" {
-			token := r.Header.Get("Authorization")
-			if token != "" {
-				t := strings.TrimPrefix(token, "Bearer ")
-				if t != "" {
-					s.Token = t
-					if caller, ok := authz.GetCaller(r); ok && caller == s.Username {
-						return s, nil
-					}
-					return nil, authz.ErrInvalidUser
+			if token, ok := getToken(r); ok {
+				s.Token = token
+				if caller, ok := authz.GetCaller(r); ok && caller == s.Username {
+					return s, nil
 				}
+				return nil, authz.ErrInvalidUser
 			}
 		}
 

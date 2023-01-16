@@ -47,6 +47,7 @@ func (s *server) secretsGet() http.HandlerFunc {
 
 	return ghttp.Do("SecretsGet", parseFn, execFn)
 }
+
 func (s *server) secretsList() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*string, error) {
 		username := getPath(r.URL.Path)[1]
@@ -76,6 +77,7 @@ func (s *server) secretsList() http.HandlerFunc {
 
 	return ghttp.Do("SecretsList", parseFn, execFn)
 }
+
 func (s *server) secretsCreate() http.HandlerFunc {
 	type secretsCreateRequest struct {
 		Username string `json:"username,omitempty"`
