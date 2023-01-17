@@ -33,7 +33,7 @@ func (s service) login(ctx context.Context, u *user.User, password string) error
 		ok, err := s.auth.Validate(ctx, u, password)
 		if err != nil {
 			if errors.Is(authz.ErrExpired, err) {
-				derr := s.keys.Delete(ctx, u.Username, keys.TokenKey)
+				derr := s.keys.Delete(ctx, keys.UserBucket(u.ID), keys.TokenKey)
 				if derr != nil {
 					err = fmt.Errorf("%w: failed to remove old token: %v", err, derr)
 				}
@@ -73,7 +73,7 @@ func (s service) Login(ctx context.Context, username, password string) (*user.Se
 		return nil, fmt.Errorf("failed to create a new session token: %v", err)
 	}
 
-	err = s.keys.Set(ctx, u.Username, keys.TokenKey, []byte(token))
+	err = s.keys.Set(ctx, keys.UserBucket(u.ID), keys.TokenKey, []byte(token))
 	if err != nil {
 		return nil, fmt.Errorf("failed to store the new session token: %v", err)
 	}
@@ -90,7 +90,12 @@ func (s service) Logout(ctx context.Context, username string) error {
 		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 
-	err := s.keys.Delete(ctx, username, keys.TokenKey)
+	u, err := s.GetUser(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to fetch user: %v", err)
+	}
+
+	err = s.keys.Delete(ctx, keys.UserBucket(u.ID), keys.TokenKey)
 	if err != nil {
 		return fmt.Errorf("failed to log user out: %v", err)
 	}
@@ -149,7 +154,7 @@ func (s service) Refresh(ctx context.Context, username, token string) (*user.Ses
 		return nil, fmt.Errorf("failed to refresh token: %v", err)
 	}
 
-	err = s.keys.Set(ctx, u.Username, keys.TokenKey, []byte(newToken))
+	err = s.keys.Set(ctx, keys.UserBucket(u.ID), keys.TokenKey, []byte(newToken))
 	if err != nil {
 		return nil, fmt.Errorf("failed to store the new session token: %v", err)
 	}

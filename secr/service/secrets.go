@@ -30,9 +30,14 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 		return fmt.Errorf("%w: %v", ErrInvalidValue, err)
 	}
 
+	u, err := s.GetUser(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to fetch user: %v", err)
+	}
+
 	// encrypt secret with user's key:
 	// fetch the key
-	cipherKey, err := s.keys.Get(ctx, username, keys.UniqueID)
+	cipherKey, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
 		return fmt.Errorf("failed to get user's private key: %v", err)
 	}
@@ -46,12 +51,12 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 	encValue := make([]byte, 0, len(value))
 	cipher.Encrypt(encValue, value)
 
-	err = s.keys.Set(ctx, username, key, encValue)
+	err = s.keys.Set(ctx, keys.UserBucket(u.ID), key, encValue)
 	if err != nil {
 		return fmt.Errorf("failed to store the secret: %v", err)
 	}
 	var rollback = func() error {
-		return s.keys.Delete(ctx, username, key)
+		return s.keys.Delete(ctx, keys.UserBucket(u.ID), key)
 	}
 
 	secr := &secret.Secret{
@@ -77,6 +82,11 @@ func (s service) GetSecret(ctx context.Context, username string, key string) (*s
 		return nil, fmt.Errorf("%w: %v", ErrInvalidKey, err)
 	}
 
+	u, err := s.GetUser(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user: %v", err)
+	}
+
 	// fetch secret('s metadata )
 	secr, err := s.secrets.Get(ctx, username, key)
 	if err != nil {
@@ -84,7 +94,7 @@ func (s service) GetSecret(ctx context.Context, username string, key string) (*s
 	}
 
 	// fetch user's private key to decode encrypted secret
-	cipherKey, err := s.keys.Get(ctx, username, keys.UniqueID)
+	cipherKey, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the user's private key: %v", err)
 	}
@@ -94,7 +104,7 @@ func (s service) GetSecret(ctx context.Context, username string, key string) (*s
 	}
 
 	// fetch secret's value
-	encValue, err := s.keys.Get(ctx, username, key)
+	encValue, err := s.keys.Get(ctx, keys.UserBucket(u.ID), key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the secret: %v", err)
 	}
@@ -113,6 +123,11 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 
+	u, err := s.GetUser(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user: %v", err)
+	}
+
 	// fetch secret('s metadata )
 	secrets, err := s.secrets.List(ctx, username)
 	if err != nil {
@@ -120,7 +135,7 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 	}
 
 	// fetch user's private key to decode encrypted secret
-	cipherKey, err := s.keys.Get(ctx, username, keys.UniqueID)
+	cipherKey, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the user's private key: %v", err)
 	}
@@ -132,7 +147,7 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 	// fetch and decode the value for each secret
 	for _, secr := range secrets {
 		// fetch secret's value
-		encValue, err := s.keys.Get(ctx, username, secr.Key)
+		encValue, err := s.keys.Get(ctx, keys.UserBucket(u.ID), secr.Key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch the secret: %v", err)
 		}
@@ -156,7 +171,12 @@ func (s service) DeleteSecret(ctx context.Context, username string, key string) 
 		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
 	}
 
-	secr, err := s.keys.Get(ctx, username, key)
+	u, err := s.GetUser(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to fetch user: %v", err)
+	}
+
+	secr, err := s.keys.Get(ctx, keys.UserBucket(u.ID), key)
 	if err != nil {
 		if errors.Is(bolt.ErrEmptyBucket, err) {
 			// nothing to delete, no changes in state
@@ -165,10 +185,10 @@ func (s service) DeleteSecret(ctx context.Context, username string, key string) 
 		return fmt.Errorf("failed to fetch the secret: %v", err)
 	}
 	var rollback = func() error {
-		return s.keys.Set(ctx, username, key, secr)
+		return s.keys.Set(ctx, keys.UserBucket(u.ID), key, secr)
 	}
 
-	err = s.keys.Delete(ctx, username, key)
+	err = s.keys.Delete(ctx, keys.UserBucket(u.ID), key)
 	if err != nil {
 		rerr := rollback()
 		if rerr != nil {

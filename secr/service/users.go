@@ -46,16 +46,6 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 	salt := crypt.NewSalt()
 	hashedPassword := sha256.Sum256(append([]byte(password), salt[:]...))
 
-	// generate a new private key for this user, and store it
-	key := crypt.NewKey()
-	err = s.keys.Set(ctx, username, keys.UniqueID, key[:])
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user %s: %v", username, err)
-	}
-	var rollback = func() error {
-		return s.keys.Delete(ctx, username, keys.UniqueID)
-	}
-
 	encSalt := base64.StdEncoding.EncodeToString(salt[:])
 	encHash := base64.StdEncoding.EncodeToString(hashedPassword[:])
 
@@ -68,6 +58,17 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 	}
 	id, err := s.users.Create(ctx, u)
 	if err != nil {
+		return nil, fmt.Errorf("failed to create user %s: %v", username, err)
+	}
+	var rollback = func() error {
+		return s.users.Delete(ctx, username)
+	}
+	u.ID = id
+
+	// generate a new private key for this user, and store it
+	key := crypt.NewKey()
+	err = s.keys.Set(ctx, keys.UserBucket(u.ID), keys.UniqueID, key[:])
+	if err != nil {
 		rerr := rollback()
 		if rerr != nil {
 			err = fmt.Errorf("%w: rollback error: %v", err, rerr)
@@ -75,7 +76,6 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 		return nil, fmt.Errorf("failed to create user %s: %v", username, err)
 	}
 
-	u.ID = id
 	return u, nil
 }
 
@@ -145,17 +145,22 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 		return fmt.Errorf("failed to fetch original user %s: %v", username, err)
 	}
 
+	u, err := s.GetUser(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to fetch user: %v", err)
+	}
+
 	// get user's private key for rollback func
-	upk, err := s.keys.Get(ctx, username, keys.UniqueID)
+	upk, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch user %s's key: %v", username, err)
 	}
 	var rollback = func() error {
-		return s.keys.Set(ctx, username, keys.UniqueID, upk)
+		return s.keys.Set(ctx, keys.UserBucket(u.ID), keys.UniqueID, upk)
 	}
 
 	// delete private key
-	err = s.keys.Delete(ctx, username, keys.UniqueID)
+	err = s.keys.Delete(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
 		return fmt.Errorf("failed to delete user %s's key: %v", username, err)
 	}
