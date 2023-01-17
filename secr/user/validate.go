@@ -49,7 +49,7 @@ func ValidateUsername(username string) error {
 	if len(username) > usernameMaxLength {
 		return ErrLongUsername
 	}
-	if match := usernameRegex.FindString(username); match != username {
+	if match := usernameRegex.FindString(username); match != username || username == RootUsername {
 		return ErrInvalidUsername
 	}
 	return nil
