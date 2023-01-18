@@ -18,7 +18,7 @@ func WithTrace(r Repository) Repository {
 }
 
 // Get fetches the secret's share metadata for a given username and secret key
-func (t withTrace) Get(ctx context.Context, username, secretName string) (*Share, error) {
+func (t withTrace) Get(ctx context.Context, username, secretName string) ([]*Share, error) {
 	ctx, s := spanner.Start(ctx, "secret.Get")
 	defer s.End()
 	s.Add(
@@ -28,6 +28,22 @@ func (t withTrace) Get(ctx context.Context, username, secretName string) (*Share
 	share, err := t.r.Get(ctx, username, secretName)
 	if err != nil {
 		s.Event("error fetching shared secret", attr.New("error", err.Error()))
+		return nil, err
+	}
+	return share, nil
+}
+
+// List fetches all shared secrets for a given username
+func (t withTrace) List(ctx context.Context, username string) ([]*Share, error) {
+	ctx, s := spanner.Start(ctx, "secret.List")
+	defer s.End()
+	s.Add(
+		attr.String("for_user", username),
+	)
+
+	share, err := t.r.List(ctx, username)
+	if err != nil {
+		s.Event("error listing shared secrets", attr.New("error", err.Error()))
 		return nil, err
 	}
 	return share, nil
