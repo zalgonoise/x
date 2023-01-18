@@ -45,6 +45,18 @@ type Service interface {
 	ListSecrets(ctx context.Context, username string) ([]*secret.Secret, error)
 	// DeleteSecret removes a secret with key `key` from the user `username`. Returns an error
 	DeleteSecret(ctx context.Context, username string, key string) error
+
+	// GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error)
+
+	// CreateShare(ctx context.Context, owner, secretKey string, targets ...string) (*shared.Share, error)
+
+	// ShareUntil(ctx context.Context, owner, secretKey string, until time.Time, targets ...string) (*shared.Share, error)
+
+	// ShareFor(ctx context.Context, owner, secretKey string, dur time.Duration, targets ...string) (*shared.Share, error)
+
+	// DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error
+
+	// PurgeShares(ctx context.Context, username, secretKey string) error
 }
 
 type service struct {
