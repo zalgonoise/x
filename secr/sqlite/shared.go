@@ -36,9 +36,7 @@ func NewSharedRepository(db *sql.DB) shared.Repository {
 }
 
 // Get fetches the secret's share metadata for a given username and secret key
-func (sr *sharedRepository) Get(ctx context.Context, username, secretName string) (*shared.Share, error) {
-	dbq := newDBShareQuery(username, secretName)
-
+func (sr *sharedRepository) Get(ctx context.Context, username, secretName string) ([]*shared.Share, error) {
 	rows, err := sr.db.QueryContext(ctx, `
 SELECT s.id, x.name, o.username, t.username, s.until, s.created_at
 FROM shared_secrets AS s
@@ -47,7 +45,28 @@ FROM shared_secrets AS s
 	JOIN secrets AS x ON x.id = s.secret_id
 WHERE o.username = ?
 	AND x.name = ?
-`, dbq.Owner, dbq.Secret)
+`, ToSQLString(username), ToSQLString(secretName))
+
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+	}
+
+	shares, err := sr.scanShares(rows)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+	}
+	return shares, nil
+}
+
+func (sr *sharedRepository) List(ctx context.Context, username string) ([]*shared.Share, error) {
+	rows, err := sr.db.QueryContext(ctx, `
+SELECT s.id, x.name, o.username, t.username, s.until, s.created_at
+FROM shared_secrets AS s
+	JOIN users AS o ON o.id = s.owner_id
+	JOIN users AS t ON t.id = s.shared_with
+	JOIN secrets AS x ON x.id = s.secret_id
+WHERE o.username = ?
+`, ToSQLString(username))
 
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
@@ -143,36 +162,65 @@ WHERE o.username = ?
 	return nil
 }
 
-func (s *dbShare) toDomainShare(shares ...*dbShare) *shared.Share {
+func toDomainShare(shares ...*dbShare) []*shared.Share {
 	if len(shares) == 0 {
 		return nil
 	}
 
-	sh := &shared.Share{
-		ID: uint64(s.ID.Int64),
+	s := make([]*shared.Share, 0, len(shares))
+	s = append(s, &shared.Share{
+		ID: uint64(shares[0].ID.Int64),
 		Secret: secret.Secret{
-			Key: s.Secret.String,
+			Key: shares[0].Secret.String,
 		},
 		Owner: user.User{
-			Username: s.Owner.String,
+			Username: shares[0].Owner.String,
 		},
 		Target: []user.User{{
-			Username: s.Target.String,
+			Username: shares[0].Target.String,
 		}},
-		Until:     s.Until.Time,
-		CreatedAt: s.CreatedAt.Time,
+		Until:     shares[0].Until.Time,
+		CreatedAt: shares[0].CreatedAt.Time,
+	})
+
+	if len(shares) == 1 {
+		return s
 	}
 
-	for _, u := range shares {
-		if u.ID == s.ID || u.Secret != s.Secret || u.Owner != s.Owner || u.Target == s.Target {
-			continue
+inputLoop:
+	for i := 1; i < len(shares); i++ {
+		for _, sh := range s {
+			if shares[i].Secret.String == sh.Secret.Key {
+				if shares[i].Until.Time == sh.Until {
+					for _, t := range sh.Target {
+						if t.Username == shares[i].Target.String {
+							continue
+						}
+						sh.Target = append(sh.Target, user.User{
+							Username: shares[i].Target.String,
+						})
+					}
+					continue inputLoop
+				}
+			}
 		}
-		sh.Target = append(sh.Target, user.User{
-			Username: u.Target.String,
+		s = append(s, &shared.Share{
+			ID: uint64(shares[i].ID.Int64),
+			Secret: secret.Secret{
+				Key: shares[i].Secret.String,
+			},
+			Owner: user.User{
+				Username: shares[i].Owner.String,
+			},
+			Target: []user.User{{
+				Username: shares[i].Target.String,
+			}},
+			Until:     shares[i].Until.Time,
+			CreatedAt: shares[i].CreatedAt.Time,
 		})
 	}
 
-	return sh
+	return s
 }
 
 func (sr *sharedRepository) scanShare(r Scanner) (dbs *dbShare, err error) {
@@ -197,7 +245,7 @@ func (sr *sharedRepository) scanShare(r Scanner) (dbs *dbShare, err error) {
 	return dbs, nil
 }
 
-func (sr *sharedRepository) scanShares(rs *sql.Rows) (*shared.Share, error) {
+func (sr *sharedRepository) scanShares(rs *sql.Rows) ([]*shared.Share, error) {
 	var shares []*dbShare
 
 	defer rs.Close()
@@ -209,14 +257,7 @@ func (sr *sharedRepository) scanShares(rs *sql.Rows) (*shared.Share, error) {
 		shares = append(shares, dbs)
 	}
 
-	switch len(shares) {
-	case 0:
-		return nil, nil
-	case 1:
-		return shares[0].toDomainShare(), nil
-	default:
-		return shares[0].toDomainShare(shares[1:]...), nil
-	}
+	return toDomainShare(shares...), nil
 }
 
 func newDBShare(s *shared.Share) []*dbShare {
