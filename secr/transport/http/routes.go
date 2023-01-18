@@ -12,6 +12,7 @@ const secrPath = "secrets"
 func (s *server) endpoints() ghttp.Endpoints {
 	e := ghttp.NewEndpoints()
 	e.Set(s.usersHandler()...)
+	e.Set(s.secretsHandler()...)
 	e.Set(s.sessionsHandler()...)
 	return e
 }
@@ -41,9 +42,58 @@ func (s *server) sessionsHandler() []ghttp.Handler {
 	}
 }
 
+func (s *server) secretsHandler() []ghttp.Handler {
+	p := "/secrets/"
+	return []ghttp.Handler{
+		{
+			Method: http.MethodGet,
+			Path:   p,
+			Fn:     s.secretsGetRoute(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
+		},
+		{
+			Method: http.MethodPost,
+			Path:   p,
+			Fn:     s.secretsCreate(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
+		},
+		{
+			Method: http.MethodDelete,
+			Path:   p,
+			Fn:     s.secretsDelete(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
+		},
+	}
+}
+
+func (s *server) secretsGetRoute() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		splitPath := getPath(r.URL.Path)
+		switch len(splitPath) {
+		case 1:
+			if splitPath[0] == secrPath {
+				s.secretsList()(w, r)
+				return
+			}
+		case 2:
+			if splitPath[0] == secrPath {
+				s.secretsGet()(w, r)
+				return
+			}
+		default:
+			http.Error(w, "not found", http.StatusNotFound)
+		}
+	}
+}
+
 func (s *server) usersHandler() []ghttp.Handler {
 	p := "/users/"
-
 	return []ghttp.Handler{
 		{
 			Method: http.MethodGet,
@@ -56,12 +106,12 @@ func (s *server) usersHandler() []ghttp.Handler {
 		{
 			Method: http.MethodPost,
 			Path:   p,
-			Fn:     s.usersPostRoute(),
+			Fn:     s.usersCreate(),
 		},
 		{
 			Method: http.MethodDelete,
 			Path:   p,
-			Fn:     s.usersDeleteRoute(),
+			Fn:     s.usersDelete(),
 			Middleware: []ghttp.MiddlewareFn{
 				s.WithAuth(),
 			},
@@ -89,59 +139,6 @@ func (s *server) usersGetRoute() http.HandlerFunc {
 		case 2:
 			if splitPath[0] == userPath {
 				s.usersGet()(w, r)
-				return
-			}
-		case 3:
-			if splitPath[0] == userPath && splitPath[2] == secrPath {
-				s.secretsList()(w, r)
-				return
-			}
-		case 4:
-			if splitPath[0] == userPath && splitPath[2] == secrPath {
-				s.secretsGet()(w, r)
-				return
-			}
-		default:
-			http.Error(w, "not found", http.StatusNotFound)
-		}
-	}
-}
-
-func (s *server) usersPostRoute() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		splitPath := getPath(r.URL.Path)
-
-		switch len(splitPath) {
-		case 1:
-			if splitPath[0] == userPath {
-				s.usersCreate()(w, r)
-				return
-			}
-		case 3:
-			if splitPath[0] == userPath && splitPath[2] == secrPath {
-				s.WithAuth()(s.secretsCreate())(w, r)
-				return
-			}
-		default:
-			http.Error(w, "not found", http.StatusNotFound)
-		}
-	}
-}
-
-func (s *server) usersDeleteRoute() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		splitPath := getPath(r.URL.Path)
-
-		switch len(splitPath) {
-		case 1:
-			if splitPath[0] == userPath {
-				s.usersDelete()(w, r)
-				return
-			}
-		case 3:
-			if splitPath[0] == userPath && splitPath[2] == secrPath {
-				s.secretsDelete()(w, r)
 				return
 			}
 		default:

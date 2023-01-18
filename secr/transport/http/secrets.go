@@ -18,11 +18,11 @@ func (s *server) secretsGet() http.HandlerFunc {
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*secretsGetRequest, error) {
 		splitPath := getPath(r.URL.Path)
-		username, key := splitPath[1], splitPath[3]
+		key := splitPath[1]
 
-		if u, ok := authz.GetCaller(r); ok && u == username {
+		if u, ok := authz.GetCaller(r); ok {
 			return &secretsGetRequest{
-				Username: username,
+				Username: u,
 				Key:      key,
 			}, nil
 		}
@@ -50,14 +50,8 @@ func (s *server) secretsGet() http.HandlerFunc {
 
 func (s *server) secretsList() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*string, error) {
-		username := getPath(r.URL.Path)[1]
-
-		if username == "" {
-			return nil, errors.New("no username provided")
-		}
-
-		if u, ok := authz.GetCaller(r); ok && u == username {
-			return &username, nil
+		if u, ok := authz.GetCaller(r); ok {
+			return &u, nil
 		}
 		return nil, authz.ErrInvalidUser
 	}
@@ -85,15 +79,13 @@ func (s *server) secretsCreate() http.HandlerFunc {
 		Value    string `json:"value,omitempty"`
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*secretsCreateRequest, error) {
-		username := getPath(r.URL.Path)[1]
-
 		secr, err := ghttp.ReadBody[secretsCreateRequest](ctx, r)
 		if err != nil {
 			return nil, err
 		}
 
-		secr.Username = username
-		if u, ok := authz.GetCaller(r); ok && u == username {
+		if u, ok := authz.GetCaller(r); ok {
+			secr.Username = u
 			return secr, nil
 		}
 		return nil, authz.ErrInvalidUser
@@ -122,11 +114,11 @@ func (s *server) secretsDelete() http.HandlerFunc {
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*secretsDeleteRequest, error) {
 		splitPath := getPath(r.URL.Path)
-		username, key := splitPath[1], splitPath[3]
+		key := splitPath[1]
 
-		if u, ok := authz.GetCaller(r); ok && u == username {
+		if u, ok := authz.GetCaller(r); ok {
 			return &secretsDeleteRequest{
-				Username: username,
+				Username: u,
 				Key:      key,
 			}, nil
 		}
