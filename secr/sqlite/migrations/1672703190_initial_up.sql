@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS shared_secrets (
     secret_id INTEGER NOT NULL,
     shared_with INTEGER NOT NULL,
     until TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (owner_id) REFERENCES users (id),
     FOREIGN KEY (secret_id) REFERENCES secrets (id),
