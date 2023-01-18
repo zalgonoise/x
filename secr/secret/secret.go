@@ -2,8 +2,6 @@ package secret
 
 import (
 	"time"
-
-	"github.com/zalgonoise/x/secr/user"
 )
 
 // Secret is a key-value pair where they Key is string type and Value
@@ -13,13 +11,4 @@ type Secret struct {
 	Key       string
 	Value     []byte
 	CreatedAt time.Time
-}
-
-// Shared is a type of secret that a user (the owner) shares with a set of users
-// optionally within a limited period of time
-type Shared struct {
-	Secret
-	Owner  user.User
-	Shares []user.User
-	Until  time.Time
 }
