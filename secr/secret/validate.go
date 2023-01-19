@@ -23,6 +23,8 @@ var (
 	keyRegex = regexp.MustCompile(`[a-z0-9]+[a-z0-9\-_]+[a-z0-9]+`)
 )
 
+// ValidateKey verifies if the input secret's key is valid, returning an error
+// if invalid
 func ValidateKey(key string) error {
 	if key == "" {
 		return ErrEmptyKey
@@ -36,6 +38,8 @@ func ValidateKey(key string) error {
 	return nil
 }
 
+// ValidateValue verifies if the input secret's value is valid, returning an error
+// if invalid
 func ValidateValue(value []byte) error {
 	if len(value) == 0 {
 		return ErrEmptyValue

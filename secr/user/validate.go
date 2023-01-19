@@ -39,6 +39,8 @@ var (
 	passwordRegex = regexp.MustCompile(`[a-zA-Z\d\-\_\~\!\@\#\$\%\^\&\*\(\)\[\]\{\}\;\:\,\.\<\>\?]+`)
 )
 
+// ValidateUsername verifies if the input username is valid, returning an error
+// if invalid
 func ValidateUsername(username string) error {
 	if username == "" {
 		return ErrEmptyUsername
@@ -55,6 +57,8 @@ func ValidateUsername(username string) error {
 	return nil
 }
 
+// ValidateName verifies if the input name is valid, returning an error
+// if invalid
 func ValidateName(name string) error {
 	if name == "" {
 		return ErrEmptyName
@@ -71,6 +75,8 @@ func ValidateName(name string) error {
 	return nil
 }
 
+// ValidatePassword verifies if the input password is valid, returning an error
+// if invalid
 func ValidatePassword(password string) error {
 	if password == "" {
 		return ErrEmptyPassword

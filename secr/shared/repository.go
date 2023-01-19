@@ -4,6 +4,7 @@ import (
 	"context"
 )
 
+// Repository describes the actions exposed by the shared secrets store
 type Repository interface {
 	// Get fetches the secret's share metadata for a given username and secret key
 	Get(ctx context.Context, username, secretName string) ([]*Share, error)
