@@ -79,6 +79,28 @@ WHERE o.username = ?
 	return shares, nil
 }
 
+// ListTarget is similar to List, but returns secrets that are shared with a target user
+func (sr *sharedRepository) ListTarget(ctx context.Context, target string) ([]*shared.Share, error) {
+	rows, err := sr.db.QueryContext(ctx, `
+	SELECT s.id, x.name, o.username, t.username, s.until, s.created_at
+	FROM shared_secrets AS s
+		JOIN users AS o ON o.id = s.owner_id
+		JOIN users AS t ON t.id = s.shared_with
+		JOIN secrets AS x ON x.id = s.secret_id
+	WHERE t.username = ?
+	`, ToSQLString(target))
+
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+	}
+
+	shares, err := sr.scanShares(rows)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+	}
+	return shares, nil
+}
+
 // Create shares the secret identified by `secretName`, owned by `owner`, with
 // user `target`. Returns an error
 func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) error {
