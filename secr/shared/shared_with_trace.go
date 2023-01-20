@@ -49,6 +49,22 @@ func (t withTrace) List(ctx context.Context, username string) ([]*Share, error) 
 	return share, nil
 }
 
+// ListTarget is similar to List, but returns secrets that are shared with a target user
+func (t withTrace) ListTarget(ctx context.Context, target string) ([]*Share, error) {
+	ctx, s := spanner.Start(ctx, "secret.ListTarget")
+	defer s.End()
+	s.Add(
+		attr.String("for_user", target),
+	)
+
+	share, err := t.r.ListTarget(ctx, target)
+	if err != nil {
+		s.Event("error listing shared secrets", attr.New("error", err.Error()))
+		return nil, err
+	}
+	return share, nil
+}
+
 // Create shares the secret identified by `secretName`, owned by `owner`, with
 // user `target`. Returns an error
 func (t withTrace) Create(ctx context.Context, sh *Share) error {
