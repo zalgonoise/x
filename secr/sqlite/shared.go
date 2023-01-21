@@ -103,12 +103,14 @@ func (sr *sharedRepository) ListTarget(ctx context.Context, target string) ([]*s
 
 // Create shares the secret identified by `secretName`, owned by `owner`, with
 // user `target`. Returns an error
-func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) error {
+func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint64, error) {
 	shares := newDBShare(sh)
 	tx, err := sr.db.Begin()
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %v", err)
+		return 0, fmt.Errorf("failed to begin transaction: %v", err)
 	}
+
+	var lastID uint64
 
 	for _, dbs := range shares {
 		res, err := tx.ExecContext(ctx, `
@@ -122,24 +124,25 @@ func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) error 
 
 		if err != nil {
 			_ = tx.Rollback()
-			return err
+			return 0, err
 		}
 		id, err := res.LastInsertId()
 		if err != nil {
 			_ = tx.Rollback()
-			return err
+			return 0, err
 		}
 		if id == 0 {
 			_ = tx.Rollback()
-			return errors.New("id zero")
+			return 0, errors.New("id zero")
 		}
+		lastID = uint64(id)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf("failed to create shared secret: %v", err)
+		return 0, fmt.Errorf("failed to create shared secret: %v", err)
 	}
-	return nil
+	return lastID, nil
 }
 
 // Delete removes the user `target` from the secret share

@@ -38,7 +38,7 @@ func newDBSecret(s *secret.Secret) *dbSecret {
 
 // Create will create (or overwrite) the secret identified by `s.Key`, for user `username`,
 // returning an error
-func (sr *secretRepository) Create(ctx context.Context, username string, s *secret.Secret) error {
+func (sr *secretRepository) Create(ctx context.Context, username string, s *secret.Secret) (uint64, error) {
 	dbs := newDBSecret(s)
 	res, err := sr.db.ExecContext(ctx, `
 INSERT INTO secrets (user_id, name)
@@ -48,17 +48,18 @@ VALUES (
 `, username, dbs.Name)
 
 	if err != nil {
-		return fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
+		return 0, fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
+		return 0, fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
 	}
 	if id == 0 {
-		return fmt.Errorf("%w: secret was not created %s", ErrDBError, s.Key)
+		return 0, fmt.Errorf("%w: secret was not created %s", ErrDBError, s.Key)
 	}
-	return nil
+
+	return uint64(id), nil
 }
 
 // Get fetches a secret identified by `key` for user `username`. Returns a secret and an error
