@@ -3,6 +3,8 @@ package secret
 import (
 	"errors"
 	"regexp"
+
+	"github.com/zalgonoise/x/secr/keys"
 )
 
 var (
@@ -34,6 +36,9 @@ func ValidateKey(key string) error {
 	}
 	if match := keyRegex.FindString(key); match != key {
 		return ErrInvalidKey
+	}
+	if key == keys.UniqueID || key == keys.TokenKey {
+		return ErrEmptyKey
 	}
 	return nil
 }
