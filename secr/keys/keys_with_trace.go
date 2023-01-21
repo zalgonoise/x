@@ -17,23 +17,6 @@ func WithTrace(r Repository) Repository {
 	}
 }
 
-// Get fetches the secret identified by `k` in the bucket `bucket`,
-// returning a slice of bytes for the value and an error
-func (t withTrace) Get(ctx context.Context, bucket, k string) ([]byte, error) {
-	ctx, s := spanner.Start(ctx, "keys.Get")
-	defer s.End()
-	s.Add(
-		attr.String("in_bucket", bucket),
-	)
-
-	value, err := t.r.Get(ctx, bucket, k)
-	if err != nil {
-		s.Event("error fetching key", attr.New("error", err.Error()))
-		return value, err
-	}
-	return value, nil
-}
-
 // Set creates or overwrites a secret identified by `k` with value `v`, in
 // bucket `bucket`. Returns an error
 func (t withTrace) Set(ctx context.Context, bucket, k string, v []byte) error {
@@ -49,6 +32,23 @@ func (t withTrace) Set(ctx context.Context, bucket, k string, v []byte) error {
 		return err
 	}
 	return nil
+}
+
+// Get fetches the secret identified by `k` in the bucket `bucket`,
+// returning a slice of bytes for the value and an error
+func (t withTrace) Get(ctx context.Context, bucket, k string) ([]byte, error) {
+	ctx, s := spanner.Start(ctx, "keys.Get")
+	defer s.End()
+	s.Add(
+		attr.String("in_bucket", bucket),
+	)
+
+	value, err := t.r.Get(ctx, bucket, k)
+	if err != nil {
+		s.Event("error fetching key", attr.New("error", err.Error()))
+		return value, err
+	}
+	return value, nil
 }
 
 // Delete removes the secret identified by `k` in bucket `bucket`, returning an error

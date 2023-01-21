@@ -21,7 +21,7 @@ type Service interface {
 	Refresh(ctx context.Context, username, token string) (*user.Session, error)
 	// Validate verifies if a user's JWT is a valid one, returning a boolean and an error
 	Validate(ctx context.Context, username, token string) (bool, error)
-	//
+	// ParseToken reads the input token string and returns the corresponding user in it, or an error
 	ParseToken(ctx context.Context, token string) (*user.User, error)
 
 	// CreateUser creates the user under username `username`, with the provided password `password` and name `name`

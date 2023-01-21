@@ -35,6 +35,50 @@ func NewSharedRepository(db *sql.DB) shared.Repository {
 	return &sharedRepository{db}
 }
 
+// Create shares the secret identified by `secretName`, owned by `owner`, with
+// user `target`. Returns an error
+func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint64, error) {
+	shares := newDBShare(sh)
+	tx, err := sr.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin transaction: %v", err)
+	}
+
+	var lastID uint64
+
+	for _, dbs := range shares {
+		res, err := tx.ExecContext(ctx, `
+		INSERT INTO shared_secrets (owner_id, secret_id, shared_with)
+		VALUES (
+			(SELECT id FROM users WHERE username = ?),
+			(SELECT id FROM secrets WHERE name = ?),
+			(SELECT id FROM users WHERE username = ?)
+		)
+		`, dbs.Owner, dbs.Secret, dbs.Target)
+
+		if err != nil {
+			_ = tx.Rollback()
+			return 0, err
+		}
+		id, err := res.LastInsertId()
+		if err != nil {
+			_ = tx.Rollback()
+			return 0, err
+		}
+		if id == 0 {
+			_ = tx.Rollback()
+			return 0, errors.New("id zero")
+		}
+		lastID = uint64(id)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, fmt.Errorf("failed to create shared secret: %v", err)
+	}
+	return lastID, nil
+}
+
 // Get fetches the secret's share metadata for a given username and secret key
 func (sr *sharedRepository) Get(ctx context.Context, username, secretName string) ([]*shared.Share, error) {
 	rows, err := sr.db.QueryContext(ctx, `
@@ -99,50 +143,6 @@ func (sr *sharedRepository) ListTarget(ctx context.Context, target string) ([]*s
 		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
 	}
 	return shares, nil
-}
-
-// Create shares the secret identified by `secretName`, owned by `owner`, with
-// user `target`. Returns an error
-func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint64, error) {
-	shares := newDBShare(sh)
-	tx, err := sr.db.Begin()
-	if err != nil {
-		return 0, fmt.Errorf("failed to begin transaction: %v", err)
-	}
-
-	var lastID uint64
-
-	for _, dbs := range shares {
-		res, err := tx.ExecContext(ctx, `
-		INSERT INTO shared_secrets (owner_id, secret_id, shared_with)
-		VALUES (
-			(SELECT id FROM users WHERE username = ?),
-			(SELECT id FROM secrets WHERE name = ?),
-			(SELECT id FROM users WHERE username = ?)
-		)
-		`, dbs.Owner, dbs.Secret, dbs.Target)
-
-		if err != nil {
-			_ = tx.Rollback()
-			return 0, err
-		}
-		id, err := res.LastInsertId()
-		if err != nil {
-			_ = tx.Rollback()
-			return 0, err
-		}
-		if id == 0 {
-			_ = tx.Rollback()
-			return 0, errors.New("id zero")
-		}
-		lastID = uint64(id)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return 0, fmt.Errorf("failed to create shared secret: %v", err)
-	}
-	return lastID, nil
 }
 
 // Delete removes the user `target` from the secret share

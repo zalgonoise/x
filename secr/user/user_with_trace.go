@@ -33,23 +33,6 @@ func (t withTrace) Create(ctx context.Context, u *User) (uint64, error) {
 	return id, err
 }
 
-// Update will update the user `username` with its updated version `updated`. Returns an error
-func (t withTrace) Update(ctx context.Context, username string, updated *User) error {
-	ctx, s := spanner.Start(ctx, "user.Update")
-	defer s.End()
-	s.Add(
-		attr.String("username", username),
-		attr.String("new_username", updated.Username),
-	)
-
-	err := t.r.Update(ctx, username, updated)
-	if err != nil {
-		s.Event("error updating user", attr.New("error", err.Error()))
-		return err
-	}
-	return err
-}
-
 // Get returns the user identified by `username`, and an error
 func (t withTrace) Get(ctx context.Context, username string) (*User, error) {
 	ctx, s := spanner.Start(ctx, "user.Get")
@@ -77,6 +60,23 @@ func (t withTrace) List(ctx context.Context) ([]*User, error) {
 		return u, err
 	}
 	return u, err
+}
+
+// Update will update the user `username` with its updated version `updated`. Returns an error
+func (t withTrace) Update(ctx context.Context, username string, updated *User) error {
+	ctx, s := spanner.Start(ctx, "user.Update")
+	defer s.End()
+	s.Add(
+		attr.String("username", username),
+		attr.String("new_username", updated.Username),
+	)
+
+	err := t.r.Update(ctx, username, updated)
+	if err != nil {
+		s.Event("error updating user", attr.New("error", err.Error()))
+		return err
+	}
+	return err
 }
 
 // Delete removes the user identified by `username`, returning an error

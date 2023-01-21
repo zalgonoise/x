@@ -59,30 +59,6 @@ VALUES (?, ?, ?, ?)
 	return uint64(id), nil
 }
 
-// Update will update the user `username` with its updated version `updated`. Returns an error
-func (ur *userRepository) Update(ctx context.Context, username string, updated *user.User) error {
-	dbu := newDBUser(updated)
-	res, err := ur.db.ExecContext(ctx, `
-UPDATE users
-SET name = ?, hash = ?
-WHERE u.username = ?
-`, dbu.Name, dbu.Hash, ToSQLString(username))
-
-	if err != nil {
-		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
-	}
-	if n == 0 {
-		return fmt.Errorf("%w: user was not updated %s", ErrDBError, username)
-	}
-
-	return nil
-}
-
 // Get returns the user identified by `username`, and an error
 func (ur *userRepository) Get(ctx context.Context, username string) (*user.User, error) {
 	row := ur.db.QueryRowContext(ctx, `
@@ -113,6 +89,30 @@ FROM users AS u
 		return nil, fmt.Errorf("%w: failed to list users: %v", ErrDBError, err)
 	}
 	return users, nil
+}
+
+// Update will update the user `username` with its updated version `updated`. Returns an error
+func (ur *userRepository) Update(ctx context.Context, username string, updated *user.User) error {
+	dbu := newDBUser(updated)
+	res, err := ur.db.ExecContext(ctx, `
+UPDATE users
+SET name = ?, hash = ?
+WHERE u.username = ?
+`, dbu.Name, dbu.Hash, ToSQLString(username))
+
+	if err != nil {
+		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
+	}
+	if n == 0 {
+		return fmt.Errorf("%w: user was not updated %s", ErrDBError, username)
+	}
+
+	return nil
 }
 
 // Delete removes the user identified by `username`, returning an error
