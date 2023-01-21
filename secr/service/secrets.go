@@ -62,7 +62,7 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 	secr := &secret.Secret{
 		Key: key,
 	}
-	err = s.secrets.Create(ctx, username, secr)
+	id, err := s.secrets.Create(ctx, username, secr)
 	if err != nil {
 		rerr := rollback()
 		if rerr != nil {
@@ -70,6 +70,8 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 		}
 		return fmt.Errorf("failed to create the secret: %v", err)
 	}
+	secr.ID = id
+
 	return nil
 }
 
