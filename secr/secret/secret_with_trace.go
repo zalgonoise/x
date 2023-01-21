@@ -19,19 +19,19 @@ func WithTrace(r Repository) Repository {
 
 // Create will create (or overwrite) the secret identified by `s.Key`, for user `username`,
 // returning an error
-func (t withTrace) Create(ctx context.Context, username string, secr *Secret) error {
+func (t withTrace) Create(ctx context.Context, username string, secr *Secret) (uint64, error) {
 	ctx, s := spanner.Start(ctx, "secret.Create")
 	defer s.End()
 	s.Add(
 		attr.String("for_user", username),
 	)
 
-	err := t.r.Create(ctx, username, secr)
+	id, err := t.r.Create(ctx, username, secr)
 	if err != nil {
 		s.Event("error creating secret", attr.New("error", err.Error()))
-		return err
+		return id, err
 	}
-	return nil
+	return id, nil
 }
 
 // Get fetches a secret identified by `key` for user `username`. Returns a secret and an error
