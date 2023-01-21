@@ -67,19 +67,19 @@ func (t withTrace) ListTarget(ctx context.Context, target string) ([]*Share, err
 
 // Create shares the secret identified by `secretName`, owned by `owner`, with
 // user `target`. Returns an error
-func (t withTrace) Create(ctx context.Context, sh *Share) error {
+func (t withTrace) Create(ctx context.Context, sh *Share) (uint64, error) {
 	ctx, s := spanner.Start(ctx, "secret.Create")
 	defer s.End()
 	s.Add(
 		attr.String("from_user", sh.Owner.Username),
 	)
 
-	err := t.r.Create(ctx, sh)
+	id, err := t.r.Create(ctx, sh)
 	if err != nil {
 		s.Event("error creating shared secret", attr.New("error", err.Error()))
-		return err
+		return id, err
 	}
-	return nil
+	return id, nil
 }
 
 // Delete removes the user `target` from the secret share

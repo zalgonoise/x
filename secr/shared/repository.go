@@ -13,8 +13,8 @@ type Repository interface {
 	// ListTarget is similar to List, but returns secrets that are shared with a target user
 	ListTarget(ctx context.Context, target string) ([]*Share, error)
 	// Create shares the secret identified by `secretName`, owned by `owner`, with
-	// user `target`. Returns an error
-	Create(ctx context.Context, s *Share) error
+	// user `target`. Returns its ID and an error
+	Create(ctx context.Context, s *Share) (uint64, error)
 	// Delete removes the user `target` from the secret share
 	Delete(ctx context.Context, s *Share) error
 }
