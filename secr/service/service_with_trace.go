@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/spanner"
 	"github.com/zalgonoise/x/secr/secret"
+	"github.com/zalgonoise/x/secr/shared"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -253,6 +255,106 @@ func (t withTrace) DeleteSecret(ctx context.Context, username string, key string
 	err := t.r.DeleteSecret(ctx, username, key)
 	if err != nil {
 		s.Event("error deleting secret", attr.New("error", err.Error()))
+		return err
+	}
+	return nil
+}
+
+// CreateShare shares the secret with key `secretKey` belonging to user with username `owner`, with users `targets`.
+// Returns the resulting shared secret, and an error
+func (t withTrace) CreateShare(ctx context.Context, owner, secretKey string, targets ...string) (*shared.Share, error) {
+	ctx, s := spanner.Start(ctx, "service.CreateShare")
+	defer s.End()
+	s.Add(
+		attr.String("username", owner),
+	)
+
+	id, err := t.r.CreateShare(ctx, owner, secretKey, targets...)
+	if err != nil {
+		s.Event("error creating shared secret", attr.New("error", err.Error()))
+		return id, err
+	}
+	return id, nil
+}
+
+// ShareFor is similar to CreateShare, but sets the shared secret to expire after `dur` Duration
+func (t withTrace) ShareFor(ctx context.Context, owner, secretKey string, dur time.Duration, targets ...string) (*shared.Share, error) {
+	ctx, s := spanner.Start(ctx, "service.ShareFor")
+	defer s.End()
+	s.Add(
+		attr.String("username", owner),
+	)
+
+	id, err := t.r.ShareFor(ctx, owner, secretKey, dur, targets...)
+	if err != nil {
+		s.Event("error creating shared secret with duration", attr.New("error", err.Error()))
+		return id, err
+	}
+	return id, nil
+}
+
+// ShareFor is similar to CreateShare, but sets the shared secret to expire after `until` Time
+func (t withTrace) ShareUntil(ctx context.Context, owner, secretKey string, until time.Time, targets ...string) (*shared.Share, error) {
+	ctx, s := spanner.Start(ctx, "service.ShareUntil")
+	defer s.End()
+	s.Add(
+		attr.String("username", owner),
+	)
+
+	id, err := t.r.ShareUntil(ctx, owner, secretKey, until, targets...)
+	if err != nil {
+		s.Event("error creating shared secret with deadline", attr.New("error", err.Error()))
+		return id, err
+	}
+	return id, nil
+}
+
+// GetShare fetches the shared secret belonging to `username`, with key `secretKey`, returning it as a
+// shared secret and an error
+func (t withTrace) GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error) {
+	ctx, s := spanner.Start(ctx, "service.GetShare")
+	defer s.End()
+	s.Add(
+		attr.String("username", username),
+	)
+
+	share, err := t.r.GetShare(ctx, username, secretKey)
+	if err != nil {
+		s.Event("error fetching shared secret", attr.New("error", err.Error()))
+		return share, err
+	}
+	return share, nil
+}
+
+// DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
+// an error
+func (t withTrace) DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error {
+	ctx, s := spanner.Start(ctx, "service.DeleteShare")
+	defer s.End()
+	s.Add(
+		attr.String("username", username),
+	)
+
+	err := t.r.DeleteShare(ctx, username, secretKey, targets...)
+	if err != nil {
+		s.Event("error deleting shared secret", attr.New("error", err.Error()))
+		return err
+	}
+	return nil
+}
+
+// PurgeShares removes the shared secret completely, so it's no longer available to the users it was
+// shared with. Returns an error
+func (t withTrace) PurgeShares(ctx context.Context, username, secretKey string) error {
+	ctx, s := spanner.Start(ctx, "service.PurgeShares")
+	defer s.End()
+	s.Add(
+		attr.String("username", username),
+	)
+
+	err := t.r.PurgeShares(ctx, username, secretKey)
+	if err != nil {
+		s.Event("error purging shared secret", attr.New("error", err.Error()))
 		return err
 	}
 	return nil

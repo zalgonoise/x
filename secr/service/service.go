@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/secret"
+	"github.com/zalgonoise/x/secr/shared"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -46,17 +48,22 @@ type Service interface {
 	// DeleteSecret removes a secret with key `key` from the user `username`. Returns an error
 	DeleteSecret(ctx context.Context, username string, key string) error
 
-	// GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error)
-
-	// CreateShare(ctx context.Context, owner, secretKey string, targets ...string) (*shared.Share, error)
-
-	// ShareUntil(ctx context.Context, owner, secretKey string, until time.Time, targets ...string) (*shared.Share, error)
-
-	// ShareFor(ctx context.Context, owner, secretKey string, dur time.Duration, targets ...string) (*shared.Share, error)
-
-	// DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error
-
-	// PurgeShares(ctx context.Context, username, secretKey string) error
+	// CreateShare shares the secret with key `secretKey` belonging to user with username `owner`, with users `targets`.
+	// Returns the resulting shared secret, and an error
+	CreateShare(ctx context.Context, owner, secretKey string, targets ...string) (*shared.Share, error)
+	// ShareFor is similar to CreateShare, but sets the shared secret to expire after `dur` Duration
+	ShareFor(ctx context.Context, owner, secretKey string, dur time.Duration, targets ...string) (*shared.Share, error)
+	// ShareFor is similar to CreateShare, but sets the shared secret to expire after `until` Time
+	ShareUntil(ctx context.Context, owner, secretKey string, until time.Time, targets ...string) (*shared.Share, error)
+	// GetShare fetches the shared secret belonging to `username`, with key `secretKey`, returning it as a
+	// shared secret and an error
+	GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error)
+	// DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
+	// an error
+	DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error
+	// PurgeShares removes the shared secret completely, so it's no longer available to the users it was
+	// shared with. Returns an error
+	PurgeShares(ctx context.Context, username, secretKey string) error
 }
 
 type service struct {
