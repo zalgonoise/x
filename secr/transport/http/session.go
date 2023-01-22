@@ -133,22 +133,30 @@ func (s *server) refresh() http.HandlerFunc {
 		Token    string `json:"token,omitempty"`
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*refreshRequest, error) {
-		s, err := ghttp.ReadBody[refreshRequest](ctx, r)
+		q, err := ghttp.ReadBody[refreshRequest](ctx, r)
 		if err != nil {
-			return nil, err
+			q = new(refreshRequest)
 		}
 
-		if s.Token == "" {
+		if q.Token == "" {
 			if token, ok := getToken(r); ok {
-				s.Token = token
-				if caller, ok := authz.GetCaller(r); ok && caller == s.Username {
-					return s, nil
+				q.Token = token
+
+				if caller, ok := authz.GetCaller(r); ok {
+					q.Username = caller
+					return q, nil
 				}
-				return nil, authz.ErrInvalidUser
+
+				u, err := s.s.ParseToken(ctx, token)
+				if err != nil {
+					return nil, authz.ErrInvalidUser
+				}
+				q.Username = u.Username
+				return q, nil
 			}
 		}
 
-		return nil, errors.New("failed to read user or token in request")
+		return q, nil
 	}
 
 	var execFn = func(ctx context.Context, q *refreshRequest) *ghttp.Response[user.Session] {
