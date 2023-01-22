@@ -262,5 +262,16 @@ func (s service) DeleteSecret(ctx context.Context, username string, key string) 
 		}
 		return err
 	}
+
+	shares, err := s.shares.Get(ctx, username, key)
+	if err != nil {
+		return fmt.Errorf("failed to scan for shared secrets under this key: %v", err)
+	}
+	for _, sh := range shares {
+		err = s.shares.Delete(ctx, sh)
+		if err != nil {
+			return fmt.Errorf("failed to remove shared secret: %v", err)
+		}
+	}
 	return nil
 }
