@@ -285,7 +285,7 @@ func (l withLogger) ShareUntil(ctx context.Context, owner, secretKey string, unt
 
 // GetShare fetches the shared secret belonging to `username`, with key `secretKey`, returning it as a
 // shared secret and an error
-func (l withLogger) GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error) {
+func (l withLogger) GetShare(ctx context.Context, username, secretKey string) ([]*shared.Share, error) {
 	share, err := l.r.GetShare(ctx, username, secretKey)
 	if err != nil {
 		l.l.Error(

@@ -311,7 +311,7 @@ func (t withTrace) ShareUntil(ctx context.Context, owner, secretKey string, unti
 
 // GetShare fetches the shared secret belonging to `username`, with key `secretKey`, returning it as a
 // shared secret and an error
-func (t withTrace) GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error) {
+func (t withTrace) GetShare(ctx context.Context, username, secretKey string) ([]*shared.Share, error) {
 	ctx, s := spanner.Start(ctx, "service.GetShare")
 	defer s.End()
 	s.Add(
