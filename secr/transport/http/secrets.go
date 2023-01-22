@@ -83,7 +83,6 @@ func (s *server) secretsCreate() http.HandlerFunc {
 		if err != nil {
 			return nil, err
 		}
-
 		if u, ok := authz.GetCaller(r); ok {
 			secr.Username = u
 			return secr, nil
@@ -101,7 +100,11 @@ func (s *server) secretsCreate() http.HandlerFunc {
 			return ghttp.NewResponse[secret.Secret](http.StatusInternalServerError, err.Error())
 		}
 
-		return ghttp.NewResponse[secret.Secret](http.StatusOK, "secret created successfully")
+		secr, err := s.s.GetSecret(ctx, q.Username, q.Key)
+		if err != nil {
+			return ghttp.NewResponse[secret.Secret](http.StatusInternalServerError, err.Error())
+		}
+		return ghttp.NewResponse[secret.Secret](http.StatusOK, "secret created successfully").WithData(secr)
 	}
 
 	return ghttp.Do("SecretsCreate", parseFn, execFn)
