@@ -66,7 +66,7 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 	u.ID = id
 
 	// generate a new private key for this user, and store it
-	key := crypt.NewKey()
+	key := crypt.New32Key()
 	err = s.keys.Set(ctx, keys.UserBucket(u.ID), keys.UniqueID, key[:])
 	if err != nil {
 		rerr := rollback()
