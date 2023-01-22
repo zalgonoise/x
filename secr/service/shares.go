@@ -151,6 +151,19 @@ func (s service) GetShare(ctx context.Context, username, secretKey string) ([]*s
 	return sh, nil
 }
 
+// ListShares fetches all the secrets the user with username `username` has shared with other users
+func (s service) ListShares(ctx context.Context, username string) ([]*shared.Share, error) {
+	if err := user.ValidateUsername(username); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+
+	sh, err := s.shares.List(ctx, username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list shared secrets: %v", err)
+	}
+	return sh, nil
+}
+
 // DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
 // an error
 func (s service) DeleteShare(ctx context.Context, owner, secretKey string, targets ...string) error {
