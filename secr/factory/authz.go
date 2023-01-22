@@ -53,7 +53,7 @@ func loadKey(path string) (authz.Authorizer, error) {
 
 func createKey(path string) (authz.Authorizer, error) {
 	// try to create local key
-	k := crypt.NewKey()
+	k := crypt.New256Key()
 	f, err := os.Create(path)
 	if err != nil {
 		return nil, err

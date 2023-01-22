@@ -13,20 +13,35 @@ import (
 type Cryptographer interface {
 	// NewSalt generates a new random salt value, of 128 bytes in size
 	NewSalt() [128]byte
-	// NewKey generates a new random key value, of 256 bytes in size
-	NewKey() [256]byte
+	// New256Key generates a new random key value, of 256 bytes in size
+	New256Key() [256]byte
+	// New32Key generates a new random key value, of 256 bytes in size
+	New32Key() [32]byte
 	// NewCipher generates a new AES cipher based on the input key
-	NewCipher(key []byte) (cipher.Block, error)
+	NewCipher(key []byte) EncryptDecrypter
+	// Random reads random bytes into the input byte slice
+	Random(buffer []byte)
+}
+
+type EncryptDecrypter interface {
+	Encrypt([]byte) ([]byte, error)
+	Decrypt([]byte) ([]byte, error)
+}
+
+type aesEncrypter struct {
+	gcm   cipher.AEAD
+	key   []byte
+	nonce []byte
 }
 
 func init() {
-	crypt = &cryptographer{}
+	cryptog = &cryptographer{}
 	var rngSeed int64
 	_ = binary.Read(cryptorand.Reader, binary.LittleEndian, &rngSeed)
-	crypt.(*cryptographer).random = rand.New(rand.NewSource(rngSeed))
+	cryptog.(*cryptographer).random = rand.New(rand.NewSource(rngSeed))
 }
 
-var crypt Cryptographer
+var cryptog Cryptographer
 
 type cryptographer struct {
 	sync.Mutex
@@ -42,8 +57,8 @@ func (g *cryptographer) NewSalt() [128]byte {
 	return salt
 }
 
-// NewKey generates a new random key value, of 256 bytes in size
-func (g *cryptographer) NewKey() [256]byte {
+// New256Key generates a new random key value, of 256 bytes in size
+func (g *cryptographer) New256Key() [256]byte {
 	key := [256]byte{}
 	g.Lock()
 	_, _ = g.random.Read(key[:])
@@ -51,26 +66,85 @@ func (g *cryptographer) NewKey() [256]byte {
 	return key
 }
 
+// New32Key generates a new random key value, of 256 bytes in size
+func (g *cryptographer) New32Key() [32]byte {
+	key := [32]byte{}
+	g.Lock()
+	_, _ = g.random.Read(key[:])
+	g.Unlock()
+	return key
+}
+
+func (g *cryptographer) Random(buffer []byte) {
+	g.Lock()
+	_, _ = g.random.Read(buffer)
+	g.Unlock()
+}
+
 // NewCipher generates a new AES cipher based on the input key
-func (g *cryptographer) NewCipher(key []byte) (cipher.Block, error) {
-	block, err := aes.NewCipher(key)
+func (g *cryptographer) NewCipher(key []byte) EncryptDecrypter {
+	return aesEncrypter{
+		key: key,
+	}
+}
+
+func (enc aesEncrypter) Encrypt(plaintext []byte) ([]byte, error) {
+	c, err := aes.NewCipher(enc.key)
 	if err != nil {
 		return nil, err
 	}
-	return block, nil
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	cryptog.Random(nonce)
+
+	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+}
+
+func (enc aesEncrypter) Decrypt(ciphertext []byte) ([]byte, error) {
+	c, err := aes.NewCipher(enc.key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, err
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+	return plaintext, nil
 }
 
 // NewSalt generates a new random salt value, of 128 bytes in size
 func NewSalt() [128]byte {
-	return crypt.NewSalt()
+	return cryptog.NewSalt()
 }
 
 // NewKey generates a new random key value, of 256 bytes in size
-func NewKey() [256]byte {
-	return crypt.NewKey()
+func New256Key() [256]byte {
+	return cryptog.New256Key()
+}
+
+// NewKey generates a new random key value, of 256 bytes in size
+func New32Key() [32]byte {
+	return cryptog.New32Key()
 }
 
 // NewCipher generates a new AES cipher based on the input key
-func NewCipher(key []byte) (cipher.Block, error) {
-	return crypt.NewCipher(key)
+func NewCipher(key []byte) EncryptDecrypter {
+	return cryptog.NewCipher(key)
 }

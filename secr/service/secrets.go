@@ -46,14 +46,12 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 		return fmt.Errorf("failed to get user's private key: %v", err)
 	}
 
-	cipher, err := crypt.NewCipher(cipherKey)
-	if err != nil {
-		return fmt.Errorf("failed to create a cipher from the user's private key: %v", err)
-	}
-
+	cipher := crypt.NewCipher(cipherKey)
 	// encrypt value with user's private key
-	encValue := make([]byte, 0, len(value))
-	cipher.Encrypt(encValue, value)
+	encValue, err := cipher.Encrypt(value)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt value: %v", err)
+	}
 
 	err = s.keys.Set(ctx, keys.UserBucket(u.ID), key, encValue)
 	if err != nil {
@@ -114,10 +112,7 @@ func (s service) getSecret(ctx context.Context, username, key string) (*secret.S
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the user's private key: %v", err)
 	}
-	cipher, err := crypt.NewCipher(cipherKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create a cipher from the user's private key: %v", err)
-	}
+	cipher := crypt.NewCipher(cipherKey)
 
 	// fetch secret's value
 	encValue, err := s.keys.Get(ctx, keys.UserBucket(u.ID), key)
@@ -126,10 +121,12 @@ func (s service) getSecret(ctx context.Context, username, key string) (*secret.S
 	}
 
 	// decrypt value with user's private key
-	decValue := make([]byte, 0, len(encValue))
-	cipher.Decrypt(decValue, encValue)
+	decValue, err := cipher.Decrypt(encValue)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt value: %v", err)
+	}
 
-	secr.Value = decValue
+	secr.Value = string(decValue)
 	return secr, nil
 }
 
@@ -193,10 +190,7 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the user's private key: %v", err)
 	}
-	cipher, err := crypt.NewCipher(cipherKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create a cipher from the user's private key: %v", err)
-	}
+	cipher := crypt.NewCipher(cipherKey)
 
 	// fetch and decode the value for each secret
 	for _, secr := range secrets {
@@ -207,10 +201,12 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 		}
 
 		// decrypt value with user's private key
-		decValue := make([]byte, 0, len(encValue))
-		cipher.Decrypt(decValue, encValue)
+		decValue, err := cipher.Decrypt(encValue)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt value: %v", err)
+		}
 
-		secr.Value = decValue
+		secr.Value = string(decValue)
 	}
 
 	sharedSecrets, err := s.shares.ListTarget(ctx, username)
