@@ -10,17 +10,17 @@ const RootUsername = "root"
 // User is a person (or entity) that uses the application to store
 // secrets. They will have a unique username.
 type User struct {
-	ID        uint64
-	Username  string
-	Name      string
-	Hash      string
-	Salt      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        uint64    `json:"id"`
+	Username  string    `json:"username"`
+	Name      string    `json:"name"`
+	Hash      string    `json:"-"`
+	Salt      string    `json:"-"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
 // Session is an authorized user, accompanied by a JWT
 type Session struct {
-	User
-	Token string
+	User  `json:"user"`
+	Token string `json:"token"`
 }

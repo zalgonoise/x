@@ -8,8 +8,8 @@ import (
 // is a slice of bytes. Secrets are encrypted then stored with a user-scoped
 // private key
 type Secret struct {
-	ID        uint64
-	Key       string
-	Value     []byte
-	CreatedAt time.Time
+	ID        uint64    `json:"id"`
+	Key       string    `json:"key"`
+	Value     string    `json:"value"`
+	CreatedAt time.Time `json:"created_at"`
 }
