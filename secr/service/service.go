@@ -57,7 +57,7 @@ type Service interface {
 	ShareUntil(ctx context.Context, owner, secretKey string, until time.Time, targets ...string) (*shared.Share, error)
 	// GetShare fetches the shared secret belonging to `username`, with key `secretKey`, returning it as a
 	// shared secret and an error
-	GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error)
+	GetShare(ctx context.Context, username, secretKey string) ([]*shared.Share, error)
 	// DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
 	// an error
 	DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error
@@ -69,6 +69,7 @@ type Service interface {
 type service struct {
 	users   user.Repository
 	secrets secret.Repository
+	shares  shared.Repository
 	keys    keys.Repository
 	auth    authz.Authorizer
 }
@@ -76,6 +77,7 @@ type service struct {
 func NewService(
 	users user.Repository,
 	secrets secret.Repository,
+	shares shared.Repository,
 	keys keys.Repository,
 	auth authz.Authorizer,
 
@@ -83,6 +85,7 @@ func NewService(
 	return service{
 		users:   users,
 		secrets: secrets,
+		shares:  shares,
 		keys:    keys,
 		auth:    auth,
 	}
