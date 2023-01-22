@@ -14,6 +14,6 @@ type Share struct {
 	Secret    secret.Secret
 	Owner     user.User
 	Target    []user.User
-	Until     time.Time
+	Until     *time.Time
 	CreatedAt time.Time
 }
