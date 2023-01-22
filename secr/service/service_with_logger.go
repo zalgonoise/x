@@ -299,6 +299,20 @@ func (l withLogger) GetShare(ctx context.Context, username, secretKey string) ([
 	return share, nil
 }
 
+// ListShares fetches all the secrets the user with username `username` has shared with other users
+func (l withLogger) ListShares(ctx context.Context, username string) ([]*shared.Share, error) {
+	share, err := l.r.ListShares(ctx, username)
+	if err != nil {
+		l.l.Error(
+			err.Error(),
+			attr.String("service", "service.ListShares"),
+			attr.String("username", username),
+		)
+		return share, err
+	}
+	return share, nil
+}
+
 // DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
 // an error
 func (l withLogger) DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error {

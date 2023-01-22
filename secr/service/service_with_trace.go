@@ -326,6 +326,22 @@ func (t withTrace) GetShare(ctx context.Context, username, secretKey string) ([]
 	return share, nil
 }
 
+// ListShares fetches all the secrets the user with username `username` has shared with other users
+func (t withTrace) ListShares(ctx context.Context, username string) ([]*shared.Share, error) {
+	ctx, s := spanner.Start(ctx, "service.ListShares")
+	defer s.End()
+	s.Add(
+		attr.String("username", username),
+	)
+
+	share, err := t.r.ListShares(ctx, username)
+	if err != nil {
+		s.Event("error listing shared secrets", attr.New("error", err.Error()))
+		return share, err
+	}
+	return share, nil
+}
+
 // DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
 // an error
 func (t withTrace) DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error {
