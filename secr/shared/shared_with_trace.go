@@ -23,7 +23,7 @@ func (t withTrace) Create(ctx context.Context, sh *Share) (uint64, error) {
 	ctx, s := spanner.Start(ctx, "secret.Create")
 	defer s.End()
 	s.Add(
-		attr.String("from_user", sh.Owner.Username),
+		attr.String("from_user", sh.Owner),
 	)
 
 	id, err := t.r.Create(ctx, sh)
@@ -87,7 +87,7 @@ func (t withTrace) Delete(ctx context.Context, sh *Share) error {
 	ctx, s := spanner.Start(ctx, "secret.Delete")
 	defer s.End()
 	s.Add(
-		attr.String("from_user", sh.Owner.Username),
+		attr.String("from_user", sh.Owner),
 	)
 
 	err := t.r.Delete(ctx, sh)
