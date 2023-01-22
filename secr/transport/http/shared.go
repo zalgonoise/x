@@ -60,7 +60,7 @@ func (s *server) sharesCreate() http.HandlerFunc {
 		}
 
 		if err != nil {
-			ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
+			return ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
 		}
 		span.Event("operation successful", attr.New("share", newShare))
 		return ghttp.NewResponse[shared.Share](http.StatusOK, "secret shared successfully").WithData(newShare)
@@ -97,10 +97,10 @@ func (s *server) sharesGet() http.HandlerFunc {
 
 		shares, err := s.s.GetShare(ctx, q.Owner, q.Key)
 		if err != nil {
-			ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
+			return ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
 		}
 		span.Event("operation successful", attr.New("share", shares))
-		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "secret shared successfully").WithData(&shares)
+		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "shared secret fetched successfully").WithData(&shares)
 	}
 
 	return ghttp.Do("SharesGet", parseFn, execFn)
@@ -125,10 +125,10 @@ func (s *server) sharesList() http.HandlerFunc {
 
 		shares, err := s.s.ListShares(ctx, *q)
 		if err != nil {
-			ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
+			return ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
 		}
 		span.Event("operation successful", attr.New("share", shares))
-		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "secret shared successfully").WithData(&shares)
+		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "shared secrets listed successfully").WithData(&shares)
 	}
 
 	return ghttp.Do("SharesList", parseFn, execFn)
@@ -143,7 +143,7 @@ func (s *server) sharesDelete() http.HandlerFunc {
 	var parseFn = func(ctx context.Context, r *http.Request) (*sharesDeleteRequest, error) {
 		req, err := ghttp.ReadBody[sharesDeleteRequest](ctx, r)
 		if err != nil {
-			return nil, err
+			req = new(sharesDeleteRequest)
 		}
 		caller, ok := authz.GetCaller(r)
 		if !ok {
@@ -173,7 +173,7 @@ func (s *server) sharesDelete() http.HandlerFunc {
 		}
 
 		if err != nil {
-			ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
+			return ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
 		}
 		span.Event("operation successful")
 		return ghttp.NewResponse[shared.Share](http.StatusOK, "secret share removed successfully")
