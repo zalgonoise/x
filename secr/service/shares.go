@@ -2,47 +2,207 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
+	"github.com/zalgonoise/x/ptr"
+	"github.com/zalgonoise/x/secr/secret"
 	"github.com/zalgonoise/x/secr/shared"
+	"github.com/zalgonoise/x/secr/user"
+)
+
+var (
+	ErrZeroTargets = errors.New("shared secret must have at least a target user to share the secret with")
+	ErrInvalidTime = errors.New("invalid shared secret time limit")
 )
 
 // CreateShare shares the secret with key `secretKey` belonging to user with username `owner`, with users `targets`.
 // Returns the resulting shared secret, and an error
 func (s service) CreateShare(ctx context.Context, owner, secretKey string, targets ...string) (*shared.Share, error) {
+	if err := user.ValidateUsername(owner); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+	if isShared, err := secret.ValidateKey(secretKey); err != nil || isShared {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidKey, err)
+	}
 
-	return nil, nil
+	if len(targets) == 0 {
+		return nil, ErrZeroTargets
+	}
+	sh := &shared.Share{
+		Secret: secret.Secret{
+			Key: secretKey,
+		},
+		Owner: user.User{
+			Username: owner,
+		},
+	}
+	for _, t := range targets {
+		if err := user.ValidateUsername(t); err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		}
+		sh.Target = append(sh.Target, user.User{Username: t})
+	}
+
+	id, err := s.shares.Create(ctx, sh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create shared secret: %v", err)
+	}
+
+	sh.ID = id
+	return sh, nil
 }
 
 // ShareFor is similar to CreateShare, but sets the shared secret to expire after `dur` Duration
 func (s service) ShareFor(ctx context.Context, owner, secretKey string, dur time.Duration, targets ...string) (*shared.Share, error) {
+	if err := user.ValidateUsername(owner); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+	if isShared, err := secret.ValidateKey(secretKey); err != nil || isShared {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidKey, err)
+	}
+	if len(targets) == 0 {
+		return nil, ErrZeroTargets
+	}
+	if err := shared.ValidateDuration(dur); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidTime, err)
+	}
 
-	return nil, nil
+	sh := &shared.Share{
+		Secret: secret.Secret{
+			Key: secretKey,
+		},
+		Owner: user.User{
+			Username: owner,
+		},
+		Until: ptr.To(time.Now().Add(dur)),
+	}
+	for _, t := range targets {
+		if err := user.ValidateUsername(t); err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		}
+		sh.Target = append(sh.Target, user.User{Username: t})
+	}
+
+	id, err := s.shares.Create(ctx, sh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create shared secret: %v", err)
+	}
+
+	sh.ID = id
+	return sh, nil
 }
 
 // ShareFor is similar to CreateShare, but sets the shared secret to expire after `until` Time
 func (s service) ShareUntil(ctx context.Context, owner, secretKey string, until time.Time, targets ...string) (*shared.Share, error) {
+	if err := user.ValidateUsername(owner); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+	if isShared, err := secret.ValidateKey(secretKey); err != nil || isShared {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidKey, err)
+	}
+	if len(targets) == 0 {
+		return nil, ErrZeroTargets
+	}
+	if err := shared.ValidateTime(until); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidTime, err)
+	}
 
-	return nil, nil
+	sh := &shared.Share{
+		Secret: secret.Secret{
+			Key: secretKey,
+		},
+		Owner: user.User{
+			Username: owner,
+		},
+		Until: ptr.To(until),
+	}
+	for _, t := range targets {
+		if err := user.ValidateUsername(t); err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		}
+		sh.Target = append(sh.Target, user.User{Username: t})
+	}
+
+	id, err := s.shares.Create(ctx, sh)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create shared secret: %v", err)
+	}
+
+	sh.ID = id
+	return sh, nil
 }
 
 // GetShare fetches the shared secret belonging to `username`, with key `secretKey`, returning it as a
 // shared secret and an error
-func (s service) GetShare(ctx context.Context, username, secretKey string) (*shared.Share, error) {
+func (s service) GetShare(ctx context.Context, username, secretKey string) ([]*shared.Share, error) {
+	if err := user.ValidateUsername(username); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+	if isShared, err := secret.ValidateKey(secretKey); err != nil || isShared {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidKey, err)
+	}
 
-	return nil, nil
+	sh, err := s.shares.Get(ctx, username, secretKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch shared secret: %v", err)
+	}
+	return sh, nil
 }
 
 // DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
 // an error
-func (s service) DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error {
+func (s service) DeleteShare(ctx context.Context, owner, secretKey string, targets ...string) error {
+	if err := user.ValidateUsername(owner); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+	if isShared, err := secret.ValidateKey(secretKey); err != nil || isShared {
+		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
+	}
 
+	sh := &shared.Share{
+		Secret: secret.Secret{
+			Key: secretKey,
+		},
+		Owner: user.User{
+			Username: owner,
+		},
+	}
+	for _, t := range targets {
+		if err := user.ValidateUsername(t); err != nil {
+			return fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		}
+		sh.Target = append(sh.Target, user.User{Username: t})
+	}
+
+	err := s.shares.Delete(ctx, sh)
+	if err != nil {
+		return fmt.Errorf("failed to delete shared secret: %v", err)
+	}
 	return nil
 }
 
 // PurgeShares removes the shared secret completely, so it's no longer available to the users it was
 // shared with. Returns an error
-func (s service) PurgeShares(ctx context.Context, username, secretKey string) error {
+func (s service) PurgeShares(ctx context.Context, owner, secretKey string) error {
+	if err := user.ValidateUsername(owner); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
+	}
+	if isShared, err := secret.ValidateKey(secretKey); err != nil || isShared {
+		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
+	}
 
+	sh, err := s.shares.Get(ctx, owner, secretKey)
+	if err != nil {
+		return fmt.Errorf("failed to fetch shared secret: %v", err)
+	}
+
+	for _, share := range sh {
+		err := s.shares.Delete(ctx, share)
+		if err != nil {
+			return fmt.Errorf("failed to remove shared secret: %v", err)
+		}
+	}
 	return nil
 }
