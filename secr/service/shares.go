@@ -31,18 +31,14 @@ func (s service) CreateShare(ctx context.Context, owner, secretKey string, targe
 		return nil, ErrZeroTargets
 	}
 	sh := &shared.Share{
-		Secret: secret.Secret{
-			Key: secretKey,
-		},
-		Owner: user.User{
-			Username: owner,
-		},
+		SecretKey: secretKey,
+		Owner:     owner,
 	}
 	for _, t := range targets {
 		if err := user.ValidateUsername(t); err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 		}
-		sh.Target = append(sh.Target, user.User{Username: t})
+		sh.Target = append(sh.Target, t)
 	}
 
 	id, err := s.shares.Create(ctx, sh)
@@ -70,19 +66,15 @@ func (s service) ShareFor(ctx context.Context, owner, secretKey string, dur time
 	}
 
 	sh := &shared.Share{
-		Secret: secret.Secret{
-			Key: secretKey,
-		},
-		Owner: user.User{
-			Username: owner,
-		},
-		Until: ptr.To(time.Now().Add(dur)),
+		SecretKey: secretKey,
+		Owner:     owner,
+		Until:     ptr.To(time.Now().Add(dur)),
 	}
 	for _, t := range targets {
 		if err := user.ValidateUsername(t); err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 		}
-		sh.Target = append(sh.Target, user.User{Username: t})
+		sh.Target = append(sh.Target, t)
 	}
 
 	id, err := s.shares.Create(ctx, sh)
@@ -110,19 +102,15 @@ func (s service) ShareUntil(ctx context.Context, owner, secretKey string, until 
 	}
 
 	sh := &shared.Share{
-		Secret: secret.Secret{
-			Key: secretKey,
-		},
-		Owner: user.User{
-			Username: owner,
-		},
-		Until: ptr.To(until),
+		SecretKey: secretKey,
+		Owner:     owner,
+		Until:     ptr.To(until),
 	}
 	for _, t := range targets {
 		if err := user.ValidateUsername(t); err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 		}
-		sh.Target = append(sh.Target, user.User{Username: t})
+		sh.Target = append(sh.Target, t)
 	}
 
 	id, err := s.shares.Create(ctx, sh)
@@ -175,18 +163,14 @@ func (s service) DeleteShare(ctx context.Context, owner, secretKey string, targe
 	}
 
 	sh := &shared.Share{
-		Secret: secret.Secret{
-			Key: secretKey,
-		},
-		Owner: user.User{
-			Username: owner,
-		},
+		SecretKey: secretKey,
+		Owner:     owner,
 	}
 	for _, t := range targets {
 		if err := user.ValidateUsername(t); err != nil {
 			return fmt.Errorf("%w: %v", ErrInvalidUser, err)
 		}
-		sh.Target = append(sh.Target, user.User{Username: t})
+		sh.Target = append(sh.Target, t)
 	}
 
 	err := s.shares.Delete(ctx, sh)
