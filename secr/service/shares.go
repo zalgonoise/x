@@ -33,6 +33,7 @@ func (s service) CreateShare(ctx context.Context, owner, secretKey string, targe
 	sh := &shared.Share{
 		SecretKey: secretKey,
 		Owner:     owner,
+		Until:     ptr.To(time.Now().Add(shared.DefaultShareDuration)),
 	}
 	for _, t := range targets {
 		if err := user.ValidateUsername(t); err != nil {
