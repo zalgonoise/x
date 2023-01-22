@@ -48,13 +48,14 @@ func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint6
 
 	for _, dbs := range shares {
 		res, err := tx.ExecContext(ctx, `
-		INSERT INTO shared_secrets (owner_id, secret_id, shared_with)
+		INSERT INTO shared_secrets (owner_id, secret_id, shared_with, until)
 		VALUES (
 			(SELECT id FROM users WHERE username = ?),
 			(SELECT id FROM secrets WHERE name = ?),
-			(SELECT id FROM users WHERE username = ?)
+			(SELECT id FROM users WHERE username = ?),
+			?
 		)
-		`, dbs.Owner, dbs.Secret, dbs.Target)
+		`, dbs.Owner, dbs.Secret, dbs.Target, dbs.Until)
 
 		if err != nil {
 			_ = tx.Rollback()
@@ -162,8 +163,9 @@ FROM shared_secrets AS s
 	JOIN secrets AS x ON x.id = s.secret_id
 WHERE o.username = ?
 	AND x.name = ?
-	AND t.username = ?`,
-			share.Owner, share.Secret, share.Target)
+	AND t.username = ?
+	AND s.until = ?`,
+			share.Owner, share.Secret, share.Target, share.Until)
 
 		if err != nil {
 			tx.Rollback()
@@ -204,7 +206,7 @@ func toDomainShare(shares ...*dbShare) []*shared.Share {
 		Target: []user.User{{
 			Username: shares[0].Target.String,
 		}},
-		Until:     shares[0].Until.Time,
+		Until:     &shares[0].Until.Time,
 		CreatedAt: shares[0].CreatedAt.Time,
 	})
 
@@ -216,7 +218,8 @@ inputLoop:
 	for i := 1; i < len(shares); i++ {
 		for _, sh := range s {
 			if shares[i].Secret.String == sh.Secret.Key {
-				if shares[i].Until.Time == sh.Until {
+				if (sh.Until == nil && !shares[i].Until.Valid) ||
+					(*sh.Until == shares[i].Until.Time) {
 					for _, t := range sh.Target {
 						if t.Username == shares[i].Target.String {
 							continue
@@ -240,7 +243,7 @@ inputLoop:
 			Target: []user.User{{
 				Username: shares[i].Target.String,
 			}},
-			Until:     shares[i].Until.Time,
+			Until:     &shares[i].Until.Time,
 			CreatedAt: shares[i].CreatedAt.Time,
 		})
 	}
@@ -286,22 +289,19 @@ func (sr *sharedRepository) scanShares(rs *sql.Rows) ([]*shared.Share, error) {
 }
 
 func newDBShare(s *shared.Share) []*dbShare {
+	var sqlT sql.NullTime
+	if s.Until != nil {
+		sqlT = ToSQLTime(*s.Until)
+	}
 	shares := make([]*dbShare, 0, len(s.Target))
 
 	for _, t := range s.Target {
 		shares = append(shares, &dbShare{
-			ID:     ToSQLInt64(s.ID),
 			Owner:  ToSQLString(s.Owner.Username),
 			Secret: ToSQLString(s.Secret.Key),
 			Target: ToSQLString(t.Username),
+			Until:  sqlT,
 		})
 	}
 	return shares
-}
-
-func newDBShareQuery(username, secretKey string) *dbShare {
-	return &dbShare{
-		Owner:  ToSQLString(username),
-		Secret: ToSQLString(secretKey),
-	}
 }
