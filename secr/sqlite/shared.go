@@ -154,16 +154,16 @@ func (sr *sharedRepository) Delete(ctx context.Context, sh *shared.Share) error 
 
 	for _, share := range dbs {
 		res, err := tx.ExecContext(ctx, `
-DELETE s
-FROM shared_secrets AS s
+DELETE FROM shared_secrets WHERE id = (
+SELECT s.id FROM shared_secrets AS s
 	JOIN users AS o ON o.id = s.owner_id
 	JOIN users AS t ON t.id = s.shared_with
 	JOIN secrets AS x ON x.id = s.secret_id
 WHERE o.username = ?
 	AND x.name = ?
 	AND t.username = ?
-	AND s.until = ?`,
-			share.Owner, share.Secret, share.Target, share.Until)
+)`,
+			share.Owner, share.Secret, share.Target)
 
 		if err != nil {
 			tx.Rollback()
