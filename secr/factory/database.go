@@ -9,6 +9,7 @@ import (
 	"github.com/zalgonoise/x/secr/bolt"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/secret"
+	"github.com/zalgonoise/x/secr/shared"
 	"github.com/zalgonoise/x/secr/sqlite"
 	"github.com/zalgonoise/x/secr/user"
 )
@@ -19,13 +20,13 @@ const (
 )
 
 // SQLite creates user and secret repositories based on the defined SQLite DB path
-func SQLite(path string) (user.Repository, secret.Repository, error) {
+func SQLite(path string) (user.Repository, secret.Repository, shared.Repository, error) {
 	fs, err := os.Stat(path)
 	if (err != nil && os.IsNotExist(err)) || (fs != nil && fs.Size() == 0) {
 		_, err := os.Create(path)
 		if err != nil {
 			if path == sqliteDbPath {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 			return SQLite(sqliteDbPath)
 		}
@@ -34,12 +35,15 @@ func SQLite(path string) (user.Repository, secret.Repository, error) {
 	db, err := sqlite.Open(path)
 	if err != nil {
 		if path == sqliteDbPath {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		return SQLite(sqliteDbPath)
 	}
 
-	return user.WithTrace(sqlite.NewUserRepository(db)), secret.WithTrace(sqlite.NewSecretRepository(db)), nil
+	return user.WithTrace(sqlite.NewUserRepository(db)),
+		secret.WithTrace(sqlite.NewSecretRepository(db)),
+		shared.WithTrace(sqlite.NewSharedRepository(db)),
+		nil
 }
 
 // Bolt creates a key repository based on the defined Bolt DB path

@@ -21,13 +21,13 @@ func Service(authKeyPath, boltDBPath, sqliteDBPath string) (service.Service, err
 		return nil, err
 	}
 
-	users, secrets, err := SQLite(sqliteDBPath)
+	users, secrets, shares, err := SQLite(sqliteDBPath)
 	if err != nil {
 		return nil, err
 	}
 
 	return service.NewService(
-		users, secrets, keys, authorizer,
+		users, secrets, shares, keys, authorizer,
 	), nil
 }
 
