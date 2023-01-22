@@ -58,6 +58,8 @@ type Service interface {
 	// GetShare fetches the shared secret belonging to `username`, with key `secretKey`, returning it as a
 	// shared secret and an error
 	GetShare(ctx context.Context, username, secretKey string) ([]*shared.Share, error)
+	// ListShares fetches all the secrets the user with username `username` has shared with other users
+	ListShares(ctx context.Context, username string) ([]*shared.Share, error)
 	// DeleteShare removes the users `targets` from a shared secret with key `secretKey`, belonging to `username`. Returns
 	// an error
 	DeleteShare(ctx context.Context, username, secretKey string, targets ...string) error
