@@ -91,7 +91,7 @@ func (a *authz) Validate(ctx context.Context, u *user.User, token string) (bool,
 		return false, err
 	}
 
-	if jwtUser.Username != u.Username || jwtUser.Name != u.Name {
+	if jwtUser.Username != u.Username {
 		return false, ErrInvalidUser
 	}
 	return true, nil
