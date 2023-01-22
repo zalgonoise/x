@@ -3,8 +3,10 @@ package secret
 import (
 	"errors"
 	"regexp"
+	"strings"
 
 	"github.com/zalgonoise/x/secr/keys"
+	"github.com/zalgonoise/x/secr/user"
 )
 
 var (
@@ -14,6 +16,8 @@ var (
 
 	ErrEmptyValue = errors.New("value cannot be empty")
 	ErrLongValue  = errors.New("value is too long")
+
+	ErrInvalidSharedKey = errors.New("invalid shared key")
 )
 
 const (
@@ -22,25 +26,38 @@ const (
 )
 
 var (
-	keyRegex = regexp.MustCompile(`[a-z0-9]+[a-z0-9\-_]+[a-z0-9]+`)
+	keyRegex = regexp.MustCompile(`[a-z0-9]+[a-z0-9\-_:]+[a-z0-9]+`)
 )
 
 // ValidateKey verifies if the input secret's key is valid, returning an error
 // if invalid
-func ValidateKey(key string) error {
+func ValidateKey(key string) (bool, error) {
 	if key == "" {
-		return ErrEmptyKey
+		return false, ErrEmptyKey
 	}
 	if len(key) > keyMaxLength {
-		return ErrLongKey
+		return false, ErrLongKey
 	}
 	if match := keyRegex.FindString(key); match != key {
-		return ErrInvalidKey
+		return false, ErrInvalidKey
 	}
 	if key == keys.UniqueID || key == keys.TokenKey {
-		return ErrEmptyKey
+		return false, ErrEmptyKey
 	}
-	return nil
+	if strings.Contains(key, ":") {
+		split := strings.Split(key, ":")
+		if len(split) != 2 {
+			return false, ErrInvalidSharedKey
+		}
+		if err := user.ValidateUsername(split[0]); err != nil {
+			return false, err
+		}
+		if isShared, err := ValidateKey(split[1]); err != nil || isShared {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, nil
 }
 
 // ValidateValue verifies if the input secret's value is valid, returning an error
