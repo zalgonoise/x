@@ -30,7 +30,7 @@ const (
 	nameMaxLength = 25
 
 	passwordMinLength = 7
-	passwordMaxLength = 30
+	passwordMaxLength = 300
 )
 
 var (
