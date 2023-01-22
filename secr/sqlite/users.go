@@ -118,9 +118,7 @@ WHERE u.username = ?
 // Delete removes the user identified by `username`, returning an error
 func (ur *userRepository) Delete(ctx context.Context, username string) error {
 	res, err := ur.db.ExecContext(ctx, `
-	DELETE u
-	FROM users AS u
-	WHERE u.username = ?
+	DELETE FROM users WHERE username = ?
 	`, ToSQLString(username))
 
 	if err != nil {

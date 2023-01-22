@@ -103,11 +103,12 @@ WHERE u.username = ?
 // Delete removes the secret identified by `key`, for user `username`. Returns an error
 func (sr *secretRepository) Delete(ctx context.Context, username string, key string) error {
 	res, err := sr.db.ExecContext(ctx, `
-	DELETE s
-	FROM secrets AS s
-		JOIN users AS u ON u.id = s.user_id
-	WHERE u.username = ? 
-		AND s.name = ?
+	DELETE FROM secrets WHERE id = (
+		SELECT s.id FROM secrets AS s
+			JOIN users AS u ON u.id = s.user_id
+		WHERE u.username = ? 
+			AND s.name = ?
+	)
 	`, username)
 
 	if err != nil {
