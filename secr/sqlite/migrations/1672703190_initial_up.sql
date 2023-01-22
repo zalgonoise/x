@@ -28,5 +28,6 @@ CREATE TABLE IF NOT EXISTS shared_secrets (
     
     FOREIGN KEY (owner_id) REFERENCES users (id),
     FOREIGN KEY (secret_id) REFERENCES secrets (id),
-    FOREIGN KEY (shared_with) REFERENCES users (id)
+    FOREIGN KEY (shared_with) REFERENCES users (id),
+    UNIQUE(secret_id, shared_with)
 );
