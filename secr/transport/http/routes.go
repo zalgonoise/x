@@ -8,11 +8,14 @@ import (
 
 const userPath = "users"
 const secrPath = "secrets"
+const shareAction = "share"
+const sharePath = "shares"
 
 func (s *server) endpoints() ghttp.Endpoints {
 	e := ghttp.NewEndpoints()
 	e.Set(s.usersHandler()...)
 	e.Set(s.secretsHandler()...)
+	e.Set(s.sharesHandler()...)
 	e.Set(s.sessionsHandler()...)
 	return e
 }
@@ -56,7 +59,7 @@ func (s *server) secretsHandler() []ghttp.Handler {
 		{
 			Method: http.MethodPost,
 			Path:   p,
-			Fn:     s.secretsCreate(),
+			Fn:     s.secretsCreateRoute(),
 			Middleware: []ghttp.MiddlewareFn{
 				s.WithAuth(),
 			},
@@ -69,6 +72,26 @@ func (s *server) secretsHandler() []ghttp.Handler {
 				s.WithAuth(),
 			},
 		},
+	}
+}
+
+func (s *server) secretsCreateRoute() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		splitPath := getPath(r.URL.Path)
+		switch len(splitPath) {
+		case 1:
+			if splitPath[0] == secrPath {
+				s.secretsCreate()(w, r)
+				return
+			}
+		case 3:
+			if splitPath[0] == secrPath && splitPath[2] == shareAction {
+				s.sharesCreate()(w, r)
+				return
+			}
+		default:
+			http.Error(w, "not found", http.StatusNotFound)
+		}
 	}
 }
 
@@ -139,6 +162,48 @@ func (s *server) usersGetRoute() http.HandlerFunc {
 		case 2:
 			if splitPath[0] == userPath {
 				s.usersGet()(w, r)
+				return
+			}
+		default:
+			http.Error(w, "not found", http.StatusNotFound)
+		}
+	}
+}
+
+func (s *server) sharesHandler() []ghttp.Handler {
+	p := "/shares/"
+	return []ghttp.Handler{
+		{
+			Method: http.MethodGet,
+			Path:   p,
+			Fn:     s.sharesGetRoute(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
+		},
+		{
+			Method: http.MethodDelete,
+			Path:   p,
+			Fn:     s.sharesDelete(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
+		},
+	}
+}
+
+func (s *server) sharesGetRoute() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		splitPath := getPath(r.URL.Path)
+		switch len(splitPath) {
+		case 1:
+			if splitPath[0] == sharePath {
+				s.sharesList()(w, r)
+				return
+			}
+		case 2:
+			if splitPath[0] == sharePath {
+				s.sharesGet()(w, r)
 				return
 			}
 		default:
