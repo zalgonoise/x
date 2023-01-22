@@ -6,9 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/zalgonoise/x/secr/secret"
 	"github.com/zalgonoise/x/secr/shared"
-	"github.com/zalgonoise/x/secr/user"
 )
 
 var (
@@ -196,16 +194,10 @@ func toDomainShare(shares ...*dbShare) []*shared.Share {
 
 	s := make([]*shared.Share, 0, len(shares))
 	s = append(s, &shared.Share{
-		ID: uint64(shares[0].ID.Int64),
-		Secret: secret.Secret{
-			Key: shares[0].Secret.String,
-		},
-		Owner: user.User{
-			Username: shares[0].Owner.String,
-		},
-		Target: []user.User{{
-			Username: shares[0].Target.String,
-		}},
+		ID:        uint64(shares[0].ID.Int64),
+		SecretKey: shares[0].Secret.String,
+		Owner:     shares[0].Owner.String,
+		Target:    []string{shares[0].Target.String},
 		Until:     &shares[0].Until.Time,
 		CreatedAt: shares[0].CreatedAt.Time,
 	})
@@ -217,32 +209,24 @@ func toDomainShare(shares ...*dbShare) []*shared.Share {
 inputLoop:
 	for i := 1; i < len(shares); i++ {
 		for _, sh := range s {
-			if shares[i].Secret.String == sh.Secret.Key {
+			if shares[i].Secret.String == sh.SecretKey {
 				if (sh.Until == nil && !shares[i].Until.Valid) ||
 					(*sh.Until == shares[i].Until.Time) {
 					for _, t := range sh.Target {
-						if t.Username == shares[i].Target.String {
+						if t == shares[i].Target.String {
 							continue
 						}
-						sh.Target = append(sh.Target, user.User{
-							Username: shares[i].Target.String,
-						})
+						sh.Target = append(sh.Target, shares[i].Target.String)
 					}
 					continue inputLoop
 				}
 			}
 		}
 		s = append(s, &shared.Share{
-			ID: uint64(shares[i].ID.Int64),
-			Secret: secret.Secret{
-				Key: shares[i].Secret.String,
-			},
-			Owner: user.User{
-				Username: shares[i].Owner.String,
-			},
-			Target: []user.User{{
-				Username: shares[i].Target.String,
-			}},
+			ID:        uint64(shares[i].ID.Int64),
+			SecretKey: shares[i].Secret.String,
+			Owner:     shares[i].Owner.String,
+			Target:    []string{shares[i].Target.String},
 			Until:     &shares[i].Until.Time,
 			CreatedAt: shares[i].CreatedAt.Time,
 		})
@@ -297,9 +281,9 @@ func newDBShare(s *shared.Share) []*dbShare {
 
 	for _, t := range s.Target {
 		shares = append(shares, &dbShare{
-			Owner:  ToSQLString(s.Owner.Username),
-			Secret: ToSQLString(s.Secret.Key),
-			Target: ToSQLString(t.Username),
+			Owner:  ToSQLString(s.Owner),
+			Secret: ToSQLString(s.SecretKey),
+			Target: ToSQLString(t),
 			Until:  sqlT,
 		})
 	}
