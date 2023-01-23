@@ -51,16 +51,38 @@ func ToSQLTime(t time.Time) sql.NullTime {
 	return sql.NullTime{Time: t, Valid: t != time.Time{} && t.Unix() != 0}
 }
 
-// IsEntityFound returns an error if the entity is not found
-//
-// TODO: must fit all entities or it will be exclusive for users in this case
-func IsEntityFound(res sql.Result) error {
+// IsUserFound returns an error if the entity is not found
+func IsUserFound(res sql.Result) error {
 	n, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrDBError, err)
 	}
 	if n == 0 {
 		return ErrNotFoundUser
+	}
+	return nil
+}
+
+// IsSecretFound returns an error if the entity is not found
+func IsSecretFound(res sql.Result) error {
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrDBError, err)
+	}
+	if n == 0 {
+		return ErrNotFoundSecret
+	}
+	return nil
+}
+
+// IsShareFound returns an error if the entity is not found
+func IsShareFound(res sql.Result) error {
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrDBError, err)
+	}
+	if n == 0 {
+		return ErrNotFoundShare
 	}
 	return nil
 }
