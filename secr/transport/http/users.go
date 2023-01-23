@@ -9,6 +9,7 @@ import (
 	"github.com/zalgonoise/spanner"
 	"github.com/zalgonoise/x/ghttp"
 	"github.com/zalgonoise/x/secr/authz"
+	"github.com/zalgonoise/x/secr/service"
 	"github.com/zalgonoise/x/secr/sqlite"
 	"github.com/zalgonoise/x/secr/user"
 )
@@ -87,7 +88,7 @@ func (s *server) usersCreate() http.HandlerFunc {
 		if err != nil {
 			span.Event("operation error", attr.String("error", err.Error()))
 
-			if errors.Is(sqlite.ErrAlreadyExistsUser, err) {
+			if errors.Is(service.ErrAlreadyExistsUser, err) {
 				return ghttp.NewResponse[user.User](http.StatusConflict, err.Error())
 			}
 			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())

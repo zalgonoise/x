@@ -7,6 +7,7 @@ import (
 
 	"github.com/zalgonoise/x/ghttp"
 	"github.com/zalgonoise/x/secr/authz"
+	"github.com/zalgonoise/x/secr/service"
 	"github.com/zalgonoise/x/secr/sqlite"
 	"github.com/zalgonoise/x/secr/user"
 )
@@ -43,7 +44,7 @@ func (s *server) login() http.HandlerFunc {
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
 			}
-			if errors.Is(sqlite.ErrIncorrectPassword, err) {
+			if errors.Is(service.ErrIncorrectPassword, err) {
 				return ghttp.NewResponse[user.Session](http.StatusBadRequest, err.Error())
 			}
 			return ghttp.NewResponse[user.Session](http.StatusInternalServerError, err.Error())
@@ -115,7 +116,7 @@ func (s *server) changePassword() http.HandlerFunc {
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
 			}
-			if errors.Is(sqlite.ErrIncorrectPassword, err) {
+			if errors.Is(service.ErrIncorrectPassword, err) {
 				return ghttp.NewResponse[user.Session](http.StatusBadRequest, err.Error())
 			}
 			return ghttp.NewResponse[user.Session](http.StatusInternalServerError, err.Error())
@@ -169,7 +170,7 @@ func (s *server) refresh() http.HandlerFunc {
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
 			}
-			if errors.Is(sqlite.ErrIncorrectPassword, err) {
+			if errors.Is(service.ErrIncorrectPassword, err) {
 				return ghttp.NewResponse[user.Session](http.StatusBadRequest, err.Error())
 			}
 			return ghttp.NewResponse[user.Session](http.StatusInternalServerError, err.Error())
