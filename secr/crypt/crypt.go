@@ -29,9 +29,7 @@ type EncryptDecrypter interface {
 }
 
 type aesEncrypter struct {
-	gcm   cipher.AEAD
-	key   []byte
-	nonce []byte
+	key []byte
 }
 
 func init() {
