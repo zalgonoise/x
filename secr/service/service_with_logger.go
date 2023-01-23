@@ -242,7 +242,7 @@ func (l withLogger) CreateShare(ctx context.Context, owner, secretKey string, ta
 			attr.String("service", "service.CreateShare"),
 			attr.String("username", owner),
 			attr.String("secretKey", secretKey),
-			attr.New[[]string]("targets", targets),
+			attr.New("targets", targets),
 		)
 		return share, err
 	}
@@ -259,7 +259,7 @@ func (l withLogger) ShareFor(ctx context.Context, owner, secretKey string, dur t
 			attr.String("username", owner),
 			attr.String("secretKey", secretKey),
 			attr.String("duration", dur.String()),
-			attr.New[[]string]("targets", targets),
+			attr.New("targets", targets),
 		)
 		return share, err
 	}
@@ -276,7 +276,7 @@ func (l withLogger) ShareUntil(ctx context.Context, owner, secretKey string, unt
 			attr.String("username", owner),
 			attr.String("secretKey", secretKey),
 			attr.String("deadline", until.String()),
-			attr.New[[]string]("targets", targets),
+			attr.New("targets", targets),
 		)
 		return share, err
 	}
@@ -323,7 +323,7 @@ func (l withLogger) DeleteShare(ctx context.Context, username, secretKey string,
 			attr.String("service", "service.DeleteShare"),
 			attr.String("username", username),
 			attr.String("secretKey", secretKey),
-			attr.New[[]string]("targets", targets),
+			attr.New("targets", targets),
 		)
 		return err
 	}
