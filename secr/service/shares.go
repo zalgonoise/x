@@ -9,6 +9,7 @@ import (
 	"github.com/zalgonoise/x/ptr"
 	"github.com/zalgonoise/x/secr/secret"
 	"github.com/zalgonoise/x/secr/shared"
+	"github.com/zalgonoise/x/secr/sqlite"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -40,6 +41,10 @@ func (s service) CreateShare(ctx context.Context, owner, secretKey string, targe
 			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 		}
 		sh.Target = append(sh.Target, t)
+	}
+	err := s.shares.Delete(ctx, sh)
+	if err != nil && !errors.Is(sqlite.ErrNotFoundShare, err) {
+		return nil, fmt.Errorf("failed to remove previous shared secrets: %v", err)
 	}
 
 	id, err := s.shares.Create(ctx, sh)
@@ -78,6 +83,11 @@ func (s service) ShareFor(ctx context.Context, owner, secretKey string, dur time
 		sh.Target = append(sh.Target, t)
 	}
 
+	err := s.shares.Delete(ctx, sh)
+	if err != nil && !errors.Is(sqlite.ErrNotFoundShare, err) {
+		return nil, fmt.Errorf("failed to remove previous shared secrets: %v", err)
+	}
+
 	id, err := s.shares.Create(ctx, sh)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create shared secret: %v", err)
@@ -112,6 +122,11 @@ func (s service) ShareUntil(ctx context.Context, owner, secretKey string, until 
 			return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 		}
 		sh.Target = append(sh.Target, t)
+	}
+
+	err := s.shares.Delete(ctx, sh)
+	if err != nil && !errors.Is(sqlite.ErrNotFoundShare, err) {
+		return nil, fmt.Errorf("failed to remove previous shared secrets: %v", err)
 	}
 
 	id, err := s.shares.Create(ctx, sh)
@@ -175,7 +190,7 @@ func (s service) DeleteShare(ctx context.Context, owner, secretKey string, targe
 	}
 
 	err := s.shares.Delete(ctx, sh)
-	if err != nil {
+	if err != nil && !errors.Is(sqlite.ErrNotFoundShare, err) {
 		return fmt.Errorf("failed to delete shared secret: %v", err)
 	}
 	return nil
