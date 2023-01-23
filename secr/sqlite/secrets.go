@@ -114,12 +114,10 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 	if err != nil {
 		return fmt.Errorf("%w: failed to delete secret %s: %v", ErrDBError, key, err)
 	}
-	n, err := res.RowsAffected()
+
+	err = IsSecretFound(res)
 	if err != nil {
 		return fmt.Errorf("%w: failed to delete secret %s: %v", ErrDBError, key, err)
-	}
-	if n == 0 {
-		return fmt.Errorf("%w: secret was not deleted %s", ErrDBError, key)
 	}
 
 	return nil
