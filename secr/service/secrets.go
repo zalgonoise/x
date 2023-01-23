@@ -165,6 +165,7 @@ func (s service) getSharedSecret(ctx context.Context, owner, key, target string)
 		return nil, fmt.Errorf("failed to fetch shared secret: %v", err)
 	}
 	secr.CreatedAt = time.Time{}
+	secr.Key = fmt.Sprintf("%s:%s", owner, secr.Key)
 	return secr, nil
 }
 
@@ -216,6 +217,9 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 	for _, sh := range sharedSecrets {
 		sharedSecr, err := s.getSharedSecret(ctx, sh.Owner, sh.SecretKey, username)
 		if err != nil {
+			if errors.Is(ErrZeroShares, err) {
+				continue
+			}
 			return secrets, fmt.Errorf("failed to fetch secrets shared with %s: %v", username, err)
 		}
 		secrets = append(secrets, sharedSecr)
