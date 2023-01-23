@@ -150,6 +150,38 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 		return fmt.Errorf("failed to fetch user: %v", err)
 	}
 
+	// remove all shares
+	shares, err := s.shares.List(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to fetch shared secrets: %v", err)
+	}
+	for _, sh := range shares {
+		err := s.shares.Delete(ctx, sh)
+		if err != nil {
+			_, rErr := s.shares.Create(ctx, sh)
+			if rErr != nil {
+				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
+			}
+			return err
+		}
+	}
+
+	// remove all secrets
+	secrets, err := s.secrets.List(ctx, username)
+	if err != nil {
+		return fmt.Errorf("failed to list user secrets: %v", err)
+	}
+	for _, secr := range secrets {
+		err := s.secrets.Delete(ctx, username, secr.Key)
+		if err != nil {
+			_, rErr := s.secrets.Create(ctx, username, secr)
+			if rErr != nil {
+				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
+			}
+			return err
+		}
+	}
+
 	// get user's private key for rollback func
 	upk, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
