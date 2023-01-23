@@ -48,6 +48,9 @@ func (ukr *keysRepository) Get(ctx context.Context, bucket, k string) ([]byte, e
 		return nil
 	})
 	if err != nil {
+		if errors.Is(err, ErrEmptyBucket) {
+			return nil, err
+		}
 		return nil, fmt.Errorf("%w: %v", ErrDBError, err)
 	}
 
@@ -63,7 +66,7 @@ func (ukr *keysRepository) Set(ctx context.Context, bucket, k string, v []byte) 
 	if k == "" {
 		return ErrEmptyKey
 	}
-	if len(k) == 0 {
+	if len(v) == 0 {
 		return ErrEmptyValue
 	}
 
@@ -109,6 +112,9 @@ func (ukr *keysRepository) Delete(ctx context.Context, bucket, k string) error {
 	})
 
 	if err != nil {
+		if errors.Is(err, ErrEmptyBucket) {
+			return err
+		}
 		return fmt.Errorf("%w: %v", ErrDBError, err)
 	}
 	return nil
@@ -118,10 +124,6 @@ func (ukr *keysRepository) Delete(ctx context.Context, bucket, k string) error {
 func (ukr *keysRepository) Purge(ctx context.Context, bucket string) error {
 	if bucket == "" {
 		return ErrEmptyBucket
-	}
-	if bucket == keys.ServerID {
-		// cannot delete the server's signing keys
-		return ErrForbidden
 	}
 
 	err := ukr.db.Update(func(tx *bbolt.Tx) error {
@@ -136,5 +138,4 @@ func (ukr *keysRepository) Purge(ctx context.Context, bucket string) error {
 		return fmt.Errorf("%w: %v", ErrDBError, err)
 	}
 	return nil
-
 }
