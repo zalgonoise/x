@@ -157,6 +157,7 @@ func (sr *secretRepository) scanSecrets(rs *sql.Rows) ([]*secret.Secret, error) 
 
 func (s *dbSecret) toDomainEntity() *secret.Secret {
 	return &secret.Secret{
+		ID:        uint64(s.ID.Int64),
 		Key:       s.Name.String,
 		CreatedAt: s.CreatedAt.Time,
 	}
