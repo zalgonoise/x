@@ -10,13 +10,9 @@ import (
 )
 
 var (
-	ErrDBError           = errors.New("database error")
-	ErrIncorrectPassword = errors.New("incorrect username or password")
-	ErrNotFoundUser      = errors.New("user not found")
-	ErrAlreadyExistsUser = errors.New("user already exists")
+	ErrDBError      = errors.New("database error")
+	ErrNotFoundUser = errors.New("user not found")
 )
-
-var _ user.Repository = &userRepository{nil}
 
 type dbUser struct {
 	ID        sql.NullInt64
@@ -27,6 +23,8 @@ type dbUser struct {
 	CreatedAt sql.NullTime
 	UpdatedAt sql.NullTime
 }
+
+var _ user.Repository = &userRepository{nil}
 
 type userRepository struct {
 	db *sql.DB
@@ -180,7 +178,6 @@ func (u *dbUser) toDomainEntity() *user.User {
 
 func newDBUser(u *user.User) *dbUser {
 	return &dbUser{
-		ID:       ToSQLInt64(u.ID),
 		Username: ToSQLString(u.Username),
 		Name:     ToSQLString(u.Name),
 		Hash:     ToSQLString(u.Hash),
