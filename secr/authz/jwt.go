@@ -104,6 +104,7 @@ func (a *authz) parseToken(token *jwt.Token) (interface{}, error) {
 	return a.signingKey, nil
 }
 
+// Parse returns the data from a valid JWT
 func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
 	tok, err := jwt.Parse(token, a.parseToken)
 
@@ -135,10 +136,16 @@ func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
 	}, nil
 }
 
+// SignRequest sets the input username `u` as a ContextUsername context value for
+// the HTTP Request `r`'s context
 func SignRequest(u string, r *http.Request) *http.Request {
 	return r.WithContext(context.WithValue(r.Context(), ContextUsername, u))
 }
 
+// GetCaller returns the username associated with the HTTP Request `r`, as extracted
+// from the request's context, under its ContextUsername value (if existing).
+//
+// Returns the username and an OK-boolean.
 func GetCaller(r *http.Request) (string, bool) {
 	v := r.Context().Value(ContextUsername)
 	if v == nil {

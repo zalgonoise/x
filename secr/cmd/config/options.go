@@ -2,10 +2,12 @@ package config
 
 type boltPath string
 
+// Apply sets the configuration on the input Config `c`
 func (p boltPath) Apply(c *Config) {
 	c.BoltDBPath = (string)(p)
 }
 
+// BoltDB defines the path for the Bolt database file
 func BoltDB(path string) ConfigOption {
 	if path == "" {
 		return nil
@@ -15,10 +17,12 @@ func BoltDB(path string) ConfigOption {
 
 type sqlitePath string
 
+// Apply sets the configuration on the input Config `c`
 func (p sqlitePath) Apply(c *Config) {
 	c.SQLiteDBPath = (string)(p)
 }
 
+// SQLiteDB defines the path for the SQLite database file
 func SQLiteDB(path string) ConfigOption {
 	if path == "" {
 		return nil
@@ -28,10 +32,12 @@ func SQLiteDB(path string) ConfigOption {
 
 type jwtKeyPath string
 
+// Apply sets the configuration on the input Config `c`
 func (p jwtKeyPath) Apply(c *Config) {
 	c.SigningKeyPath = (string)(p)
 }
 
+// JWTKey defines the path for the JWT signing key file
 func JWTKey(path string) ConfigOption {
 	if path == "" {
 		return nil
@@ -41,10 +47,12 @@ func JWTKey(path string) ConfigOption {
 
 type httpPort int
 
+// Apply sets the configuration on the input Config `c`
 func (p httpPort) Apply(c *Config) {
 	c.HTTPPort = (int)(p)
 }
 
+// Port defines the HTTP port for the server
 func Port(port int) ConfigOption {
 	if port == 0 {
 		return nil
@@ -54,10 +62,12 @@ func Port(port int) ConfigOption {
 
 type logfilePath string
 
+// Apply sets the configuration on the input Config `c`
 func (p logfilePath) Apply(c *Config) {
 	c.LogFilePath = (string)(p)
 }
 
+// Logfile defines the path for the error log file
 func Logfile(path string) ConfigOption {
 	if path == "" {
 		return nil
@@ -67,10 +77,12 @@ func Logfile(path string) ConfigOption {
 
 type tracefilePath string
 
+// Apply sets the configuration on the input Config `c`
 func (p tracefilePath) Apply(c *Config) {
 	c.TraceFilePath = (string)(p)
 }
 
+// Tracefile defines the path for the trace file
 func Tracefile(path string) ConfigOption {
 	if path == "" {
 		return nil

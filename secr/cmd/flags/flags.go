@@ -7,6 +7,7 @@ import (
 	"github.com/zalgonoise/x/secr/cmd/config"
 )
 
+// ParseFlags will consume the CLI flags as the app is executed
 func ParseFlags() *config.Config {
 	var conf = &config.Default
 
@@ -30,6 +31,7 @@ func ParseFlags() *config.Config {
 	return config.Merge(conf, osFlags)
 }
 
+// ParseOSEnv will consume the OS environment variables associated with this app, when executed
 func ParseOSEnv() *config.Config {
 	return &config.Config{
 		BoltDBPath:     os.Getenv("SECR_BOLT_PATH"),

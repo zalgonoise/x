@@ -76,6 +76,7 @@ type service struct {
 	auth    authz.Authorizer
 }
 
+// NewService creates a service instance from the input repositories and authorizer
 func NewService(
 	users user.Repository,
 	secrets secret.Repository,

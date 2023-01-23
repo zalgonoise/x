@@ -11,6 +11,7 @@ const (
 	ServerID = "secr-server-id"
 )
 
+// UserBucket formats the input user ID as a user bucket identifier (`uid:###`)
 func UserBucket(id uint64) string {
 	return fmt.Sprintf("uid:%d", id)
 }

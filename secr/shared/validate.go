@@ -13,6 +13,8 @@ var (
 	ErrExpired       = errors.New("input time is already expired")
 )
 
+// ValidateDuration verifies if the input duration is valid, returning an error
+// if otherwise
 func ValidateDuration(dur time.Duration) error {
 	if dur == 0 {
 		return ErrEmptyDuration
@@ -20,6 +22,8 @@ func ValidateDuration(dur time.Duration) error {
 	return nil
 }
 
+// ValidateTime verifies if the input time is valid, returning an error
+// if otherwise
 func ValidateTime(t time.Time) error {
 	if t.IsZero() || t == zeroTime {
 		return ErrEmptyTime

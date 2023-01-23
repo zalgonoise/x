@@ -1,5 +1,6 @@
 package config
 
+// Config describes the app configuration
 type Config struct {
 	HTTPPort       int    `json:"http_port,omitempty" yaml:"http_port,omitempty"`
 	BoltDBPath     string `json:"bolt_path,omitempty" yaml:"bolt_path,omitempty"`
@@ -9,6 +10,7 @@ type Config struct {
 	TraceFilePath  string `json:"tracefile_path,omitempty" yaml:"tracefile_path,omitempty"`
 }
 
+// Default is a default configuration that the app will kick-off with, if not configured
 var Default = Config{
 	HTTPPort:       8080,
 	BoltDBPath:     "/secr/keys.db",
@@ -21,7 +23,8 @@ var Default = Config{
 // As new options / elements are added to the Config, new data structures can
 // implement the ConfigOption interface to allow setting these options in the Config
 type ConfigOption interface {
-	Apply(*Config)
+	// Apply sets the configuration on the input Config `c`
+	Apply(c *Config)
 }
 
 // New initializes a new config with default settings, and then iterates through

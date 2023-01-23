@@ -11,6 +11,7 @@ import (
 	"github.com/zalgonoise/x/secr/factory"
 )
 
+// Run executes the app by initializing its configuration and running the HTTP server
 func Run() {
 	// temp logger
 	log := logx.Default()
