@@ -23,9 +23,16 @@ type Cryptographer interface {
 	Random(buffer []byte)
 }
 
+// EncrypterDecrypter is a general purpose encryption interface that supports
+// an Encrypt and a Decrypt method
 type EncryptDecrypter interface {
-	Encrypt([]byte) ([]byte, error)
-	Decrypt([]byte) ([]byte, error)
+	// Encrypt will encrypt the input bytes `v` with the EncryptDecrypter key,
+	// returning the ciphertext of `v` as a byte slice, and an error
+	Encrypt(v []byte) ([]byte, error)
+
+	// Decrypt will decipher the input bytes `v` with the EncryptDecrypter key,
+	// returning the plaintext of `v` as a byte slice, and an error
+	Decrypt(v []byte) ([]byte, error)
 }
 
 type aesEncrypter struct {
@@ -73,6 +80,7 @@ func (g *cryptographer) New32Key() [32]byte {
 	return key
 }
 
+// Random reads random bytes into the input byte slice
 func (g *cryptographer) Random(buffer []byte) {
 	g.Lock()
 	_, _ = g.random.Read(buffer)
@@ -86,6 +94,8 @@ func (g *cryptographer) NewCipher(key []byte) EncryptDecrypter {
 	}
 }
 
+// Encrypt will encrypt the input bytes `v` with the EncryptDecrypter key,
+// returning the ciphertext of `v` as a byte slice, and an error
 func (enc aesEncrypter) Encrypt(plaintext []byte) ([]byte, error) {
 	c, err := aes.NewCipher(enc.key)
 	if err != nil {
@@ -103,6 +113,8 @@ func (enc aesEncrypter) Encrypt(plaintext []byte) ([]byte, error) {
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
+// Decrypt will decipher the input bytes `v` with the EncryptDecrypter key,
+// returning the plaintext of `v` as a byte slice, and an error
 func (enc aesEncrypter) Decrypt(ciphertext []byte) ([]byte, error) {
 	c, err := aes.NewCipher(enc.key)
 	if err != nil {
