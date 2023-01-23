@@ -104,14 +104,10 @@ WHERE u.username = ?
 		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
 	}
 
-	n, err := res.RowsAffected()
+	err = IsUserFound(res)
 	if err != nil {
 		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
 	}
-	if n == 0 {
-		return fmt.Errorf("%w: user was not updated %s", ErrDBError, username)
-	}
-
 	return nil
 }
 
@@ -124,12 +120,10 @@ func (ur *userRepository) Delete(ctx context.Context, username string) error {
 	if err != nil {
 		return fmt.Errorf("%w: failed to delete user %s: %v", ErrDBError, username, err)
 	}
-	n, err := res.RowsAffected()
+
+	err = IsUserFound(res)
 	if err != nil {
 		return fmt.Errorf("%w: failed to delete user %s: %v", ErrDBError, username, err)
-	}
-	if n == 0 {
-		return fmt.Errorf("%w: user was not deleted %s", ErrDBError, username)
 	}
 
 	return nil
