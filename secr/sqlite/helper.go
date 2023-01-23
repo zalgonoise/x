@@ -43,7 +43,7 @@ func ToSQLString(s string) sql.NullString {
 
 // ToSQLInt64 converts the generic integer into a sql.NullInt64
 func ToSQLInt64[T constraints.Integer](v T) sql.NullInt64 {
-	return sql.NullInt64{Int64: int64(v), Valid: int64(v) >= 0}
+	return sql.NullInt64{Int64: int64(v), Valid: v >= 0}
 }
 
 // ToSQLTime converts the input time into a sql.NullTime
