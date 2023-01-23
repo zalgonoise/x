@@ -56,17 +56,19 @@ func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint6
 		`, dbs.Owner, dbs.Secret, dbs.Target, dbs.Until)
 
 		if err != nil {
-			_ = tx.Rollback()
+			rErr := tx.Rollback()
+			if rErr != nil {
+				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
+			}
 			return 0, err
 		}
 		id, err := res.LastInsertId()
 		if err != nil {
-			_ = tx.Rollback()
+			rErr := tx.Rollback()
+			if rErr != nil {
+				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
+			}
 			return 0, err
-		}
-		if id == 0 {
-			_ = tx.Rollback()
-			return 0, errors.New("id zero")
 		}
 		lastID = uint64(id)
 	}
@@ -166,17 +168,27 @@ WHERE o.username = ?
 			share.Owner, share.Secret, share.Target)
 
 		if err != nil {
-			tx.Rollback()
-			return fmt.Errorf("%w: failed to delete shared secret: %v", ErrDBError, err)
+			rErr := tx.Rollback()
+			if rErr != nil {
+				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
+			}
+			return fmt.Errorf("%w: %v", ErrDBError, err)
 		}
 		n, err := res.RowsAffected()
 		if err != nil {
-			tx.Rollback()
-			return fmt.Errorf("%w: failed to delete shared secret: %v", ErrDBError, err)
+			rErr := tx.Rollback()
+			if rErr != nil {
+				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
+			}
+			return fmt.Errorf("%w: %v", ErrDBError, err)
 		}
 		if n == 0 {
-			tx.Rollback()
-			return fmt.Errorf("%w: shared secret was not deleted", ErrDBError)
+			err := ErrNotFoundShare
+			rErr := tx.Rollback()
+			if rErr != nil {
+				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
+			}
+			return err
 		}
 	}
 
@@ -209,17 +221,17 @@ func toDomainShare(shares ...*dbShare) []*shared.Share {
 inputLoop:
 	for i := 1; i < len(shares); i++ {
 		for _, sh := range s {
-			if shares[i].Secret.String == sh.SecretKey {
-				if (sh.Until == nil && !shares[i].Until.Valid) ||
-					(*sh.Until == shares[i].Until.Time) {
-					for _, t := range sh.Target {
-						if t == shares[i].Target.String {
-							continue
-						}
-						sh.Target = append(sh.Target, shares[i].Target.String)
+			if shares[i].Secret.String == sh.SecretKey &&
+				((sh.Until == nil && !shares[i].Until.Valid) ||
+					(sh.Until.Unix() == shares[i].Until.Time.Unix())) {
+				for _, t := range sh.Target {
+					if t == shares[i].Target.String {
+						continue
 					}
+					sh.Target = append(sh.Target, shares[i].Target.String)
 					continue inputLoop
 				}
+				continue inputLoop
 			}
 		}
 		s = append(s, &shared.Share{
