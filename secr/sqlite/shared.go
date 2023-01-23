@@ -174,21 +174,13 @@ WHERE o.username = ?
 			}
 			return fmt.Errorf("%w: %v", ErrDBError, err)
 		}
-		n, err := res.RowsAffected()
+		err = IsShareFound(res)
 		if err != nil {
 			rErr := tx.Rollback()
 			if rErr != nil {
 				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
 			}
 			return fmt.Errorf("%w: %v", ErrDBError, err)
-		}
-		if n == 0 {
-			err := ErrNotFoundShare
-			rErr := tx.Rollback()
-			if rErr != nil {
-				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
-			}
-			return err
 		}
 	}
 
