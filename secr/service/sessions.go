@@ -90,7 +90,7 @@ func (s service) Logout(ctx context.Context, username string) error {
 		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 
-	u, err := s.GetUser(ctx, username)
+	u, err := s.users.Get(ctx, username)
 	if err != nil {
 		return fmt.Errorf("failed to fetch user: %v", err)
 	}
