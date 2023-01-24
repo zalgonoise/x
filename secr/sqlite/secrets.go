@@ -9,8 +9,6 @@ import (
 	"github.com/zalgonoise/x/secr/secret"
 )
 
-var _ secret.Repository = &secretRepository{nil}
-
 var (
 	ErrNotFoundSecret = errors.New("secret not found")
 )
@@ -21,6 +19,8 @@ type dbSecret struct {
 	CreatedAt sql.NullTime
 }
 
+var _ secret.Repository = &secretRepository{nil}
+
 type secretRepository struct {
 	db *sql.DB
 }
@@ -28,12 +28,6 @@ type secretRepository struct {
 // NewSecretRepository creates a secret.Repository from the SQL DB `db`
 func NewSecretRepository(db *sql.DB) secret.Repository {
 	return &secretRepository{db}
-}
-
-func newDBSecret(s *secret.Secret) *dbSecret {
-	return &dbSecret{
-		Name: ToSQLString(s.Key),
-	}
 }
 
 // Create will create (or overwrite) the secret identified by `s.Key`, for user `username`,
@@ -158,5 +152,11 @@ func (s *dbSecret) toDomainEntity() *secret.Secret {
 		ID:        uint64(s.ID.Int64),
 		Key:       s.Name.String,
 		CreatedAt: s.CreatedAt.Time,
+	}
+}
+
+func newDBSecret(s *secret.Secret) *dbSecret {
+	return &dbSecret{
+		Name: ToSQLString(s.Key),
 	}
 }
