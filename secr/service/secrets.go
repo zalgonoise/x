@@ -34,7 +34,7 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 		return fmt.Errorf("%w: %v", ErrInvalidValue, err)
 	}
 
-	u, err := s.GetUser(ctx, username)
+	u, err := s.users.Get(ctx, username)
 	if err != nil {
 		return fmt.Errorf("failed to fetch user: %v", err)
 	}
@@ -53,24 +53,22 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 		return fmt.Errorf("failed to encrypt value: %v", err)
 	}
 
+	tx := newTx()
+
 	err = s.keys.Set(ctx, keys.UserBucket(u.ID), key, encValue)
 	if err != nil {
 		return fmt.Errorf("failed to store the secret: %v", err)
 	}
-	var rollback = func() error {
+	tx.Add(func() error {
 		return s.keys.Delete(ctx, keys.UserBucket(u.ID), key)
-	}
+	})
 
 	secr := &secret.Secret{
 		Key: key,
 	}
 	id, err := s.secrets.Create(ctx, username, secr)
 	if err != nil {
-		rerr := rollback()
-		if rerr != nil {
-			err = fmt.Errorf("%w -- rollback error: %v", err, rerr)
-		}
-		return fmt.Errorf("failed to create the secret: %v", err)
+		return tx.Rollback(fmt.Errorf("failed to create the secret: %v", err))
 	}
 	secr.ID = id
 
@@ -96,7 +94,7 @@ func (s service) GetSecret(ctx context.Context, username string, key string) (*s
 }
 
 func (s service) getSecret(ctx context.Context, username, key string) (*secret.Secret, error) {
-	u, err := s.GetUser(ctx, username)
+	u, err := s.users.Get(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user: %v", err)
 	}
@@ -175,7 +173,7 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 
-	u, err := s.GetUser(ctx, username)
+	u, err := s.users.Get(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user: %v", err)
 	}
@@ -237,9 +235,27 @@ func (s service) DeleteSecret(ctx context.Context, username string, key string) 
 		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
 	}
 
-	u, err := s.GetUser(ctx, username)
+	u, err := s.users.Get(ctx, username)
 	if err != nil {
 		return fmt.Errorf("failed to fetch user: %v", err)
+	}
+
+	tx := newTx()
+
+	// remove shares for this secret
+	shares, err := s.shares.Get(ctx, username, key)
+	if err != nil {
+		return fmt.Errorf("failed to list shared secrets: %v", err)
+	}
+	for _, sh := range shares {
+		tx.Add(func() error {
+			_, err := s.shares.Create(ctx, sh)
+			return err
+		})
+		err := s.shares.Delete(ctx, sh)
+		if err != nil {
+			return tx.Rollback(fmt.Errorf("failed to remove shared secret: %v", err))
+		}
 	}
 
 	secr, err := s.keys.Get(ctx, keys.UserBucket(u.ID), key)
@@ -248,30 +264,16 @@ func (s service) DeleteSecret(ctx context.Context, username string, key string) 
 			// nothing to delete, no changes in state
 			return nil
 		}
-		return fmt.Errorf("failed to fetch the secret: %v", err)
+		return tx.Rollback(fmt.Errorf("failed to fetch the secret: %v", err))
 	}
-	var rollback = func() error {
+	tx.Add(func() error {
 		return s.keys.Set(ctx, keys.UserBucket(u.ID), key, secr)
-	}
+	})
 
 	err = s.keys.Delete(ctx, keys.UserBucket(u.ID), key)
 	if err != nil {
-		rerr := rollback()
-		if rerr != nil {
-			err = fmt.Errorf("%w -- rollback error: %v", err, rerr)
-		}
-		return err
+		return tx.Rollback(fmt.Errorf("failed to remove secret: %v", err))
 	}
 
-	shares, err := s.shares.Get(ctx, username, key)
-	if err != nil {
-		return fmt.Errorf("failed to scan for shared secrets under this key: %v", err)
-	}
-	for _, sh := range shares {
-		err = s.shares.Delete(ctx, sh)
-		if err != nil {
-			return fmt.Errorf("failed to remove shared secret: %v", err)
-		}
-	}
 	return nil
 }
