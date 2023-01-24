@@ -83,7 +83,6 @@ func NewService(
 	shares shared.Repository,
 	keys keys.Repository,
 	auth authz.Authorizer,
-
 ) Service {
 	return service{
 		users:   users,
