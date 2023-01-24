@@ -30,7 +30,7 @@ func (s service) login(ctx context.Context, u *user.User, password string) error
 	hashedPassword := sha256.Sum256(append([]byte(password), salt...))
 
 	if string(hashedPassword[:]) != string(hash) {
-		ok, err := s.auth.Validate(ctx, u, password)
+		jwtUser, err := s.auth.Parse(ctx, password)
 		if err != nil {
 			if errors.Is(authz.ErrExpired, err) {
 				derr := s.keys.Delete(ctx, keys.UserBucket(u.ID), keys.TokenKey)
@@ -40,7 +40,7 @@ func (s service) login(ctx context.Context, u *user.User, password string) error
 			}
 			return fmt.Errorf("failed to validate JWT: %v", err)
 		}
-		if !ok {
+		if jwtUser.Username != u.Username {
 			return fmt.Errorf("%w: couldn't login with username %s", ErrIncorrectPassword, u.Username)
 		}
 	}
@@ -149,7 +149,16 @@ func (s service) Refresh(ctx context.Context, username, token string) (*user.Ses
 		return nil, fmt.Errorf("failed to fetch user %s: %v", username, err)
 	}
 
-	newToken, err := s.auth.Refresh(ctx, u, token)
+	jwtUser, err := s.auth.Parse(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate token: %v", err)
+	}
+
+	if jwtUser.Username != u.Username {
+		return nil, ErrIncorrectPassword
+	}
+
+	newToken, err := s.auth.NewToken(ctx, u)
 	if err != nil {
 		return nil, fmt.Errorf("failed to refresh token: %v", err)
 	}
