@@ -35,11 +35,8 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 
 	// check if user exists
 	_, err := s.users.Get(ctx, username)
-	if err == nil {
+	if err == nil || !errors.Is(sqlite.ErrNotFoundUser, err) {
 		return nil, fmt.Errorf("failed to create user: %v", ErrAlreadyExistsUser)
-	}
-	if !errors.Is(sqlite.ErrNotFoundUser, err) {
-		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
 
 	// generate hash from password
@@ -60,20 +57,18 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user %s: %v", username, err)
 	}
-	var rollback = func() error {
-		return s.users.Delete(ctx, username)
-	}
 	u.ID = id
+
+	tx := newTx()
+	tx.Add(func() error {
+		return s.users.Delete(ctx, username)
+	})
 
 	// generate a new private key for this user, and store it
 	key := crypt.New32Key()
 	err = s.keys.Set(ctx, keys.UserBucket(u.ID), keys.UniqueID, key[:])
 	if err != nil {
-		rerr := rollback()
-		if rerr != nil {
-			err = fmt.Errorf("%w: rollback error: %v", err, rerr)
-		}
-		return nil, fmt.Errorf("failed to create user %s: %v", username, err)
+		return nil, tx.Rollback(fmt.Errorf("failed to create user %s: %v", username, err))
 	}
 
 	return u, nil
@@ -136,7 +131,7 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
 	}
 
-	_, err := s.users.Get(ctx, username)
+	u, err := s.users.Get(ctx, username)
 	if err != nil {
 		if errors.Is(sqlite.ErrNotFoundUser, err) {
 			// no change in state
@@ -145,10 +140,7 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 		return fmt.Errorf("failed to fetch original user %s: %v", username, err)
 	}
 
-	u, err := s.GetUser(ctx, username)
-	if err != nil {
-		return fmt.Errorf("failed to fetch user: %v", err)
-	}
+	tx := newTx()
 
 	// remove all shares
 	shares, err := s.shares.List(ctx, username)
@@ -156,13 +148,14 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 		return fmt.Errorf("failed to fetch shared secrets: %v", err)
 	}
 	for _, sh := range shares {
+		tx.Add(func() error {
+			_, err := s.shares.Create(ctx, sh)
+			return err
+		})
+
 		err := s.shares.Delete(ctx, sh)
 		if err != nil {
-			_, rErr := s.shares.Create(ctx, sh)
-			if rErr != nil {
-				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
-			}
-			return err
+			return tx.Rollback(fmt.Errorf("failed to remove shared secret: %v", err))
 		}
 	}
 
@@ -172,13 +165,14 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 		return fmt.Errorf("failed to list user secrets: %v", err)
 	}
 	for _, secr := range secrets {
+		tx.Add(func() error {
+			_, err := s.secrets.Create(ctx, username, secr)
+			return err
+		})
+
 		err := s.secrets.Delete(ctx, username, secr.Key)
 		if err != nil {
-			_, rErr := s.secrets.Create(ctx, username, secr)
-			if rErr != nil {
-				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
-			}
-			return err
+			return tx.Rollback(fmt.Errorf("failed to remove secret: %v", err))
 		}
 	}
 
@@ -187,25 +181,20 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 	if err != nil {
 		return fmt.Errorf("failed to fetch user %s's key: %v", username, err)
 	}
-	var rollback = func() error {
+	tx.Add(func() error {
 		return s.keys.Set(ctx, keys.UserBucket(u.ID), keys.UniqueID, upk)
-	}
+	})
 
 	// delete private key
 	err = s.keys.Delete(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
-		return fmt.Errorf("failed to delete user %s's key: %v", username, err)
+		return tx.Rollback(fmt.Errorf("failed to delete user %s's key: %v", username, err))
 	}
 
 	// delete user
 	err = s.users.Delete(ctx, username)
 	if err != nil {
-		// rollback key deletion since user deletion failed
-		rerr := rollback()
-		if rerr != nil {
-			err = fmt.Errorf("%w: rollback error: %v", err, rerr)
-		}
-		return fmt.Errorf("failed to delete user %s: %v", username, err)
+		return tx.Rollback(fmt.Errorf("failed to delete user %s: %v", username, err))
 	}
 
 	return nil
