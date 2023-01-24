@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/zalgonoise/x/secr/shared"
 )
@@ -42,6 +43,8 @@ func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint6
 		return 0, fmt.Errorf("failed to begin transaction: %v", err)
 	}
 
+	defer tx.Rollback()
+
 	var lastID uint64
 
 	for _, dbs := range shares {
@@ -56,18 +59,10 @@ func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint6
 		`, dbs.Owner, dbs.Secret, dbs.Target, dbs.Until)
 
 		if err != nil {
-			rErr := tx.Rollback()
-			if rErr != nil {
-				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
-			}
 			return 0, err
 		}
 		id, err := res.LastInsertId()
 		if err != nil {
-			rErr := tx.Rollback()
-			if rErr != nil {
-				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
-			}
 			return 0, err
 		}
 		lastID = uint64(id)
@@ -154,6 +149,9 @@ func (sr *sharedRepository) Delete(ctx context.Context, sh *shared.Share) error 
 		return fmt.Errorf("failed to begin transaction: %v", err)
 	}
 
+	// defer rollback in case an error occurs
+	defer tx.Rollback()
+
 	for _, share := range dbs {
 		res, err := tx.ExecContext(ctx, `
 DELETE FROM shared_secrets WHERE id = (
@@ -168,18 +166,10 @@ WHERE o.username = ?
 			share.Owner, share.Secret, share.Target)
 
 		if err != nil {
-			rErr := tx.Rollback()
-			if rErr != nil {
-				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
-			}
 			return fmt.Errorf("%w: %v", ErrDBError, err)
 		}
 		err = IsShareFound(res)
 		if err != nil {
-			rErr := tx.Rollback()
-			if rErr != nil {
-				err = fmt.Errorf("%w -- rollback error: %v", err, rErr)
-			}
 			return fmt.Errorf("%w: %v", ErrDBError, err)
 		}
 	}
@@ -213,9 +203,9 @@ func toDomainShare(shares ...*dbShare) []*shared.Share {
 inputLoop:
 	for i := 1; i < len(shares); i++ {
 		for _, sh := range s {
-			if shares[i].Secret.String == sh.SecretKey &&
-				((sh.Until == nil && !shares[i].Until.Valid) ||
-					(sh.Until.Unix() == shares[i].Until.Time.Unix())) {
+			if shares[i].Owner.String == sh.Owner &&
+				shares[i].Secret.String == sh.SecretKey &&
+				sh.Until.Unix() == shares[i].Until.Time.Unix() {
 				for _, t := range sh.Target {
 					if t == shares[i].Target.String {
 						continue
@@ -223,7 +213,6 @@ inputLoop:
 					sh.Target = append(sh.Target, shares[i].Target.String)
 					continue inputLoop
 				}
-				continue inputLoop
 			}
 		}
 		s = append(s, &shared.Share{
@@ -278,9 +267,13 @@ func (sr *sharedRepository) scanShares(rs *sql.Rows) ([]*shared.Share, error) {
 
 func newDBShare(s *shared.Share) []*dbShare {
 	var sqlT sql.NullTime
-	if s.Until != nil {
+	switch s.Until {
+	case nil:
+		sqlT = ToSQLTime(time.Now().Add(shared.DefaultShareDuration))
+	default:
 		sqlT = ToSQLTime(*s.Until)
 	}
+
 	shares := make([]*dbShare, 0, len(s.Target))
 
 	for _, t := range s.Target {
