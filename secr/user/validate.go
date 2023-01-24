@@ -29,15 +29,24 @@ const (
 	nameMinLength = 2
 	nameMaxLength = 25
 
-	passwordMinLength = 7
-	passwordMaxLength = 300
+	passwordMinLength       = 7
+	passwordMaxLength       = 300
+	PasswordCharRepeatLimit = 4
+	passwordAllowedChars    = `abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_~!@#$%^&*()=[]{}'\"|,./<>?;:`
 )
 
 var (
 	usernameRegex = regexp.MustCompile(`[a-z0-9]+[a-z0-9\-_]+[a-z0-9]+`)
 	nameRegex     = regexp.MustCompile(`[a-zA-Z]+[\s]?[a-zA-Z]+`)
-	passwordRegex = regexp.MustCompile(`[a-zA-Z\d\-\_\~\!\@\#\$\%\^\&\*\(\)\[\]\{\}\;\:\,\.\<\>\?]+`)
+
+	passwordCharMap = map[rune]struct{}{}
 )
+
+func init() {
+	for _, c := range passwordAllowedChars {
+		passwordCharMap[c] = struct{}{}
+	}
+}
 
 // ValidateUsername verifies if the input username is valid, returning an error
 // if invalid
@@ -87,8 +96,26 @@ func ValidatePassword(password string) error {
 	if len(password) > passwordMaxLength {
 		return ErrLongPassword
 	}
-	if match := passwordRegex.FindString(password); match != password {
-		return ErrInvalidPassword
+	return validatePasswordCharacters(password)
+}
+
+func validatePasswordCharacters(password string) error {
+	var cur rune
+	var count int = 1
+	for _, c := range password {
+		switch c {
+		case cur:
+			count++
+			if count >= PasswordCharRepeatLimit {
+				return ErrInvalidPassword
+			}
+		default:
+			cur = c
+			count = 1
+		}
+		if _, ok := passwordCharMap[c]; !ok {
+			return ErrInvalidPassword
+		}
 	}
 	return nil
 }
