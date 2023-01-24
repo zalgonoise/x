@@ -5,8 +5,10 @@ import (
 	"crypto/cipher"
 	cryptorand "crypto/rand"
 	"encoding/binary"
+	"errors"
 	"math/rand"
 	"sync"
+	"time"
 )
 
 // Cryptographer describes the set of cryptographic actions required by the app
@@ -35,22 +37,18 @@ type EncryptDecrypter interface {
 	Decrypt(v []byte) ([]byte, error)
 }
 
-type aesEncrypter struct {
-	key []byte
-}
-
-func init() {
-	cryptog = &cryptographer{}
-	var rngSeed int64
-	_ = binary.Read(cryptorand.Reader, binary.LittleEndian, &rngSeed)
-	cryptog.(*cryptographer).random = rand.New(rand.NewSource(rngSeed))
+type cryptographer struct {
+	sync.Mutex
+	random *rand.Rand
 }
 
 var cryptog Cryptographer
 
-type cryptographer struct {
-	sync.Mutex
-	random *rand.Rand
+func init() {
+	cryptog = &cryptographer{}
+	var rngSeed int64 = time.Now().Unix()
+	_ = binary.Read(cryptorand.Reader, binary.LittleEndian, &rngSeed)
+	cryptog.(*cryptographer).random = rand.New(rand.NewSource(rngSeed))
 }
 
 // NewSalt generates a new random salt value, of 128 bytes in size
@@ -94,6 +92,10 @@ func (g *cryptographer) NewCipher(key []byte) EncryptDecrypter {
 	}
 }
 
+type aesEncrypter struct {
+	key []byte
+}
+
 // Encrypt will encrypt the input bytes `v` with the EncryptDecrypter key,
 // returning the ciphertext of `v` as a byte slice, and an error
 func (enc aesEncrypter) Encrypt(plaintext []byte) ([]byte, error) {
@@ -128,7 +130,7 @@ func (enc aesEncrypter) Decrypt(ciphertext []byte) ([]byte, error) {
 
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
-		return nil, err
+		return nil, errors.New("invalid ciphertext length")
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
