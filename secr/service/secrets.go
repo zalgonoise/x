@@ -85,18 +85,18 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 	// fetch the key
 	cipherKey, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
-		return fmt.Errorf("failed to get user's private key: %v", err)
+		return tx.Rollback(fmt.Errorf("failed to get user's private key: %v", err))
 	}
 
 	cipher := crypt.NewCipher(cipherKey)
 	// encrypt value with user's private key
 	encValue, err := cipher.Encrypt(value)
 	if err != nil {
-		return fmt.Errorf("failed to encrypt value: %v", err)
+		return tx.Rollback(fmt.Errorf("failed to encrypt value: %v", err))
 	}
 	err = s.keys.Set(ctx, keys.UserBucket(u.ID), key, encValue)
 	if err != nil {
-		return fmt.Errorf("failed to store the secret: %v", err)
+		return tx.Rollback(fmt.Errorf("failed to store the secret: %v", err))
 	}
 	tx.Add(func() error {
 		if oldSecr == nil {
