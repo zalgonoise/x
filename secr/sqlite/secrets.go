@@ -39,7 +39,7 @@ INSERT INTO secrets (user_id, name)
 VALUES (
 	(SELECT u.id FROM users AS u WHERE u.username = ?), 
 	?)
-`, username, dbs.Name)
+`, ToSQLString(username), dbs.Name)
 
 	if err != nil {
 		return 0, fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
@@ -103,7 +103,7 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 		WHERE u.username = ? 
 			AND s.name = ?
 	)
-	`, username)
+	`, ToSQLString(username), ToSQLString(key))
 
 	if err != nil {
 		return fmt.Errorf("%w: failed to delete secret %s: %v", ErrDBError, key, err)
@@ -111,7 +111,7 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 
 	err = IsSecretFound(res)
 	if err != nil {
-		return fmt.Errorf("%w: failed to delete secret %s: %v", ErrDBError, key, err)
+		return err
 	}
 
 	return nil
@@ -128,6 +128,9 @@ func (sr *secretRepository) scanSecret(r Scanner) (s *secret.Secret, err error) 
 		&dbs.CreatedAt,
 	)
 	if err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			return nil, ErrNotFoundSecret
+		}
 		return nil, fmt.Errorf("%w: failed to scan DB row: %v", ErrDBError, err)
 	}
 	return dbs.toDomainEntity(), nil
