@@ -104,7 +104,7 @@ WHERE u.username = ?
 
 	err = IsUserFound(res)
 	if err != nil {
-		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
+		return err
 	}
 	return nil
 }
@@ -121,7 +121,7 @@ func (ur *userRepository) Delete(ctx context.Context, username string) error {
 
 	err = IsUserFound(res)
 	if err != nil {
-		return fmt.Errorf("%w: failed to delete user %s: %v", ErrDBError, username, err)
+		return err
 	}
 
 	return nil

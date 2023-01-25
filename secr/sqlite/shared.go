@@ -170,7 +170,7 @@ WHERE o.username = ?
 		}
 		err = IsShareFound(res)
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrDBError, err)
+			return err
 		}
 	}
 
