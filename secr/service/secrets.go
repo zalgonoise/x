@@ -12,6 +12,7 @@ import (
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/secret"
 	"github.com/zalgonoise/x/secr/shared"
+	"github.com/zalgonoise/x/secr/sqlite"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -39,6 +40,47 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 		return fmt.Errorf("failed to fetch user: %v", err)
 	}
 
+	tx := newTx()
+
+	// check if secret already exists
+	oldSecr, err := s.secrets.Get(ctx, username, key)
+	if err != nil && !errors.Is(sqlite.ErrNotFoundSecret, err) {
+		return fmt.Errorf("failed to fetch previous secret under this key: %v", err)
+	}
+	if oldSecr != nil {
+		shares, err := s.shares.Get(ctx, username, oldSecr.Key)
+		if err != nil && !errors.Is(sqlite.ErrNotFoundShare, err) {
+			return fmt.Errorf("failed to fetch previous shared secrets: %v", err)
+		}
+		for _, sh := range shares {
+			tx.Add(func() error {
+				_, err := s.shares.Create(ctx, sh)
+				return err
+			})
+			err := s.shares.Delete(ctx, sh)
+			if err != nil {
+				return tx.Rollback(fmt.Errorf("failed to remove old share: %v", err))
+			}
+		}
+
+		val, err := s.keys.Get(ctx, keys.UserBucket(u.ID), key)
+		if err != nil {
+			return tx.Rollback(fmt.Errorf("failed to fetch old secret's value: %v", err))
+		}
+
+		tx.Add(func() error {
+			return s.keys.Set(ctx, keys.UserBucket(u.ID), key, val)
+		})
+		tx.Add(func() error {
+			_, err := s.secrets.Create(ctx, username, oldSecr)
+			return err
+		})
+		err = s.secrets.Delete(ctx, username, key)
+		if err != nil {
+			return tx.Rollback(fmt.Errorf("failed to remove old secret: %v", err))
+		}
+	}
+
 	// encrypt secret with user's key:
 	// fetch the key
 	cipherKey, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
@@ -52,15 +94,15 @@ func (s service) CreateSecret(ctx context.Context, username string, key string, 
 	if err != nil {
 		return fmt.Errorf("failed to encrypt value: %v", err)
 	}
-
-	tx := newTx()
-
 	err = s.keys.Set(ctx, keys.UserBucket(u.ID), key, encValue)
 	if err != nil {
 		return fmt.Errorf("failed to store the secret: %v", err)
 	}
 	tx.Add(func() error {
-		return s.keys.Delete(ctx, keys.UserBucket(u.ID), key)
+		if oldSecr == nil {
+			return s.keys.Delete(ctx, keys.UserBucket(u.ID), key)
+		}
+		return nil
 	})
 
 	secr := &secret.Secret{
