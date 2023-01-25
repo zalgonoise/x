@@ -286,7 +286,7 @@ func (s service) DeleteSecret(ctx context.Context, username string, key string) 
 
 	// remove shares for this secret
 	shares, err := s.shares.Get(ctx, username, key)
-	if err != nil {
+	if err != nil && !errors.Is(sqlite.ErrNotFoundShare, err) {
 		return fmt.Errorf("failed to list shared secrets: %v", err)
 	}
 	for _, sh := range shares {
@@ -313,6 +313,20 @@ func (s service) DeleteSecret(ctx context.Context, username string, key string) 
 	})
 
 	err = s.keys.Delete(ctx, keys.UserBucket(u.ID), key)
+	if err != nil {
+		return tx.Rollback(fmt.Errorf("failed to remove secret: %v", err))
+	}
+
+	secretMeta, err := s.secrets.Get(ctx, username, key)
+	if err != nil {
+		return tx.Rollback(fmt.Errorf("failed to fetch secret: %v", err))
+	}
+
+	tx.Add(func() error {
+		_, err := s.secrets.Create(ctx, username, secretMeta)
+		return err
+	})
+	err = s.secrets.Delete(ctx, username, key)
 	if err != nil {
 		return tx.Rollback(fmt.Errorf("failed to remove secret: %v", err))
 	}
