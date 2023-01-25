@@ -45,7 +45,7 @@ func ValidateKey(key string) (bool, error) {
 		return false, ErrEmptyKey
 	}
 	if strings.Contains(key, ":") {
-		split := strings.Split(key, ":")
+		split := strings.SplitN(key, ":", 1)
 		if len(split) != 2 {
 			return false, ErrInvalidSharedKey
 		}
