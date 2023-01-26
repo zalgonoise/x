@@ -57,23 +57,20 @@ func (s *server) login() http.HandlerFunc {
 }
 
 func (s *server) logout() http.HandlerFunc {
-	var parseFn = func(ctx context.Context, r *http.Request) (*user.User, error) {
-		if token, ok := getToken(r); ok {
-			u, err := s.s.ParseToken(ctx, token)
-			if err != nil {
-				return u, nil
-			}
-
+	var parseFn = func(ctx context.Context, r *http.Request) (*string, error) {
+		caller, ok := authz.GetCaller(r)
+		if ok {
+			return &caller, nil
 		}
 		return nil, errors.New("failed to read password or token in request")
 	}
 
-	var execFn = func(ctx context.Context, q *user.User) *ghttp.Response[user.Session] {
-		if q == nil || q.Username == "" {
+	var execFn = func(ctx context.Context, q *string) *ghttp.Response[user.Session] {
+		if q == nil || *q == "" {
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
 
-		err := s.s.Logout(ctx, q.Username)
+		err := s.s.Logout(ctx, *q)
 		if err != nil {
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
