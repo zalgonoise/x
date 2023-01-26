@@ -48,7 +48,7 @@ func (ukr *keysRepository) Get(ctx context.Context, bucket, k string) ([]byte, e
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, ErrEmptyBucket) {
+		if errors.Is(ErrEmptyBucket, err) {
 			return nil, err
 		}
 		return nil, fmt.Errorf("%w: %v", ErrDBError, err)
@@ -112,7 +112,7 @@ func (ukr *keysRepository) Delete(ctx context.Context, bucket, k string) error {
 	})
 
 	if err != nil {
-		if errors.Is(err, ErrEmptyBucket) {
+		if errors.Is(ErrEmptyBucket, err) {
 			return err
 		}
 		return fmt.Errorf("%w: %v", ErrDBError, err)
