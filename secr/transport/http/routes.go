@@ -31,16 +31,25 @@ func (s *server) sessionsHandler() []ghttp.Handler {
 			Method: http.MethodPost,
 			Path:   "/logout",
 			Fn:     s.logout(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
 		},
 		{
 			Method: http.MethodPost,
 			Path:   "/recover",
 			Fn:     s.changePassword(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
 		},
 		{
 			Method: http.MethodPost,
 			Path:   "/refresh",
 			Fn:     s.refresh(),
+			Middleware: []ghttp.MiddlewareFn{
+				s.WithAuth(),
+			},
 		},
 	}
 }
