@@ -79,32 +79,6 @@ func (l withLogger) Refresh(ctx context.Context, username, token string) (*user.
 	return tok, nil
 }
 
-// Validate verifies if a user's JWT is a valid one, returning a boolean and an error
-func (l withLogger) Validate(ctx context.Context, username, token string) (bool, error) {
-	ok, err := l.r.Validate(ctx, username, token)
-	if err != nil {
-		l.l.Error(
-			err.Error(),
-			attr.String("service", "service.Validate"),
-			attr.String("username", username),
-		)
-		return ok, err
-	}
-	return ok, nil
-}
-
-func (l withLogger) ParseToken(ctx context.Context, token string) (*user.User, error) {
-	u, err := l.r.ParseToken(ctx, token)
-	if err != nil {
-		l.l.Error(
-			err.Error(),
-			attr.String("service", "service.ParseToken"),
-		)
-		return u, err
-	}
-	return u, nil
-}
-
 // CreateUser creates the user under username `username`, with the provided password `password` and name `name`
 // It returns a user and an error
 func (l withLogger) CreateUser(ctx context.Context, username, password, name string) (*user.User, error) {
