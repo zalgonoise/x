@@ -115,7 +115,7 @@ func (s service) ShareUntil(ctx context.Context, owner, secretKey string, until 
 	sh := &shared.Share{
 		SecretKey: secretKey,
 		Owner:     owner,
-		Until:     ptr.To(until),
+		Until:     &until,
 	}
 	for _, t := range targets {
 		if err := user.ValidateUsername(t); err != nil {
@@ -177,6 +177,9 @@ func (s service) DeleteShare(ctx context.Context, owner, secretKey string, targe
 	if isShared, err := secret.ValidateKey(secretKey); err != nil || isShared {
 		return fmt.Errorf("%w: %v", ErrInvalidKey, err)
 	}
+	if len(targets) == 0 {
+		return s.PurgeShares(ctx, owner, secretKey)
+	}
 
 	sh := &shared.Share{
 		SecretKey: secretKey,
@@ -211,10 +214,16 @@ func (s service) PurgeShares(ctx context.Context, owner, secretKey string) error
 		return fmt.Errorf("failed to fetch shared secret: %v", err)
 	}
 
+	tx := newTx()
+
 	for _, share := range sh {
+		tx.Add(func() error {
+			_, err := s.shares.Create(ctx, share)
+			return err
+		})
 		err := s.shares.Delete(ctx, share)
 		if err != nil {
-			return fmt.Errorf("failed to remove shared secret: %v", err)
+			return tx.Rollback(fmt.Errorf("failed to remove shared secret: %v", err))
 		}
 	}
 	return nil
