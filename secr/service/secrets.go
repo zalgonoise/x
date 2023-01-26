@@ -243,7 +243,7 @@ func (s service) ListSecrets(ctx context.Context, username string) ([]*secret.Se
 		return nil, fmt.Errorf("failed to fetch user: %v", err)
 	}
 
-	// fetch secret('s metadata )
+	// fetch secrets(' metadata )
 	secrets, err := s.secrets.List(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list the user's secrets: %v", err)
