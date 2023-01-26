@@ -85,6 +85,21 @@ func (t withTrace) Refresh(ctx context.Context, username, token string) (*user.S
 	return tok, nil
 }
 
+func (t withTrace) ParseToken(ctx context.Context, token string) (*user.User, error) {
+	ctx, s := spanner.Start(ctx, "service.Refresh")
+	defer s.End()
+
+	u, err := t.r.ParseToken(ctx, token)
+	if err != nil {
+		s.Event("error parsing user's token", attr.New("error", err.Error()))
+		return u, err
+	}
+	s.Add(
+		attr.String("username", u.Username),
+	)
+	return u, nil
+}
+
 // CreateUser creates the user under username `username`, with the provided password `password` and name `name`
 // It returns a user and an error
 func (t withTrace) CreateUser(ctx context.Context, username, password, name string) (*user.User, error) {

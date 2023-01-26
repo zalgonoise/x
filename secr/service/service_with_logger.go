@@ -79,6 +79,18 @@ func (l withLogger) Refresh(ctx context.Context, username, token string) (*user.
 	return tok, nil
 }
 
+func (l withLogger) ParseToken(ctx context.Context, token string) (*user.User, error) {
+	u, err := l.r.ParseToken(ctx, token)
+	if err != nil {
+		l.l.Error(
+			err.Error(),
+			attr.String("service", "service.ParseToken"),
+		)
+		return u, err
+	}
+	return u, nil
+}
+
 // CreateUser creates the user under username `username`, with the provided password `password` and name `name`
 // It returns a user and an error
 func (l withLogger) CreateUser(ctx context.Context, username, password, name string) (*user.User, error) {

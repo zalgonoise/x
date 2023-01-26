@@ -163,3 +163,22 @@ func (s service) Refresh(ctx context.Context, username, token string) (*user.Ses
 		Token: newToken,
 	}, nil
 }
+
+// ParseToken reads the input token string and returns the corresponding user in it, or an error
+func (s service) ParseToken(ctx context.Context, token string) (*user.User, error) {
+	if token == "" {
+		return nil, fmt.Errorf("%w: token cannot be empty", ErrInvalidPassword)
+	}
+
+	t, err := s.auth.Parse(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %v", err)
+	}
+
+	u, err := s.users.Get(ctx, t.Username)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user %s: %v", t.Username, err)
+	}
+
+	return u, nil
+}
