@@ -8,7 +8,7 @@ func (p boltPath) Apply(c *Config) {
 }
 
 // BoltDB defines the path for the Bolt database file
-func BoltDB(path string) ConfigOption {
+func BoltDB(path string) Option {
 	if path == "" {
 		return nil
 	}
@@ -23,7 +23,7 @@ func (p sqlitePath) Apply(c *Config) {
 }
 
 // SQLiteDB defines the path for the SQLite database file
-func SQLiteDB(path string) ConfigOption {
+func SQLiteDB(path string) Option {
 	if path == "" {
 		return nil
 	}
@@ -38,7 +38,7 @@ func (p jwtKeyPath) Apply(c *Config) {
 }
 
 // JWTKey defines the path for the JWT signing key file
-func JWTKey(path string) ConfigOption {
+func JWTKey(path string) Option {
 	if path == "" {
 		return nil
 	}
@@ -53,7 +53,7 @@ func (p httpPort) Apply(c *Config) {
 }
 
 // Port defines the HTTP port for the server
-func Port(port int) ConfigOption {
+func Port(port int) Option {
 	if port == 0 {
 		return nil
 	}
@@ -68,7 +68,7 @@ func (p logfilePath) Apply(c *Config) {
 }
 
 // Logfile defines the path for the error log file
-func Logfile(path string) ConfigOption {
+func Logfile(path string) Option {
 	if path == "" {
 		return nil
 	}
@@ -83,7 +83,7 @@ func (p tracefilePath) Apply(c *Config) {
 }
 
 // Tracefile defines the path for the trace file
-func Tracefile(path string) ConfigOption {
+func Tracefile(path string) Option {
 	if path == "" {
 		return nil
 	}
