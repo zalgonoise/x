@@ -67,5 +67,4 @@ func Bolt(path string) (keys.Repository, error) {
 		return Bolt(boltDbPath)
 	}
 	return keys.WithTrace(bolt.NewKeysRepository(db)), nil
-
 }
