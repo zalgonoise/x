@@ -18,19 +18,19 @@ var Default = Config{
 	SigningKeyPath: "/secr/server/key",
 }
 
-// ConfigOption describes setter types for a Config
+// Option describes setter types for a Config
 //
 // As new options / elements are added to the Config, new data structures can
-// implement the ConfigOption interface to allow setting these options in the Config
-type ConfigOption interface {
+// implement the Option interface to allow setting these options in the Config
+type Option interface {
 	// Apply sets the configuration on the input Config `c`
 	Apply(c *Config)
 }
 
 // New initializes a new config with default settings, and then iterates through
-// all input ConfigOption `opts` applying them to the Config, which is returned
+// all input Option `opts` applying them to the Config, which is returned
 // to the caller
-func New(opts ...ConfigOption) *Config {
+func New(opts ...Option) *Config {
 	conf := &Default
 
 	for _, opt := range opts {
@@ -45,7 +45,7 @@ func New(opts ...ConfigOption) *Config {
 // Apply implements the ConfigOption interface
 //
 // It allows applying new options on top of an already existing config
-func (c *Config) Apply(opts ...ConfigOption) *Config {
+func (c *Config) Apply(opts ...Option) *Config {
 	for _, opt := range opts {
 		if opt != nil {
 			opt.Apply(c)
@@ -54,26 +54,26 @@ func (c *Config) Apply(opts ...ConfigOption) *Config {
 	return c
 }
 
-// Merge combines Configs `main` with `input`, returning a merged version
+// Merge combines Configs `c` with `input`, returning a merged version
 // of the two
 //
-// All set elements in `input` will be applied to `main`, and the unset elements
-// will be ignored (keeps `main`'s data)
-func Merge(main, input *Config) *Config {
+// All set elements in `input` will be applied to `c`, and the unset elements
+// will be ignored (keeps `c`'s data)
+func (c *Config) Merge(input *Config) *Config {
 	if input.HTTPPort != 0 {
-		main.HTTPPort = input.HTTPPort
+		c.HTTPPort = input.HTTPPort
 	}
 	if input.BoltDBPath != "" {
-		main.BoltDBPath = input.BoltDBPath
+		c.BoltDBPath = input.BoltDBPath
 	}
 	if input.SQLiteDBPath != "" {
-		main.SQLiteDBPath = input.SQLiteDBPath
+		c.SQLiteDBPath = input.SQLiteDBPath
 	}
 	if input.SigningKeyPath != "" {
-		main.SigningKeyPath = input.SigningKeyPath
+		c.SigningKeyPath = input.SigningKeyPath
 	}
 	if input.LogFilePath != "" {
-		main.LogFilePath = input.LogFilePath
+		c.LogFilePath = input.LogFilePath
 	}
-	return main
+	return c
 }
