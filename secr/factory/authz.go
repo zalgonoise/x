@@ -45,7 +45,7 @@ func loadKey(path string) (authz.Authorizer, error) {
 		return nil, err
 	}
 	if len(b) == 0 {
-		return nil, errors.New("zero bytes written")
+		return nil, errors.New("zero bytes read")
 	}
 
 	return authz.NewAuthorizer(b), nil
