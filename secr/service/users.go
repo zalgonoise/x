@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -41,7 +40,7 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 
 	// generate hash from password
 	salt := crypt.NewSalt()
-	hashedPassword := sha256.Sum256(append([]byte(password), salt[:]...))
+	hashedPassword := crypt.Hash([]byte(password), salt[:])
 
 	encSalt := base64.StdEncoding.EncodeToString(salt[:])
 	encHash := base64.StdEncoding.EncodeToString(hashedPassword[:])

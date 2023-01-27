@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
 
+	"github.com/zalgonoise/x/secr/crypt"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/user"
 )
@@ -24,7 +24,7 @@ func (s service) login(ctx context.Context, u *user.User, password string) error
 	if err != nil {
 		return fmt.Errorf("failed to decode salt: %v", err)
 	}
-	hashedPassword := sha256.Sum256(append([]byte(password), salt...))
+	hashedPassword := crypt.Hash([]byte(password), salt)
 
 	if string(hashedPassword[:]) != string(hash) {
 		return ErrIncorrectPassword
@@ -114,9 +114,7 @@ func (s service) ChangePassword(ctx context.Context, username, password, newPass
 		return fmt.Errorf("failed to decode salt: %v", err)
 	}
 
-	hashedPassword := sha256.Sum256(append([]byte(newPassword), salt...))
-	u.Hash = string(hashedPassword[:])
-
+	u.Hash = string(crypt.Hash([]byte(password), salt))
 	err = s.users.Update(ctx, username, u)
 	if err != nil {
 		return fmt.Errorf("failed to update user %s's password: %v", username, err)
