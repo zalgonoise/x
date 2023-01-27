@@ -46,7 +46,7 @@ func (s *server) usersGet() http.HandlerFunc {
 }
 
 func (s *server) usersList() http.HandlerFunc {
-	var execFn = func(ctx context.Context, q *string) *ghttp.Response[[]*user.User] {
+	var execFn = func(ctx context.Context, q *any) *ghttp.Response[[]*user.User] {
 		dbuser, err := s.s.ListUsers(ctx)
 		if err != nil {
 			return ghttp.NewResponse[[]*user.User](http.StatusInternalServerError, err.Error())
@@ -97,7 +97,7 @@ func (s *server) usersCreate() http.HandlerFunc {
 func (s *server) usersUpdate() http.HandlerFunc {
 	type usersUpdateRequest struct {
 		Name     string `json:"name,omitempty"`
-		Username string `json:"username,omitempty"`
+		Username string `json:"-"`
 	}
 
 	var parseFn = func(ctx context.Context, r *http.Request) (*usersUpdateRequest, error) {
@@ -112,8 +112,8 @@ func (s *server) usersUpdate() http.HandlerFunc {
 		if err != nil {
 			return nil, err
 		}
-
 		u.Username = username
+
 		if caller, ok := authz.GetCaller(r); ok && caller == username {
 			return u, nil
 		}
@@ -122,19 +122,14 @@ func (s *server) usersUpdate() http.HandlerFunc {
 
 	var execFn = func(ctx context.Context, q *usersUpdateRequest) *ghttp.Response[user.User] {
 		if q == nil {
-			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid username")
+			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid request")
 		}
 
-		u, err := s.s.GetUser(ctx, q.Username)
-		if err != nil {
-			if errors.Is(sqlite.ErrNotFoundUser, err) {
-				return ghttp.NewResponse[user.User](http.StatusNotFound, err.Error())
-			}
-			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())
+		u := &user.User{
+			Username: q.Username,
 		}
 
-		u.Name = q.Name
-		err = s.s.UpdateUser(ctx, q.Username, u)
+		err := s.s.UpdateUser(ctx, q.Username, u)
 		if err != nil {
 			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())
 		}
