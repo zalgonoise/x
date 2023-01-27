@@ -107,16 +107,18 @@ func (s service) UpdateUser(ctx context.Context, username string, updated *user.
 		return fmt.Errorf("%w: %v", ErrInvalidName, err)
 	}
 
-	currentUser, err := s.users.Get(ctx, username)
+	u, err := s.users.Get(ctx, username)
 	if err != nil {
 		return fmt.Errorf("failed to fetch original user %s: %v", username, err)
 	}
-	if updated.Name == currentUser.Name && updated.Hash == currentUser.Hash {
+
+	if updated.Name == u.Name {
 		// no changes to be made
 		return nil
 	}
+	u.Name = updated.Name
 
-	err = s.users.Update(ctx, username, updated)
+	err = s.users.Update(ctx, username, u)
 	if err != nil {
 		return fmt.Errorf("failed to update user %s: %v", username, err)
 	}
