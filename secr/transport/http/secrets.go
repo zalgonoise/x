@@ -13,8 +13,8 @@ import (
 
 func (s *server) secretsGet() http.HandlerFunc {
 	type secretsGetRequest struct {
-		Username string `json:"username,omitempty"`
-		Key      string `json:"key,omitempty"`
+		Username string `json:"-"`
+		Key      string `json:"-"`
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*secretsGetRequest, error) {
 		splitPath := getPath(r.URL.Path)
@@ -31,7 +31,7 @@ func (s *server) secretsGet() http.HandlerFunc {
 
 	var execFn = func(ctx context.Context, q *secretsGetRequest) *ghttp.Response[secret.Secret] {
 		if q == nil {
-			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid username")
+			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid request")
 		}
 
 		dbsecr, err := s.s.GetSecret(ctx, q.Username, q.Key)
@@ -74,7 +74,7 @@ func (s *server) secretsList() http.HandlerFunc {
 
 func (s *server) secretsCreate() http.HandlerFunc {
 	type secretsCreateRequest struct {
-		Username string `json:"username,omitempty"`
+		Username string `json:"-"`
 		Key      string `json:"key,omitempty"`
 		Value    string `json:"value,omitempty"`
 	}
@@ -92,7 +92,7 @@ func (s *server) secretsCreate() http.HandlerFunc {
 
 	var execFn = func(ctx context.Context, q *secretsCreateRequest) *ghttp.Response[secret.Secret] {
 		if q == nil {
-			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid username")
+			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid request")
 		}
 
 		err := s.s.CreateSecret(ctx, q.Username, q.Key, []byte(q.Value))
@@ -112,8 +112,8 @@ func (s *server) secretsCreate() http.HandlerFunc {
 
 func (s *server) secretsDelete() http.HandlerFunc {
 	type secretsDeleteRequest struct {
-		Username string `json:"username,omitempty"`
-		Key      string `json:"key,omitempty"`
+		Username string `json:"-"`
+		Key      string `json:"-"`
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*secretsDeleteRequest, error) {
 		splitPath := getPath(r.URL.Path)
