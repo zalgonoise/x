@@ -4,12 +4,17 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	cryptorand "crypto/rand"
+	"crypto/sha512"
 	"encoding/binary"
 	"errors"
 	"math/rand"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/pbkdf2"
 )
+
+const numHashIter = 600_001
 
 // Cryptographer describes the set of cryptographic actions required by the app
 type Cryptographer interface {
@@ -159,4 +164,8 @@ func New32Key() [32]byte {
 // NewCipher generates a new AES cipher based on the input key
 func NewCipher(key []byte) EncryptDecrypter {
 	return cryptog.NewCipher(key)
+}
+
+func Hash(secret, salt []byte) []byte {
+	return pbkdf2.Key(secret, salt, numHashIter, 128, sha512.New)
 }
