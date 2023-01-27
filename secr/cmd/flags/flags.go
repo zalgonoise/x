@@ -28,7 +28,7 @@ func ParseFlags() *config.Config {
 		config.Tracefile(*tracefilePath),
 	)
 
-	return config.Merge(conf, osFlags)
+	return conf.Merge(osFlags)
 }
 
 // ParseOSEnv will consume the OS environment variables associated with this app, when executed
