@@ -23,10 +23,7 @@ func (s *server) usersGet() http.HandlerFunc {
 			return nil, errors.New("no username provided")
 		}
 
-		if u, ok := authz.GetCaller(r); ok && u == q {
-			return &q, nil
-		}
-		return nil, authz.ErrInvalidUser
+		return &q, nil
 	}
 
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[user.User] {
@@ -68,11 +65,7 @@ func (s *server) usersCreate() http.HandlerFunc {
 		Password string `json:"password,omitempty"`
 	}
 	var parseFn = func(ctx context.Context, r *http.Request) (*usersCreateRequest, error) {
-		u, err := ghttp.ReadBody[usersCreateRequest](ctx, r)
-		if err != nil {
-			return nil, err
-		}
-		return u, nil
+		return ghttp.ReadBody[usersCreateRequest](ctx, r)
 	}
 
 	var execFn = func(ctx context.Context, q *usersCreateRequest) *ghttp.Response[user.User] {
@@ -81,7 +74,7 @@ func (s *server) usersCreate() http.HandlerFunc {
 
 		if q == nil {
 			span.Event("empty object error")
-			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid username")
+			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid request")
 		}
 
 		dbuser, err := s.s.CreateUser(ctx, q.Username, q.Password, q.Name)
