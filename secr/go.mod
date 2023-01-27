@@ -11,11 +11,12 @@ require (
 	github.com/zalgonoise/x/ghttp v0.0.0-20230114182139-01b85dedbf92
 	github.com/zalgonoise/x/ptr v0.0.0-20230121174328-affab0dd1faa
 	go.etcd.io/bbolt v1.3.6
+	golang.org/x/crypto v0.5.0
 	golang.org/x/exp v0.0.0-20221230185412-738e83a70c30
 )
 
 require (
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 )
