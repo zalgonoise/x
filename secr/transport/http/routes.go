@@ -84,26 +84,6 @@ func (s *server) secretsHandler() []ghttp.Handler {
 	}
 }
 
-func (s *server) secretsCreateRoute() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		splitPath := getPath(r.URL.Path)
-		switch len(splitPath) {
-		case 1:
-			if splitPath[0] == secrPath {
-				s.secretsCreate()(w, r)
-				return
-			}
-		case 3:
-			if splitPath[0] == secrPath && splitPath[2] == shareAction {
-				s.sharesCreate()(w, r)
-				return
-			}
-		default:
-			http.Error(w, "not found", http.StatusNotFound)
-		}
-	}
-}
-
 func (s *server) secretsGetRoute() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		splitPath := getPath(r.URL.Path)
@@ -124,9 +104,34 @@ func (s *server) secretsGetRoute() http.HandlerFunc {
 	}
 }
 
+func (s *server) secretsCreateRoute() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		splitPath := getPath(r.URL.Path)
+		switch len(splitPath) {
+		case 1:
+			if splitPath[0] == secrPath {
+				s.secretsCreate()(w, r)
+				return
+			}
+		case 3:
+			if splitPath[0] == secrPath && splitPath[2] == shareAction {
+				s.sharesCreate()(w, r)
+				return
+			}
+		default:
+			http.Error(w, "not found", http.StatusNotFound)
+		}
+	}
+}
+
 func (s *server) usersHandler() []ghttp.Handler {
 	p := "/users/"
 	return []ghttp.Handler{
+		{
+			Method: http.MethodPost,
+			Path:   p,
+			Fn:     s.usersCreate(),
+		},
 		{
 			Method: http.MethodGet,
 			Path:   p,
@@ -134,11 +139,6 @@ func (s *server) usersHandler() []ghttp.Handler {
 			Middleware: []ghttp.MiddlewareFn{
 				s.WithAuth(),
 			},
-		},
-		{
-			Method: http.MethodPost,
-			Path:   p,
-			Fn:     s.usersCreate(),
 		},
 		{
 			Method: http.MethodDelete,
