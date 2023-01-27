@@ -31,27 +31,13 @@ func Service(authKeyPath, boltDBPath, sqliteDBPath string) (service.Service, err
 	), nil
 }
 
-// Service creates a new service based on the signing key path `authKeyPath`,
-// Bolt DB path `boltDBPath`, and SQLite DB path `sqliteDBPath`
+// WithLogAndTrace configures a service to write on a specific trace file and log file
 func WithLogAndTrace(traceFilePath, logFilePath string, svc service.Service) service.Service {
 	Spanner(traceFilePath)
 	return service.WithLogger(
 		Logger(logFilePath),
 		service.WithTrace(svc),
 	)
-}
-
-// Server creates a new HTTP server based on the service created using the
-// signing key path `authKeyPath`, Bolt DB path `boltDBPath`, and SQLite DB path `sqliteDBPath`
-func Server(port int, svc service.Service) (http.Server, error) {
-	if port == 0 {
-		port = config.Default.HTTPPort
-	}
-
-	return http.NewServer(
-		port,
-		svc,
-	), nil
 }
 
 // From creates a HTTP server for the Secrets service based on the input config
@@ -67,5 +53,5 @@ func From(conf *config.Config) (http.Server, error) {
 		svc,
 	)
 
-	return Server(conf.HTTPPort, loggedSvc)
+	return http.NewServer(conf.HTTPPort, loggedSvc), nil
 }
