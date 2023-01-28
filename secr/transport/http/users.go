@@ -31,22 +31,18 @@ func (s *server) usersGet() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil || *q == "" {
-			span.Event("empty object error")
 			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid username")
 		}
 		span.Add(attr.String("for_user", *q))
 
 		dbuser, err := s.s.GetUser(ctx, *q)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
-
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.User](http.StatusNotFound, err.Error())
 			}
 			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())
 		}
 
-		span.Event("operation successful", attr.New("user", dbuser))
 		return ghttp.NewResponse[user.User](http.StatusOK, "user fetched successfully").WithData(dbuser)
 	}
 
@@ -60,12 +56,9 @@ func (s *server) usersList() http.HandlerFunc {
 
 		dbuser, err := s.s.ListUsers(ctx)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
-
 			return ghttp.NewResponse[[]*user.User](http.StatusInternalServerError, err.Error())
 		}
 
-		span.Event("operation successful", attr.Int("len", len(dbuser)))
 		return ghttp.NewResponse[[]*user.User](http.StatusOK, "user fetched successfully").WithData(&dbuser)
 	}
 
@@ -87,22 +80,18 @@ func (s *server) usersCreate() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil {
-			span.Event("empty object error")
 			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid request")
 		}
 		span.Add(attr.String("for_user", q.Username))
 
 		dbuser, err := s.s.CreateUser(ctx, q.Username, q.Password, q.Name)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
-
 			if errors.Is(service.ErrAlreadyExistsUser, err) {
 				return ghttp.NewResponse[user.User](http.StatusConflict, err.Error())
 			}
 			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())
 		}
 
-		span.Event("operation successful", attr.New("user", dbuser))
 		return ghttp.NewResponse[user.User](http.StatusOK, "user created successfully").WithData(dbuser)
 	}
 
@@ -140,7 +129,6 @@ func (s *server) usersUpdate() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil {
-			span.Event("empty object error")
 			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid request")
 		}
 		span.Add(
@@ -154,17 +142,14 @@ func (s *server) usersUpdate() http.HandlerFunc {
 
 		err := s.s.UpdateUser(ctx, q.Username, u)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())
 		}
 
 		dbUser, err := s.s.GetUser(ctx, q.Username)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())
 		}
 
-		span.Event("operation successful", attr.New("user", dbUser))
 		return ghttp.NewResponse[user.User](http.StatusOK, "user updated successfully").WithData(dbUser)
 	}
 
@@ -191,22 +176,18 @@ func (s *server) usersDelete() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil || *q == "" {
-			span.Event("empty object error")
 			return ghttp.NewResponse[user.User](http.StatusBadRequest, "invalid username")
 		}
 		span.Add(attr.String("for_user", *q))
 
 		err := s.s.DeleteUser(ctx, *q)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
-
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.User](http.StatusNotFound, err.Error())
 			}
 			return ghttp.NewResponse[user.User](http.StatusInternalServerError, err.Error())
 		}
 
-		span.Event("operation successful")
 		return ghttp.NewResponse[user.User](http.StatusOK, "user deleted successfully")
 	}
 

@@ -29,7 +29,6 @@ func (s *server) WithAuth() ghttp.MiddlewareFn {
 				span.Event("auth error", attr.String("error", err.Error()))
 			}
 
-			span.Event("invalid auth")
 			http.Error(w, "not found", http.StatusNotFound)
 		}
 	}

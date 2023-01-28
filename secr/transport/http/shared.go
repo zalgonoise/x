@@ -42,7 +42,6 @@ func (s *server) sharesCreate() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil {
-			span.Event("empty object error")
 			return ghttp.NewResponse[shared.Share](http.StatusBadRequest, "empty request")
 		}
 		span.Add(
@@ -64,10 +63,8 @@ func (s *server) sharesCreate() http.HandlerFunc {
 		}
 
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
 		}
-		span.Event("operation successful")
 		return ghttp.NewResponse[shared.Share](http.StatusOK, "secret shared successfully").WithData(newShare)
 	}
 
@@ -96,17 +93,14 @@ func (s *server) sharesGet() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil {
-			span.Event("empty object error")
 			return ghttp.NewResponse[[]*shared.Share](http.StatusBadRequest, "empty request")
 		}
 		span.Add(attr.String("for_user", q.Owner))
 
 		shares, err := s.s.GetShare(ctx, q.Owner, q.Key)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
 		}
-		span.Event("operation successful")
 		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "shared secret fetched successfully").WithData(&shares)
 	}
 
@@ -126,17 +120,14 @@ func (s *server) sharesList() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil {
-			span.Event("empty object error")
 			return ghttp.NewResponse[[]*shared.Share](http.StatusBadRequest, "empty request")
 		}
 		span.Add(attr.String("for_user", *q))
 
 		shares, err := s.s.ListShares(ctx, *q)
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
 		}
-		span.Event("operation successful")
 		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "shared secrets listed successfully").WithData(&shares)
 	}
 
@@ -169,7 +160,6 @@ func (s *server) sharesDelete() http.HandlerFunc {
 		defer span.End()
 
 		if q == nil {
-			span.Event("empty object error")
 			return ghttp.NewResponse[shared.Share](http.StatusBadRequest, "empty request")
 		}
 		span.Add(attr.String("for_user", q.Owner))
@@ -183,10 +173,8 @@ func (s *server) sharesDelete() http.HandlerFunc {
 		}
 
 		if err != nil {
-			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
 		}
-		span.Event("operation successful")
 		return ghttp.NewResponse[shared.Share](http.StatusOK, "secret share removed successfully")
 	}
 
