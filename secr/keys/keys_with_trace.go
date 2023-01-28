@@ -77,7 +77,7 @@ func (t withTrace) Purge(ctx context.Context, bucket string) error {
 
 	err := t.r.Purge(ctx, bucket)
 	if err != nil {
-		s.Event("error deleting key", attr.New("error", err.Error()))
+		s.Event("error deleting bucket", attr.New("error", err.Error()))
 		return err
 	}
 	return nil
