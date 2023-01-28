@@ -9,8 +9,6 @@ import (
 // Service creates a new service based on the signing key path `authKeyPath`,
 // Bolt DB path `boltDBPath`, and SQLite DB path `sqliteDBPath`
 func Service(authKeyPath, boltDBPath, sqliteDBPath string) (service.Service, error) {
-	Spanner(traceFilePath)
-
 	authorizer, err := Authorizer(authKeyPath)
 	if err != nil {
 		return nil, err
