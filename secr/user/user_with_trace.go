@@ -30,7 +30,7 @@ func (t withTrace) Create(ctx context.Context, u *User) (uint64, error) {
 		s.Event("error creating user", attr.New("error", err.Error()))
 		return id, err
 	}
-	return id, err
+	return id, nil
 }
 
 // Get returns the user identified by `username`, and an error
@@ -46,7 +46,7 @@ func (t withTrace) Get(ctx context.Context, username string) (*User, error) {
 		s.Event("error fetching user", attr.New("error", err.Error()))
 		return u, err
 	}
-	return u, err
+	return u, nil
 }
 
 // List returns all the users, and an error
@@ -59,7 +59,7 @@ func (t withTrace) List(ctx context.Context) ([]*User, error) {
 		s.Event("error listing users", attr.New("error", err.Error()))
 		return u, err
 	}
-	return u, err
+	return u, nil
 }
 
 // Update will update the user `username` with its updated version `updated`. Returns an error
@@ -76,7 +76,7 @@ func (t withTrace) Update(ctx context.Context, username string, updated *User) e
 		s.Event("error updating user", attr.New("error", err.Error()))
 		return err
 	}
-	return err
+	return nil
 }
 
 // Delete removes the user identified by `username`, returning an error
@@ -92,5 +92,5 @@ func (t withTrace) Delete(ctx context.Context, username string) error {
 		s.Event("error deleting user", attr.New("error", err.Error()))
 		return err
 	}
-	return err
+	return nil
 }
