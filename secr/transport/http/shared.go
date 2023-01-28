@@ -38,13 +38,17 @@ func (s *server) sharesCreate() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *sharesCreateRequest) *ghttp.Response[shared.Share] {
-		ctx, span := spanner.Start(ctx, "SharesCreate")
-		span.Add(attr.New("req", q))
+		ctx, span := spanner.Start(ctx, "http.CreateShare:exec")
+		defer span.End()
 
 		if q == nil {
 			span.Event("empty object error")
 			return ghttp.NewResponse[shared.Share](http.StatusBadRequest, "empty request")
 		}
+		span.Add(
+			attr.String("for_user", q.Owner),
+			attr.New("targets", q.Targets),
+		)
 
 		var (
 			newShare *shared.Share
@@ -60,9 +64,10 @@ func (s *server) sharesCreate() http.HandlerFunc {
 		}
 
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
 		}
-		span.Event("operation successful", attr.New("share", newShare))
+		span.Event("operation successful")
 		return ghttp.NewResponse[shared.Share](http.StatusOK, "secret shared successfully").WithData(newShare)
 	}
 
@@ -87,19 +92,21 @@ func (s *server) sharesGet() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *sharesGetRequest) *ghttp.Response[[]*shared.Share] {
-		ctx, span := spanner.Start(ctx, "SharesGet")
-		span.Add(attr.New("req", q))
+		ctx, span := spanner.Start(ctx, "http.GetShare:exec")
+		defer span.End()
 
 		if q == nil {
 			span.Event("empty object error")
 			return ghttp.NewResponse[[]*shared.Share](http.StatusBadRequest, "empty request")
 		}
+		span.Add(attr.String("for_user", q.Owner))
 
 		shares, err := s.s.GetShare(ctx, q.Owner, q.Key)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
 		}
-		span.Event("operation successful", attr.New("share", shares))
+		span.Event("operation successful")
 		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "shared secret fetched successfully").WithData(&shares)
 	}
 
@@ -115,19 +122,21 @@ func (s *server) sharesList() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[[]*shared.Share] {
-		ctx, span := spanner.Start(ctx, "SharesList")
-		span.Add(attr.New("req", q))
+		ctx, span := spanner.Start(ctx, "http.ListShares:exec")
+		defer span.End()
 
 		if q == nil {
 			span.Event("empty object error")
 			return ghttp.NewResponse[[]*shared.Share](http.StatusBadRequest, "empty request")
 		}
+		span.Add(attr.String("for_user", *q))
 
 		shares, err := s.s.ListShares(ctx, *q)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[[]*shared.Share](http.StatusInternalServerError, err.Error())
 		}
-		span.Event("operation successful", attr.New("share", shares))
+		span.Event("operation successful")
 		return ghttp.NewResponse[[]*shared.Share](http.StatusOK, "shared secrets listed successfully").WithData(&shares)
 	}
 
@@ -156,13 +165,14 @@ func (s *server) sharesDelete() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *sharesDeleteRequest) *ghttp.Response[shared.Share] {
-		ctx, span := spanner.Start(ctx, "SharesDelete")
-		span.Add(attr.New("req", q))
+		ctx, span := spanner.Start(ctx, "http.DeleteShare:exec")
+		defer span.End()
 
 		if q == nil {
 			span.Event("empty object error")
 			return ghttp.NewResponse[shared.Share](http.StatusBadRequest, "empty request")
 		}
+		span.Add(attr.String("for_user", q.Owner))
 
 		var err error
 
@@ -173,6 +183,7 @@ func (s *server) sharesDelete() http.HandlerFunc {
 		}
 
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[shared.Share](http.StatusInternalServerError, err.Error())
 		}
 		span.Event("operation successful")

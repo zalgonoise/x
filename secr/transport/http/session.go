@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/zalgonoise/attr"
+	"github.com/zalgonoise/spanner"
 	"github.com/zalgonoise/x/ghttp"
 	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/service"
@@ -23,12 +25,19 @@ func (s *server) login() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *loginRequest) *ghttp.Response[user.Session] {
+		ctx, span := spanner.Start(ctx, "http.Login:exec")
+		defer span.End()
+
 		if q == nil {
+			span.Event("empty object error")
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
+		span.Add(attr.String("for_user", q.Username))
 
 		dbsession, err := s.s.Login(ctx, q.Username, q.Password)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
+
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
 			}
@@ -38,6 +47,7 @@ func (s *server) login() http.HandlerFunc {
 			return ghttp.NewResponse[user.Session](http.StatusInternalServerError, err.Error())
 		}
 
+		span.Event("operation successful")
 		return ghttp.NewResponse[user.Session](http.StatusOK, "user logged in successfully").WithData(dbsession)
 	}
 
@@ -54,18 +64,25 @@ func (s *server) logout() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[user.Session] {
+		ctx, span := spanner.Start(ctx, "http.Logout:exec")
+		defer span.End()
+
 		if q == nil || *q == "" {
+			span.Event("empty object error")
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
+		span.Add(attr.String("for_user", *q))
 
 		err := s.s.Logout(ctx, *q)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
 			}
 			return ghttp.NewResponse[user.Session](http.StatusInternalServerError, err.Error())
 		}
 
+		span.Event("operation successful")
 		return ghttp.NewResponse[user.Session](http.StatusOK, "user logged out successfully")
 	}
 
@@ -93,12 +110,19 @@ func (s *server) changePassword() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *changePasswordRequest) *ghttp.Response[user.Session] {
+		ctx, span := spanner.Start(ctx, "http.ChangePassword:exec")
+		defer span.End()
+
 		if q == nil {
+			span.Event("empty object error")
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
+		span.Add(attr.String("for_user", q.Username))
 
 		err := s.s.ChangePassword(ctx, q.Username, q.Password, q.NewPassword)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
+
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
 			}
@@ -108,6 +132,7 @@ func (s *server) changePassword() http.HandlerFunc {
 			return ghttp.NewResponse[user.Session](http.StatusInternalServerError, err.Error())
 		}
 
+		span.Event("operation successful")
 		return ghttp.NewResponse[user.Session](http.StatusOK, "password changed successfully")
 	}
 
@@ -135,12 +160,19 @@ func (s *server) refresh() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *refreshRequest) *ghttp.Response[user.Session] {
+		ctx, span := spanner.Start(ctx, "http.Refresh:exec")
+		defer span.End()
+
 		if q == nil {
+			span.Event("empty object error")
 			return ghttp.NewResponse[user.Session](http.StatusBadRequest, "invalid request")
 		}
+		span.Add(attr.String("for_user", q.Username))
 
 		token, err := s.s.Refresh(ctx, q.Username, q.Token)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
+
 			if errors.Is(sqlite.ErrNotFoundUser, err) {
 				return ghttp.NewResponse[user.Session](http.StatusNotFound, err.Error())
 			}
@@ -150,6 +182,7 @@ func (s *server) refresh() http.HandlerFunc {
 			return ghttp.NewResponse[user.Session](http.StatusInternalServerError, err.Error())
 		}
 
+		span.Event("operation successful")
 		return ghttp.NewResponse[user.Session](http.StatusOK, "token refreshed successfully").WithData(token)
 	}
 

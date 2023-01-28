@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/zalgonoise/attr"
+	"github.com/zalgonoise/spanner"
 	"github.com/zalgonoise/x/ghttp"
 	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/secret"
@@ -30,18 +32,25 @@ func (s *server) secretsGet() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *secretsGetRequest) *ghttp.Response[secret.Secret] {
+		ctx, span := spanner.Start(ctx, "http.GetSecret:exec")
+		defer span.End()
+
 		if q == nil {
+			span.Event("empty object error")
 			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid request")
 		}
+		span.Add(attr.String("for_user", q.Username))
 
 		dbsecr, err := s.s.GetSecret(ctx, q.Username, q.Key)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			if errors.Is(sqlite.ErrNotFoundSecret, err) {
 				return ghttp.NewResponse[secret.Secret](http.StatusNotFound, err.Error())
 			}
 			return ghttp.NewResponse[secret.Secret](http.StatusInternalServerError, err.Error())
 		}
 
+		span.Event("operation successful")
 		return ghttp.NewResponse[secret.Secret](http.StatusOK, "secret fetched successfully").WithData(dbsecr)
 	}
 
@@ -57,15 +66,22 @@ func (s *server) secretsList() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *string) *ghttp.Response[[]*secret.Secret] {
+		ctx, span := spanner.Start(ctx, "http.ListSecrets:exec")
+		defer span.End()
+
 		if q == nil || *q == "" {
+			span.Event("empty object error")
 			return ghttp.NewResponse[[]*secret.Secret](http.StatusBadRequest, "invalid username")
 		}
+		span.Add(attr.String("for_user", *q))
 
 		dbsecr, err := s.s.ListSecrets(ctx, *q)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[[]*secret.Secret](http.StatusInternalServerError, err.Error())
 		}
 
+		span.Event("operation successful", attr.Int("len", len(dbsecr)))
 		return ghttp.NewResponse[[]*secret.Secret](http.StatusOK, "secrets listed successfully").WithData(&dbsecr)
 	}
 
@@ -91,19 +107,28 @@ func (s *server) secretsCreate() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *secretsCreateRequest) *ghttp.Response[secret.Secret] {
+		ctx, span := spanner.Start(ctx, "http.CreateSecret:exec")
+		defer span.End()
+
 		if q == nil {
+			span.Event("empty object error")
 			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid request")
 		}
+		span.Add(attr.String("for_user", q.Username))
 
 		err := s.s.CreateSecret(ctx, q.Username, q.Key, []byte(q.Value))
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[secret.Secret](http.StatusInternalServerError, err.Error())
 		}
 
 		secr, err := s.s.GetSecret(ctx, q.Username, q.Key)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[secret.Secret](http.StatusInternalServerError, err.Error())
 		}
+
+		span.Event("operation successful")
 		return ghttp.NewResponse[secret.Secret](http.StatusOK, "secret created successfully").WithData(secr)
 	}
 
@@ -129,15 +154,22 @@ func (s *server) secretsDelete() http.HandlerFunc {
 	}
 
 	var execFn = func(ctx context.Context, q *secretsDeleteRequest) *ghttp.Response[secret.Secret] {
+		ctx, span := spanner.Start(ctx, "http.DeleteSecret:exec")
+		defer span.End()
+
 		if q == nil {
+			span.Event("empty object error")
 			return ghttp.NewResponse[secret.Secret](http.StatusBadRequest, "invalid request")
 		}
+		span.Add(attr.String("for_user", q.Username))
 
 		err := s.s.DeleteSecret(ctx, q.Username, q.Key)
 		if err != nil {
+			span.Event("operation error", attr.String("error", err.Error()))
 			return ghttp.NewResponse[secret.Secret](http.StatusInternalServerError, err.Error())
 		}
 
+		span.Event("operation successful")
 		return ghttp.NewResponse[secret.Secret](http.StatusOK, "secret deleted successfully")
 	}
 
