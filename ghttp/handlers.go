@@ -3,6 +3,8 @@ package ghttp
 import (
 	"context"
 	"net/http"
+
+	"github.com/zalgonoise/attr"
 )
 
 type router struct {
@@ -95,11 +97,20 @@ func Do[Q any, A any](name string, parseFn ParseFn[Q], queryFn ExecFn[Q, A]) htt
 		if parseFn != nil {
 			query, err = parseFn(ctx, r)
 			if err != nil {
+				s.Event("failed to parse the request", attr.String("error", err.Error()))
 				NewResponse[A](http.StatusBadRequest, err.Error()).WriteHTTP(ctx, w)
 				return
 			}
 		}
 
-		queryFn(ctx, query).WriteHTTP(ctx, w)
+		res := queryFn(ctx, query)
+		if res.Status > 399 {
+			s.Event("operation error", attr.Int("status", res.Status), attr.String("error", res.Message))
+			res.WriteHTTP(ctx, w)
+			return
+		}
+
+		s.Event("operation successful", attr.Int("status", res.Status))
+		res.WriteHTTP(ctx, w)
 	}
 }
