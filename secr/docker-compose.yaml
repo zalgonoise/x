@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+
+  cloaki:
+    build:
+      context: . 
+      dockerfile: ./Dockerfile
+    container_name: secr
+    ports: 
+      - 8080:8080
+    restart: unless-stopped
+    volumes:
+      - /tmp/secr:/secr
+    environment:
+      - SECR_BOLT_PATH=/secr/keys.db
+      - SECR_SQLITE_PATH=/secr/sqlite.db
+      - SECR_JWT_KEY_PATH=/secr/server/key
+      - SECR_LOGFILE_PATH=/secr/error.log
+      - SECR_TRACEFILE_PATH=/secr/trace.json
