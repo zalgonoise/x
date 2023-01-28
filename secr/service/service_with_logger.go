@@ -25,16 +25,16 @@ func WithLogger(l logx.Logger, r Service) Service {
 
 // Login verifies the user's credentials and returns a session and an error
 func (l withLogger) Login(ctx context.Context, username, password string) (*user.Session, error) {
-	sess, err := l.r.Login(ctx, username, password)
+	session, err := l.r.Login(ctx, username, password)
 	if err != nil {
 		l.l.Error(
 			err.Error(),
 			attr.String("service", "service.Login"),
 			attr.String("username", username),
 		)
-		return sess, err
+		return session, err
 	}
-	return sess, nil
+	return session, nil
 }
 
 // Logout signs-out the user `username`

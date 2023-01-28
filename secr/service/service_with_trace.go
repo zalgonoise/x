@@ -29,12 +29,12 @@ func (t withTrace) Login(ctx context.Context, username, password string) (*user.
 		attr.String("username", username),
 	)
 
-	sess, err := t.r.Login(ctx, username, password)
+	session, err := t.r.Login(ctx, username, password)
 	if err != nil {
 		s.Event("error logging user in", attr.New("error", err.Error()))
-		return sess, err
+		return session, err
 	}
-	return sess, nil
+	return session, nil
 }
 
 // Logout signs-out the user `username`
