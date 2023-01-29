@@ -1,6 +1,10 @@
 package service
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/zalgonoise/x/errors"
+)
 
 type Transactioner interface {
 	Rollback(error) error
@@ -10,8 +14,7 @@ type Transactioner interface {
 type RollbackFn func() error
 
 type transactioner struct {
-	r   []RollbackFn
-	err error
+	r []RollbackFn
 }
 
 func newTx() Transactioner {
@@ -19,20 +22,21 @@ func newTx() Transactioner {
 }
 
 func (tx *transactioner) Rollback(input error) error {
+	var errs = make([]error, 0, len(tx.r)+1)
+	errs[0] = input
+
 	for _, rb := range tx.r {
-		err := rb()
-		if err != nil {
-			if tx.err == nil {
-				tx.err = err
-				continue
-			}
-			tx.err = fmt.Errorf("%w -- %v", tx.err, err)
+		if err := rb(); err != nil {
+			errs = append(errs, fmt.Errorf("rollback error: %w", err))
 		}
 	}
-	if tx.err == nil {
-		return input
+	switch len(errs) {
+
+	case 1:
+		return errs[0]
+	default:
+		return errors.Join(errs...)
 	}
-	return fmt.Errorf("%w -- rollback error: %v", input, tx.err)
 }
 
 func (tx *transactioner) Add(r RollbackFn) {
