@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/crypt"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/sqlite"
@@ -23,19 +23,19 @@ var (
 // It returns a user and an error
 func (s service) CreateUser(ctx context.Context, username, password, name string) (*user.User, error) {
 	if err := user.ValidateUsername(username); err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		return nil, errors.Join(ErrInvalidUser, err)
 	}
 	if err := user.ValidatePassword(password); err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInvalidPassword, err)
+		return nil, errors.Join(ErrInvalidPassword, err)
 	}
 	if err := user.ValidateName(name); err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInvalidName, err)
+		return nil, errors.Join(ErrInvalidName, err)
 	}
 
 	// check if user exists
 	_, err := s.users.Get(ctx, username)
 	if err == nil || !errors.Is(sqlite.ErrNotFoundUser, err) {
-		return nil, fmt.Errorf("failed to create user: %v", ErrAlreadyExistsUser)
+		return nil, fmt.Errorf("failed to create user: %w", ErrAlreadyExistsUser)
 	}
 
 	// generate hash from password
@@ -54,7 +54,7 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 	}
 	id, err := s.users.Create(ctx, u)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create user %s: %v", username, err)
+		return nil, fmt.Errorf("failed to create user %s: %w", username, err)
 	}
 	u.ID = id
 
@@ -67,7 +67,7 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 	key := crypt.New32Key()
 	err = s.keys.Set(ctx, keys.UserBucket(u.ID), keys.UniqueID, key[:])
 	if err != nil {
-		return nil, tx.Rollback(fmt.Errorf("failed to create user %s: %v", username, err))
+		return nil, tx.Rollback(fmt.Errorf("failed to create user %s: %w", username, err))
 	}
 
 	return u, nil
@@ -76,12 +76,12 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 // GetUser fetches the user with username `username`. Returns a user and an error
 func (s service) GetUser(ctx context.Context, username string) (*user.User, error) {
 	if err := user.ValidateUsername(username); err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		return nil, errors.Join(ErrInvalidUser, err)
 	}
 
 	u, err := s.users.Get(ctx, username)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user %s: %v", username, err)
+		return nil, fmt.Errorf("failed to get user %s: %w", username, err)
 	}
 	return u, nil
 }
@@ -90,7 +90,7 @@ func (s service) GetUser(ctx context.Context, username string) (*user.User, erro
 func (s service) ListUsers(ctx context.Context) ([]*user.User, error) {
 	users, err := s.users.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list users: %v", err)
+		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
 	return users, nil
 }
@@ -98,18 +98,18 @@ func (s service) ListUsers(ctx context.Context) ([]*user.User, error) {
 // UpdateUser updates the user `username`'s name, found in `updated` user. Returns an error
 func (s service) UpdateUser(ctx context.Context, username string, updated *user.User) error {
 	if err := user.ValidateUsername(username); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		return errors.Join(ErrInvalidUser, err)
 	}
 	if updated == nil {
 		return fmt.Errorf("%w: updated user cannot be nil", ErrInvalidUser)
 	}
 	if err := user.ValidateName(updated.Name); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidName, err)
+		return errors.Join(ErrInvalidName, err)
 	}
 
 	u, err := s.users.Get(ctx, username)
 	if err != nil {
-		return fmt.Errorf("failed to fetch original user %s: %v", username, err)
+		return fmt.Errorf("failed to fetch original user %s: %w", username, err)
 	}
 
 	if updated.Name == u.Name {
@@ -120,7 +120,7 @@ func (s service) UpdateUser(ctx context.Context, username string, updated *user.
 
 	err = s.users.Update(ctx, username, u)
 	if err != nil {
-		return fmt.Errorf("failed to update user %s: %v", username, err)
+		return fmt.Errorf("failed to update user %s: %w", username, err)
 	}
 
 	return nil
@@ -129,7 +129,7 @@ func (s service) UpdateUser(ctx context.Context, username string, updated *user.
 // DeleteUser removes the user with username `username`. Returns an error
 func (s service) DeleteUser(ctx context.Context, username string) error {
 	if err := user.ValidateUsername(username); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidUser, err)
+		return errors.Join(ErrInvalidUser, err)
 	}
 
 	u, err := s.users.Get(ctx, username)
@@ -138,7 +138,7 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 			// no change in state
 			return nil
 		}
-		return fmt.Errorf("failed to fetch original user %s: %v", username, err)
+		return fmt.Errorf("failed to fetch original user %s: %w", username, err)
 	}
 
 	tx := newTx()
@@ -146,7 +146,7 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 	// remove all shares
 	shares, err := s.shares.List(ctx, username)
 	if err != nil {
-		return fmt.Errorf("failed to fetch shared secrets: %v", err)
+		return fmt.Errorf("failed to fetch shared secrets: %w", err)
 	}
 	for _, sh := range shares {
 		tx.Add(func() error {
@@ -156,14 +156,14 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 
 		err := s.shares.Delete(ctx, sh)
 		if err != nil {
-			return tx.Rollback(fmt.Errorf("failed to remove shared secret: %v", err))
+			return tx.Rollback(fmt.Errorf("failed to remove shared secret: %w", err))
 		}
 	}
 
 	// remove all secrets
 	secrets, err := s.secrets.List(ctx, username)
 	if err != nil {
-		return fmt.Errorf("failed to list user secrets: %v", err)
+		return fmt.Errorf("failed to list user secrets: %w", err)
 	}
 	for _, secr := range secrets {
 		tx.Add(func() error {
@@ -173,14 +173,14 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 
 		err := s.secrets.Delete(ctx, username, secr.Key)
 		if err != nil {
-			return tx.Rollback(fmt.Errorf("failed to remove secret: %v", err))
+			return tx.Rollback(fmt.Errorf("failed to remove secret: %w", err))
 		}
 	}
 
 	// get user's private key for rollback func
 	upk, err := s.keys.Get(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch user %s's key: %v", username, err)
+		return fmt.Errorf("failed to fetch user %s's key: %w", username, err)
 	}
 	tx.Add(func() error {
 		return s.keys.Set(ctx, keys.UserBucket(u.ID), keys.UniqueID, upk)
@@ -189,13 +189,13 @@ func (s service) DeleteUser(ctx context.Context, username string) error {
 	// delete private key
 	err = s.keys.Delete(ctx, keys.UserBucket(u.ID), keys.UniqueID)
 	if err != nil {
-		return tx.Rollback(fmt.Errorf("failed to delete user %s's key: %v", username, err))
+		return tx.Rollback(fmt.Errorf("failed to delete user %s's key: %w", username, err))
 	}
 
 	// delete user
 	err = s.users.Delete(ctx, username)
 	if err != nil {
-		return tx.Rollback(fmt.Errorf("failed to delete user %s: %v", username, err))
+		return tx.Rollback(fmt.Errorf("failed to delete user %s: %w", username, err))
 	}
 
 	return nil

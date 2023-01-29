@@ -1,11 +1,11 @@
 package factory
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
 
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/crypt"
 )
@@ -23,7 +23,7 @@ func Authorizer(path string) (auth authz.Authorizer, err error) {
 	if err != nil {
 		auth, defErr = loadKey(signingKeyPath)
 		if defErr != nil {
-			return nil, fmt.Errorf("failed to load key from input path and from default path: %w ; %v", err, defErr)
+			return nil, errors.Join(defErr, fmt.Errorf("failed to load key from input path and from default path: %w", err))
 		}
 	}
 	return authz.WithTrace(auth), nil

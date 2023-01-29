@@ -2,9 +2,9 @@ package bolt
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/keys"
 	"go.etcd.io/bbolt"
 )
@@ -51,7 +51,7 @@ func (ukr *keysRepository) Get(ctx context.Context, bucket, k string) ([]byte, e
 		if errors.Is(ErrEmptyBucket, err) {
 			return nil, err
 		}
-		return nil, fmt.Errorf("%w: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, err)
 	}
 
 	return v, nil
@@ -73,18 +73,18 @@ func (ukr *keysRepository) Set(ctx context.Context, bucket, k string, v []byte) 
 	err := ukr.db.Update(func(tx *bbolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(bucket))
 		if err != nil {
-			return fmt.Errorf("failed to get / create bucket: %v", err)
+			return fmt.Errorf("failed to get / create bucket: %w", err)
 		}
 
 		err = b.Put([]byte(k), []byte(v))
 		if err != nil {
-			return fmt.Errorf("failed to set key-value: %v", err)
+			return fmt.Errorf("failed to set key-value: %w", err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrDBError, err)
+		return errors.Join(ErrDBError, err)
 	}
 	return nil
 }
@@ -106,7 +106,7 @@ func (ukr *keysRepository) Delete(ctx context.Context, bucket, k string) error {
 
 		err := b.Delete([]byte(k))
 		if err != nil {
-			return fmt.Errorf("failed to delete key %s in the bucket %s: %v", k, bucket, err)
+			return fmt.Errorf("failed to delete key %s in the bucket %s: %w", k, bucket, err)
 		}
 		return nil
 	})
@@ -115,7 +115,7 @@ func (ukr *keysRepository) Delete(ctx context.Context, bucket, k string) error {
 		if errors.Is(ErrEmptyBucket, err) {
 			return err
 		}
-		return fmt.Errorf("%w: %v", ErrDBError, err)
+		return errors.Join(ErrDBError, err)
 	}
 	return nil
 }
@@ -129,13 +129,13 @@ func (ukr *keysRepository) Purge(ctx context.Context, bucket string) error {
 	err := ukr.db.Update(func(tx *bbolt.Tx) error {
 		err := tx.DeleteBucket([]byte(bucket))
 		if err != nil {
-			return fmt.Errorf("failed to delete the bucket %s: %v", bucket, err)
+			return fmt.Errorf("failed to delete the bucket %s: %w", bucket, err)
 		}
 		return nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrDBError, err)
+		return errors.Join(ErrDBError, err)
 	}
 	return nil
 }

@@ -2,12 +2,12 @@ package authz
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -24,6 +24,7 @@ var (
 	ErrMissingUser   = errors.New("missing user claim")
 	ErrInvalidUser   = errors.New("invalid user claim")
 	ErrExpired       = errors.New("token has expired")
+	ErrInvalidMethod = errors.New("invalid signing method")
 )
 
 // Authorizer is responsible for generating, refreshing and validating JWT
@@ -64,7 +65,7 @@ func (a *authz) NewToken(ctx context.Context, u *user.User) (string, error) {
 
 	token, err := tok.SignedString(a.signingKey)
 	if err != nil {
-		return "", fmt.Errorf("failed to sign token: %v", err)
+		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
 	return token, nil
 }
@@ -74,7 +75,7 @@ func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
 	tok, err := jwt.Parse(token, a.parseToken)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse token: %v", err)
+		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 	claims := tok.Claims.(jwt.MapClaims)
 
@@ -103,7 +104,7 @@ func (a *authz) Parse(ctx context.Context, token string) (*user.User, error) {
 
 func (a *authz) parseToken(token *jwt.Token) (interface{}, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		return nil, errors.Join(ErrInvalidMethod, fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
 	}
 	return a.signingKey, nil
 }

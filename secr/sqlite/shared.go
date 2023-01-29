@@ -3,10 +3,10 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/shared"
 )
 
@@ -40,7 +40,7 @@ func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint6
 	shares := newDBShare(sh)
 	tx, err := sr.db.Begin()
 	if err != nil {
-		return 0, fmt.Errorf("failed to begin transaction: %v", err)
+		return 0, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	defer tx.Rollback()
@@ -70,7 +70,7 @@ func (sr *sharedRepository) Create(ctx context.Context, sh *shared.Share) (uint6
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, fmt.Errorf("failed to create shared secret: %v", err)
+		return 0, fmt.Errorf("failed to create shared secret: %w", err)
 	}
 	return lastID, nil
 }
@@ -88,12 +88,12 @@ WHERE o.username = ?
 `, ToSQLString(username), ToSQLString(secretName))
 
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list shared secrets: %w", err))
 	}
 
 	shares, err := sr.scanShares(rows)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list shared secrets: %w", err))
 	}
 	return shares, nil
 }
@@ -109,12 +109,12 @@ WHERE o.username = ?
 `, ToSQLString(username))
 
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list shared secrets: %w", err))
 	}
 
 	shares, err := sr.scanShares(rows)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list shared secrets: %w", err))
 	}
 	return shares, nil
 }
@@ -131,12 +131,12 @@ func (sr *sharedRepository) ListTarget(ctx context.Context, target string) ([]*s
 	`, ToSQLString(target))
 
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list shared secrets: %w", err))
 	}
 
 	shares, err := sr.scanShares(rows)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list shared secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list shared secrets: %w", err))
 	}
 	return shares, nil
 }
@@ -146,7 +146,7 @@ func (sr *sharedRepository) Delete(ctx context.Context, sh *shared.Share) error 
 	dbs := newDBShare(sh)
 	tx, err := sr.db.Begin()
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %v", err)
+		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
 	// defer rollback in case an error occurs
@@ -166,7 +166,7 @@ WHERE o.username = ?
 			share.Owner, share.Secret, share.Target)
 
 		if err != nil {
-			return fmt.Errorf("%w: %v", ErrDBError, err)
+			return errors.Join(ErrDBError, err)
 		}
 		err = IsShareFound(res)
 		if err != nil {
@@ -176,7 +176,7 @@ WHERE o.username = ?
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf("%w: shared secret was not deleted: %v", ErrDBError, err)
+		return errors.Join(ErrDBError, fmt.Errorf("shared secret was not deleted: %w", err))
 	}
 	return nil
 }
@@ -245,7 +245,7 @@ func (sr *sharedRepository) scanShare(r Scanner) (dbs *dbShare, err error) {
 		if errors.Is(sql.ErrNoRows, err) {
 			return nil, ErrNotFoundShare
 		}
-		return nil, fmt.Errorf("%w: failed to scan DB row: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to scan DB row: %w", err))
 	}
 	return dbs, nil
 }
@@ -257,7 +257,7 @@ func (sr *sharedRepository) scanShares(rs *sql.Rows) ([]*shared.Share, error) {
 	for rs.Next() {
 		dbs, err := sr.scanShare(rs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %v", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		shares = append(shares, dbs)
 	}

@@ -3,9 +3,9 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/user"
 )
 
@@ -44,12 +44,12 @@ VALUES (?, ?, ?, ?)
 `, dbu.Username, dbu.Name, dbu.Hash, dbu.Salt)
 
 	if err != nil {
-		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, u.Username, err)
+		return 0, errors.Join(ErrDBError, fmt.Errorf("failed to create user %s: %w", u.Username, err))
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("%w: failed to create user %s: %v", ErrDBError, u.Username, err)
+		return 0, errors.Join(ErrDBError, fmt.Errorf("failed to create user %s: %w", u.Username, err))
 	}
 	if id == 0 {
 		return 0, fmt.Errorf("%w: user was not created %s", ErrDBError, u.Username)
@@ -79,12 +79,12 @@ SELECT u.id, u.username, u.name, u.created_at, u.updated_at
 FROM users AS u
 	`)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list users: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list users: %w", err))
 	}
 
 	users, err := ur.scanUsers(rows)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list users: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list users: %w", err))
 	}
 	return users, nil
 }
@@ -99,7 +99,7 @@ WHERE u.username = ?
 `, dbu.Name, dbu.Hash, ToSQLString(username))
 
 	if err != nil {
-		return fmt.Errorf("%w: failed to update user %s: %v", ErrDBError, username, err)
+		return errors.Join(ErrDBError, fmt.Errorf("failed to update user %s: %w", username, err))
 	}
 
 	err = IsUserFound(res)
@@ -116,7 +116,7 @@ func (ur *userRepository) Delete(ctx context.Context, username string) error {
 	`, ToSQLString(username))
 
 	if err != nil {
-		return fmt.Errorf("%w: failed to delete user %s: %v", ErrDBError, username, err)
+		return errors.Join(ErrDBError, fmt.Errorf("failed to delete user %s: %w", username, err))
 	}
 
 	err = IsUserFound(res)
@@ -145,7 +145,7 @@ func (ur *userRepository) scanUser(r Scanner) (u *user.User, err error) {
 		if errors.Is(sql.ErrNoRows, err) {
 			return nil, ErrNotFoundUser
 		}
-		return nil, fmt.Errorf("%w: failed to scan DB row: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to scan DB row: %w", err))
 	}
 	return dbu.toDomainEntity(), nil
 }
@@ -157,7 +157,7 @@ func (ur *userRepository) scanUsers(rs *sql.Rows) ([]*user.User, error) {
 	for rs.Next() {
 		u, err := ur.scanUser(rs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %v", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		users = append(users, u)
 	}

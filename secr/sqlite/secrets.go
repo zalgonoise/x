@@ -3,9 +3,9 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/secret"
 )
 
@@ -42,12 +42,12 @@ VALUES (
 `, ToSQLString(username), dbs.Name)
 
 	if err != nil {
-		return 0, fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
+		return 0, errors.Join(ErrDBError, fmt.Errorf("failed to create secret %s: %w", s.Key, err))
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, fmt.Errorf("%w: failed to create secret %s: %v", ErrDBError, s.Key, err)
+		return 0, errors.Join(ErrDBError, fmt.Errorf("failed to create secret %s: %w", s.Key, err))
 	}
 	if id == 0 {
 		return 0, fmt.Errorf("%w: secret was not created %s", ErrDBError, s.Key)
@@ -83,12 +83,12 @@ WHERE u.username = ?
 		`, ToSQLString(username))
 
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list secrets: %w", err))
 	}
 
 	secrets, err := sr.scanSecrets(rows)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to list secrets: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to list secrets: %w", err))
 	}
 
 	return secrets, nil
@@ -106,7 +106,7 @@ func (sr *secretRepository) Delete(ctx context.Context, username string, key str
 	`, ToSQLString(username), ToSQLString(key))
 
 	if err != nil {
-		return fmt.Errorf("%w: failed to delete secret %s: %v", ErrDBError, key, err)
+		return errors.Join(ErrDBError, fmt.Errorf("failed to delete secret %s: %w", key, err))
 	}
 
 	err = IsSecretFound(res)
@@ -131,7 +131,7 @@ func (sr *secretRepository) scanSecret(r Scanner) (s *secret.Secret, err error) 
 		if errors.Is(sql.ErrNoRows, err) {
 			return nil, ErrNotFoundSecret
 		}
-		return nil, fmt.Errorf("%w: failed to scan DB row: %v", ErrDBError, err)
+		return nil, errors.Join(ErrDBError, fmt.Errorf("failed to scan DB row: %w", err))
 	}
 	return dbs.toDomainEntity(), nil
 }
@@ -143,7 +143,7 @@ func (sr *secretRepository) scanSecrets(rs *sql.Rows) ([]*secret.Secret, error) 
 	for rs.Next() {
 		s, err := sr.scanSecret(rs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan row: %v", err)
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		secrets = append(secrets, s)
 	}

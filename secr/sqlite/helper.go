@@ -3,9 +3,9 @@ package sqlite
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
+	"github.com/zalgonoise/x/errors"
 	"golang.org/x/exp/constraints"
 )
 
@@ -55,7 +55,7 @@ func ToSQLTime(t time.Time) sql.NullTime {
 func IsUserFound(res sql.Result) error {
 	n, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrDBError, err)
+		return errors.Join(ErrDBError, err)
 	}
 	if n == 0 {
 		return ErrNotFoundUser
@@ -67,7 +67,7 @@ func IsUserFound(res sql.Result) error {
 func IsSecretFound(res sql.Result) error {
 	n, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrDBError, err)
+		return errors.Join(ErrDBError, err)
 	}
 	if n == 0 {
 		return ErrNotFoundSecret
@@ -79,7 +79,7 @@ func IsSecretFound(res sql.Result) error {
 func IsShareFound(res sql.Result) error {
 	n, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrDBError, err)
+		return errors.Join(ErrDBError, err)
 	}
 	if n == 0 {
 		return ErrNotFoundShare
