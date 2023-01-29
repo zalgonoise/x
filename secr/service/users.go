@@ -35,7 +35,7 @@ func (s service) CreateUser(ctx context.Context, username, password, name string
 	// check if user exists
 	_, err := s.users.Get(ctx, username)
 	if err == nil || !errors.Is(sqlite.ErrNotFoundUser, err) {
-		return nil, fmt.Errorf("failed to create user: %w", ErrAlreadyExistsUser)
+		return nil, errors.Join(ErrAlreadyExistsUser, err)
 	}
 
 	// generate hash from password
