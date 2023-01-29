@@ -63,6 +63,7 @@ func (r *Response[T]) WriteHTTP(ctx context.Context, w http.ResponseWriter) {
 	for k, v := range r.Headers {
 		w.Header().Set(k, v)
 	}
+	w.Header().Set("Content-Type", "application/json")
 
 	n, err := w.Write(response)
 	if err != nil {
