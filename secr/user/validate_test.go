@@ -1,9 +1,9 @@
 package user_test
 
 import (
-	"errors"
 	"testing"
 
+	"github.com/zalgonoise/x/errors"
 	. "github.com/zalgonoise/x/secr/user"
 )
 
