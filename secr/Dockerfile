@@ -17,6 +17,6 @@ FROM alpine:edge
 
 RUN mkdir -p /secr/server
 
-COPY --from=builder /build/secr /secr
+COPY --from=builder /build/secr /app
 
-CMD ["/secr"]
+CMD ["/app"]
