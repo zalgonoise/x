@@ -2,12 +2,12 @@ package http
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/spanner"
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/ghttp"
 	"github.com/zalgonoise/x/secr/authz"
 	"github.com/zalgonoise/x/secr/shared"

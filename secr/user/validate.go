@@ -1,8 +1,9 @@
 package user
 
 import (
-	"errors"
 	"regexp"
+
+	"github.com/zalgonoise/x/errors"
 )
 
 var (

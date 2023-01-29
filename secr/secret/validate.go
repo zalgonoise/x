@@ -1,10 +1,10 @@
 package secret
 
 import (
-	"errors"
 	"regexp"
 	"strings"
 
+	"github.com/zalgonoise/x/errors"
 	"github.com/zalgonoise/x/secr/keys"
 	"github.com/zalgonoise/x/secr/user"
 )

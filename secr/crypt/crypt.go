@@ -6,15 +6,19 @@ import (
 	cryptorand "crypto/rand"
 	"crypto/sha512"
 	"encoding/binary"
-	"errors"
 	"math/rand"
 	"sync"
 	"time"
 
+	"github.com/zalgonoise/x/errors"
 	"golang.org/x/crypto/pbkdf2"
 )
 
 const numHashIter = 600_001
+
+var (
+	ErrInvalidLen = errors.New("invalid ciphertext length")
+)
 
 // Cryptographer describes the set of cryptographic actions required by the app
 type Cryptographer interface {
@@ -135,7 +139,7 @@ func (enc aesEncrypter) Decrypt(ciphertext []byte) ([]byte, error) {
 
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
-		return nil, errors.New("invalid ciphertext length")
+		return nil, ErrInvalidLen
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]

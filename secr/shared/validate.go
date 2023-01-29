@@ -1,8 +1,9 @@
 package shared
 
 import (
-	"errors"
 	"time"
+
+	"github.com/zalgonoise/x/errors"
 )
 
 var zeroTime = time.Time{}
