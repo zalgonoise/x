@@ -18,5 +18,6 @@ require (
 require (
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/zalgonoise/x/errors v0.0.0-20230129014217-13ba7fbf7808 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 )

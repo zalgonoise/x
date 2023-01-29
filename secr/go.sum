@@ -12,6 +12,8 @@ github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be h1:ba6thk6xk6aWTGx
 github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be/go.mod h1:H1GvFfv7qC2rtnOLO49lHOHa8fsS6w0cjYhxw9/WamQ=
 github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6 h1:lEVAaRJSf7M4AL+Ye0bG83EuU5YyXJjgqkzc/RA9nUs=
 github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6/go.mod h1:zcjBm68rwWIPohFOeMhJWIlCvl3UZrSLn49hzAde99A=
+github.com/zalgonoise/x/errors v0.0.0-20230129014217-13ba7fbf7808 h1:NULWMbUE3yPuXIdPx4CfX9xJiM80V5Fnfy1ZeYY3RY0=
+github.com/zalgonoise/x/errors v0.0.0-20230129014217-13ba7fbf7808/go.mod h1:+jv4S3ON/Mgx1kol8frhcL6bJjXb0pRwCmMqH5ZJ/NE=
 github.com/zalgonoise/x/ghttp v0.0.0-20230114182139-01b85dedbf92 h1:zMPig9uN9vlGDu9y80L4iPyb2NWzz33Bw0qy52cZJA8=
 github.com/zalgonoise/x/ghttp v0.0.0-20230114182139-01b85dedbf92/go.mod h1:iA+9dXCQwQmUNxAjwMSxk9JNvaK6IgHHQpHRHip28oY=
 github.com/zalgonoise/x/ghttp v0.0.0-20230128165119-124113b62650 h1:UP9uivG1KSceJbWuwpPMsqu1BRzbe0AYdwTs7WVwqoE=
