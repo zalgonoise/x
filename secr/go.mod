@@ -8,7 +8,7 @@ require (
 	github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d
 	github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be
 	github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6
-	github.com/zalgonoise/x/ghttp v0.0.0-20230128165119-124113b62650
+	github.com/zalgonoise/x/ghttp v0.0.0-20230129000120-e397457a4020
 	github.com/zalgonoise/x/ptr v0.0.0-20230121174328-affab0dd1faa
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/crypto v0.5.0
