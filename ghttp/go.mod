@@ -6,7 +6,7 @@ require (
 	github.com/goccy/go-json v0.10.0
 	github.com/google/uuid v1.3.0
 	github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d
-	github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6
+	github.com/zalgonoise/spanner v0.0.0-20230131182152-6e9c077fea4b
 	github.com/zalgonoise/x/errors v0.0.0-20230129211157-8454813f8bc7
 )
 
