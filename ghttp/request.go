@@ -2,13 +2,13 @@ package ghttp
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/spanner"
+	"github.com/zalgonoise/x/errors"
 )
 
 var (
@@ -27,21 +27,21 @@ var _ ParseFn[any] = ReadBody[any]
 //
 // Returns a pointer to the object T and an error
 func ReadBody[T any](ctx context.Context, r *http.Request) (*T, error) {
-	ctx, s := spanner.Start(ctx, "http.readBody")
+	ctx, s := spanner.Start(ctx, "ghttp.ReadBody")
 	defer s.End()
 	s.Add(attr.String("for_type", fmt.Sprintf("%T", *new(T))))
 
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		s.Event("error reading body", attr.New("error", err.Error()))
-		return nil, fmt.Errorf("%w: %v", ErrInvalidBody, err)
+		return nil, errors.Join(ErrInvalidBody, err)
 	}
 	item := new(T)
 	err = Enc(ctx).Decode(b, item)
 	if err != nil {
 		s.Event("error decoding buffer", attr.New("error", err.Error()), attr.String("buffer", string(b)))
-		return nil, fmt.Errorf("%w: %v", ErrInvalidJSON, err)
+		return nil, errors.Join(ErrInvalidJSON, err)
 	}
-	s.Event("decoded request body", attr.Ptr("item", item))
+	s.Event("decoded request body")
 	return item, nil
 }
