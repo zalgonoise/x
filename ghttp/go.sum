@@ -8,3 +8,5 @@ github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be h1:ba6thk6xk6aWTGx
 github.com/zalgonoise/logx v0.0.0-20221210214610-c003c0f931be/go.mod h1:H1GvFfv7qC2rtnOLO49lHOHa8fsS6w0cjYhxw9/WamQ=
 github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6 h1:lEVAaRJSf7M4AL+Ye0bG83EuU5YyXJjgqkzc/RA9nUs=
 github.com/zalgonoise/spanner v0.0.0-20221218020729-6780005ee1f6/go.mod h1:zcjBm68rwWIPohFOeMhJWIlCvl3UZrSLn49hzAde99A=
+github.com/zalgonoise/x/errors v0.0.0-20230129211157-8454813f8bc7 h1:kjA2weCGyfufF4bg+AipOgebYl2HhGdTLLHCcfbz8wo=
+github.com/zalgonoise/x/errors v0.0.0-20230129211157-8454813f8bc7/go.mod h1:+jv4S3ON/Mgx1kol8frhcL6bJjXb0pRwCmMqH5ZJ/NE=
