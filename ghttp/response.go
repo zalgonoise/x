@@ -45,7 +45,7 @@ func (r *Response[T]) WithHeaders(headers map[string]string) *Response[T] {
 
 // WriteHTTP writes the contents of the object to the http.ResponseWriter `w`
 func (r *Response[T]) WriteHTTP(ctx context.Context, w http.ResponseWriter) {
-	ctx, s := spanner.Start(ctx, "http.HttpResponse.WriteHTTP")
+	ctx, s := spanner.Start(ctx, "ghttp.Response.WriteHTTP")
 	defer s.End()
 	s.Add(
 		attr.Int("http_status", r.Status),
@@ -58,6 +58,7 @@ func (r *Response[T]) WriteHTTP(ctx context.Context, w http.ResponseWriter) {
 	response, err := enc.Encode(r)
 	if err != nil {
 		s.Event("failed to encode response", attr.String("error", err.Error()))
+		return
 	}
 
 	for k, v := range r.Headers {
@@ -68,6 +69,7 @@ func (r *Response[T]) WriteHTTP(ctx context.Context, w http.ResponseWriter) {
 	n, err := w.Write(response)
 	if err != nil {
 		s.Event("failed to write response", attr.String("error", err.Error()))
+		return
 	}
 
 	s.Event("response written successfully", attr.Int("bytes_written", n))
