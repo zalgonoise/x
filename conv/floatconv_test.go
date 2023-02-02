@@ -4,13 +4,13 @@ import "testing"
 
 func BenchmarkToFrom64(b *testing.B) {
 	var f float64 = 1.1254964682342
-	var to []byte = To64(f)
+	var to []byte = Float64To(f)
 
 	b.Run("To", func(b *testing.B) {
 		var r []byte
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			r = To64(f)
+			r = Float64To(f)
 		}
 		_ = r
 	})
@@ -19,7 +19,7 @@ func BenchmarkToFrom64(b *testing.B) {
 		var r float64
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			r = From64(to)
+			r = Float64From(to)
 		}
 		_ = r
 	})
@@ -29,8 +29,8 @@ func BenchmarkToFrom64(b *testing.B) {
 		var buf []byte
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			buf = To64(f)
-			r = From64(buf)
+			buf = Float64To(f)
+			r = Float64From(buf)
 		}
 		_ = buf
 		_ = r
@@ -48,7 +48,7 @@ func TestToFrom64(t *testing.T) {
 	}
 
 	for _, v := range fl {
-		r := From64(To64(v))
+		r := Float64From(Float64To(v))
 
 		if r != v {
 			t.Errorf("output mismatch error: wanted %f ; got %f", v, r)
@@ -68,7 +68,7 @@ func TestToFrom32(t *testing.T) {
 	}
 
 	for _, v := range fl {
-		r := From32(To32(v))
+		r := Float32From(Float32To(v))
 
 		if r != v {
 			t.Errorf("output mismatch error: wanted %f ; got %f", v, r)
