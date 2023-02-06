@@ -14,15 +14,13 @@ func NewEncoder() *Encoder {
 
 func (w *Encoder) EncodeVarint(value uint64) int {
 	var n int
-	for {
+	for n = 0; ; n++ {
 		if value < 128 {
 			w.b.WriteByte(byte(value))
-			n++
 			break
 		}
 
 		w.b.WriteByte(byte(value&0x7f | 0x80))
-		n++
 		value >>= 7
 	}
 	return n
