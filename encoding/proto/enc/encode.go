@@ -13,25 +13,22 @@ func NewEncoder() *Encoder {
 }
 
 func (w *Encoder) EncodeVarint(value uint64) int {
-	var n int
-	for n = 0; ; n++ {
+	for n := 0; ; n++ {
 		if value < 128 {
-			w.b.WriteByte(byte(value))
-			break
+			_ = w.b.WriteByte((byte)(value))
+			return n
 		}
-
-		w.b.WriteByte(byte(value&0x7f | 0x80))
+		n++
+		_ = w.b.WriteByte((byte)(value&0x7f | 0x80))
 		value >>= 7
 	}
-	return n
-
 }
 func (w *Encoder) EncodeInt64(value int64) int {
 	return w.EncodeVarint(uint64(value<<1) ^ uint64(value>>63))
 }
 func (w *Encoder) EncodeLengthDelimited(value []byte) int {
 	n := w.EncodeVarint(uint64(len(value)))
-	w.b.Write(value)
+	_, _ = w.b.Write(value)
 	return n + len(value)
 
 }
