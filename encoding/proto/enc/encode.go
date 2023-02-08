@@ -1,4 +1,4 @@
-package types
+package enc
 
 import "bytes"
 
@@ -15,16 +15,16 @@ func NewEncoder() Encoder {
 }
 
 func (w Encoder) EncodeVarint(value uint64) int {
-	for n := 0; ; n++ {
-		if value < 128 {
-			_ = w.b.WriteByte((byte)(value))
-			return n
-		}
-		n++
-		_ = w.b.WriteByte((byte)(value&0x7f | 0x80))
+	i := 0
+	for value >= 0x80 {
+		_ = w.b.WriteByte(byte(value) | 0x80)
 		value >>= 7
+		i++
 	}
+	_ = w.b.WriteByte(byte(value))
+	return i + 1
 }
+
 func (w Encoder) EncodeInt64(value int64) int {
 	return w.EncodeVarint(uint64(value<<1) ^ uint64(value>>63))
 }

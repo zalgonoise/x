@@ -1,4 +1,4 @@
-package types
+package enc
 
 import (
 	"strings"
@@ -28,7 +28,7 @@ func TestEncode(t *testing.T) {
 
 	b.EncodeVarintField(5, 103)
 	b.EncodeField(2, 2, []byte("pb by hand"))
-	b.EncodeVarintField(3, 301)
+	b.EncodeVarintField(3, 30)
 	b.EncodeVarintField(4, 1)
 
 	t.Log(b.String(), b.Bytes())
@@ -41,15 +41,7 @@ func TestEncode(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(out) == 0 {
-		t.Error("EMPTY MAP")
-		return
-	}
-
-	t.Log(out, out[5], out[5].Value(), out[5].Num())
-	t.Log(out, out[2], string((out[2].Value()).([]byte)), out[2].Num())
-	t.Log(out, out[3], out[3].Value(), out[3].Num())
-	t.Log(out, out[4], out[4].Value(), out[4].Num())
+	t.Log(out.Name, out.Age, out.ID, out.IsAdmin)
 }
 
 func BenchmarkEncoding(b *testing.B) {
@@ -93,13 +85,13 @@ func BenchmarkEncoding(b *testing.B) {
 		b.Run("SimpleVarint", func(b *testing.B) {
 			var wants uint64 = 103
 			var input = []byte{40, 103}
-			var f map[int]Field
 			var err error
+			var p Person
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				dec := NewDecoder(input)
-				f, err = dec.Decode()
+				p, err = dec.Decode()
 				if err != nil {
 					b.Error(err)
 					return
@@ -108,25 +100,20 @@ func BenchmarkEncoding(b *testing.B) {
 			b.StopTimer()
 
 			// verify
-			field, ok := f[5]
-			if !ok {
-				b.Error("no field number 5")
-				return
-			}
-			if (field.Value()).(uint64) != wants {
-				b.Errorf("unexpected output error: wanted %d ; got %d", field.Value(), wants)
+			if p.ID != wants {
+				b.Errorf("unexpected output error: wanted %d ; got %d", p.ID, wants)
 			}
 		})
 		b.Run("SimpleLen10Bytes", func(b *testing.B) {
 			var wants string = "pb by hand"
 			var input = []byte{18, 10, 112, 98, 32, 98, 121, 32, 104, 97, 110, 100}
-			var f map[int]Field
+			var p Person
 			var err error
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				dec := NewDecoder(input)
-				f, err = dec.Decode()
+				p, err = dec.Decode()
 				if err != nil {
 					b.Error(err)
 					return
@@ -135,32 +122,25 @@ func BenchmarkEncoding(b *testing.B) {
 			b.StopTimer()
 
 			// verify
-			field, ok := f[2]
-			if !ok {
-				b.Error("no field number 2")
-				return
-			}
-			if string((field.Value()).([]byte)) != wants {
-				b.Errorf("unexpected output error: wanted %s ; got %s", field.Value(), wants)
+			if p.Name != wants {
+				b.Errorf("unexpected output error: wanted %s ; got %s", p.Name, wants)
 			}
 		})
 		b.Run("MultiField", func(b *testing.B) {
-			var wantsUint64 = map[int]uint64{
-				5: 103,
-				3: 301,
-				4: 1,
+			var wants = Person{
+				ID:      103,
+				Age:     30,
+				IsAdmin: 1,
+				Name:    "pb by hand",
 			}
-			var wantsBytes = map[int]string{
-				2: "pb by hand",
-			}
-			var input = []byte{40, 103, 18, 10, 112, 98, 32, 98, 121, 32, 104, 97, 110, 100, 24, 173, 2, 32, 1}
-			var f map[int]Field
+			var input = []byte{40, 103, 18, 10, 112, 98, 32, 98, 121, 32, 104, 97, 110, 100, 24, 30, 32, 1}
+			var p Person
 			var err error
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				dec := NewDecoder(input)
-				f, err = dec.Decode()
+				p, err = dec.Decode()
 				if err != nil {
 					b.Error(err)
 					return
@@ -169,25 +149,17 @@ func BenchmarkEncoding(b *testing.B) {
 			b.StopTimer()
 
 			// verify
-			for k, v := range wantsBytes {
-				field, ok := f[k]
-				if !ok {
-					b.Errorf("no field number %d", k)
-					return
-				}
-				if string((field.Value()).([]byte)) != v {
-					b.Errorf("unexpected output error: wanted %s ; got %s", field.Value(), v)
-				}
+			if p.Name != wants.Name {
+				b.Errorf("unexpected output error: wanted %s ; got %s", wants.Name, p.Name)
 			}
-			for k, v := range wantsUint64 {
-				field, ok := f[k]
-				if !ok {
-					b.Errorf("no field number %d", k)
-					return
-				}
-				if (field.Value()).(uint64) != v {
-					b.Errorf("unexpected output error: wanted %d ; got %d", field.Value(), v)
-				}
+			if p.ID != wants.ID {
+				b.Errorf("unexpected output error: wanted %d ; got %d", wants.ID, p.ID)
+			}
+			if p.Age != wants.Age {
+				b.Errorf("unexpected output error: wanted %d ; got %d", wants.Age, p.Age)
+			}
+			if p.IsAdmin != wants.IsAdmin {
+				b.Errorf("unexpected output error: wanted %d ; got %d", wants.IsAdmin, p.IsAdmin)
 			}
 		})
 	})
