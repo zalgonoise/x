@@ -67,7 +67,7 @@ func printBin(t *testing.T, data []byte) {
 }
 
 func TestEncode(t *testing.T) {
-	b := NewEncoder()
+	b := NewEncoder(0)
 
 	b.EncodeField(2, 2, []byte("pb by hand"))
 	b.EncodeVarintField(3, 30)
@@ -94,10 +94,76 @@ func TestEncode(t *testing.T) {
 	// t.Error()
 }
 
+func BenchmarkEncodeDecode(b *testing.B) {
+	b.Run("TypeEncode", func(b *testing.B) {
+		p := Person{
+			Name:    "pb by hand",
+			Age:     30,
+			IsAdmin: 1,
+			ID:      103,
+		}
+
+		var buf []byte
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			buf = p.Bytes()
+		}
+		_ = buf
+	})
+	b.Run("TypeDecode", func(b *testing.B) {
+		p := Person{
+			Name:    "pb by hand",
+			Age:     30,
+			IsAdmin: 1,
+			ID:      103,
+		}
+
+		buf := p.Bytes()
+		var newP Person
+		var err error
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			dec := NewDecoder(buf)
+			newP, err = dec.Decode()
+			if err != nil {
+				b.Error(err)
+				return
+			}
+		}
+		_ = newP
+	})
+	b.Run("TypeEncodeDecode", func(b *testing.B) {
+		p := Person{
+			Name:    "pb by hand",
+			Age:     30,
+			IsAdmin: 1,
+			ID:      103,
+		}
+
+		var newP Person
+		var err error
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			buf := p.Bytes()
+			dec := NewDecoder(buf)
+			newP, err = dec.Decode()
+			if err != nil {
+				b.Error(err)
+				return
+			}
+		}
+		_ = newP
+	})
+}
+
 func BenchmarkEncoding(b *testing.B) {
+
 	b.Run("Encode", func(b *testing.B) {
 		b.Run("SimpleVarint", func(b *testing.B) {
-			enc := NewEncoder()
+			enc := NewEncoder(0)
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -107,7 +173,7 @@ func BenchmarkEncoding(b *testing.B) {
 			_ = enc.String()
 		})
 		b.Run("SimpleLen10Bytes", func(b *testing.B) {
-			enc := NewEncoder()
+			enc := NewEncoder(0)
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
@@ -117,7 +183,7 @@ func BenchmarkEncoding(b *testing.B) {
 			_ = enc.String()
 		})
 		b.Run("MultiField", func(b *testing.B) {
-			enc := NewEncoder()
+			enc := NewEncoder(0)
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {

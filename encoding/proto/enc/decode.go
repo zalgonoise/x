@@ -18,13 +18,6 @@ func NewDecoder(buf []byte) *Decoder {
 	}
 }
 
-type Person struct {
-	Name    string
-	Age     uint64
-	ID      uint64
-	IsAdmin uint64
-}
-
 var (
 	headerName    uint64 = 18 // {2, 2}
 	headerAge     uint64 = 24 // {3, 0}

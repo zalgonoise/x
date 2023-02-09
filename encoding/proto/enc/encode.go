@@ -2,15 +2,41 @@ package enc
 
 import "bytes"
 
-const minSize = 512
+type Person struct {
+	Name    string
+	Age     uint64
+	ID      uint64
+	IsAdmin uint64
+}
+
+const minSize = 32
 
 type Encoder struct {
 	b *bytes.Buffer
 }
 
-func NewEncoder() Encoder {
+func (p Person) Bytes() []byte {
+	// init buffer with expected min size
+	e := NewEncoder(4 + 4 + 1 + len(p.Name))
+	e.b.WriteByte(18)
+	e.EncodeLengthDelimited([]byte(p.Name))
+
+	e.b.WriteByte(24)
+	e.EncodeVarint(p.Age)
+
+	e.b.WriteByte(32)
+	e.EncodeVarint(p.IsAdmin)
+	e.b.WriteByte(32)
+	e.EncodeVarint(p.ID)
+	return e.Bytes()
+}
+
+func NewEncoder(size int) Encoder {
+	if size == 0 {
+		size = minSize
+	}
 	return Encoder{
-		b: bytes.NewBuffer(make([]byte, 0, minSize)),
+		b: bytes.NewBuffer(make([]byte, 0, size)),
 	}
 }
 
