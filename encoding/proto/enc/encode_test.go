@@ -111,6 +111,22 @@ func BenchmarkEncodeDecode(b *testing.B) {
 		}
 		_ = buf
 	})
+	b.Run("TypeEncodeLarge", func(b *testing.B) {
+		p := Person{
+			Name:    "pb by hand pb by hand pb by hand pb by hand pb by hand pb by hand pb by hand pb by hand pb by hand pb by hand",
+			Age:     12312565464576345234,
+			IsAdmin: 12546457314654633453,
+			ID:      16754345645324267681,
+		}
+
+		var buf []byte
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			buf = p.Bytes()
+		}
+		_ = buf
+	})
 	b.Run("TypeDecode", func(b *testing.B) {
 		p := Person{
 			Name:    "pb by hand",

@@ -9,15 +9,35 @@ type Person struct {
 	IsAdmin uint64
 }
 
-const minSize = 32
+// 1 byte per field, plus 1 byte for LEN field's length
+const minSize = 5
 
 type Encoder struct {
 	b *bytes.Buffer
 }
 
+type number interface {
+	~uint | ~uint16 | ~uint32 | ~uint64 | ~int | ~int16 | ~int32 | ~int64
+}
+
+func byteLen[T number](v T) int {
+	for i := 0; i < 8; i++ {
+		v = v >> 8
+		if v == 0 {
+			return i + i
+		}
+	}
+	return 0
+}
+
 func (p Person) Bytes() []byte {
 	// init buffer with expected min size
-	e := NewEncoder(4 + 4 + 1 + len(p.Name))
+	e := NewEncoder(
+		minSize +
+			byteLen(p.Age) +
+			byteLen(p.IsAdmin) +
+			byteLen(p.ID) +
+			len(p.Name))
 	e.b.WriteByte(18)
 	e.EncodeLengthDelimited([]byte(p.Name))
 
