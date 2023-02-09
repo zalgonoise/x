@@ -1,6 +1,10 @@
 package enc
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/zalgonoise/x/conv"
+)
 
 type Person struct {
 	Name    string
@@ -9,8 +13,8 @@ type Person struct {
 	IsAdmin uint64
 }
 
-// 1 byte per field, plus 1 byte for LEN field's length
-const minSize = 5
+// 1 byte per field
+const minSize = 4
 
 type Encoder struct {
 	b *bytes.Buffer
@@ -20,7 +24,7 @@ type number interface {
 	~uint | ~uint16 | ~uint32 | ~uint64 | ~int | ~int16 | ~int32 | ~int64
 }
 
-func byteLen[T number](v T) int {
+func byteLen[T number](v T) (size int) {
 	for i := 0; i < 8; i++ {
 		v = v >> 8
 		if v == 0 {
@@ -37,6 +41,8 @@ func (p Person) Bytes() []byte {
 			byteLen(p.Age) +
 			byteLen(p.IsAdmin) +
 			byteLen(p.ID) +
+			byteLen(len(p.Name)) +
+			len(p.Name)>>8 + 1 +
 			len(p.Name))
 	e.b.WriteByte(18)
 	e.EncodeLengthDelimited([]byte(p.Name))
@@ -71,9 +77,25 @@ func (w Encoder) EncodeVarint(value uint64) int {
 	return i + 1
 }
 
-func (w Encoder) EncodeInt64(value int64) int {
-	return w.EncodeVarint(uint64(value<<1) ^ uint64(value>>63))
+func zigZagEncode(n int64) uint64 {
+	return uint64((n << 1) ^ (n >> 63))
 }
+
+func float32Encode(n float32) []byte {
+	return conv.Float32To(n)
+}
+
+func float64Encode(n float64) []byte {
+	return conv.Float64To(n)
+}
+
+func boolEncode(v bool) byte {
+	if v {
+		return 1
+	}
+	return 0
+}
+
 func (w Encoder) EncodeLengthDelimited(value []byte) int {
 	n := w.EncodeVarint(uint64(len(value)))
 	_, _ = w.b.Write(value)

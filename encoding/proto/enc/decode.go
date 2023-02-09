@@ -109,3 +109,7 @@ func decodeVarint(r io.Reader) (uint64, error) {
 		s += 7
 	}
 }
+
+func zigZagDecode(n uint64) int64 {
+	return int64((n >> 1) ^ -(n & 1))
+}
