@@ -3,7 +3,6 @@ package enc
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 )
 
@@ -26,6 +25,13 @@ type Person struct {
 	IsAdmin uint64
 }
 
+var (
+	headerName    uint64 = 18 // {2, 2}
+	headerAge     uint64 = 24 // {3, 0}
+	headerIsAdmin uint64 = 32 // {4, 0}
+	headerID      uint64 = 40 // {5, 0}
+)
+
 func (d *Decoder) Decode() (Person, error) {
 	p, err := decodePerson(d.Reader)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -35,62 +41,58 @@ func (d *Decoder) Decode() (Person, error) {
 }
 
 func decodePerson(r io.Reader) (Person, error) {
-	var p Person
+	var p = Person{}
 	for {
-		num, wireType, _, err := decodeFieldHeader(r)
+		v, err := decodeVarint(r)
 		if err != nil {
 			return p, err
 		}
-		if num == 0 {
-			return p, nil
-		}
-		switch wireType {
+		switch v {
+		case headerName:
+			name, err := decodeString(r)
+			if err != nil {
+				return p, err
+			}
+			p.Name = name
+		case headerAge:
+			age, err := decodeVarint(r)
+			if err != nil {
+				return p, err
+			}
+			p.Age = age
+		case headerIsAdmin:
+			isAdmin, err := decodeVarint(r)
+			if err != nil {
+				return p, err
+			}
+			p.IsAdmin = isAdmin
+		case headerID:
+			id, err := decodeVarint(r)
+			if err != nil {
+				return p, err
+			}
+			p.ID = id
 		case 0:
-			v, _, err := decodeVarint(r)
-			if err != nil {
-				return p, err
-			}
-			switch num {
-			case 3:
-				p.Age = v
-			case 4:
-				p.IsAdmin = v
-			case 5:
-				p.ID = v
-			default:
-				return p, fmt.Errorf("invalid field number: %d", num)
-			}
-		case 2:
-			length, _, err := decodeVarint(r)
-			if err != nil {
-				return p, err
-			}
-			data := make([]byte, length)
-			_, err = r.Read(data)
-			if err != nil {
-				return p, err
-			}
-			switch num {
-			case 2:
-				p.Name = string(data)
-			default:
-				return p, errors.New("invalid field number")
-			}
+			return p, nil
+		default:
+			return p, errors.New("invalid header")
 		}
 	}
 }
 
-func decodeFieldHeader(r io.Reader) (field, wireType, n int, err error) {
-	fieldAndWire, n, err := decodeVarint(r)
+func decodeString(r io.Reader) (string, error) {
+	length, err := decodeVarint(r)
 	if err != nil {
-		return 0, 0, 0, err
+		return "", err
 	}
-	field = int(fieldAndWire >> 3)
-	wireType = int(fieldAndWire & 0x7)
-	return field, wireType, n, nil
+	data := make([]byte, length)
+	_, err = r.Read(data)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
-
-func decodeVarint(r io.Reader) (uint64, int, error) {
+func decodeVarint(r io.Reader) (uint64, error) {
 	var x uint64
 	var s uint
 	var i int
@@ -98,17 +100,17 @@ func decodeVarint(r io.Reader) (uint64, int, error) {
 		byt := make([]byte, 1)
 		_, err := r.Read(byt)
 		if err != nil {
-			return x, i, err
+			return x, err
 		}
 		i++
 		if i == MaxVarintLen64 {
-			return 0, -(i + 1), errors.New("varint overflow") // overflow
+			return 0, errors.New("varint overflow") // overflow
 		}
 		if byt[0] < 0x80 {
 			if i == MaxVarintLen64-1 && byt[0] > 1 {
-				return 0, -(i + 1), errors.New("varint overflow") // overflow
+				return 0, errors.New("varint overflow") // overflow
 			}
-			return x | uint64(byt[0])<<s, i + 1, nil
+			return x | uint64(byt[0])<<s, nil
 		}
 		x |= uint64(byt[0]&0x7f) << s
 		s += 7

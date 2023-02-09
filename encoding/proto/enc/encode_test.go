@@ -5,6 +5,49 @@ import (
 	"testing"
 )
 
+//	message Person {
+//	    string name = 2;
+//	    uint64 age = 3;
+//	    uint64 is_admin = 4;
+//	    uint64 id = 5;
+//	}
+func printHeaders(t *testing.T) {
+	type IDAndWire struct {
+		ID   int
+		Wire int
+	}
+	ids := []IDAndWire{
+		{2, 2},
+		{3, 0},
+		{4, 0},
+		{5, 0},
+	}
+	encodeVarint := func(value uint64) []byte {
+		i := 0
+		out := make([]byte, 0, 10)
+		for value >= 0x80 {
+			out = append(out, byte(value)|0x80)
+			value >>= 7
+			i++
+		}
+		out = append(out, byte(value))
+		return out
+	}
+
+	args := []any{}
+	s := new(strings.Builder)
+	s.WriteString("\n")
+	for i := 0; i < 4; i++ {
+		s.WriteString("ID: %d, Type: %d, Val: %v, Bin: %08b\t")
+		args = append(args, ids[i].ID)
+		args = append(args, ids[i].Wire)
+		byt := encodeVarint(uint64((ids[i].ID << 3) | ids[i].Wire))
+		args = append(args, byt)
+		args = append(args, byt)
+	}
+	t.Logf(s.String(), args...)
+}
+
 func printBin(t *testing.T, data []byte) {
 	s := new(strings.Builder)
 	s.WriteString("\n")
@@ -26,13 +69,14 @@ func printBin(t *testing.T, data []byte) {
 func TestEncode(t *testing.T) {
 	b := NewEncoder()
 
-	b.EncodeVarintField(5, 103)
 	b.EncodeField(2, 2, []byte("pb by hand"))
 	b.EncodeVarintField(3, 30)
 	b.EncodeVarintField(4, 1)
+	b.EncodeVarintField(5, 103)
 
 	t.Log(b.String(), b.Bytes())
 	buf := b.Bytes()
+	printHeaders(t)
 	printBin(t, buf)
 
 	d := NewDecoder(buf)
@@ -40,8 +84,14 @@ func TestEncode(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
+	if out.Name != "pb by hand" ||
+		out.Age != 30 ||
+		out.IsAdmin != 1 ||
+		out.ID != 103 {
+		t.Error("invalid output:", out)
+	}
 	t.Log(out.Name, out.Age, out.ID, out.IsAdmin)
+	// t.Error()
 }
 
 func BenchmarkEncoding(b *testing.B) {
@@ -71,10 +121,10 @@ func BenchmarkEncoding(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				enc.EncodeVarintField(5, 103)
 				enc.EncodeField(2, 2, []byte("pb by hand"))
-				enc.EncodeVarintField(3, 301)
+				enc.EncodeVarintField(3, 30)
 				enc.EncodeVarintField(4, 1)
+				enc.EncodeVarintField(5, 103)
 			}
 			b.StopTimer()
 			_ = enc.String()
@@ -128,12 +178,12 @@ func BenchmarkEncoding(b *testing.B) {
 		})
 		b.Run("MultiField", func(b *testing.B) {
 			var wants = Person{
-				ID:      103,
+				Name:    "pb by hand",
 				Age:     30,
 				IsAdmin: 1,
-				Name:    "pb by hand",
+				ID:      103,
 			}
-			var input = []byte{40, 103, 18, 10, 112, 98, 32, 98, 121, 32, 104, 97, 110, 100, 24, 30, 32, 1}
+			var input = []byte{18, 10, 112, 98, 32, 98, 121, 32, 104, 97, 110, 100, 24, 30, 32, 1, 40, 103}
 			var p Person
 			var err error
 
