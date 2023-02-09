@@ -1,2 +1,4 @@
 github.com/zalgonoise/x/conv v0.0.0-20230209152649-73289c5fa3c9 h1:t9gbOmCj6AjbgtGAHV4CM4VW37PCjvG7UVUe9o9PRIw=
 github.com/zalgonoise/x/conv v0.0.0-20230209152649-73289c5fa3c9/go.mod h1:5kGysZK9eVX8k9G6F3uA+14BvYNboF/pHPR+hge5f14=
+golang.org/x/text v0.7.0 h1:4BRB4x83lYWy72KwLD/qYDuTu7q9PjSagHvijDw7cLo=
+golang.org/x/text v0.7.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=

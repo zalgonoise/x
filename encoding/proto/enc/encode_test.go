@@ -12,15 +12,11 @@ import (
 //	    uint64 id = 5;
 //	}
 func printHeaders(t *testing.T) {
-	type IDAndWire struct {
-		ID   int
-		Wire int
-	}
 	ids := []IDAndWire{
-		{2, 2},
-		{3, 0},
-		{4, 0},
-		{5, 0},
+		{2, 2, "name"},
+		{3, 0, "age"},
+		{4, 0, "id"},
+		{5, 0, "isAdmin"},
 	}
 	encodeVarint := func(value uint64) []byte {
 		i := 0
@@ -67,6 +63,13 @@ func printBin(t *testing.T, data []byte) {
 }
 
 func TestEncode(t *testing.T) {
+	headers := []IDAndWire{
+		{2, 2, "name"},
+		{3, 0, "age"},
+		{4, 0, "id"},
+		{5, 0, "isAdmin"},
+	}
+
 	b := NewEncoder(0)
 
 	b.EncodeField(2, 2, []byte("pb by hand"))
@@ -76,7 +79,7 @@ func TestEncode(t *testing.T) {
 
 	t.Log(b.String(), b.Bytes())
 	buf := b.Bytes()
-	printHeaders(t)
+	t.Log(HeaderGoString(headers...))
 	printBin(t, buf)
 
 	d := NewDecoder(buf)

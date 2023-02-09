@@ -20,8 +20,14 @@ type Encoder struct {
 	b *bytes.Buffer
 }
 
+type signed interface {
+	~int | ~int16 | ~int32 | ~int64
+}
+type unsigned interface {
+	~uint | ~uint16 | ~uint32 | ~uint64
+}
 type number interface {
-	~uint | ~uint16 | ~uint32 | ~uint64 | ~int | ~int16 | ~int32 | ~int64
+	unsigned | signed
 }
 
 func byteLen[T number](v T) (size int) {

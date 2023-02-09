@@ -4,7 +4,43 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"strconv"
+	"strings"
 )
+
+type IDAndWire struct {
+	ID   int
+	Wire int
+	Name string
+}
+
+func HeaderGoString(fields ...IDAndWire) string {
+	if len(fields) == 0 {
+		return ""
+	}
+
+	sb := new(strings.Builder)
+	sb.WriteString("var (\n")
+
+	for _, f := range fields {
+		if f.Name == "" {
+			continue
+		}
+		n := []byte(f.Name)
+		if n[0] > 96 {
+			n[0] = n[0] - 32 // fast uppercase
+		}
+		b := (f.ID << 3) | f.Wire
+		sb.WriteString("\theader")
+		sb.WriteString(string(n))
+		sb.WriteString(" uint64 = ")
+		sb.WriteString(strconv.Itoa(b))
+		sb.WriteByte('\n')
+	}
+	sb.WriteString(")\n\n")
+
+	return sb.String()
+}
 
 const MaxVarintLen64 = 10
 
