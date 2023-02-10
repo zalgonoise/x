@@ -23,30 +23,6 @@ func initParse[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
 	return nil
 }
 
-// func parseText[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
-// 	item := t.Next()
-// 	if tok, ok := keywords[toString(item.Value)]; ok {
-// 		item.Type = (C)(tok)
-
-// 		t.Node(item)
-// 		switch tok {
-// 		case TokenSYNTAX:
-// 			return parseSyntax[C, T]
-// 		case TokenPACKAGE:
-// 			return parsePackage[C, T]
-// 		case TokenENUM:
-// 			return parseEnum[C, T]
-// 		case TokenMESSAGE:
-// 			return parseMessage[C, T]
-// 		default:
-// 			return initParse[C, T]
-// 		}
-// 	}
-
-//		t.Node(item)
-//		return initParse[C, T]
-//	}
-
 func toString[T byte](v []T) string {
 	buf := make([]byte, len(v))
 	for i, b := range v {
