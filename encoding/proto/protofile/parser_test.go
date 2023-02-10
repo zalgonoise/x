@@ -13,7 +13,7 @@ var protofile []byte
 
 func TestParser(t *testing.T) {
 	r := (gio.Reader[byte])(bytes.NewReader(protofile))
-	str, err := Run(r)
+	str, err := Parse(r)
 	if err != nil {
 		t.Error(err)
 		return
