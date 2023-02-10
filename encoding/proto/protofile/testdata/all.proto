@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package generic;
 
+option go_package = "./generic";
+
 enum Status {
     not_ok = 0;
     ok = 1;
@@ -29,6 +31,6 @@ message Generic {
     string varchar = 14;
     bytes byte_slice = 15;
     repeated uint64 int_slice = 16;
-    Status enum_field = 17;
+    optional Status enum_field = 17;
     repeated Short inner_struct = 18;    
 }
