@@ -14,9 +14,11 @@ const (
 	TokenRBRACE
 	TokenSYNTAX
 	TokenPACKAGE
+	TokenOPTION
 	TokenMESSAGE
 	TokenENUM
 	TokenREPEATED
+	TokenOPTIONAL
 
 	TokenBOOL
 	TokenUINT32
@@ -38,9 +40,11 @@ const (
 var keywords = map[string]ProtoToken{
 	"syntax":   TokenSYNTAX,
 	"package":  TokenPACKAGE,
+	"option":   TokenOPTION,
 	"message":  TokenMESSAGE,
 	"enum":     TokenENUM,
 	"repeated": TokenREPEATED,
+	"optional": TokenOPTIONAL,
 }
 
 var types = map[string]struct{}{

@@ -12,6 +12,8 @@ func initParse[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
 			return parseSyntax[C, T]
 		case (C)(TokenPACKAGE):
 			return parsePackage[C, T]
+		case (C)(TokenOPTION):
+			return parseOption[C, T]
 		case (C)(TokenENUM):
 			return parseEnum[C, T]
 		case (C)(TokenMESSAGE):
@@ -65,6 +67,34 @@ func parsePackage[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[C, T]
 		}
 	}
 	t.Set(t.Parent().Parent)
+	return initParse[C, T]
+}
+
+func parseOption[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
+	t.Node(t.Next())
+	if t.Peek().Type == (C)(TokenIDENT) {
+		item := t.Next()
+		item.Type = C(TokenTYPE)
+		t.Node(item)
+	}
+	if t.Peek().Type == C(TokenEQUAL) {
+		t.Next()
+	}
+	if t.Peek().Type == C(TokenDQUOTE) {
+		t.Next()
+	}
+	if t.Peek().Type == (C)(TokenIDENT) {
+		item := t.Next()
+		item.Type = C(TokenVALUE)
+		t.Node(item)
+	}
+	if t.Peek().Type == C(TokenDQUOTE) {
+		t.Next()
+	}
+	if t.Peek().Type == (C)(TokenSEMICOL) {
+		t.Next() // skip
+	}
+	t.Set(t.Parent().Parent.Parent)
 	return initParse[C, T]
 }
 
@@ -128,15 +158,18 @@ func parseMessage[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[C, T]
 
 func parseTypeKeyValue[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[C, T] {
 	for t.Peek().Type != (C)(TokenRBRACE) {
-		var elems = make([]lex.Item[C, T], 3)
+		var elems = make([]lex.Item[C, T], 4)
 		var repeated bool
+		var optional bool
 
 		switch t.Peek().Type {
 		case (C)(TokenREPEATED):
 			elems[2] = t.Next()
 			repeated = true
+		case (C)(TokenOPTIONAL):
+			elems[3] = t.Next()
+			optional = true
 		case (C)(TokenMESSAGE):
-			// t.Set(t.Parent())
 			t.Store(parse.Slot0)
 			return parseMessage[C, T]
 		}
@@ -165,6 +198,10 @@ func parseTypeKeyValue[C ProtoToken, T byte](t *parse.Tree[C, T]) parse.ParseFn[
 			t.Set(t.Parent())
 			if repeated {
 				t.Node(elems[2])
+				t.Set(t.Parent())
+			}
+			if optional {
+				t.Node(elems[3])
 				t.Set(t.Parent())
 			}
 			t.Set(t.Parent())

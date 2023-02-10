@@ -6,7 +6,7 @@ import (
 	"github.com/zalgonoise/lex"
 )
 
-var chars = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_")
+var chars = []byte("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_./")
 
 func initState[C ProtoToken, T byte](l lex.Lexer[C, T]) lex.StateFn[C, T] {
 	switch l.Next() {
