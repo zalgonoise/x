@@ -19,6 +19,8 @@ func processFn[C ProtoToken, T byte, R string](t *parse.Tree[C, T]) (R, error) {
 			processSyntax(sb, n)
 		case C(TokenPACKAGE):
 			processPackage(sb, n)
+		case C(TokenOPTION):
+			processOption(sb, n)
 		case C(TokenENUM):
 			processEnum(sb, n)
 		case C(TokenMESSAGE):
@@ -46,6 +48,23 @@ func processPackage[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, 
 	for _, e := range n.Edges {
 		if e.Type == C(TokenVALUE) {
 			sb.WriteString(toString(e.Value))
+		}
+	}
+	sb.WriteByte('\n')
+}
+
+func processOption[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T]) {
+	sb.WriteString("option: ")
+	for _, e := range n.Edges {
+		if e.Type == (C)(TokenTYPE) {
+			sb.WriteString("type: ")
+			sb.WriteString(toString(e.Value))
+			for _, ee := range e.Edges {
+				if ee.Type == C(TokenVALUE) {
+					sb.WriteString(" to ")
+					sb.WriteString(toString(ee.Value))
+				}
+			}
 		}
 	}
 	sb.WriteByte('\n')
@@ -126,6 +145,8 @@ func processMessageFields[C ProtoToken, T byte](sb *strings.Builder, n *parse.No
 				sb.WriteString(toString(e.Value))
 			case C(TokenREPEATED):
 				sb.WriteString("\trepeated: true")
+			case C(TokenOPTIONAL):
+				sb.WriteString("\toptional: true")
 			}
 		}
 		sb.WriteByte('\n')
