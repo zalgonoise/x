@@ -11,38 +11,6 @@ import (
 //	    uint64 is_admin = 4;
 //	    uint64 id = 5;
 //	}
-func printHeaders(t *testing.T) {
-	ids := []IDAndWire{
-		{2, 2, "name"},
-		{3, 0, "age"},
-		{4, 0, "id"},
-		{5, 0, "isAdmin"},
-	}
-	encodeVarint := func(value uint64) []byte {
-		i := 0
-		out := make([]byte, 0, 10)
-		for value >= 0x80 {
-			out = append(out, byte(value)|0x80)
-			value >>= 7
-			i++
-		}
-		out = append(out, byte(value))
-		return out
-	}
-
-	args := []any{}
-	s := new(strings.Builder)
-	s.WriteString("\n")
-	for i := 0; i < 4; i++ {
-		s.WriteString("ID: %d, Type: %d, Val: %v, Bin: %08b\t")
-		args = append(args, ids[i].ID)
-		args = append(args, ids[i].Wire)
-		byt := encodeVarint(uint64((ids[i].ID << 3) | ids[i].Wire))
-		args = append(args, byt)
-		args = append(args, byt)
-	}
-	t.Logf(s.String(), args...)
-}
 
 func printBin(t *testing.T, data []byte) {
 	s := new(strings.Builder)
@@ -63,13 +31,6 @@ func printBin(t *testing.T, data []byte) {
 }
 
 func TestEncode(t *testing.T) {
-	headers := []IDAndWire{
-		{2, 2, "name"},
-		{3, 0, "age"},
-		{4, 0, "id"},
-		{5, 0, "isAdmin"},
-	}
-
 	b := NewEncoder(0)
 
 	b.EncodeField(2, 2, []byte("pb by hand"))
@@ -79,7 +40,6 @@ func TestEncode(t *testing.T) {
 
 	t.Log(b.String(), b.Bytes())
 	buf := b.Bytes()
-	t.Log(HeaderGoString(headers...))
 	printBin(t, buf)
 
 	d := NewDecoder(buf)
