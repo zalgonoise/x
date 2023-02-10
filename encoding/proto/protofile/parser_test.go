@@ -1,15 +1,19 @@
 package protofile
 
 import (
+	"bytes"
 	_ "embed"
 	"testing"
+
+	"github.com/zalgonoise/gio"
 )
 
 //go:embed testdata/all.proto
 var protofile []byte
 
 func TestParser(t *testing.T) {
-	str, err := Run(protofile)
+	r := (gio.Reader[byte])(bytes.NewReader(protofile))
+	str, err := Run(r)
 	if err != nil {
 		t.Error(err)
 		return
