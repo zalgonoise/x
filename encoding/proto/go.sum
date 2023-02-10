@@ -6,7 +6,11 @@ github.com/zalgonoise/gio v0.0.0-20221231224511-990149dd48ad h1:rv93oyGpIyLYOzo8
 github.com/zalgonoise/gio v0.0.0-20221231224511-990149dd48ad/go.mod h1:nhc82H2KvRf8/28o3RGBnJM/k7NapcDGPegqGIOqATY=
 github.com/zalgonoise/lex v0.0.0-20230205200406-82d28bf775a2 h1:DFEHl4lQnF2KhaHPkeoFpzNGsEigI/ZXvxdsHFbih60=
 github.com/zalgonoise/lex v0.0.0-20230205200406-82d28bf775a2/go.mod h1:iX2pTl/kiQb7RVQvS/8WgnzcVWG0igsGhwObKvnwjfU=
+github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7 h1:0oKoHdbDXnujmZWNVoDfLlNE1PLB/SYqWkTN19x0sYw=
+github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7/go.mod h1:iX2pTl/kiQb7RVQvS/8WgnzcVWG0igsGhwObKvnwjfU=
 github.com/zalgonoise/parse v0.0.0-20230205181257-0ceebea8442c h1:RdPk18SfKNETQekk/TyzvUGBbPEp3UcnbBbI6R+SZso=
 github.com/zalgonoise/parse v0.0.0-20230205181257-0ceebea8442c/go.mod h1:qjsAgDilaLVnrstcyrgm0MEbL147du4hO24LfYEiMqI=
+github.com/zalgonoise/parse v0.0.0-20230210134033-f3184e2a2c17 h1:SjfYADyeNnSMuIJ7MrOtXCYWkjvSsLwjO/GRoIpMqBM=
+github.com/zalgonoise/parse v0.0.0-20230210134033-f3184e2a2c17/go.mod h1:gN5pXQ+VmE3Jmy4/gPhgD+4gEisXfMpuDrjHb1eertI=
 github.com/zalgonoise/x/conv v0.0.0-20230209152649-73289c5fa3c9 h1:t9gbOmCj6AjbgtGAHV4CM4VW37PCjvG7UVUe9o9PRIw=
 github.com/zalgonoise/x/conv v0.0.0-20230209152649-73289c5fa3c9/go.mod h1:5kGysZK9eVX8k9G6F3uA+14BvYNboF/pHPR+hge5f14=
