@@ -6,7 +6,7 @@ require (
 	github.com/zalgonoise/gbuf v0.0.0-20230101003923-5929d4c4a7d0
 	github.com/zalgonoise/gio v0.0.0-20221231224511-990149dd48ad
 	github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7
-	github.com/zalgonoise/parse v0.0.0-20230210134033-f3184e2a2c17
+	github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5
 	github.com/zalgonoise/x/conv v0.0.0-20230209152649-73289c5fa3c9
 )
 

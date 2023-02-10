@@ -12,5 +12,7 @@ github.com/zalgonoise/parse v0.0.0-20230205181257-0ceebea8442c h1:RdPk18SfKNETQe
 github.com/zalgonoise/parse v0.0.0-20230205181257-0ceebea8442c/go.mod h1:qjsAgDilaLVnrstcyrgm0MEbL147du4hO24LfYEiMqI=
 github.com/zalgonoise/parse v0.0.0-20230210134033-f3184e2a2c17 h1:SjfYADyeNnSMuIJ7MrOtXCYWkjvSsLwjO/GRoIpMqBM=
 github.com/zalgonoise/parse v0.0.0-20230210134033-f3184e2a2c17/go.mod h1:gN5pXQ+VmE3Jmy4/gPhgD+4gEisXfMpuDrjHb1eertI=
+github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5 h1:EBgljXGafLZA4PqRdmtHBzSlShSXp/XizEqBfFOEbSM=
+github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5/go.mod h1:gN5pXQ+VmE3Jmy4/gPhgD+4gEisXfMpuDrjHb1eertI=
 github.com/zalgonoise/x/conv v0.0.0-20230209152649-73289c5fa3c9 h1:t9gbOmCj6AjbgtGAHV4CM4VW37PCjvG7UVUe9o9PRIw=
 github.com/zalgonoise/x/conv v0.0.0-20230209152649-73289c5fa3c9/go.mod h1:5kGysZK9eVX8k9G6F3uA+14BvYNboF/pHPR+hge5f14=
