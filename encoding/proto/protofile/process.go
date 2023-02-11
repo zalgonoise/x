@@ -1,157 +1,251 @@
 package protofile
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/zalgonoise/parse"
 )
 
+const supportedSyntax = "proto3"
+const supportedOption = "go_package"
+
+var (
+	ErrInvalidSyntax     = fmt.Errorf("invalid syntax (only %s is supported)", supportedSyntax)
+	ErrInvalidEdgeAmount = errors.New("invalid amount of edges")
+	ErrMissingPackage    = errors.New("missing package name")
+	ErrInvalidOption     = errors.New(`invalid option; include 'option go_package = "./my_package"'`)
+	ErrInvalidTokenType  = errors.New("invalid token type")
+)
+
+type GoField struct {
+	IsRepeated bool   `json:"is_repeated,omitempty"`
+	IsOptional bool   `json:"is_optional,omitempty"`
+	IsStruct   bool   `json:"is_struct,omitempty"`
+	GoType     string `json:"go_type,omitempty"`
+	GoName     string `json:"go_name,omitempty"`
+	ProtoType  string `json:"proto_type,omitempty"`
+	ProtoIndex int    `json:"proto_index,omitempty"`
+	ProtoName  string `json:"proto_name,omitempty"`
+}
+
+type EnumField struct {
+	Index     int    `json:"index,omitempty"`
+	GoName    string `json:"go_name,omitempty"`
+	ProtoName string `json:"proto_name,omitempty"`
+}
+
+type GoType struct {
+	Name   string    `json:"name,omitempty"`
+	Fields []GoField `json:"fields,omitempty"`
+}
+
+type GoEnum struct {
+	ProtoName string      `json:"proto_name,omitempty"`
+	GoName    string      `json:"go_name,omitempty"`
+	Fields    []EnumField `json:"fields,omitempty"`
+}
+
+type GoFile struct {
+	Path        string    `json:"path,omitempty"`
+	Package     string    `json:"package,omitempty"`
+	Types       []*GoType `json:"types,omitempty"`
+	Enums       []*GoEnum `json:"enums,omitempty"`
+	CustomTypes []string  `json:"custom_types,omitempty"`
+}
+
 func processFn[C ProtoToken, T byte, R string](t *parse.Tree[C, T]) (R, error) {
-	var sb = new(strings.Builder)
-	sb.WriteByte('\n')
+	var goFile = new(GoFile)
+	var sb = new(bytes.Buffer)
+	enc := json.NewEncoder(sb)
 
 	for _, n := range t.List() {
-
 		switch n.Type {
 		case C(TokenSYNTAX):
-			processSyntax(sb, n)
+			err := processSyntax(goFile, n)
+			if err != nil {
+				return "", err
+			}
 		case C(TokenPACKAGE):
-			processPackage(sb, n)
+			err := processPackage(goFile, n)
+			if err != nil {
+				return "", err
+			}
 		case C(TokenOPTION):
-			processOption(sb, n)
+			err := processOption(goFile, n)
+			if err != nil {
+				return "", err
+			}
 		case C(TokenENUM):
-			processEnum(sb, n)
+			err := processEnum(goFile, n)
+			if err != nil {
+				return "", err
+			}
 		case C(TokenMESSAGE):
-			processMessage(sb, n, 0)
+			err := processMessage(goFile, n)
+			if err != nil {
+				return "", err
+			}
 		default:
-			return (R)(sb.String()), fmt.Errorf("invalid top-level token: %d -- %s", n.Type, toString(n.Value))
+			invalidErr := fmt.Errorf("invalid top-level token: %d -- %s", n.Type, toString(n.Value))
+			err := enc.Encode(goFile)
+			if err != nil {
+				return (R)(sb.String()), errors.Join(invalidErr, err)
+			}
+			return (R)(sb.String()), invalidErr
 		}
+	}
+	err := enc.Encode(goFile)
+	if err != nil {
+		return (R)(sb.String()), err
 	}
 
 	return (R)(sb.String()), nil
 }
 
-func processSyntax[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T]) {
-	sb.WriteString("syntax: ")
-	for _, e := range n.Edges {
-		if e.Type == C(TokenVALUE) {
-			sb.WriteString(toString(e.Value))
+func processSyntax[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
+	if len(n.Edges) != 1 {
+		return ErrInvalidEdgeAmount
+	}
+
+	if n.Edges[0].Type != C(TokenVALUE) || toString(n.Edges[0].Value) != supportedSyntax {
+		return ErrInvalidSyntax
+	}
+	return nil
+}
+
+func processPackage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
+	if len(n.Edges) != 1 {
+		return ErrInvalidEdgeAmount
+	}
+
+	if n.Edges[0].Type != C(TokenVALUE) {
+		return ErrMissingPackage
+	}
+	goFile.Package = toString(n.Edges[0].Value)
+	return nil
+}
+
+func processOption[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
+	if len(n.Edges) != 1 {
+		return ErrInvalidEdgeAmount
+	}
+	if n.Edges[0].Type != (C)(TokenTYPE) ||
+		toString(n.Edges[0].Value) != supportedOption {
+		return ErrInvalidOption
+	}
+
+	if len(n.Edges[0].Edges) != 1 ||
+		n.Edges[0].Edges[0].Type != (C)(TokenVALUE) {
+		return ErrInvalidTokenType
+	}
+	goFile.Path = toString(n.Edges[0].Edges[0].Value)
+	return nil
+
+}
+
+func processEnum[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
+	if len(n.Edges) != 1 && len(n.Edges[0].Edges) == 0 {
+		return ErrInvalidEdgeAmount
+	}
+	if n.Edges[0].Type != (C)(TokenTYPE) {
+		return ErrInvalidTokenType
+	}
+
+	var jerr []error
+	enum := new(GoEnum)
+
+	enum.ProtoName = toString(n.Edges[0].Value)
+
+	for _, e := range n.Edges[0].Edges {
+		err := processEnumFields(enum, e)
+		if err != nil {
+			jerr = append(jerr, err)
 		}
 	}
-	sb.WriteByte('\n')
+
+	if len(jerr) > 0 {
+		return errors.Join(jerr...)
+	}
+	goFile.Enums = append(goFile.Enums, enum)
+	return nil
+}
+func processEnumFields[C ProtoToken, T byte](enum *GoEnum, n *parse.Node[C, T]) error {
+	if len(n.Edges) != 1 {
+		return ErrInvalidEdgeAmount
+	}
+
+	if n.Type != (C)(TokenVALUE) {
+		return ErrInvalidTokenType
+	}
+
+	idx, err := strconv.Atoi(toString(n.Value))
+	if err != nil {
+		return err
+	}
+	f := EnumField{
+		Index:     idx,
+		ProtoName: toString(n.Edges[0].Value),
+	}
+	enum.Fields = append(enum.Fields, f)
+	return nil
+
 }
 
-func processPackage[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T]) {
-	sb.WriteString("package: ")
-	for _, e := range n.Edges {
-		if e.Type == C(TokenVALUE) {
-			sb.WriteString(toString(e.Value))
+func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
+	if len(n.Edges) != 1 {
+		return ErrInvalidEdgeAmount
+	}
+
+	var jerr []error
+	goType := new(GoType)
+	goType.Name = toString(n.Edges[0].Value)
+	goFile.CustomTypes = append(goFile.CustomTypes, goType.Name)
+
+	for _, e := range n.Edges[0].Edges {
+		err := processMessageFields(goType, goFile, e)
+		if err != nil {
+			jerr = append(jerr, err)
 		}
 	}
-	sb.WriteByte('\n')
+	if len(jerr) > 0 {
+		return errors.Join(jerr...)
+	}
+	goFile.Types = append(goFile.Types, goType)
+	return nil
 }
 
-func processOption[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T]) {
-	sb.WriteString("option: ")
-	for _, e := range n.Edges {
-		if e.Type == (C)(TokenTYPE) {
-			sb.WriteString("type: ")
-			sb.WriteString(toString(e.Value))
-			for _, ee := range e.Edges {
-				if ee.Type == C(TokenVALUE) {
-					sb.WriteString(" to ")
-					sb.WriteString(toString(ee.Value))
-				}
-			}
-		}
-	}
-	sb.WriteByte('\n')
-}
+func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, n *parse.Node[C, T]) error {
+	field := new(GoField)
 
-func processEnum[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T]) {
-	sb.WriteString("enum (len: ")
-	if len(n.Edges) > 0 {
-		sb.WriteString(strconv.Itoa(len(n.Edges[0].Edges)))
-	}
-	sb.WriteString(")\n")
-	for _, e := range n.Edges {
-		if e.Type == (C)(TokenTYPE) {
-			sb.WriteString("type: ")
-			sb.WriteString(toString(e.Value))
-			sb.WriteByte('\n')
-			for _, ee := range e.Edges {
-				processEnumFields(sb, ee)
-			}
-		}
-	}
-}
-func processEnumFields[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T]) {
-	if n.Type == (C)(TokenVALUE) {
-		sb.WriteString("\tid: ")
-		sb.WriteString(toString(n.Value))
-		for _, e := range n.Edges {
-			sb.WriteString("\tname: ")
-			sb.WriteString(toString(e.Value))
-		}
-		sb.WriteByte('\n')
-	}
-}
-
-func processMessage[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T], ident int) {
-	addIdent(sb, ident)
-	sb.WriteString("message (len: ")
-	if len(n.Edges) > 0 {
-		sb.WriteString(strconv.Itoa(len(n.Edges[0].Edges)))
-	}
-	sb.WriteString(")\n")
-
-	for _, e := range n.Edges {
-		if e.Type == (C)(TokenTYPE) {
-			addIdent(sb, ident)
-			sb.WriteString("type: ")
-			sb.WriteString(toString(e.Value))
-			sb.WriteByte('\n')
-
-			for _, ee := range e.Edges {
-				processMessageFields(sb, ee, ident)
-			}
-
-		}
-	}
-}
-func addIdent(sb *strings.Builder, n int) {
-	for i := 0; i < n; i++ {
-		sb.WriteByte('\t')
-	}
-}
-
-func processMessageFields[C ProtoToken, T byte](sb *strings.Builder, n *parse.Node[C, T], ident int) {
 	switch n.Type {
 	case (C)(TokenVALUE):
-		addIdent(sb, ident)
-		sb.WriteString("\tid: ")
-		sb.WriteString(toString(n.Value))
+		idx, err := strconv.Atoi(toString(n.Value))
+		if err != nil {
+			return err
+		}
+		field.ProtoIndex = idx
 		for _, e := range n.Edges {
 			switch e.Type {
 			case (C)(TokenMESSAGE):
-				processMessage(sb, e, ident+1)
+				return processMessage(goFile, e)
 			case C(TokenIDENT):
-				sb.WriteString("\tname: ")
-				sb.WriteString(toString(e.Value))
+				field.ProtoName = toString(e.Value)
 			case C(TokenTYPE):
-				sb.WriteString("\ttype: ")
-				sb.WriteString(toString(e.Value))
+				field.ProtoType = toString(e.Value)
 			case C(TokenREPEATED):
-				sb.WriteString("\trepeated: true")
+				field.IsRepeated = true
 			case C(TokenOPTIONAL):
-				sb.WriteString("\toptional: true")
+				field.IsOptional = true
 			}
 		}
-		sb.WriteByte('\n')
 	case (C)(TokenMESSAGE):
-		processMessage(sb, n, ident+1)
+		return processMessage(goFile, n)
 	}
+	goType.Fields = append(goType.Fields, *field)
+	return nil
 
 }
