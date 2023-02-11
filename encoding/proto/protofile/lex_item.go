@@ -19,22 +19,6 @@ const (
 	TokenENUM
 	TokenREPEATED
 	TokenOPTIONAL
-
-	TokenBOOL
-	TokenUINT32
-	TokenUINT64
-	TokenSINT32
-	TokenSINT64
-	TokenINT32
-	TokenINT64
-	TokenFIXED32
-	TokenFIXED64
-	TokenSFIXED32
-	TokenSFIXED64
-	TokenDOUBLE
-	TokenFLOAT
-	TokenSTRING
-	TokenBYTES
 )
 
 var keywords = map[string]ProtoToken{
