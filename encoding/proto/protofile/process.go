@@ -19,6 +19,8 @@ var (
 	ErrMissingPackage    = errors.New("missing package name")
 	ErrInvalidOption     = errors.New(`invalid option; include 'option go_package = "./my_package"'`)
 	ErrInvalidTokenType  = errors.New("invalid token type")
+	ErrAlreadyExistsName = errors.New("name already exists")
+	ErrAlreadyExistsID   = errors.New("ID already exists")
 )
 
 type GoField struct {
@@ -28,37 +30,42 @@ type GoField struct {
 	GoType     string `json:"go_type,omitempty"`
 	GoName     string `json:"go_name,omitempty"`
 	ProtoType  string `json:"proto_type,omitempty"`
-	ProtoIndex int    `json:"proto_index,omitempty"`
+	ProtoIndex int    `json:"proto_index"`
 	ProtoName  string `json:"proto_name,omitempty"`
 }
 
 type EnumField struct {
-	Index     int    `json:"index,omitempty"`
+	Index     int    `json:"index"`
 	GoName    string `json:"go_name,omitempty"`
 	ProtoName string `json:"proto_name,omitempty"`
 }
 
 type GoType struct {
-	Name   string    `json:"name,omitempty"`
-	Fields []GoField `json:"fields,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Fields      []GoField `json:"fields,omitempty"`
+	uniqueNames map[string]struct{}
+	uniqueIDs   map[int]struct{}
 }
 
 type GoEnum struct {
-	ProtoName string      `json:"proto_name,omitempty"`
-	GoName    string      `json:"go_name,omitempty"`
-	Fields    []EnumField `json:"fields,omitempty"`
+	ProtoName   string      `json:"proto_name,omitempty"`
+	GoName      string      `json:"go_name,omitempty"`
+	Fields      []EnumField `json:"fields,omitempty"`
+	uniqueNames map[string]struct{}
+	uniqueIDs   map[int]struct{}
 }
 
 type GoFile struct {
-	Path        string    `json:"path,omitempty"`
-	Package     string    `json:"package,omitempty"`
-	Types       []*GoType `json:"types,omitempty"`
-	Enums       []*GoEnum `json:"enums,omitempty"`
-	CustomTypes []string  `json:"custom_types,omitempty"`
+	Path        string              `json:"path,omitempty"`
+	Package     string              `json:"package,omitempty"`
+	Types       []*GoType           `json:"types,omitempty"`
+	Enums       []*GoEnum           `json:"enums,omitempty"`
+	UniqueTypes map[string]struct{} `json:"unique_types"`
 }
 
 func processFn[C ProtoToken, T byte, R string](t *parse.Tree[C, T]) (R, error) {
 	var goFile = new(GoFile)
+	goFile.UniqueTypes = make(map[string]struct{})
 	var sb = new(bytes.Buffer)
 	enc := json.NewEncoder(sb)
 
@@ -157,8 +164,15 @@ func processEnum[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) erro
 
 	var jerr []error
 	enum := new(GoEnum)
+	enum.uniqueIDs = make(map[int]struct{})
+	enum.uniqueNames = make(map[string]struct{})
 
-	enum.ProtoName = toString(n.Edges[0].Value)
+	name := toString(n.Edges[0].Value)
+	if _, ok := goFile.UniqueTypes[name]; ok {
+		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, name)
+	}
+	goFile.UniqueTypes[name] = struct{}{}
+	enum.ProtoName = name
 
 	for _, e := range n.Edges[0].Edges {
 		err := processEnumFields(enum, e)
@@ -186,13 +200,23 @@ func processEnumFields[C ProtoToken, T byte](enum *GoEnum, n *parse.Node[C, T]) 
 	if err != nil {
 		return err
 	}
+	name := toString(n.Edges[0].Value)
+
+	if _, ok := enum.uniqueIDs[idx]; ok {
+		return fmt.Errorf("%w: %d", ErrAlreadyExistsID, idx)
+	}
+	enum.uniqueIDs[idx] = struct{}{}
+	if _, ok := enum.uniqueNames[name]; ok {
+		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, name)
+	}
+	enum.uniqueNames[name] = struct{}{}
+
 	f := EnumField{
 		Index:     idx,
-		ProtoName: toString(n.Edges[0].Value),
+		ProtoName: name,
 	}
 	enum.Fields = append(enum.Fields, f)
 	return nil
-
 }
 
 func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
@@ -202,8 +226,14 @@ func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) e
 
 	var jerr []error
 	goType := new(GoType)
+	goType.uniqueIDs = make(map[int]struct{})
+	goType.uniqueNames = make(map[string]struct{})
+
 	goType.Name = toString(n.Edges[0].Value)
-	goFile.CustomTypes = append(goFile.CustomTypes, goType.Name)
+	if _, ok := goFile.UniqueTypes[goType.Name]; ok {
+		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, goType.Name)
+	}
+	goFile.UniqueTypes[goType.Name] = struct{}{}
 
 	for _, e := range n.Edges[0].Edges {
 		err := processMessageFields(goType, goFile, e)
@@ -227,13 +257,22 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 		if err != nil {
 			return err
 		}
+		if _, ok := goType.uniqueIDs[idx]; ok {
+			return fmt.Errorf("%w: %d", ErrAlreadyExistsID, idx)
+		}
+		goType.uniqueIDs[idx] = struct{}{}
 		field.ProtoIndex = idx
 		for _, e := range n.Edges {
 			switch e.Type {
 			case (C)(TokenMESSAGE):
 				return processMessage(goFile, e)
 			case C(TokenIDENT):
-				field.ProtoName = toString(e.Value)
+				name := toString(e.Value)
+				if _, ok := goType.uniqueNames[name]; ok {
+					return fmt.Errorf("%w: %s", ErrAlreadyExistsName, name)
+				}
+				goType.uniqueNames[name] = struct{}{}
+				field.ProtoName = name
 			case C(TokenTYPE):
 				field.ProtoType = toString(e.Value)
 			case C(TokenREPEATED):
