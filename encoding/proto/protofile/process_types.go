@@ -185,14 +185,59 @@ func (t GoFile) GoString() string {
 					isStruct = true
 				}
 			}
-
-			if v, ok := t.UniqueTypes[field.ProtoName]; ok {
-				if v {
-					isEnum = true
-				} else {
-					isStruct = true
+			if field.IsRepeated {
+				sb.WriteString("\t\t\tlen(")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				sb.WriteString(") * 8")
+				if idx == len(typ.Fields)-1 {
+					sb.WriteString(")\n")
+					continue
 				}
+				sb.WriteString(" +\n")
+				continue
 			}
+			if field.IsOptional {
+				sb.WriteString("\t\t\t8")
+				if idx == len(typ.Fields)-1 {
+					sb.WriteString(")\n")
+					continue
+				}
+				sb.WriteString(" +\n")
+				continue
+			}
+			if isEnum {
+				sb.WriteString("\t\t\tbyteLen(uint64(")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				sb.WriteString("))")
+				if idx == len(typ.Fields)-1 {
+					sb.WriteString(")\n")
+					continue
+				}
+				sb.WriteString(" +\n")
+				continue
+			}
+			if isStruct {
+				sb.WriteString("\t\t\tbyteLen(len(")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				sb.WriteString(".Bytes())) +\n")
+				sb.WriteString("\t\t\tlen(")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				sb.WriteString(".Bytes())")
+				if idx == len(typ.Fields)-1 {
+					sb.WriteString(")\n")
+					continue
+				}
+				sb.WriteString(" +\n")
+			}
+
 			switch field.GoType {
 			case "bool":
 				sb.WriteString("\t\t\t1")
@@ -231,36 +276,13 @@ func (t GoFile) GoString() string {
 				}
 				sb.WriteString(" +\n")
 			default:
-				if isEnum {
-					sb.WriteString("\t\t\tbyteLen(")
-					sb.WriteString(placeholder)
-					sb.WriteByte('.')
-					sb.WriteString(field.GoName)
-					sb.WriteString(")")
-					if idx == len(typ.Fields)-1 {
-						sb.WriteString(")\n")
-						continue
-					}
-					sb.WriteString(" +\n")
+				sb.WriteString("\t\t\t8")
+				if idx == len(typ.Fields)-1 {
+					sb.WriteString(")\n")
 					continue
 				}
-				if isStruct {
-					sb.WriteString("\t\t\tbyteLen(len(")
-					sb.WriteString(placeholder)
-					sb.WriteByte('.')
-					sb.WriteString(field.GoName)
-					sb.WriteString(".Bytes())) +\n")
-					sb.WriteString("\t\t\tlen(")
-					sb.WriteString(placeholder)
-					sb.WriteByte('.')
-					sb.WriteString(field.GoName)
-					sb.WriteString(".Bytes())")
-					if idx == len(typ.Fields)-1 {
-						sb.WriteString(")\n")
-						continue
-					}
-					sb.WriteString(" +\n")
-				}
+				sb.WriteString(" +\n")
+
 			}
 		}
 		for _, field := range typ.Fields {
@@ -303,7 +325,7 @@ func (t GoFile) GoString() string {
 				if isEnum {
 					sb.WriteString("\te.")
 					sb.WriteString(Int64.EncoderFunc())
-					sb.WriteByte('(')
+					sb.WriteString("(int64(")
 					if field.IsOptional {
 						sb.WriteString("*")
 					}
@@ -313,7 +335,7 @@ func (t GoFile) GoString() string {
 					if field.IsRepeated {
 						sb.WriteString("[idx]")
 					}
-					sb.WriteByte(')')
+					sb.WriteString("))")
 					sb.WriteByte('\n')
 				} else {
 					sb.WriteString("\te.")
@@ -350,10 +372,29 @@ func (t GoFile) GoString() string {
 
 	sb.WriteString("\n\ntype encoder struct {\n\tb *bytes.Buffer\n}")
 	sb.WriteString("\n\nfunc newEncoder(size int) encoder {\n\tif size == 0 {\n\t\tsize = minSize\n\t}\n\treturn encoder{\n\t\tb: bytes.NewBuffer(make([]byte, 0, size)),\n\t}\n}")
+	sb.WriteString(`
+
+func (w encoder) encodeVarint(value uint64) int {
+	i := 0
+	for value >= 0x80 {
+		_ = w.b.WriteByte(byte(value) | 0x80)
+		value >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(value))
+	return i + 1	
+}	
+`)
+
 	sb.WriteString("\n\ntype signed interface {\n\t~int | ~int16 | ~int32 | ~int64\n}")
 	sb.WriteString("\n\ntype unsigned interface {\n\t~uint | ~uint16 | ~uint32 | ~uint64\n}")
 	sb.WriteString("\n\ntype number interface {\n\tsigned | unsigned\n}")
 	sb.WriteString("\n\nfunc byteLen[T number](v T) (size int) {\n\tfor i := 0 ; i < 8 ; i++ {\n\t\tv = v >> 8\n\t\tif v == 0 {\n\t\t\treturn i + i\n\t\t}\n\t}\n\treturn 0\n}")
+
+	for _, conc := range t.concreteTypes {
+		sb.WriteString("\n\n")
+		sb.WriteString(conc.FuncGoString())
+	}
 
 	return sb.String()
 }

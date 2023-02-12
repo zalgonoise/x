@@ -70,7 +70,7 @@ func (boolType) EncoderFunc() string { return "EncodeBool" }
 func (boolType) FuncGoString() string {
 	return `
 // EncodeBool writes the boolean value to the Encoder as a single byte
-func (w Encoder) EncodeBool(value bool) {
+func (w encoder) EncodeBool(value bool) {
 	if value {
 		_ = w.b.WriteByte(1)
 		return
@@ -90,7 +90,7 @@ func (uint32Type) EncoderFunc() string { return "EncodeUint32" }
 func (uint32Type) FuncGoString() string {
 	return `
 // EncodeUint32 writes the uint32 value to the Encoder, as a varint
-func (w Encoder) EncodeUint32(value uint32) int {
+func (w encoder) EncodeUint32(value uint32) int {
 	i := 0
 	for value >= 0x80 {
 		_ = w.b.WriteByte(byte(value) | 0x80)
@@ -113,15 +113,8 @@ func (uint64Type) EncoderFunc() string { return "EncodeUint64" }
 func (uint64Type) FuncGoString() string {
 	return `
 // EncodeUint64 writes the uint64 value to the Encoder, as a varint
-func (w Encoder) EncodeUint64(value uint64) int {
-	i := 0
-	for value >= 0x80 {
-		_ = w.b.WriteByte(byte(value) | 0x80)
-		value >>= 7
-		i++
-	}
-	_ = w.b.WriteByte(byte(value))
-	return i + 1
+func (w encoder) EncodeUint64(value uint64) int {
+	return w.encodeVarint(value)
 }
 
 `
@@ -137,7 +130,7 @@ func (int64Type) FuncGoString() string {
 	return `
 // EncodeInt64 writes the int64 value to the Encoder, as a zig-zag
 // encoded varint
-func (w Encoder) EncodeInt64(value int64) int {
+func (w encoder) EncodeInt64(value int64) int {
 	v := uint64((value << 1) ^ (value >> 63))
 	i := 0
 	for v >= 0x80 {
@@ -161,7 +154,7 @@ func (int32Type) FuncGoString() string {
 	return `
 // EncodeInt32 writes the int32 value to the Encoder, as a zig-zag
 // encoded varint
-func (w Encoder) EncodeInt32(value int32) int {
+func (w encoder) EncodeInt32(value int32) int {
 	v := uint32((value << 1) ^ (value >> 31))
 	i := 0
 	for v >= 0x80 {
@@ -185,9 +178,9 @@ func (float32Type) FuncGoString() string {
 	return `
 // EncodeFloat32 writes the float32 value to the Encoder, as a 4-byte
 // buffer
-func (w Encoder) EncodeFloat32(value float32) int {
+func (w encoder) EncodeFloat32(value float32) int {
 	var buf = make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, math.Float32bits(v))
+	binary.BigEndian.PutUint32(buf, math.Float32bits(value))
 	_, _ = w.b.Write(buf)
 	return 4
 }
@@ -205,9 +198,9 @@ func (float64Type) FuncGoString() string {
 	return `
 // EncodeFloat64 writes the float64 value to the Encoder, as a 4-byte
 // buffer
-func (w Encoder) EncodeFloat64(value float64) int {
+func (w encoder) EncodeFloat64(value float64) int {
 	var buf = make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, math.Float64bits(v))
+	binary.BigEndian.PutUint64(buf, math.Float64bits(value))
 	_, _ = w.b.Write(buf)
 	return 8
 }
@@ -225,8 +218,8 @@ func (bytesType) FuncGoString() string {
 	return `
 // EncodeBytes writes the byte slice to the Encoder, as a length-delimited
 // record
-func (w Encoder) EncodeBytes(value []byte) int {
-	n := w.EncodeVarint(uint64(len(value)))
+func (w encoder) EncodeBytes(value []byte) int {
+	n := w.encodeVarint(uint64(len(value)))
 	_, _ = w.b.Write(value)
 	return n + len(value)
 }
@@ -241,12 +234,12 @@ func (stringType) WireType() int       { return 2 }
 func (stringType) EncoderFunc() string { return "EncodeString" }
 
 func (stringType) FuncGoString() string {
-	return `EncodeBytes
+	return `
 // EncodeString writes the string as a byte slice to the Encoder, 
 // as a length-delimited record
-func (w Encoder) EncodeString(value string) int {
+func (w encoder) EncodeString(value string) int {
 	buf := []byte(value)
-	n := w.EncodeVarint(uint64(len(buf)))
+	n := w.encodeVarint(uint64(len(buf)))
 	_, _ = w.b.Write(buf)
 	return n + len(buf)
 }

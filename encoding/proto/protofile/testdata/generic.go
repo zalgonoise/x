@@ -2,6 +2,8 @@ package generic
 
 import (
 	"bytes"
+	"encoding/binary"
+	"math"
 )
 
 const minSize = 14
@@ -62,14 +64,15 @@ func (x Generic) Bytes() []byte {
 			byteLen(x.Fixed64) +
 			byteLen(x.Sfixed32) +
 			byteLen(x.Sfixed64) +
+			8 +
+			8 +
 			byteLen(len(x.Varchar)) +
 			len(x.Varchar) +
 			byteLen(len(x.ByteSlice)) +
 			len(x.ByteSlice) +
-			byteLen(x.IntSlice) +
-			byteLen(x.EnumField) +
-			byteLen(len(x.InnerStruct.Bytes())) +
-			len(x.InnerStruct.Bytes()))
+			len(x.IntSlice)*8 +
+			8 +
+			len(x.InnerStruct)*8)
 	e.b.WriteByte(8)
 	e.EncodeBool(x.BoolField)
 	e.b.WriteByte(16)
@@ -106,7 +109,7 @@ func (x Generic) Bytes() []byte {
 	}
 	if x.EnumField != nil {
 		e.b.WriteByte(138)
-		e.EncodeInt64(*x.EnumField)
+		e.EncodeInt64(int64(*x.EnumField))
 	}
 	for idx := range x.InnerStruct {
 		e.b.WriteByte(146)
@@ -158,6 +161,17 @@ func newEncoder(size int) encoder {
 	}
 }
 
+func (w encoder) encodeVarint(value uint64) int {
+	i := 0
+	for value >= 0x80 {
+		_ = w.b.WriteByte(byte(value) | 0x80)
+		value >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(value))
+	return i + 1
+}
+
 type signed interface {
 	~int | ~int16 | ~int32 | ~int64
 }
@@ -178,4 +192,93 @@ func byteLen[T number](v T) (size int) {
 		}
 	}
 	return 0
+}
+
+// EncodeInt32 writes the int32 value to the Encoder, as a zig-zag
+// encoded varint
+func (w encoder) EncodeInt32(value int32) int {
+	v := uint32((value << 1) ^ (value >> 31))
+	i := 0
+	for v >= 0x80 {
+		_ = w.b.WriteByte(byte(v) | 0x80)
+		v >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(v))
+	return i + 1
+}
+
+// EncodeInt64 writes the int64 value to the Encoder, as a zig-zag
+// encoded varint
+func (w encoder) EncodeInt64(value int64) int {
+	v := uint64((value << 1) ^ (value >> 63))
+	i := 0
+	for v >= 0x80 {
+		_ = w.b.WriteByte(byte(v) | 0x80)
+		v >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(v))
+	return i + 1
+}
+
+// EncodeFloat32 writes the float32 value to the Encoder, as a 4-byte
+// buffer
+func (w encoder) EncodeFloat32(value float32) int {
+	var buf = make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, math.Float32bits(value))
+	_, _ = w.b.Write(buf)
+	return 4
+}
+
+// EncodeBool writes the boolean value to the Encoder as a single byte
+func (w encoder) EncodeBool(value bool) {
+	if value {
+		_ = w.b.WriteByte(1)
+		return
+	}
+	_ = w.b.WriteByte(0)
+}
+
+// EncodeBytes writes the byte slice to the Encoder, as a length-delimited
+// record
+func (w encoder) EncodeBytes(value []byte) int {
+	n := w.encodeVarint(uint64(len(value)))
+	_, _ = w.b.Write(value)
+	return n + len(value)
+}
+
+// EncodeFloat64 writes the float64 value to the Encoder, as a 4-byte
+// buffer
+func (w encoder) EncodeFloat64(value float64) int {
+	var buf = make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, math.Float64bits(value))
+	_, _ = w.b.Write(buf)
+	return 8
+}
+
+// EncodeString writes the string as a byte slice to the Encoder,
+// as a length-delimited record
+func (w encoder) EncodeString(value string) int {
+	buf := []byte(value)
+	n := w.encodeVarint(uint64(len(buf)))
+	_, _ = w.b.Write(buf)
+	return n + len(buf)
+}
+
+// EncodeUint32 writes the uint32 value to the Encoder, as a varint
+func (w encoder) EncodeUint32(value uint32) int {
+	i := 0
+	for value >= 0x80 {
+		_ = w.b.WriteByte(byte(value) | 0x80)
+		value >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(value))
+	return i + 1
+}
+
+// EncodeUint64 writes the uint64 value to the Encoder, as a varint
+func (w encoder) EncodeUint64(value uint64) int {
+	return w.encodeVarint(value)
 }

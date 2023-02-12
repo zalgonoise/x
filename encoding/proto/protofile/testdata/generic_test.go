@@ -3,15 +3,16 @@ package generic
 import "testing"
 
 func TestGeneric(t *testing.T) {
+	status := Ok
 	gen := Generic{
 		BoolField:   true,
 		Unsigned32:  12,
 		Unsigned64:  32,
 		Signed32:    -12,
-		Unsigned64:  -32,
+		Signed64:    -32,
 		Int32:       12546734,
 		Int64:       -15675732,
-		Fixed32:     123145445645,
+		Fixed32:     45445645,
 		Fixed64:     112315435323,
 		Sfixed32:    -12454,
 		Sfixed64:    -12434324,
@@ -20,7 +21,7 @@ func TestGeneric(t *testing.T) {
 		Varchar:     "something",
 		ByteSlice:   []byte("yep"),
 		IntSlice:    []uint64{1, 2, 3},
-		EnumField:   &Ok,
+		EnumField:   &status,
 		InnerStruct: []Short{{Ok: true}},
 	}
 
