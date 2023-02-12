@@ -26,7 +26,13 @@ func TestGeneric(t *testing.T) {
 	}
 
 	buf := gen.Bytes()
+
+	gen2, err := ToGeneric(buf)
+	if err != nil {
+		t.Error(err)
+	}
 	t.Log(string(buf))
+	t.Log(gen2)
 	t.Error()
 
 }

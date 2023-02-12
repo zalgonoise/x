@@ -163,9 +163,26 @@ func (t GoFile) GoString() string {
 		sb.WriteByte('\n')
 	}
 	sb.WriteString(")\n\n")
-	sb.WriteString("const minSize = ")
+	sb.WriteString("const (\n\tminSize = ")
 	sb.WriteString(strconv.Itoa(t.minAlloc))
-	sb.WriteString("\n\n")
+	sb.WriteString("\n\tMaxVarintLen64 = 10\n)\n")
+
+	for _, typ := range t.Types {
+		sb.WriteString("const (\n")
+		for _, field := range typ.Fields {
+			sb.WriteString("\theader")
+			sb.WriteString(typ.Name)
+			sb.WriteString(field.GoName)
+			sb.WriteString(" uint64 = ")
+			sb.WriteString(strconv.Itoa(field.idAndWire.Header()))
+			sb.WriteString(" // {")
+			sb.WriteString(strconv.Itoa(field.idAndWire.ID))
+			sb.WriteString(", ")
+			sb.WriteString(strconv.Itoa(field.idAndWire.Wire))
+			sb.WriteString("}\n")
+		}
+		sb.WriteString(")\n")
+	}
 	for _, typ := range t.Types {
 		sb.WriteString(typ.GoString())
 
@@ -391,9 +408,121 @@ func (w encoder) encodeVarint(value uint64) int {
 	sb.WriteString("\n\ntype number interface {\n\tsigned | unsigned\n}")
 	sb.WriteString("\n\nfunc byteLen[T number](v T) (size int) {\n\tfor i := 0 ; i < 8 ; i++ {\n\t\tv = v >> 8\n\t\tif v == 0 {\n\t\t\treturn i + i\n\t\t}\n\t}\n\treturn 0\n}")
 
+	sb.WriteString(`
+
+func decodeVarint(r io.Reader) (uint64, error) {
+	var x uint64
+	var s uint
+	var i int
+	for {
+		byt := make([]byte, 1)
+		_, err := r.Read(byt)
+		if err != nil {
+			return x, err
+		}
+		i++
+		if i == MaxVarintLen64 {
+			return 0, errors.New("varint overflow") // overflow
+		}
+		if byt[0] < 0x80 {
+			if i == MaxVarintLen64-1 && byt[0] > 1 {
+				return 0, errors.New("varint overflow") // overflow
+			}
+			return x | uint64(byt[0])<<s, nil
+		}
+		x |= uint64(byt[0]&0x7f) << s
+		s += 7
+	}
+}
+`)
+	for _, typ := range t.Types {
+		sb.WriteString("\n\ntype dec")
+		sb.WriteString(typ.Name)
+		sb.WriteString(" struct {\n\t*bytes.Reader\n}")
+
+		sb.WriteString("\n\nfunc To")
+		sb.WriteString(typ.Name)
+		sb.WriteString("(buf []byte) (")
+		sb.WriteString(typ.Name)
+		sb.WriteString(", error) {\n\treturn (&dec")
+		sb.WriteString(typ.Name)
+		sb.WriteString("{Reader: bytes.NewReader(buf)}).decode()\n}")
+
+		sb.WriteString("\n\nfunc (d *dec")
+		sb.WriteString(typ.Name)
+		sb.WriteString(") decode() (")
+		sb.WriteString(typ.Name)
+		sb.WriteString(", error) {\n\tx, err := decode")
+		sb.WriteString(typ.Name)
+		sb.WriteString("(d.Reader)\n\tif err != nil && !errors.Is(err, io.EOF) {\n\t\treturn x, err\n\t}\n\treturn x, nil\n}")
+
+		sb.WriteString("\n\nfunc decode")
+		sb.WriteString(typ.Name)
+		sb.WriteString("(r io.Reader) (")
+		sb.WriteString(typ.Name)
+		sb.WriteString(", error) {\n\t var x = ")
+		sb.WriteString(typ.Name)
+		sb.WriteString("{}\n\tfor {\n\t\tv, err := decodeVarint(r)\n\t\tif err != nil {\n\t\t\treturn x, err\n\t\t}\n\t\tswitch v {\n")
+
+		for _, field := range typ.Fields {
+			var decoderFn string
+			var isEnum bool
+			if conc, ok := goTypes[field.GoType]; ok {
+				decoderFn = conc.DecoderFunc()
+			} else if enum, ok := t.UniqueTypes[field.GoType]; ok {
+				if enum {
+					isEnum = true
+					decoderFn = Int64.DecoderFunc()
+				} else {
+					decoderFn = "decode" + field.GoType
+				}
+			}
+			sb.WriteString("\t\tcase header")
+			sb.WriteString(typ.Name)
+			sb.WriteString(field.GoName)
+			sb.WriteString(":\n\t\t\t")
+			sb.WriteString(field.ProtoName)
+			sb.WriteString(", err := ")
+			sb.WriteString(decoderFn)
+			sb.WriteString("(r)\n\t\t\tif err != nil {\n\t\t\t\treturn x, err\n\t\t\t}\n")
+			sb.WriteString("\t\t\tx.")
+			sb.WriteString(field.GoName)
+			sb.WriteString(" = ")
+			if field.IsRepeated {
+				sb.WriteString("append(x.")
+				sb.WriteString(field.GoName)
+				sb.WriteString(", ")
+			}
+			if isEnum {
+				sb.WriteString("(")
+				if field.IsOptional {
+					sb.WriteString("*")
+				}
+				sb.WriteString(field.GoType)
+				sb.WriteString(")(")
+			}
+			if field.IsOptional {
+				sb.WriteString("&")
+			}
+			sb.WriteString(field.ProtoName)
+			if isEnum {
+				sb.WriteString(")")
+			}
+			if field.IsRepeated {
+				sb.WriteString(")")
+			}
+			sb.WriteByte('\n')
+
+		}
+		sb.WriteString("\t\tcase 0:\n\t\t\treturn x, nil\n\t\tdefault:\n\t\t\treturn x, errors.New(`invalid header`)\n\t\t}\n\t}\n}")
+	}
 	for _, conc := range t.concreteTypes {
 		sb.WriteString("\n\n")
-		sb.WriteString(conc.FuncGoString())
+		sb.WriteString(conc.EncoderGoString())
+	}
+	for _, conc := range t.concreteTypes {
+		sb.WriteString("\n\n")
+		sb.WriteString(conc.DecoderGoString())
 	}
 
 	return sb.String()

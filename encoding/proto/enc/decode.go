@@ -8,14 +8,18 @@ import (
 
 const MaxVarintLen64 = 10
 
-type Decoder struct {
+type decoder struct {
 	*bytes.Reader
 }
 
-func NewDecoder(buf []byte) *Decoder {
-	return &Decoder{
+func newDecoder(buf []byte) *decoder {
+	return &decoder{
 		Reader: bytes.NewReader(buf),
 	}
+}
+
+func ToPerson(buf []byte) (Person, error) {
+	return (&decoder{Reader: bytes.NewReader(buf)}).decode()
 }
 
 var (
@@ -25,7 +29,7 @@ var (
 	headerID      uint64 = 40 // {5, 0}
 )
 
-func (d *Decoder) Decode() (Person, error) {
+func (d *decoder) decode() (Person, error) {
 	p, err := decodePerson(d.Reader)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return p, err
@@ -84,6 +88,19 @@ func decodeString(r io.Reader) (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+func decodeBytes(r io.Reader) ([]byte, error) {
+	length, err := decodeVarint(r)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]byte, length)
+	_, err = r.Read(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 func decodeVarint(r io.Reader) (uint64, error) {
 	var x uint64

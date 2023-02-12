@@ -42,8 +42,8 @@ func TestEncode(t *testing.T) {
 	buf := b.Bytes()
 	printBin(t, buf)
 
-	d := NewDecoder(buf)
-	out, err := d.Decode()
+	d := newDecoder(buf)
+	out, err := d.decode()
 	if err != nil {
 		t.Error(err)
 	}
@@ -104,8 +104,8 @@ func BenchmarkEncodeDecode(b *testing.B) {
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			dec := NewDecoder(buf)
-			newP, err = dec.Decode()
+			dec := newDecoder(buf)
+			newP, err = dec.decode()
 			if err != nil {
 				b.Error(err)
 				return
@@ -127,8 +127,8 @@ func BenchmarkEncodeDecode(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			buf := p.Bytes()
-			dec := NewDecoder(buf)
-			newP, err = dec.Decode()
+			dec := newDecoder(buf)
+			newP, err = dec.decode()
 			if err != nil {
 				b.Error(err)
 				return
@@ -185,8 +185,8 @@ func BenchmarkEncoding(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				dec := NewDecoder(input)
-				p, err = dec.Decode()
+				dec := newDecoder(input)
+				p, err = dec.decode()
 				if err != nil {
 					b.Error(err)
 					return
@@ -207,8 +207,8 @@ func BenchmarkEncoding(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				dec := NewDecoder(input)
-				p, err = dec.Decode()
+				dec := newDecoder(input)
+				p, err = dec.decode()
 				if err != nil {
 					b.Error(err)
 					return
@@ -234,8 +234,8 @@ func BenchmarkEncoding(b *testing.B) {
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				dec := NewDecoder(input)
-				p, err = dec.Decode()
+				dec := newDecoder(input)
+				p, err = dec.decode()
 				if err != nil {
 					b.Error(err)
 					return

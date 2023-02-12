@@ -55,10 +55,12 @@ var allocMap = map[ConcreteType]int{
 }
 
 type ConcreteType interface {
-	FuncGoString() string
+	EncoderGoString() string
+	DecoderGoString() string
 	GoType() string
 	WireType() int
 	EncoderFunc() string
+	DecoderFunc() string
 }
 
 type boolType struct{}
@@ -66,8 +68,9 @@ type boolType struct{}
 func (boolType) GoType() string      { return "bool" }
 func (boolType) WireType() int       { return 0 }
 func (boolType) EncoderFunc() string { return "EncodeBool" }
+func (boolType) DecoderFunc() string { return "decodeBool" }
 
-func (boolType) FuncGoString() string {
+func (boolType) EncoderGoString() string {
 	return `
 // EncodeBool writes the boolean value to the Encoder as a single byte
 func (w encoder) EncodeBool(value bool) {
@@ -81,13 +84,31 @@ func (w encoder) EncodeBool(value bool) {
 `
 }
 
+func (boolType) DecoderGoString() string {
+	return `
+func decodeBool(r io.Reader) (bool, error) {
+	var x bool
+	byt := make([]byte, 1)
+	_, err := r.Read(byt)
+	if err != nil {
+		return x, err
+	}
+	if byt[0] == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+`
+}
+
 type uint32Type struct{}
 
 func (uint32Type) GoType() string      { return "uint32" }
 func (uint32Type) WireType() int       { return 0 }
 func (uint32Type) EncoderFunc() string { return "EncodeUint32" }
+func (uint32Type) DecoderFunc() string { return "decodeUint32" }
 
-func (uint32Type) FuncGoString() string {
+func (uint32Type) EncoderGoString() string {
 	return `
 // EncodeUint32 writes the uint32 value to the Encoder, as a varint
 func (w encoder) EncodeUint32(value uint32) int {
@@ -104,13 +125,43 @@ func (w encoder) EncodeUint32(value uint32) int {
 `
 }
 
+func (uint32Type) DecoderGoString() string {
+	return `
+func decodeUint32(r io.Reader) (uint32, error) {
+	var x uint32
+	var s uint
+	var i int
+	for {
+		byt := make([]byte, 1)
+		_, err := r.Read(byt)
+		if err != nil {
+			return x, err
+		}
+		i++
+		if i == MaxVarintLen64 {
+			return 0, errors.New("varint overflow") // overflow
+		}
+		if byt[0] < 0x80 {
+			if i == MaxVarintLen64-1 && byt[0] > 1 {
+				return 0, errors.New("varint overflow") // overflow
+			}
+			return x | uint32(byt[0])<<s, nil
+		}
+		x |= uint32(byt[0]&0x7f) << s
+		s += 7
+	}
+}
+`
+}
+
 type uint64Type struct{}
 
 func (uint64Type) GoType() string      { return "uint64" }
 func (uint64Type) WireType() int       { return 0 }
 func (uint64Type) EncoderFunc() string { return "EncodeUint64" }
+func (uint64Type) DecoderFunc() string { return "decodeUint64" }
 
-func (uint64Type) FuncGoString() string {
+func (uint64Type) EncoderGoString() string {
 	return `
 // EncodeUint64 writes the uint64 value to the Encoder, as a varint
 func (w encoder) EncodeUint64(value uint64) int {
@@ -120,13 +171,22 @@ func (w encoder) EncodeUint64(value uint64) int {
 `
 }
 
+func (uint64Type) DecoderGoString() string {
+	return `
+func decodeUint64(r io.Reader) (uint64, error) {
+	return decodeVarint(r)
+}
+`
+}
+
 type int64Type struct{}
 
 func (int64Type) GoType() string      { return "int64" }
 func (int64Type) WireType() int       { return 0 }
 func (int64Type) EncoderFunc() string { return "EncodeInt64" }
+func (int64Type) DecoderFunc() string { return "decodeInt64" }
 
-func (int64Type) FuncGoString() string {
+func (int64Type) EncoderGoString() string {
 	return `
 // EncodeInt64 writes the int64 value to the Encoder, as a zig-zag
 // encoded varint
@@ -144,13 +204,44 @@ func (w encoder) EncodeInt64(value int64) int {
 `
 }
 
+func (int64Type) DecoderGoString() string {
+	return `
+func decodeInt64(r io.Reader) (int64, error) {
+	var x uint64
+	var s uint
+	var i int
+	for {
+		byt := make([]byte, 1)
+		_, err := r.Read(byt)
+		if err != nil {
+			return int64(x), err
+		}
+		i++
+		if i == MaxVarintLen64 {
+			return 0, errors.New("varint overflow") // overflow
+		}
+		if byt[0] < 0x80 {
+			if i == MaxVarintLen64-1 && byt[0] > 1 {
+				return 0, errors.New("varint overflow") // overflow
+			}
+			n := x | uint64(byt[0])<<s
+			return int64((n >> 1) ^ -(n & 1)), nil
+		}
+		x |= uint64(byt[0]&0x7f) << s
+		s += 7
+	}
+}
+`
+}
+
 type int32Type struct{}
 
 func (int32Type) GoType() string      { return "int32" }
 func (int32Type) WireType() int       { return 0 }
 func (int32Type) EncoderFunc() string { return "EncodeInt32" }
+func (int32Type) DecoderFunc() string { return "decodeInt32" }
 
-func (int32Type) FuncGoString() string {
+func (int32Type) EncoderGoString() string {
 	return `
 // EncodeInt32 writes the int32 value to the Encoder, as a zig-zag
 // encoded varint
@@ -168,13 +259,44 @@ func (w encoder) EncodeInt32(value int32) int {
 `
 }
 
+func (int32Type) DecoderGoString() string {
+	return `
+func decodeInt32(r io.Reader) (int32, error) {
+	var x uint32
+	var s uint
+	var i int
+	for {
+		byt := make([]byte, 1)
+		_, err := r.Read(byt)
+		if err != nil {
+			return int32(x), err
+		}
+		i++
+		if i == MaxVarintLen64 {
+			return 0, errors.New("varint overflow") // overflow
+		}
+		if byt[0] < 0x80 {
+			if i == MaxVarintLen64-1 && byt[0] > 1 {
+				return 0, errors.New("varint overflow") // overflow
+			}
+			n := x | uint32(byt[0])<<s
+			return int32((n >> 1) ^ -(n & 1)), nil
+		}
+		x |= uint32(byt[0]&0x7f) << s
+		s += 7
+	}
+}
+`
+}
+
 type float32Type struct{}
 
 func (float32Type) GoType() string      { return "float32" }
 func (float32Type) WireType() int       { return 5 }
 func (float32Type) EncoderFunc() string { return "EncodeFloat32" }
+func (float32Type) DecoderFunc() string { return "decodeFloat32" }
 
-func (float32Type) FuncGoString() string {
+func (float32Type) EncoderGoString() string {
 	return `
 // EncodeFloat32 writes the float32 value to the Encoder, as a 4-byte
 // buffer
@@ -188,13 +310,28 @@ func (w encoder) EncodeFloat32(value float32) int {
 `
 }
 
+func (float32Type) DecoderGoString() string {
+	return `
+func decodeFloat32(r io.Reader) (float32, error) {
+	var x float32
+	byt := make([]byte, 4)
+	_, err := r.Read(byt)
+	if err != nil {
+		return x, err
+	}
+	return math.Float32frombits(binary.BigEndian.Uint32(byt)), nil
+}
+`
+}
+
 type float64Type struct{}
 
 func (float64Type) GoType() string      { return "float64" }
 func (float64Type) WireType() int       { return 1 }
 func (float64Type) EncoderFunc() string { return "EncodeFloat64" }
+func (float64Type) DecoderFunc() string { return "decodeFloat64" }
 
-func (float64Type) FuncGoString() string {
+func (float64Type) EncoderGoString() string {
 	return `
 // EncodeFloat64 writes the float64 value to the Encoder, as a 4-byte
 // buffer
@@ -208,13 +345,28 @@ func (w encoder) EncodeFloat64(value float64) int {
 `
 }
 
+func (float64Type) DecoderGoString() string {
+	return `
+func decodeFloat64(r io.Reader) (float64, error) {
+	var x float64
+	byt := make([]byte, 8)
+	_, err := r.Read(byt)
+	if err != nil {
+		return x, err
+	}
+	return math.Float64frombits(binary.BigEndian.Uint64(byt)), nil
+}
+`
+}
+
 type bytesType struct{}
 
 func (bytesType) GoType() string      { return "[]byte" }
 func (bytesType) WireType() int       { return 2 }
 func (bytesType) EncoderFunc() string { return "EncodeBytes" }
+func (bytesType) DecoderFunc() string { return "decodeBytes" }
 
-func (bytesType) FuncGoString() string {
+func (bytesType) EncoderGoString() string {
 	return `
 // EncodeBytes writes the byte slice to the Encoder, as a length-delimited
 // record
@@ -227,13 +379,31 @@ func (w encoder) EncodeBytes(value []byte) int {
 `
 }
 
+func (bytesType) DecoderGoString() string {
+	return `
+func decodeBytes(r io.Reader) ([]byte, error) {
+	length, err := decodeVarint(r)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]byte, length)
+	_, err = r.Read(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+`
+}
+
 type stringType struct{}
 
 func (stringType) GoType() string      { return "string" }
 func (stringType) WireType() int       { return 2 }
 func (stringType) EncoderFunc() string { return "EncodeString" }
+func (stringType) DecoderFunc() string { return "decodeString" }
 
-func (stringType) FuncGoString() string {
+func (stringType) EncoderGoString() string {
 	return `
 // EncodeString writes the string as a byte slice to the Encoder, 
 // as a length-delimited record
@@ -244,5 +414,22 @@ func (w encoder) EncodeString(value string) int {
 	return n + len(buf)
 }
 
+`
+}
+
+func (stringType) DecoderGoString() string {
+	return `
+func decodeString(r io.Reader) (string, error) {
+	length, err := decodeVarint(r)
+	if err != nil {
+		return "", err
+	}
+	data := make([]byte, length)
+	_, err = r.Read(data)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
 `
 }
