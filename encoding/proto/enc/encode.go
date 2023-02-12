@@ -83,6 +83,51 @@ func (w Encoder) EncodeVarint(value uint64) int {
 	return i + 1
 }
 
+func (w Encoder) EncodeUint32(value uint32) int {
+	i := 0
+	for value >= 0x80 {
+		_ = w.b.WriteByte(byte(value) | 0x80)
+		value >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(value))
+	return i + 1
+}
+
+func (w Encoder) EncodeUint64(value uint64) int {
+	i := 0
+	for value >= 0x80 {
+		_ = w.b.WriteByte(byte(value) | 0x80)
+		value >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(value))
+	return i + 1
+}
+
+func (w Encoder) EncodeInt64(value int64) int {
+	v := uint64((value << 1) ^ (value >> 63))
+	i := 0
+	for v >= 0x80 {
+		_ = w.b.WriteByte(byte(v) | 0x80)
+		v >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(v))
+	return i + 1
+}
+func (w Encoder) EncodeInt32(value int32) int {
+	v := uint32((value << 1) ^ (value >> 31))
+	i := 0
+	for v >= 0x80 {
+		_ = w.b.WriteByte(byte(v) | 0x80)
+		v >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(v))
+	return i + 1
+}
+
 func zigZagEncode(n int64) uint64 {
 	return uint64((n << 1) ^ (n >> 63))
 }
@@ -106,8 +151,8 @@ func (w Encoder) EncodeLengthDelimited(value []byte) int {
 	n := w.EncodeVarint(uint64(len(value)))
 	_, _ = w.b.Write(value)
 	return n + len(value)
-
 }
+
 func (w Encoder) EncodeField(fieldNumber int, wireType int, value []byte) int {
 	n := w.EncodeVarint(uint64((fieldNumber << 3) | wireType))
 	return n + w.EncodeLengthDelimited(value)

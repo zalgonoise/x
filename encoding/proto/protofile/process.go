@@ -1,13 +1,10 @@
 package protofile
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 
-	"github.com/zalgonoise/gio"
 	"github.com/zalgonoise/parse"
 )
 
@@ -28,54 +25,45 @@ var (
 	ErrInvalidType       = errors.New("invalid, undeclared or unsupported type")
 )
 
-func processFn[C ProtoToken, T byte, R gio.Reader[byte]](t *parse.Tree[C, T]) (R, error) {
+func processFn[C ProtoToken, T byte, R *GoFile](t *parse.Tree[C, T]) (R, error) {
 	var goFile = new(GoFile)
-	goFile.UniqueTypes = make(map[string]struct{})
-	var sb = new(bytes.Buffer)
-	enc := json.NewEncoder(sb)
+	goFile.UniqueTypes = make(map[string]bool)
+	goFile.concreteTypes = make(map[string]ConcreteType)
+	goFile.importsList = make(map[string]struct{})
+	goFile.importsList["bytes"] = struct{}{}
 
 	for _, n := range t.List() {
 		switch n.Type {
 		case C(TokenSYNTAX):
 			err := processSyntax(goFile, n)
 			if err != nil {
-				return (gio.Reader[byte])(sb).(R), err
+				return (R)(goFile), err
 			}
 		case C(TokenPACKAGE):
 			err := processPackage(goFile, n)
 			if err != nil {
-				return (gio.Reader[byte])(sb).(R), err
+				return (R)(goFile), err
 			}
 		case C(TokenOPTION):
 			err := processOption(goFile, n)
 			if err != nil {
-				return (gio.Reader[byte])(sb).(R), err
+				return (R)(goFile), err
 			}
 		case C(TokenENUM):
 			err := processEnum(goFile, n)
 			if err != nil {
-				return (gio.Reader[byte])(sb).(R), err
+				return (R)(goFile), err
 			}
 		case C(TokenMESSAGE):
 			err := processMessage(goFile, n)
 			if err != nil {
-				return (gio.Reader[byte])(sb).(R), err
+				return (R)(goFile), err
 			}
 		default:
-			invalidErr := fmt.Errorf("invalid top-level token: %d -- %s", n.Type, toString(n.Value))
-			err := enc.Encode(goFile)
-			if err != nil {
-				return (gio.Reader[byte])(sb).(R), errors.Join(invalidErr, err)
-			}
-			return (gio.Reader[byte])(sb).(R), invalidErr
+			return (R)(goFile), fmt.Errorf("invalid top-level token: %d -- %s", n.Type, toString(n.Value))
 		}
 	}
-	err := enc.Encode(goFile)
-	if err != nil {
-		return (gio.Reader[byte])(sb).(R), err
-	}
-
-	return (gio.Reader[byte])(sb).(R), nil
+	return (R)(goFile), nil
 }
 
 func processSyntax[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
@@ -145,7 +133,7 @@ func processEnum[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) erro
 	if _, ok := goFile.UniqueTypes[name]; ok {
 		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, name)
 	}
-	goFile.UniqueTypes[name] = struct{}{}
+	goFile.UniqueTypes[name] = true
 	enum.ProtoName = name
 	enum.GoName = fmtPascal(name)
 
@@ -216,7 +204,7 @@ func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) e
 	if _, ok := goFile.UniqueTypes[goType.Name]; ok {
 		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, goType.Name)
 	}
-	goFile.UniqueTypes[goType.Name] = struct{}{}
+	goFile.UniqueTypes[goType.Name] = false
 
 	for _, e := range n.Edges[0].Edges {
 		err := processMessageFields(goType, goFile, e)
@@ -262,8 +250,18 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 				field.GoName = fmtPascal(name)
 			case C(TokenTYPE):
 				field.ProtoType = toString(e.Value)
-				if goType, ok := goTypes[field.ProtoType]; ok {
-					field.GoType = goType
+				if goType, ok := protoTypes[field.ProtoType]; ok {
+					field.GoType = goType.GoType()
+					if _, ok := goFile.concreteTypes[goType.GoType()]; !ok {
+						goFile.concreteTypes[goType.GoType()] = goType
+					}
+					if goType == Float32 || goType == Float64 {
+						goFile.importsList["math"] = struct{}{}
+						goFile.importsList["encoding/binary"] = struct{}{}
+					}
+					if n := allocMap[goType]; n > 0 {
+						goFile.minAlloc += n
+					}
 					continue
 				}
 				if _, ok := goFile.UniqueTypes[field.ProtoType]; ok {
@@ -280,6 +278,28 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 	case (C)(TokenMESSAGE):
 		return processMessage(goFile, n)
 	}
+
+	var wireType int
+	if t, ok := goFile.concreteTypes[field.GoType]; ok {
+		wireType = t.WireType()
+	} else {
+		if v, ok := goFile.UniqueTypes[field.GoName]; ok {
+			if v {
+				wireType = 0
+			} else {
+				wireType = 2
+			}
+		} else {
+			wireType = 2
+		}
+	}
+
+	field.idAndWire = IDAndWire{
+		ID:   field.ProtoIndex,
+		Wire: wireType,
+		Name: field.GoName,
+	}
+
 	goType.Fields = append(goType.Fields, *field)
 	return nil
 

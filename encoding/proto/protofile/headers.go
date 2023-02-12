@@ -11,6 +11,10 @@ type IDAndWire struct {
 	Name string
 }
 
+func (iaw IDAndWire) Header() int {
+	return (iaw.ID << 3) | iaw.Wire
+}
+
 func fmtPascal(name string) string {
 	split := strings.Split(name, "_")
 	for idx, s := range split {
