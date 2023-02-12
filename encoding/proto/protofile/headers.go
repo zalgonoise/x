@@ -11,7 +11,7 @@ type IDAndWire struct {
 	Name string
 }
 
-func formatName(name string) string {
+func fmtPascal(name string) string {
 	split := strings.Split(name, "_")
 	for idx, s := range split {
 		n := []byte(s)
@@ -35,7 +35,7 @@ func HeaderGoString(fields ...IDAndWire) string {
 		if f.Name == "" {
 			continue
 		}
-		n := formatName(f.Name)
+		n := fmtPascal(f.Name)
 		b := (f.ID << 3) | f.Wire
 		sb.WriteString("\theader")
 		sb.WriteString(string(n))

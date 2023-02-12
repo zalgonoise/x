@@ -39,3 +39,21 @@ type GoFile struct {
 	Enums       []*GoEnum           `json:"enums,omitempty"`
 	UniqueTypes map[string]struct{} `json:"unique_types"`
 }
+
+var goTypes = map[string]string{
+	"bool":     "bool",
+	"uint32":   "uint32",
+	"uint64":   "uint64",
+	"sint32":   "int32",
+	"sint64":   "int64",
+	"int32":    "int32",
+	"int64":    "int64",
+	"fixed32":  "uint32",
+	"fixed64":  "uint64",
+	"sfixed32": "int32",
+	"sfixed64": "int64",
+	"double":   "float32",
+	"float":    "float64",
+	"string":   "string",
+	"bytes":    "[]byte",
+}

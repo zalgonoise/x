@@ -22,9 +22,13 @@ var (
 	ErrInvalidTokenType  = errors.New("invalid token type")
 	ErrAlreadyExistsName = errors.New("name already exists")
 	ErrAlreadyExistsID   = errors.New("ID already exists")
+	ErrEmptyName         = errors.New("name cannot be empty")
+	ErrEmptyPath         = errors.New("go path cannot be empty")
+	ErrEmptyPackage      = errors.New("package name cannot be empty")
+	ErrInvalidType       = errors.New("invalid, undeclared or unsupported type")
 )
 
-func processFn[C ProtoToken, T byte, R gio.Reader[T]](t *parse.Tree[C, T]) (R, error) {
+func processFn[C ProtoToken, T byte, R gio.Reader[byte]](t *parse.Tree[C, T]) (R, error) {
 	var goFile = new(GoFile)
 	goFile.UniqueTypes = make(map[string]struct{})
 	var sb = new(bytes.Buffer)
@@ -71,7 +75,6 @@ func processFn[C ProtoToken, T byte, R gio.Reader[T]](t *parse.Tree[C, T]) (R, e
 		return (gio.Reader[byte])(sb).(R), err
 	}
 
-	// fmt.Println(sb.String())
 	return (gio.Reader[byte])(sb).(R), nil
 }
 
@@ -95,6 +98,9 @@ func processPackage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) e
 		return ErrMissingPackage
 	}
 	goFile.Package = toString(n.Edges[0].Value)
+	if goFile.Package == "" {
+		return ErrEmptyPackage
+	}
 	return nil
 }
 
@@ -112,6 +118,9 @@ func processOption[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) er
 		return ErrInvalidTokenType
 	}
 	goFile.Path = toString(n.Edges[0].Edges[0].Value)
+	if goFile.Path == "" {
+		return ErrEmptyPath
+	}
 	return nil
 
 }
@@ -130,11 +139,15 @@ func processEnum[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) erro
 	enum.uniqueNames = make(map[string]struct{})
 
 	name := toString(n.Edges[0].Value)
+	if name == "" {
+		return ErrEmptyName
+	}
 	if _, ok := goFile.UniqueTypes[name]; ok {
 		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, name)
 	}
 	goFile.UniqueTypes[name] = struct{}{}
 	enum.ProtoName = name
+	enum.GoName = fmtPascal(name)
 
 	for _, e := range n.Edges[0].Edges {
 		err := processEnumFields(enum, e)
@@ -164,6 +177,9 @@ func processEnumFields[C ProtoToken, T byte](enum *GoEnum, n *parse.Node[C, T]) 
 		return err
 	}
 	name := toString(n.Edges[0].Value)
+	if name == "" {
+		return ErrEmptyName
+	}
 
 	if _, ok := enum.uniqueIDs[idx]; ok {
 		return fmt.Errorf("%w: %d", ErrAlreadyExistsID, idx)
@@ -177,6 +193,7 @@ func processEnumFields[C ProtoToken, T byte](enum *GoEnum, n *parse.Node[C, T]) 
 	f := EnumField{
 		Index:     idx,
 		ProtoName: name,
+		GoName:    fmtPascal(name),
 	}
 	enum.Fields = append(enum.Fields, f)
 	return nil
@@ -193,6 +210,9 @@ func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) e
 	goType.uniqueNames = make(map[string]struct{})
 
 	goType.Name = toString(n.Edges[0].Value)
+	if goType.Name == "" {
+		return ErrEmptyName
+	}
 	if _, ok := goFile.UniqueTypes[goType.Name]; ok {
 		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, goType.Name)
 	}
@@ -231,13 +251,26 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 				return processMessage(goFile, e)
 			case C(TokenIDENT):
 				name := toString(e.Value)
+				if name == "" {
+					return ErrEmptyName
+				}
 				if _, ok := goType.uniqueNames[name]; ok {
 					return fmt.Errorf("%w: %s", ErrAlreadyExistsName, name)
 				}
 				goType.uniqueNames[name] = struct{}{}
 				field.ProtoName = name
+				field.GoName = fmtPascal(name)
 			case C(TokenTYPE):
 				field.ProtoType = toString(e.Value)
+				if goType, ok := goTypes[field.ProtoType]; ok {
+					field.GoType = goType
+					continue
+				}
+				if _, ok := goFile.UniqueTypes[field.ProtoType]; ok {
+					field.GoType = field.ProtoType
+					continue
+				}
+				return ErrInvalidType
 			case C(TokenREPEATED):
 				field.IsRepeated = true
 			case C(TokenOPTIONAL):
