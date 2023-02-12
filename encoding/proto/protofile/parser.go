@@ -5,6 +5,6 @@ import (
 	"github.com/zalgonoise/parse"
 )
 
-func Parse[C ProtoToken, T byte, R string](r gio.Reader[T]) (R, error) {
+func Parse[C ProtoToken, T byte, R gio.Reader[T]](r gio.Reader[T]) (R, error) {
 	return parse.Parse(r, initState[C, T], initParse[C, T], processFn[C, T, R])
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/zalgonoise/gio"
 	"github.com/zalgonoise/parse"
 )
 
@@ -23,47 +24,7 @@ var (
 	ErrAlreadyExistsID   = errors.New("ID already exists")
 )
 
-type GoField struct {
-	IsRepeated bool   `json:"is_repeated,omitempty"`
-	IsOptional bool   `json:"is_optional,omitempty"`
-	IsStruct   bool   `json:"is_struct,omitempty"`
-	GoType     string `json:"go_type,omitempty"`
-	GoName     string `json:"go_name,omitempty"`
-	ProtoType  string `json:"proto_type,omitempty"`
-	ProtoIndex int    `json:"proto_index"`
-	ProtoName  string `json:"proto_name,omitempty"`
-}
-
-type EnumField struct {
-	Index     int    `json:"index"`
-	GoName    string `json:"go_name,omitempty"`
-	ProtoName string `json:"proto_name,omitempty"`
-}
-
-type GoType struct {
-	Name        string    `json:"name,omitempty"`
-	Fields      []GoField `json:"fields,omitempty"`
-	uniqueNames map[string]struct{}
-	uniqueIDs   map[int]struct{}
-}
-
-type GoEnum struct {
-	ProtoName   string      `json:"proto_name,omitempty"`
-	GoName      string      `json:"go_name,omitempty"`
-	Fields      []EnumField `json:"fields,omitempty"`
-	uniqueNames map[string]struct{}
-	uniqueIDs   map[int]struct{}
-}
-
-type GoFile struct {
-	Path        string              `json:"path,omitempty"`
-	Package     string              `json:"package,omitempty"`
-	Types       []*GoType           `json:"types,omitempty"`
-	Enums       []*GoEnum           `json:"enums,omitempty"`
-	UniqueTypes map[string]struct{} `json:"unique_types"`
-}
-
-func processFn[C ProtoToken, T byte, R string](t *parse.Tree[C, T]) (R, error) {
+func processFn[C ProtoToken, T byte, R gio.Reader[T]](t *parse.Tree[C, T]) (R, error) {
 	var goFile = new(GoFile)
 	goFile.UniqueTypes = make(map[string]struct{})
 	var sb = new(bytes.Buffer)
@@ -74,43 +35,44 @@ func processFn[C ProtoToken, T byte, R string](t *parse.Tree[C, T]) (R, error) {
 		case C(TokenSYNTAX):
 			err := processSyntax(goFile, n)
 			if err != nil {
-				return "", err
+				return (gio.Reader[byte])(sb).(R), err
 			}
 		case C(TokenPACKAGE):
 			err := processPackage(goFile, n)
 			if err != nil {
-				return "", err
+				return (gio.Reader[byte])(sb).(R), err
 			}
 		case C(TokenOPTION):
 			err := processOption(goFile, n)
 			if err != nil {
-				return "", err
+				return (gio.Reader[byte])(sb).(R), err
 			}
 		case C(TokenENUM):
 			err := processEnum(goFile, n)
 			if err != nil {
-				return "", err
+				return (gio.Reader[byte])(sb).(R), err
 			}
 		case C(TokenMESSAGE):
 			err := processMessage(goFile, n)
 			if err != nil {
-				return "", err
+				return (gio.Reader[byte])(sb).(R), err
 			}
 		default:
 			invalidErr := fmt.Errorf("invalid top-level token: %d -- %s", n.Type, toString(n.Value))
 			err := enc.Encode(goFile)
 			if err != nil {
-				return (R)(sb.String()), errors.Join(invalidErr, err)
+				return (gio.Reader[byte])(sb).(R), errors.Join(invalidErr, err)
 			}
-			return (R)(sb.String()), invalidErr
+			return (gio.Reader[byte])(sb).(R), invalidErr
 		}
 	}
 	err := enc.Encode(goFile)
 	if err != nil {
-		return (R)(sb.String()), err
+		return (gio.Reader[byte])(sb).(R), err
 	}
 
-	return (R)(sb.String()), nil
+	// fmt.Println(sb.String())
+	return (gio.Reader[byte])(sb).(R), nil
 }
 
 func processSyntax[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
@@ -187,6 +149,7 @@ func processEnum[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) erro
 	goFile.Enums = append(goFile.Enums, enum)
 	return nil
 }
+
 func processEnumFields[C ProtoToken, T byte](enum *GoEnum, n *parse.Node[C, T]) error {
 	if len(n.Edges) != 1 {
 		return ErrInvalidEdgeAmount

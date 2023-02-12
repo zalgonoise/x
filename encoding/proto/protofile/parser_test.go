@@ -3,6 +3,7 @@ package protofile
 import (
 	"bytes"
 	_ "embed"
+	"os"
 	"testing"
 
 	"github.com/zalgonoise/gio"
@@ -13,11 +14,16 @@ var protofile []byte
 
 func TestParser(t *testing.T) {
 	r := (gio.Reader[byte])(bytes.NewReader(protofile))
-	str, err := Parse(r)
+	buf, err := Parse[ProtoToken, byte, gio.Reader[byte]](r)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log(str)
+	_, err = gio.Copy[byte](os.Stderr, buf)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	t.Error()
 }
