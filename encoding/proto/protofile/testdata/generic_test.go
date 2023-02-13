@@ -50,6 +50,70 @@ func TestGoogleProtobuf(t *testing.T) {
 	t.Error()
 }
 
+func BenchmarkFullEncDec(b *testing.B) {
+	status := Ok
+	genObj := Generic{
+		BoolField:   true,
+		Unsigned32:  12,
+		Unsigned64:  32,
+		Signed32:    -12,
+		Signed64:    -32,
+		Int32:       12546734,
+		Int64:       -15675732,
+		Fixed32:     45445645,
+		Fixed64:     112315435323,
+		Sfixed32:    -12454,
+		Sfixed64:    -12434324,
+		Float32:     1.5,
+		Float64:     1.6546456,
+		Varchar:     "something",
+		ByteSlice:   []byte("yep"),
+		IntSlice:    []uint64{1, 2, 3},
+		EnumField:   &status,
+		InnerStruct: []Short{{Ok: true}},
+	}
+	genBytes := []byte{
+		8, 1, 16, 12, 24, 32, 32, 23, 40, 63, 48, 220, 202, 251, 11, 56, 167,
+		197, 249, 14, 64, 141, 228, 213, 21, 72, 187, 146, 150, 180, 162, 3,
+		80, 203, 194, 1, 88, 167, 238, 237, 11, 101, 0, 0, 192, 63, 105, 87,
+		134, 39, 170, 109, 121, 250, 63, 114, 9, 115, 111, 109, 101, 116, 104,
+		105, 110, 103, 122, 3, 121, 101, 112, 128, 1, 128, 2, 128, 3, 136, 1,
+		146, 2, 8, 1,
+	}
+	b.Run("Encode", func(b *testing.B) {
+		var buf []byte
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			buf = genObj.Bytes()
+		}
+		_ = buf
+	})
+	b.Run("Decode", func(b *testing.B) {
+		var g Generic
+		var err error
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			g, err = ToGeneric(genBytes)
+			if err != nil {
+				b.Error(err)
+			}
+		}
+		_ = g
+	})
+	b.Run("EncodeDecode", func(b *testing.B) {
+		var new Generic
+		var err error
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			new, err = ToGeneric(genObj.Bytes())
+			if err != nil {
+				b.Error(err)
+			}
+		}
+		_ = new
+	})
+}
+
 func TestGeneric(t *testing.T) {
 	status := Ok
 	gen := Generic{
