@@ -31,6 +31,8 @@ func processFn[C ProtoToken, T byte, R *GoFile](t *parse.Tree[C, T]) (R, error) 
 	goFile.concreteTypes = make(map[string]ConcreteType)
 	goFile.importsList = make(map[string]struct{})
 	goFile.importsList["bytes"] = struct{}{}
+	goFile.importsList["errors"] = struct{}{}
+	goFile.importsList["io"] = struct{}{}
 
 	for _, n := range t.List() {
 		switch n.Type {
