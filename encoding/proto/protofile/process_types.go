@@ -1,7 +1,8 @@
 package protofile
 
 import (
-	"strconv"
+	"fmt"
+	"io"
 	"strings"
 )
 
@@ -24,572 +25,327 @@ type GoType struct {
 	uniqueIDs   map[int]struct{}
 }
 
-func (t GoType) GoString() string {
+func (t GoType) TypeGoString() string {
 	sb := new(strings.Builder)
-	sb.WriteString("\n\n// ")
-	sb.WriteString(t.Name)
-	sb.WriteString(" describes the message")
-	sb.WriteString("\ntype ")
-	sb.WriteString(t.Name)
-	sb.WriteString(" struct {\n")
+
+	sb.WriteString(fmt.Sprintf(`
+
+// %s describes the message
+type %s struct {
+`, t.Name, t.Name))
+
 	for _, f := range t.Fields {
-		sb.WriteByte('\t')
-		sb.WriteString(f.GoName)
-		sb.WriteByte('\t')
+		sb.WriteString(fmt.Sprintf(
+			`	%s	`, f.GoName))
+
 		if f.IsRepeated {
 			sb.WriteString("[]")
 		}
 		if f.IsOptional {
 			sb.WriteString("*")
 		}
-		sb.WriteString(f.GoType)
-		sb.WriteByte('\t')
-		sb.WriteString("// id:")
-		sb.WriteString(strconv.Itoa(f.ProtoIndex))
-		sb.WriteString("; wire type:")
-		sb.WriteString(strconv.Itoa(f.idAndWire.Wire))
-		sb.WriteByte('\n')
+		sb.WriteString(fmt.Sprintf(
+			`%s	// id: %d; wire_type: %d
+`, f.GoType, f.ProtoIndex, f.idAndWire.Wire))
 	}
 	sb.WriteString("}\n")
 
 	return sb.String()
 }
 
-type EnumField struct {
-	Index     int    `json:"index"`
-	GoName    string `json:"go_name,omitempty"`
-	ProtoName string `json:"proto_name,omitempty"`
+func nextPlusSeparator(sb io.StringWriter, idx, len int) {
+	if idx == len-1 {
+		_, _ = sb.WriteString(")\n")
+		return
+	}
+	_, _ = sb.WriteString(" +\n")
 }
 
-type GoEnum struct {
-	ProtoName   string      `json:"proto_name,omitempty"`
-	GoName      string      `json:"go_name,omitempty"`
-	Fields      []EnumField `json:"fields,omitempty"`
-	uniqueNames map[string]struct{}
-	uniqueIDs   map[int]struct{}
-}
-
-func (t GoEnum) GoString() string {
+func (g *GoType) EncoderGoString(f GoFile) string {
 	sb := new(strings.Builder)
-	sb.WriteString("\n\n// ")
-	sb.WriteString(t.GoName)
-	sb.WriteString(" outlines the enumeration")
-	sb.WriteString("\ntype ")
-	sb.WriteString(t.GoName)
-	sb.WriteString(" uint64\n\n")
+	sb.WriteString(fmt.Sprintf(
+		`
 
-	sb.WriteString("const (\n")
-	for _, f := range t.Fields {
-		sb.WriteByte('\t')
-		sb.WriteString(f.GoName)
-		sb.WriteByte('\t')
-		sb.WriteString(t.GoName)
-		sb.WriteString(" = ")
-		sb.WriteString(strconv.Itoa(f.Index))
-		sb.WriteByte('\n')
-	}
-	sb.WriteString(")\n\n")
-	sb.WriteString("var conv")
-	sb.WriteString(t.GoName)
-	sb.WriteString("ToString = map[")
-	sb.WriteString(t.GoName)
-	sb.WriteString("]string{\n")
-
-	for _, f := range t.Fields {
-		sb.WriteByte('\t')
-		sb.WriteString(f.GoName)
-		sb.WriteString(`: "`)
-		sb.WriteString(f.GoName)
-		sb.WriteString(`",`)
-		sb.WriteByte('\n')
-	}
-	sb.WriteString("}\n\n")
-	sb.WriteString("var convStringTo")
-	sb.WriteString(t.GoName)
-	sb.WriteString(" = map[string]")
-	sb.WriteString(t.GoName)
-	sb.WriteString("{\n")
-
-	for _, f := range t.Fields {
-		sb.WriteByte('\t')
-		sb.WriteByte('"')
-		sb.WriteString(f.GoName)
-		sb.WriteString(`": `)
-		sb.WriteString(f.GoName)
-		sb.WriteByte(',')
-		sb.WriteByte('\n')
-	}
-	sb.WriteString("}\n\n")
-
-	sb.WriteString("\n\nfunc (e ")
-	sb.WriteString(t.GoName)
-	sb.WriteString(") String() string {\n\treturn conv")
-	sb.WriteString(t.GoName)
-	sb.WriteString("ToString[e]\n}\n\n")
-	sb.WriteString("func As")
-	sb.WriteString(t.GoName)
-	sb.WriteString("(s string) *")
-	sb.WriteString(t.GoName)
-	sb.WriteString(" {\n\tif v, ok := convStringTo")
-	sb.WriteString(t.GoName)
-	sb.WriteString("[s]; ok {\n\t\treturn &v\n\t}\n\treturn nil\n}\n\n")
-
-	return sb.String()
-}
-
-type GoFile struct {
-	Path          string          `json:"path,omitempty"`
-	Package       string          `json:"package,omitempty"`
-	Types         []*GoType       `json:"types,omitempty"`
-	Enums         []*GoEnum       `json:"enums,omitempty"`
-	UniqueTypes   map[string]bool `json:"unique_types"`
-	concreteTypes map[string]ConcreteType
-	importsList   map[string]struct{}
-	minAlloc      int
-}
-
-func (t GoFile) GoString() string {
-	sb := new(strings.Builder)
-
-	sb.WriteString("package ")
-	sb.WriteString(t.Package)
-	sb.WriteString("\n\n")
-	sb.WriteString("import (\n")
-	for imp := range t.importsList {
-		sb.WriteByte('\t')
-		sb.WriteByte('"')
-		sb.WriteString(imp)
-		sb.WriteByte('"')
-		sb.WriteByte('\n')
-	}
-	sb.WriteString(")\n\n")
-	sb.WriteString("const (\n\tminSize = ")
-	sb.WriteString(strconv.Itoa(t.minAlloc))
-	sb.WriteString("\n\tMaxVarintLen64 = 10\n)\n")
-
-	for _, typ := range t.Types {
-		sb.WriteString("const (\n")
-		for _, field := range typ.Fields {
-			sb.WriteString("\theader")
-			sb.WriteString(typ.Name)
-			sb.WriteString(field.GoName)
-			sb.WriteString(" byte = ")
-			sb.WriteString(strconv.Itoa(field.idAndWire.Header()))
-			sb.WriteString(" // {")
-			sb.WriteString(strconv.Itoa(field.idAndWire.ID))
-			sb.WriteString(", ")
-			sb.WriteString(strconv.Itoa(field.idAndWire.Wire))
-			sb.WriteString("}\n")
-		}
-		sb.WriteString(")\n")
-	}
-	for _, typ := range t.Types {
-		sb.WriteString(typ.GoString())
-
-		var placeholder = "x"
-		sb.WriteString("\n\nfunc (")
-		sb.WriteString(placeholder)
-		sb.WriteByte(' ')
-		sb.WriteString(typ.Name)
-		sb.WriteString(") Bytes() []byte {\n\te := newEncoder(\n\t\tminSize +\n")
-		for idx, field := range typ.Fields {
-			var isStruct bool
-			var isEnum bool
-			if v, ok := t.UniqueTypes[field.GoType]; ok {
-				if v {
-					isEnum = true
-				} else {
-					isStruct = true
-				}
-			}
-			if field.IsRepeated {
-				sb.WriteString("\t\t\tlen(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString(") * 8")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-				continue
-			}
-			if field.IsOptional {
-				sb.WriteString("\t\t\t8")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-				continue
-			}
-			if isEnum {
-				sb.WriteString("\t\t\tbyteLen(uint64(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString("))")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-				continue
-			}
-			if isStruct {
-				sb.WriteString("\t\t\tbyteLen(len(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString(".Bytes())) +\n")
-				sb.WriteString("\t\t\tlen(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString(".Bytes())")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-			}
-
-			switch field.GoType {
-			case "bool":
-				sb.WriteString("\t\t\t1")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-
-			case "string", "[]byte":
-				sb.WriteString("\t\t\tbyteLen(len(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString(")) +\n")
-				sb.WriteString("\t\t\tlen(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString(")")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-
-			case "int", "uint", "int32", "uint32", "int64", "uint64":
-				sb.WriteString("\t\t\tbyteLen(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString(")")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-			default:
-				sb.WriteString("\t\t\t8")
-				if idx == len(typ.Fields)-1 {
-					sb.WriteString(")\n")
-					continue
-				}
-				sb.WriteString(" +\n")
-
+func (x %s) Bytes() []byte {
+e := newEncoder(
+	minSize +
+`, g.Name))
+	for idx, field := range g.Fields {
+		var isStruct bool
+		var isEnum bool
+		if v, ok := f.UniqueTypes[field.GoType]; ok {
+			if v {
+				isEnum = true
+			} else {
+				isStruct = true
 			}
 		}
-		for _, field := range typ.Fields {
-			if field.IsRepeated {
-				sb.WriteString("for idx := range ")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				sb.WriteString(" {\n\t")
-			}
-			if field.IsOptional {
-				sb.WriteString("if ")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				if field.IsRepeated {
-					sb.WriteString("[idx]")
-				}
-				sb.WriteString(" != nil {\n")
-			}
-			var forceCloseIf bool
-			switch field.GoType {
-			case "bool":
-				sb.WriteString("\tif ")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				if field.IsRepeated {
-					sb.WriteString("[idx]")
-				}
-				sb.WriteString(" {\n\t")
-			case "string":
-				sb.WriteString("\tif ")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				if field.IsRepeated {
-					sb.WriteString("[idx]")
-				}
-				sb.WriteString(` != "" {`)
-				sb.WriteString("\n\t")
-			case "[]byte":
-				sb.WriteString("\tif len(")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				if field.IsRepeated {
-					sb.WriteString("[idx]")
-				}
-				sb.WriteString(`) > 0 {`)
-				sb.WriteString("\n\t")
-			case "int", "uint", "int32", "uint32", "int64", "uint64", "float32", "float64":
-				sb.WriteString("\tif ")
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				if field.IsRepeated {
-					sb.WriteString("[idx]")
-				}
-				sb.WriteString(` != 0 {`)
-				sb.WriteString("\n\t")
-			default:
-				// enums and structs
-				if isEnum, ok := t.UniqueTypes[field.GoType]; ok {
-					if !isEnum {
-						sb.WriteString("\tif structBytes := ")
-						sb.WriteString(placeholder)
-						sb.WriteByte('.')
-						sb.WriteString(field.GoName)
-						if field.IsRepeated {
-							sb.WriteString("[idx]")
-						}
-						sb.WriteString(`.Bytes(); len(structBytes) > 0 {`)
-						sb.WriteString("\n\t")
-						forceCloseIf = true
-					}
-				}
-			}
+		if field.IsRepeated {
 
-			sb.WriteString("\te.b.WriteByte(")
-			sb.WriteString(strconv.Itoa(field.idAndWire.Header()))
-			sb.WriteString(")\n")
-			if conc, ok := goTypes[field.GoType]; ok {
-				sb.WriteString("\te.")
-				sb.WriteString(conc.EncoderFunc())
-				sb.WriteByte('(')
-				if field.IsOptional {
-					sb.WriteString("*")
-				}
-				sb.WriteString(placeholder)
-				sb.WriteByte('.')
-				sb.WriteString(field.GoName)
-				if field.IsRepeated {
-					sb.WriteString("[idx]")
-				}
-				sb.WriteByte(')')
-				sb.WriteByte('\n')
-			} else if isEnum, ok := t.UniqueTypes[field.GoType]; ok {
-				if isEnum {
-					sb.WriteString("\te.")
-					sb.WriteString(Uint64.EncoderFunc())
-					sb.WriteString("(uint64(")
-					if field.IsOptional {
-						sb.WriteString("*")
-					}
-					sb.WriteString(placeholder)
-					sb.WriteByte('.')
-					sb.WriteString(field.GoName)
+			sb.WriteString(fmt.Sprintf(
+				`			len(x.%s) * 8`, field.GoName))
+			nextPlusSeparator(sb, idx, len(g.Fields))
+			continue
+		}
+		if field.IsOptional {
+			sb.WriteString("\t\t\t8")
+			nextPlusSeparator(sb, idx, len(g.Fields))
+			continue
+		}
+		if isEnum {
+			sb.WriteString(fmt.Sprintf(
+				`			byteLen(uint64(x.%s))`, field.GoName))
+			nextPlusSeparator(sb, idx, len(g.Fields))
+			continue
+		}
+		if isStruct {
+			sb.WriteString(fmt.Sprintf(
+				`			byteLen(len(x.%s.Bytes())) +
+		len(x.%s.Bytes())`, field.GoName, field.GoName))
+			nextPlusSeparator(sb, idx, len(g.Fields))
+		}
+
+		switch field.GoType {
+		case "bool":
+			sb.WriteString("\t\t\t1")
+			nextPlusSeparator(sb, idx, len(g.Fields))
+
+		case "string", "[]byte":
+			sb.WriteString(fmt.Sprintf(
+				`			byteLen(len(x.%s)) +
+		len(x.%s)`, field.GoName, field.GoName))
+			nextPlusSeparator(sb, idx, len(g.Fields))
+
+		case "int", "uint", "int32", "uint32", "int64", "uint64":
+			sb.WriteString(fmt.Sprintf(
+				`			byteLen(x.%s)`, field.GoName))
+			nextPlusSeparator(sb, idx, len(g.Fields))
+		default:
+			sb.WriteString("\t\t\t8")
+			nextPlusSeparator(sb, idx, len(g.Fields))
+		}
+	}
+	for _, field := range g.Fields {
+		if field.IsRepeated {
+			sb.WriteString(fmt.Sprintf(
+				`for idx := range x.%s {
+`, field.GoName))
+		}
+		if field.IsOptional {
+			sb.WriteString(fmt.Sprintf(
+				`if x.%s`, field.GoName))
+
+			if field.IsRepeated {
+				sb.WriteString("[idx]")
+			}
+			sb.WriteString(" != nil {\n")
+		}
+		var forceCloseIf bool
+		switch field.GoType {
+		case "bool":
+			sb.WriteString(fmt.Sprintf(
+				`if x.%s`, field.GoName))
+			if field.IsRepeated {
+				sb.WriteString("[idx]")
+			}
+			sb.WriteString(" {\n\t")
+		case "string":
+			sb.WriteString(fmt.Sprintf(
+				`if x.%s`, field.GoName))
+			if field.IsRepeated {
+				sb.WriteString("[idx]")
+			}
+			sb.WriteString(` != "" {
+`)
+		case "[]byte":
+			sb.WriteString(fmt.Sprintf(
+				`if len(x.%s`, field.GoName))
+			if field.IsRepeated {
+				sb.WriteString("[idx]")
+			}
+			sb.WriteString(`) > 0 {
+`)
+		case "int", "uint", "int32", "uint32", "int64", "uint64", "float32", "float64":
+			sb.WriteString(fmt.Sprintf(
+				`if x.%s`, field.GoName))
+
+			if field.IsRepeated {
+				sb.WriteString("[idx]")
+			}
+			sb.WriteString(` != 0 {
+`)
+		default:
+			// enums and structs
+			if isEnum, ok := f.UniqueTypes[field.GoType]; ok {
+				if !isEnum {
+					sb.WriteString(fmt.Sprintf(
+						`	if structBytes := x.%s`, field.GoName))
 					if field.IsRepeated {
 						sb.WriteString("[idx]")
 					}
-					sb.WriteString("))")
-					sb.WriteByte('\n')
-				} else {
-					sb.WriteString("\te.")
-					sb.WriteString(Bytes.EncoderFunc())
-					sb.WriteString("(structBytes)")
-					sb.WriteByte('\n')
+					sb.WriteString(`.Bytes(); len(structBytes) > 0 {
+`)
+					forceCloseIf = true
 				}
 			}
-			switch field.GoType {
-			case "bool", "string", "[]byte", "int", "uint", "int32", "uint32", "int64", "uint64", "float32", "float64":
-				sb.WriteString("}\n")
-			default:
-				if forceCloseIf {
-					sb.WriteString("}\n")
-				}
-			}
+		}
 
+		sb.WriteString(fmt.Sprintf(
+			`	e.b.WriteByte(%d)
+`, field.idAndWire.Header()))
+		if conc, ok := goTypes[field.GoType]; ok {
+			sb.WriteString(fmt.Sprintf(
+				`	e.%s(`, conc.EncoderFunc()))
 			if field.IsOptional {
-				sb.WriteString("}\n")
+				sb.WriteString("*")
 			}
-
+			sb.WriteString(fmt.Sprintf("x.%s", field.GoName))
 			if field.IsRepeated {
-				sb.WriteString("}\n")
+				sb.WriteString("[idx]")
 			}
-		}
-		sb.WriteString("\n\treturn e.b.Bytes()\n}\n")
-
-	}
-	for _, enum := range t.Enums {
-		sb.WriteString(enum.GoString())
-	}
-
-	sb.WriteString("\n\ntype encoder struct {\n\tb *bytes.Buffer\n}")
-	sb.WriteString("\n\nfunc newEncoder(size int) encoder {\n\tif size == 0 {\n\t\tsize = minSize\n\t}\n\treturn encoder{\n\t\tb: bytes.NewBuffer(make([]byte, 0, size)),\n\t}\n}")
-	sb.WriteString(`
-
-func (w encoder) encodeVarint(value uint64) int {
-	i := 0
-	for value >= 0x80 {
-		_ = w.b.WriteByte(byte(value) | 0x80)
-		value >>= 7
-		i++
-	}
-	_ = w.b.WriteByte(byte(value))
-	return i + 1	
-}	
+			sb.WriteString(`)
 `)
-
-	sb.WriteString("\n\ntype signed interface {\n\t~int | ~int16 | ~int32 | ~int64\n}")
-	sb.WriteString("\n\ntype unsigned interface {\n\t~uint | ~uint16 | ~uint32 | ~uint64\n}")
-	sb.WriteString("\n\ntype number interface {\n\tsigned | unsigned\n}")
-	sb.WriteString("\n\nfunc byteLen[T number](v T) (size int) {\n\tfor i := 0 ; i < 8 ; i++ {\n\t\tv = v >> 8\n\t\tif v == 0 {\n\t\t\treturn i + i\n\t\t}\n\t}\n\treturn 0\n}")
-
-	sb.WriteString(`
-
-func decodeVarint(r io.ByteReader) (uint64, error) {
-	var x uint64
-	var s uint
-	var i int
-	for {
-		byt, err := r.ReadByte()
-		if err != nil {
-			return x, err
-		}
-		i++
-		if i == MaxVarintLen64 {
-			return 0, errors.New("varint overflow") // overflow
-		}
-		if byt < 0x80 {
-			if i == MaxVarintLen64-1 && byt > 1 {
-				return 0, errors.New("varint overflow") // overflow
-			}
-			return x | uint64(byt)<<s, nil
-		}
-		x |= uint64(byt&0x7f) << s
-		s += 7
-	}
-}
-`)
-	for _, typ := range t.Types {
-		sb.WriteString("\n\ntype dec")
-		sb.WriteString(typ.Name)
-		sb.WriteString(" struct {\n\t*bytes.Reader\n}")
-
-		sb.WriteString("\n\nfunc To")
-		sb.WriteString(typ.Name)
-		sb.WriteString("(buf []byte) (")
-		sb.WriteString(typ.Name)
-		sb.WriteString(", error) {\n\treturn (&dec")
-		sb.WriteString(typ.Name)
-		sb.WriteString("{Reader: bytes.NewReader(buf)}).decode()\n}")
-
-		sb.WriteString("\n\nfunc (d *dec")
-		sb.WriteString(typ.Name)
-		sb.WriteString(") decode() (")
-		sb.WriteString(typ.Name)
-		sb.WriteString(", error) {\n\tx, err := decode")
-		sb.WriteString(typ.Name)
-		sb.WriteString("(d.Reader)\n\tif err != nil && !errors.Is(err, io.EOF) {\n\t\treturn x, err\n\t}\n\treturn x, nil\n}")
-
-		sb.WriteString("\n\nfunc decode")
-		sb.WriteString(typ.Name)
-		sb.WriteString("(r io.ByteReader) (")
-		sb.WriteString(typ.Name)
-		sb.WriteString(", error) {\n\t var x = ")
-		sb.WriteString(typ.Name)
-		sb.WriteString("{}\n\tfor {\n\t\tv, err := r.ReadByte()\n\t\tif err != nil {\n\t\t\treturn x, err\n\t\t}\n\t\tswitch v {\n")
-
-		for _, field := range typ.Fields {
-			var decoderFn string
-			var isEnum bool
-			var isStruct bool
-			if conc, ok := goTypes[field.GoType]; ok {
-				decoderFn = conc.DecoderFunc()
-			} else if enum, ok := t.UniqueTypes[field.GoType]; ok {
-				if enum {
-					isEnum = true
-					decoderFn = Uint64.DecoderFunc()
-				} else {
-					isStruct = true
-					decoderFn = "decode" + field.GoType
-				}
-			}
-			sb.WriteString("\t\tcase header")
-			sb.WriteString(typ.Name)
-			sb.WriteString(field.GoName)
-			sb.WriteString(":\n\t\t\t")
-			if isStruct {
-				sb.WriteString("_, err := r.ReadByte() // length byte\n\t\t\tif err != nil {\n\t\t\t\treturn x, err\n\t\t\t}\n\t\t\t")
-			}
-			sb.WriteString(field.ProtoName)
-			sb.WriteString(", err := ")
-			sb.WriteString(decoderFn)
-			sb.WriteString("(r")
-			switch field.GoType {
-			case "[]byte", "string", "float32", "float64":
-				sb.WriteString(".(io.Reader)")
-			}
-			sb.WriteString(")\n\t\t\tif err != nil && !errors.Is(err, io.EOF) {\n\t\t\t\treturn x, err\n\t\t\t}\n")
-			sb.WriteString("\t\t\tx.")
-			sb.WriteString(field.GoName)
-			sb.WriteString(" = ")
-			if field.IsRepeated {
-				sb.WriteString("append(x.")
-				sb.WriteString(field.GoName)
-				sb.WriteString(", ")
-			}
+		} else if isEnum, ok := f.UniqueTypes[field.GoType]; ok {
 			if isEnum {
-				sb.WriteString("(")
+				sb.WriteString(fmt.Sprintf(
+					`	e.%s(uint64(`, Uint64.EncoderFunc()))
 				if field.IsOptional {
 					sb.WriteString("*")
 				}
-				sb.WriteString(field.GoType)
-				sb.WriteString(")(")
+				sb.WriteString(fmt.Sprintf("x.%s", field.GoName))
+				if field.IsRepeated {
+					sb.WriteString("[idx]")
+				}
+				sb.WriteString(`))
+`)
+			} else {
+				sb.WriteString(fmt.Sprintf(
+					`	e.%s(structBytes)
+`, Bytes.EncoderFunc()))
 			}
-			if field.IsOptional {
-				sb.WriteString("&")
-			}
-			sb.WriteString(field.ProtoName)
-			if isEnum {
-				sb.WriteString(")")
-			}
-			if field.IsRepeated {
-				sb.WriteString(")")
-			}
-			sb.WriteByte('\n')
-
 		}
-		sb.WriteString("\t\tcase 0:\n\t\t\treturn x, nil\n\t\tdefault:\n\t\t\treturn x, errors.New(`invalid header`)\n\t\t}\n\t}\n}")
+		switch field.GoType {
+		case "bool", "string", "[]byte", "int", "uint", "int32", "uint32", "int64", "uint64", "float32", "float64":
+			sb.WriteString("}\n")
+		default:
+			if forceCloseIf {
+				sb.WriteString("}\n")
+			}
+		}
+
+		if field.IsOptional {
+			sb.WriteString("}\n")
+		}
+
+		if field.IsRepeated {
+			sb.WriteString("}\n")
+		}
 	}
-	for _, conc := range t.concreteTypes {
-		sb.WriteString("\n\n")
-		sb.WriteString(conc.EncoderGoString())
+	sb.WriteString(`
+	return e.b.Bytes()
+}
+`)
+
+	return sb.String()
+}
+func (g *GoType) DecoderGoString(f GoFile) string {
+	sb := new(strings.Builder)
+	sb.WriteString(fmt.Sprintf(`
+
+	type dec%s struct {
+		*bytes.Reader
 	}
-	for _, conc := range t.concreteTypes {
-		sb.WriteString("\n\n")
-		sb.WriteString(conc.DecoderGoString())
+	
+	func To%s(buf []byte) (%s, error) {
+		return (&dec%s{Reader: bytes.NewReader(buf)}).decode()
 	}
+	
+	func (d *dec%s) decode() (%s, error) {
+		x, err := decode%s(d.Reader)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return x, err
+		}
+		return x, nil
+	}
+	
+	func decode%s(r io.ByteReader) (%s, error) {
+		var x = %s{}
+		for {
+			v, err := r.ReadByte()
+			if err != nil {
+				return x, err
+			}
+			switch v {
+	`, g.Name, g.Name, g.Name, g.Name, g.Name, g.Name, g.Name, g.Name, g.Name, g.Name))
+
+	for _, field := range g.Fields {
+		var decoderFn string
+		var isEnum bool
+		var isStruct bool
+		if conc, ok := goTypes[field.GoType]; ok {
+			decoderFn = conc.DecoderFunc()
+		} else if enum, ok := f.UniqueTypes[field.GoType]; ok {
+			if enum {
+				isEnum = true
+				decoderFn = Uint64.DecoderFunc()
+			} else {
+				isStruct = true
+				decoderFn = "decode" + field.GoType
+			}
+		}
+		sb.WriteString(fmt.Sprintf(
+			`		case header%s%s:
+		`, g.Name, field.GoName))
+		if isStruct {
+			sb.WriteString(`_, err := r.ReadByte() // length byte
+		if err != nil {
+			return x, err
+		}
+		`)
+		}
+		sb.WriteString(fmt.Sprintf(
+			`%s, err := %s(r`, field.ProtoName, decoderFn))
+		switch field.GoType {
+		case "[]byte", "string", "float32", "float64":
+			sb.WriteString(".(io.Reader)")
+		}
+		sb.WriteString(fmt.Sprintf(
+			`)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return x, err
+		}
+		x.%s = `, field.GoName))
+		if field.IsRepeated {
+			sb.WriteString(fmt.Sprintf(`append(x.%s, `, field.GoName))
+		}
+		if isEnum {
+			sb.WriteString("(")
+			if field.IsOptional {
+				sb.WriteString("*")
+			}
+			sb.WriteString(fmt.Sprintf(`%s)(`, field.GoType))
+		}
+		if field.IsOptional {
+			sb.WriteString("&")
+		}
+		sb.WriteString(field.ProtoName)
+		if isEnum {
+			sb.WriteString(")")
+		}
+		if field.IsRepeated {
+			sb.WriteString(")")
+		}
+		sb.WriteByte('\n')
+
+	}
+
+	sb.WriteString(`		case 0:
+		return x, nil
+	default:
+		return x, errors.New("invalid header")
+	}
+}
+}`)
 
 	return sb.String()
 }

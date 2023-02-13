@@ -12,6 +12,7 @@ const (
 	minSize        = 14
 	MaxVarintLen64 = 10
 )
+
 const (
 	headerShortOk    byte = 8  // {1, 0}
 	headerShortValue byte = 18 // {2, 2}
@@ -39,8 +40,8 @@ const (
 
 // Short describes the message
 type Short struct {
-	Ok    bool   // id:1; wire type:0
-	Value []byte // id:2; wire type:2
+	Ok    bool   // id: 1; wire_type: 0
+	Value []byte // id: 2; wire_type: 2
 }
 
 func (x Short) Bytes() []byte {
@@ -63,24 +64,24 @@ func (x Short) Bytes() []byte {
 
 // Generic describes the message
 type Generic struct {
-	BoolField   bool     // id:1; wire type:0
-	Unsigned32  uint32   // id:2; wire type:0
-	Unsigned64  uint64   // id:3; wire type:0
-	Signed32    int32    // id:4; wire type:0
-	Signed64    int64    // id:5; wire type:0
-	Int32       int32    // id:6; wire type:0
-	Int64       int64    // id:7; wire type:0
-	Fixed32     uint32   // id:8; wire type:0
-	Fixed64     uint64   // id:9; wire type:0
-	Sfixed32    int32    // id:10; wire type:0
-	Sfixed64    int64    // id:11; wire type:0
-	Float32     float32  // id:12; wire type:5
-	Float64     float64  // id:13; wire type:1
-	Varchar     string   // id:14; wire type:2
-	ByteSlice   []byte   // id:15; wire type:2
-	IntSlice    []uint64 // id:16; wire type:0
-	EnumField   *Status  // id:17; wire type:0
-	InnerStruct []Short  // id:18; wire type:2
+	BoolField   bool     // id: 1; wire_type: 0
+	Unsigned32  uint32   // id: 2; wire_type: 0
+	Unsigned64  uint64   // id: 3; wire_type: 0
+	Signed32    int32    // id: 4; wire_type: 0
+	Signed64    int64    // id: 5; wire_type: 0
+	Int32       int32    // id: 6; wire_type: 0
+	Int64       int64    // id: 7; wire_type: 0
+	Fixed32     uint32   // id: 8; wire_type: 0
+	Fixed64     uint64   // id: 9; wire_type: 0
+	Sfixed32    int32    // id: 10; wire_type: 0
+	Sfixed64    int64    // id: 11; wire_type: 0
+	Float32     float32  // id: 12; wire_type: 5
+	Float64     float64  // id: 13; wire_type: 1
+	Varchar     string   // id: 14; wire_type: 2
+	ByteSlice   []byte   // id: 15; wire_type: 2
+	IntSlice    []uint64 // id: 16; wire_type: 0
+	EnumField   *Status  // id: 17; wire_type: 0
+	InnerStruct []Short  // id: 18; wire_type: 2
 }
 
 func (x Generic) Bytes() []byte {
@@ -194,15 +195,17 @@ const (
 	Ok    Status = 1
 )
 
-var convStatusToString = map[Status]string{
-	NotOk: "NotOk",
-	Ok:    "Ok",
-}
+var (
+	convStatusToString = map[Status]string{
+		NotOk: "NotOk",
+		Ok:    "Ok",
+	}
 
-var convStringToStatus = map[string]Status{
-	"NotOk": NotOk,
-	"Ok":    Ok,
-}
+	convStringToStatus = map[string]Status{
+		"NotOk": NotOk,
+		"Ok":    Ok,
+	}
+)
 
 func (e Status) String() string {
 	return convStatusToString[e]
@@ -251,7 +254,7 @@ type number interface {
 	signed | unsigned
 }
 
-func byteLen[T number](v T) (size int) {
+func byteLen[T number](v T) int {
 	for i := 0; i < 8; i++ {
 		v = v >> 8
 		if v == 0 {
@@ -324,7 +327,7 @@ func decodeShort(r io.ByteReader) (Short, error) {
 		case 0:
 			return x, nil
 		default:
-			return x, errors.New(`invalid header`)
+			return x, errors.New("invalid header")
 		}
 	}
 }
@@ -468,46 +471,15 @@ func decodeGeneric(r io.ByteReader) (Generic, error) {
 		case 0:
 			return x, nil
 		default:
-			return x, errors.New(`invalid header`)
+			return x, errors.New("invalid header")
 		}
 	}
-}
-
-// EncodeUint32 writes the uint32 value to the Encoder, as a varint
-func (w encoder) EncodeUint32(value uint32) int {
-	i := 0
-	for value >= 0x80 {
-		_ = w.b.WriteByte(byte(value) | 0x80)
-		value >>= 7
-		i++
-	}
-	_ = w.b.WriteByte(byte(value))
-	return i + 1
-}
-
-// EncodeUint64 writes the uint64 value to the Encoder, as a varint
-func (w encoder) EncodeUint64(value uint64) int {
-	return w.encodeVarint(value)
 }
 
 // EncodeInt32 writes the int32 value to the Encoder, as a zig-zag
 // encoded varint
 func (w encoder) EncodeInt32(value int32) int {
 	v := uint32((value << 1) ^ (value >> 31))
-	i := 0
-	for v >= 0x80 {
-		_ = w.b.WriteByte(byte(v) | 0x80)
-		v >>= 7
-		i++
-	}
-	_ = w.b.WriteByte(byte(v))
-	return i + 1
-}
-
-// EncodeInt64 writes the int64 value to the Encoder, as a zig-zag
-// encoded varint
-func (w encoder) EncodeInt64(value int64) int {
-	v := uint64((value << 1) ^ (value >> 63))
 	i := 0
 	for v >= 0x80 {
 		_ = w.b.WriteByte(byte(v) | 0x80)
@@ -525,23 +497,6 @@ func (w encoder) EncodeFloat32(value float32) int {
 	binary.LittleEndian.PutUint32(buf, math.Float32bits(value))
 	_, _ = w.b.Write(buf)
 	return 4
-}
-
-// EncodeBool writes the boolean value to the Encoder as a single byte
-func (w encoder) EncodeBool(value bool) {
-	if value {
-		_ = w.b.WriteByte(1)
-		return
-	}
-	_ = w.b.WriteByte(0)
-}
-
-// EncodeBytes writes the byte slice to the Encoder, as a length-delimited
-// record
-func (w encoder) EncodeBytes(value []byte) int {
-	n := w.encodeVarint(uint64(len(value)))
-	_, _ = w.b.Write(value)
-	return n + len(value)
 }
 
 // EncodeFloat64 writes the float64 value to the Encoder, as a 4-byte
@@ -562,29 +517,87 @@ func (w encoder) EncodeString(value string) int {
 	return n + len(buf)
 }
 
-func decodeBool(r io.ByteReader) (bool, error) {
-	var x bool
-	byt, err := r.ReadByte()
+// EncodeBool writes the boolean value to the Encoder as a single byte
+func (w encoder) EncodeBool(value bool) {
+	if value {
+		_ = w.b.WriteByte(1)
+		return
+	}
+	_ = w.b.WriteByte(0)
+}
+
+// EncodeUint32 writes the uint32 value to the Encoder, as a varint
+func (w encoder) EncodeUint32(value uint32) int {
+	i := 0
+	for value >= 0x80 {
+		_ = w.b.WriteByte(byte(value) | 0x80)
+		value >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(value))
+	return i + 1
+}
+
+// EncodeUint64 writes the uint64 value to the Encoder, as a varint
+func (w encoder) EncodeUint64(value uint64) int {
+	return w.encodeVarint(value)
+}
+
+// EncodeBytes writes the byte slice to the Encoder, as a length-delimited
+// record
+func (w encoder) EncodeBytes(value []byte) int {
+	n := w.encodeVarint(uint64(len(value)))
+	_, _ = w.b.Write(value)
+	return n + len(value)
+}
+
+// EncodeInt64 writes the int64 value to the Encoder, as a zig-zag
+// encoded varint
+func (w encoder) EncodeInt64(value int64) int {
+	v := uint64((value << 1) ^ (value >> 63))
+	i := 0
+	for v >= 0x80 {
+		_ = w.b.WriteByte(byte(v) | 0x80)
+		v >>= 7
+		i++
+	}
+	_ = w.b.WriteByte(byte(v))
+	return i + 1
+}
+
+func decodeInt32(r io.ByteReader) (int32, error) {
+	var x uint32
+	var s uint
+	var i int
+	for {
+		byt, err := r.ReadByte()
+		if err != nil {
+			return int32(x), err
+		}
+		i++
+		if i == MaxVarintLen64 {
+			return 0, errors.New("varint overflow") // overflow
+		}
+		if byt < 0x80 {
+			if i == MaxVarintLen64-1 && byt > 1 {
+				return 0, errors.New("varint overflow") // overflow
+			}
+			n := x | uint32(byt)<<s
+			return int32((n >> 1) ^ -(n & 1)), nil
+		}
+		x |= uint32(byt&0x7f) << s
+		s += 7
+	}
+}
+
+func decodeFloat32(r io.Reader) (float32, error) {
+	var x float32
+	byt := make([]byte, 4)
+	_, err := r.Read(byt)
 	if err != nil {
 		return x, err
 	}
-	if byt == 1 {
-		return true, nil
-	}
-	return false, nil
-}
-
-func decodeBytes(r io.Reader) ([]byte, error) {
-	length, err := decodeVarint(r.(io.ByteReader))
-	if err != nil {
-		return nil, err
-	}
-	data := make([]byte, length)
-	_, err = r.Read(data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
+	return math.Float32frombits(binary.LittleEndian.Uint32(byt)), nil
 }
 
 func decodeFloat64(r io.Reader) (float64, error) {
@@ -608,6 +621,18 @@ func decodeString(r io.Reader) (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+func decodeBool(r io.ByteReader) (bool, error) {
+	var x bool
+	byt, err := r.ReadByte()
+	if err != nil {
+		return x, err
+	}
+	if byt == 1 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func decodeUint32(r io.ByteReader) (uint32, error) {
@@ -638,29 +663,17 @@ func decodeUint64(r io.ByteReader) (uint64, error) {
 	return decodeVarint(r)
 }
 
-func decodeInt32(r io.ByteReader) (int32, error) {
-	var x uint32
-	var s uint
-	var i int
-	for {
-		byt, err := r.ReadByte()
-		if err != nil {
-			return int32(x), err
-		}
-		i++
-		if i == MaxVarintLen64 {
-			return 0, errors.New("varint overflow") // overflow
-		}
-		if byt < 0x80 {
-			if i == MaxVarintLen64-1 && byt > 1 {
-				return 0, errors.New("varint overflow") // overflow
-			}
-			n := x | uint32(byt)<<s
-			return int32((n >> 1) ^ -(n & 1)), nil
-		}
-		x |= uint32(byt&0x7f) << s
-		s += 7
+func decodeBytes(r io.Reader) ([]byte, error) {
+	length, err := decodeVarint(r.(io.ByteReader))
+	if err != nil {
+		return nil, err
 	}
+	data := make([]byte, length)
+	_, err = r.Read(data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func decodeInt64(r io.ByteReader) (int64, error) {
@@ -686,14 +699,4 @@ func decodeInt64(r io.ByteReader) (int64, error) {
 		x |= uint64(byt&0x7f) << s
 		s += 7
 	}
-}
-
-func decodeFloat32(r io.Reader) (float32, error) {
-	var x float32
-	byt := make([]byte, 4)
-	_, err := r.Read(byt)
-	if err != nil {
-		return x, err
-	}
-	return math.Float32frombits(binary.LittleEndian.Uint32(byt)), nil
 }
