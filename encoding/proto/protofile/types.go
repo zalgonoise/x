@@ -24,8 +24,8 @@ var protoTypes = map[string]ConcreteType{
 	"fixed64":  Uint64,
 	"sfixed32": Int32,
 	"sfixed64": Int64,
-	"double":   Float32,
-	"float":    Float64,
+	"float":    Float32,
+	"double":   Float64,
 	"string":   String,
 	"bytes":    Bytes,
 }
@@ -86,14 +86,13 @@ func (w encoder) EncodeBool(value bool) {
 
 func (boolType) DecoderGoString() string {
 	return `
-func decodeBool(r io.Reader) (bool, error) {
+func decodeBool(r io.ByteReader) (bool, error) {
 	var x bool
-	byt := make([]byte, 1)
-	_, err := r.Read(byt)
+	byt, err := r.ReadByte()
 	if err != nil {
 		return x, err
 	}
-	if byt[0] == 1 {
+	if byt == 1 {
 		return true, nil
 	}
 	return false, nil
@@ -127,13 +126,12 @@ func (w encoder) EncodeUint32(value uint32) int {
 
 func (uint32Type) DecoderGoString() string {
 	return `
-func decodeUint32(r io.Reader) (uint32, error) {
+func decodeUint32(r io.ByteReader) (uint32, error) {
 	var x uint32
 	var s uint
 	var i int
 	for {
-		byt := make([]byte, 1)
-		_, err := r.Read(byt)
+		byt, err := r.ReadByte()
 		if err != nil {
 			return x, err
 		}
@@ -141,13 +139,13 @@ func decodeUint32(r io.Reader) (uint32, error) {
 		if i == MaxVarintLen64 {
 			return 0, errors.New("varint overflow") // overflow
 		}
-		if byt[0] < 0x80 {
-			if i == MaxVarintLen64-1 && byt[0] > 1 {
+		if byt < 0x80 {
+			if i == MaxVarintLen64-1 && byt > 1 {
 				return 0, errors.New("varint overflow") // overflow
 			}
-			return x | uint32(byt[0])<<s, nil
+			return x | uint32(byt)<<s, nil
 		}
-		x |= uint32(byt[0]&0x7f) << s
+		x |= uint32(byt&0x7f) << s
 		s += 7
 	}
 }
@@ -173,7 +171,7 @@ func (w encoder) EncodeUint64(value uint64) int {
 
 func (uint64Type) DecoderGoString() string {
 	return `
-func decodeUint64(r io.Reader) (uint64, error) {
+func decodeUint64(r io.ByteReader) (uint64, error) {
 	return decodeVarint(r)
 }
 `
@@ -206,13 +204,12 @@ func (w encoder) EncodeInt64(value int64) int {
 
 func (int64Type) DecoderGoString() string {
 	return `
-func decodeInt64(r io.Reader) (int64, error) {
+func decodeInt64(r io.ByteReader) (int64, error) {
 	var x uint64
 	var s uint
 	var i int
 	for {
-		byt := make([]byte, 1)
-		_, err := r.Read(byt)
+		byt, err := r.ReadByte()
 		if err != nil {
 			return int64(x), err
 		}
@@ -220,14 +217,14 @@ func decodeInt64(r io.Reader) (int64, error) {
 		if i == MaxVarintLen64 {
 			return 0, errors.New("varint overflow") // overflow
 		}
-		if byt[0] < 0x80 {
-			if i == MaxVarintLen64-1 && byt[0] > 1 {
+		if byt < 0x80 {
+			if i == MaxVarintLen64-1 && byt > 1 {
 				return 0, errors.New("varint overflow") // overflow
 			}
-			n := x | uint64(byt[0])<<s
+			n := x | uint64(byt)<<s
 			return int64((n >> 1) ^ -(n & 1)), nil
 		}
-		x |= uint64(byt[0]&0x7f) << s
+		x |= uint64(byt&0x7f) << s
 		s += 7
 	}
 }
@@ -261,13 +258,12 @@ func (w encoder) EncodeInt32(value int32) int {
 
 func (int32Type) DecoderGoString() string {
 	return `
-func decodeInt32(r io.Reader) (int32, error) {
+func decodeInt32(r io.ByteReader) (int32, error) {
 	var x uint32
 	var s uint
 	var i int
 	for {
-		byt := make([]byte, 1)
-		_, err := r.Read(byt)
+		byt, err := r.ReadByte()
 		if err != nil {
 			return int32(x), err
 		}
@@ -275,14 +271,14 @@ func decodeInt32(r io.Reader) (int32, error) {
 		if i == MaxVarintLen64 {
 			return 0, errors.New("varint overflow") // overflow
 		}
-		if byt[0] < 0x80 {
-			if i == MaxVarintLen64-1 && byt[0] > 1 {
+		if byt < 0x80 {
+			if i == MaxVarintLen64-1 && byt > 1 {
 				return 0, errors.New("varint overflow") // overflow
 			}
-			n := x | uint32(byt[0])<<s
+			n := x | uint32(byt)<<s
 			return int32((n >> 1) ^ -(n & 1)), nil
 		}
-		x |= uint32(byt[0]&0x7f) << s
+		x |= uint32(byt&0x7f) << s
 		s += 7
 	}
 }
@@ -302,7 +298,7 @@ func (float32Type) EncoderGoString() string {
 // buffer
 func (w encoder) EncodeFloat32(value float32) int {
 	var buf = make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, math.Float32bits(value))
+	binary.LittleEndian.PutUint32(buf, math.Float32bits(value))
 	_, _ = w.b.Write(buf)
 	return 4
 }
@@ -319,7 +315,7 @@ func decodeFloat32(r io.Reader) (float32, error) {
 	if err != nil {
 		return x, err
 	}
-	return math.Float32frombits(binary.BigEndian.Uint32(byt)), nil
+	return math.Float32frombits(binary.LittleEndian.Uint32(byt)), nil
 }
 `
 }
@@ -337,7 +333,7 @@ func (float64Type) EncoderGoString() string {
 // buffer
 func (w encoder) EncodeFloat64(value float64) int {
 	var buf = make([]byte, 8)
-	binary.BigEndian.PutUint64(buf, math.Float64bits(value))
+	binary.LittleEndian.PutUint64(buf, math.Float64bits(value))
 	_, _ = w.b.Write(buf)
 	return 8
 }
@@ -354,7 +350,7 @@ func decodeFloat64(r io.Reader) (float64, error) {
 	if err != nil {
 		return x, err
 	}
-	return math.Float64frombits(binary.BigEndian.Uint64(byt)), nil
+	return math.Float64frombits(binary.LittleEndian.Uint64(byt)), nil
 }
 `
 }
@@ -382,7 +378,7 @@ func (w encoder) EncodeBytes(value []byte) int {
 func (bytesType) DecoderGoString() string {
 	return `
 func decodeBytes(r io.Reader) ([]byte, error) {
-	length, err := decodeVarint(r)
+	length, err := decodeVarint(r.(io.ByteReader))
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +416,7 @@ func (w encoder) EncodeString(value string) int {
 func (stringType) DecoderGoString() string {
 	return `
 func decodeString(r io.Reader) (string, error) {
-	length, err := decodeVarint(r)
+	length, err := decodeVarint(r.(io.ByteReader))
 	if err != nil {
 		return "", err
 	}

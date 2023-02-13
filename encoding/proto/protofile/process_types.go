@@ -76,7 +76,7 @@ func (t GoEnum) GoString() string {
 	sb.WriteString(" outlines the enumeration")
 	sb.WriteString("\ntype ")
 	sb.WriteString(t.GoName)
-	sb.WriteString(" int64\n\n")
+	sb.WriteString(" uint64\n\n")
 
 	sb.WriteString("const (\n")
 	for _, f := range t.Fields {
@@ -173,7 +173,7 @@ func (t GoFile) GoString() string {
 			sb.WriteString("\theader")
 			sb.WriteString(typ.Name)
 			sb.WriteString(field.GoName)
-			sb.WriteString(" uint64 = ")
+			sb.WriteString(" byte = ")
 			sb.WriteString(strconv.Itoa(field.idAndWire.Header()))
 			sb.WriteString(" // {")
 			sb.WriteString(strconv.Itoa(field.idAndWire.ID))
@@ -320,6 +320,65 @@ func (t GoFile) GoString() string {
 				}
 				sb.WriteString(" != nil {\n")
 			}
+			var forceCloseIf bool
+			switch field.GoType {
+			case "bool":
+				sb.WriteString("\tif ")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				if field.IsRepeated {
+					sb.WriteString("[idx]")
+				}
+				sb.WriteString(" {\n\t")
+			case "string":
+				sb.WriteString("\tif ")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				if field.IsRepeated {
+					sb.WriteString("[idx]")
+				}
+				sb.WriteString(` != "" {`)
+				sb.WriteString("\n\t")
+			case "[]byte":
+				sb.WriteString("\tif len(")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				if field.IsRepeated {
+					sb.WriteString("[idx]")
+				}
+				sb.WriteString(`) > 0 {`)
+				sb.WriteString("\n\t")
+			case "int", "uint", "int32", "uint32", "int64", "uint64", "float32", "float64":
+				sb.WriteString("\tif ")
+				sb.WriteString(placeholder)
+				sb.WriteByte('.')
+				sb.WriteString(field.GoName)
+				if field.IsRepeated {
+					sb.WriteString("[idx]")
+				}
+				sb.WriteString(` != 0 {`)
+				sb.WriteString("\n\t")
+			default:
+				// enums and structs
+				if isEnum, ok := t.UniqueTypes[field.GoType]; ok {
+					if !isEnum {
+						sb.WriteString("\tif structBytes := ")
+						sb.WriteString(placeholder)
+						sb.WriteByte('.')
+						sb.WriteString(field.GoName)
+						if field.IsRepeated {
+							sb.WriteString("[idx]")
+						}
+						sb.WriteString(`.Bytes(); len(structBytes) > 0 {`)
+						sb.WriteString("\n\t")
+						forceCloseIf = true
+					}
+				}
+			}
+
 			sb.WriteString("\te.b.WriteByte(")
 			sb.WriteString(strconv.Itoa(field.idAndWire.Header()))
 			sb.WriteString(")\n")
@@ -341,8 +400,8 @@ func (t GoFile) GoString() string {
 			} else if isEnum, ok := t.UniqueTypes[field.GoType]; ok {
 				if isEnum {
 					sb.WriteString("\te.")
-					sb.WriteString(Int64.EncoderFunc())
-					sb.WriteString("(int64(")
+					sb.WriteString(Uint64.EncoderFunc())
+					sb.WriteString("(uint64(")
 					if field.IsOptional {
 						sb.WriteString("*")
 					}
@@ -357,18 +416,16 @@ func (t GoFile) GoString() string {
 				} else {
 					sb.WriteString("\te.")
 					sb.WriteString(Bytes.EncoderFunc())
-					sb.WriteByte('(')
-					if field.IsOptional {
-						sb.WriteString("*")
-					}
-					sb.WriteString(placeholder)
-					sb.WriteByte('.')
-					sb.WriteString(field.GoName)
-					if field.IsRepeated {
-						sb.WriteString("[idx]")
-					}
-					sb.WriteString(".Bytes())")
+					sb.WriteString("(structBytes)")
 					sb.WriteByte('\n')
+				}
+			}
+			switch field.GoType {
+			case "bool", "string", "[]byte", "int", "uint", "int32", "uint32", "int64", "uint64", "float32", "float64":
+				sb.WriteString("}\n")
+			default:
+				if forceCloseIf {
+					sb.WriteString("}\n")
 				}
 			}
 
@@ -410,13 +467,12 @@ func (w encoder) encodeVarint(value uint64) int {
 
 	sb.WriteString(`
 
-func decodeVarint(r io.Reader) (uint64, error) {
+func decodeVarint(r io.ByteReader) (uint64, error) {
 	var x uint64
 	var s uint
 	var i int
 	for {
-		byt := make([]byte, 1)
-		_, err := r.Read(byt)
+		byt, err := r.ReadByte()
 		if err != nil {
 			return x, err
 		}
@@ -424,13 +480,13 @@ func decodeVarint(r io.Reader) (uint64, error) {
 		if i == MaxVarintLen64 {
 			return 0, errors.New("varint overflow") // overflow
 		}
-		if byt[0] < 0x80 {
-			if i == MaxVarintLen64-1 && byt[0] > 1 {
+		if byt < 0x80 {
+			if i == MaxVarintLen64-1 && byt > 1 {
 				return 0, errors.New("varint overflow") // overflow
 			}
-			return x | uint64(byt[0])<<s, nil
+			return x | uint64(byt)<<s, nil
 		}
-		x |= uint64(byt[0]&0x7f) << s
+		x |= uint64(byt&0x7f) << s
 		s += 7
 	}
 }
@@ -458,22 +514,24 @@ func decodeVarint(r io.Reader) (uint64, error) {
 
 		sb.WriteString("\n\nfunc decode")
 		sb.WriteString(typ.Name)
-		sb.WriteString("(r io.Reader) (")
+		sb.WriteString("(r io.ByteReader) (")
 		sb.WriteString(typ.Name)
 		sb.WriteString(", error) {\n\t var x = ")
 		sb.WriteString(typ.Name)
-		sb.WriteString("{}\n\tfor {\n\t\tv, err := decodeVarint(r)\n\t\tif err != nil {\n\t\t\treturn x, err\n\t\t}\n\t\tswitch v {\n")
+		sb.WriteString("{}\n\tfor {\n\t\tv, err := r.ReadByte()\n\t\tif err != nil {\n\t\t\treturn x, err\n\t\t}\n\t\tswitch v {\n")
 
 		for _, field := range typ.Fields {
 			var decoderFn string
 			var isEnum bool
+			var isStruct bool
 			if conc, ok := goTypes[field.GoType]; ok {
 				decoderFn = conc.DecoderFunc()
 			} else if enum, ok := t.UniqueTypes[field.GoType]; ok {
 				if enum {
 					isEnum = true
-					decoderFn = Int64.DecoderFunc()
+					decoderFn = Uint64.DecoderFunc()
 				} else {
+					isStruct = true
 					decoderFn = "decode" + field.GoType
 				}
 			}
@@ -481,10 +539,18 @@ func decodeVarint(r io.Reader) (uint64, error) {
 			sb.WriteString(typ.Name)
 			sb.WriteString(field.GoName)
 			sb.WriteString(":\n\t\t\t")
+			if isStruct {
+				sb.WriteString("_, err := r.ReadByte() // length byte\n\t\t\tif err != nil {\n\t\t\t\treturn x, err\n\t\t\t}\n\t\t\t")
+			}
 			sb.WriteString(field.ProtoName)
 			sb.WriteString(", err := ")
 			sb.WriteString(decoderFn)
-			sb.WriteString("(r)\n\t\t\tif err != nil {\n\t\t\t\treturn x, err\n\t\t\t}\n")
+			sb.WriteString("(r")
+			switch field.GoType {
+			case "[]byte", "string", "float32", "float64":
+				sb.WriteString(".(io.Reader)")
+			}
+			sb.WriteString(")\n\t\t\tif err != nil && !errors.Is(err, io.EOF) {\n\t\t\t\treturn x, err\n\t\t\t}\n")
 			sb.WriteString("\t\t\tx.")
 			sb.WriteString(field.GoName)
 			sb.WriteString(" = ")

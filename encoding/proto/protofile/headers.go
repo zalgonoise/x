@@ -12,7 +12,11 @@ type IDAndWire struct {
 }
 
 func (iaw IDAndWire) Header() int {
-	return (iaw.ID << 3) | iaw.Wire
+	header := (iaw.ID << 3) | iaw.Wire
+	if header > 255 {
+		return 0
+	}
+	return header
 }
 
 func fmtPascal(name string) string {

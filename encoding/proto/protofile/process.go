@@ -284,13 +284,9 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 	var wireType int
 	if t, ok := goFile.concreteTypes[field.GoType]; ok {
 		wireType = t.WireType()
-	} else {
-		if v, ok := goFile.UniqueTypes[field.GoName]; ok {
-			if v {
-				wireType = 0
-			} else {
-				wireType = 2
-			}
+	} else if isEnum, ok := goFile.UniqueTypes[field.ProtoType]; ok {
+		if isEnum {
+			wireType = 0
 		} else {
 			wireType = 2
 		}
@@ -300,6 +296,10 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 		ID:   field.ProtoIndex,
 		Wire: wireType,
 		Name: field.GoName,
+	}
+
+	if header := field.idAndWire.Header(); header == 0 {
+		return fmt.Errorf("field %s generates a header larger than 255: %d -- please generate a shorter message", field.GoName, (field.idAndWire.ID<<3)|field.idAndWire.Wire)
 	}
 
 	goType.Fields = append(goType.Fields, *field)

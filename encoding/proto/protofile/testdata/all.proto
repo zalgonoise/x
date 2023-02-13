@@ -26,8 +26,8 @@ message Generic {
     fixed64 fixed_64 = 9;
     sfixed32 sfixed_32 = 10;
     sfixed64 sfixed_64 = 11;
-    double float_32 = 12;
-    float float_64 = 13;
+    float float_32 = 12;
+    double float_64 = 13;
     string varchar = 14;
     bytes byte_slice = 15;
     repeated uint64 int_slice = 16;
