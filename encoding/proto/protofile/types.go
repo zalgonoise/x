@@ -172,7 +172,27 @@ func (w encoder) EncodeUint64(value uint64) int {
 func (uint64Type) DecoderGoString() string {
 	return `
 func decodeUint64(r io.ByteReader) (uint64, error) {
-	return decodeVarint(r)
+	var x uint64
+	var s uint
+	var i int
+	for {
+		byt, err := r.ReadByte()
+		if err != nil {
+			return x, err
+		}
+		i++
+		if i == MaxVarintLen64 {
+			return 0, errors.New("varint overflow") // overflow
+		}
+		if byt < 0x80 {
+			if i == MaxVarintLen64-1 && byt > 1 {
+				return 0, errors.New("varint overflow") // overflow
+			}
+			return x | uint64(byt)<<s, nil
+		}
+		x |= uint64(byt&0x7f) << s
+		s += 7
+	}
 }
 `
 }
@@ -308,14 +328,15 @@ func (w encoder) EncodeFloat32(value float32) int {
 
 func (float32Type) DecoderGoString() string {
 	return `
-func decodeFloat32(r io.Reader) (float32, error) {
-	var x float32
-	byt := make([]byte, 4)
-	_, err := r.Read(byt)
-	if err != nil {
-		return x, err
+func decodeFloat32(r io.ByteReader) (v float32, err error) {
+	var arr [4]byte
+	for idx := range arr {
+		arr[idx], err = r.ReadByte()
+		if err != nil {
+			return v, err
+		}
 	}
-	return math.Float32frombits(binary.LittleEndian.Uint32(byt)), nil
+	return math.Float32frombits(binary.LittleEndian.Uint32(arr[:])), nil
 }
 `
 }
@@ -343,14 +364,15 @@ func (w encoder) EncodeFloat64(value float64) int {
 
 func (float64Type) DecoderGoString() string {
 	return `
-func decodeFloat64(r io.Reader) (float64, error) {
-	var x float64
-	byt := make([]byte, 8)
-	_, err := r.Read(byt)
-	if err != nil {
-		return x, err
+func decodeFloat64(r io.ByteReader) (v float64, err error) {
+	var arr [8]byte
+	for idx := range arr {
+		arr[idx], err = r.ReadByte()
+		if err != nil {
+			return v, err
+		}
 	}
-	return math.Float64frombits(binary.LittleEndian.Uint64(byt)), nil
+	return math.Float64frombits(binary.LittleEndian.Uint64(arr[:])), nil
 }
 `
 }
@@ -378,7 +400,7 @@ func (w encoder) EncodeBytes(value []byte) int {
 func (bytesType) DecoderGoString() string {
 	return `
 func decodeBytes(r io.Reader) ([]byte, error) {
-	length, err := decodeVarint(r.(io.ByteReader))
+	length, err := decodeUint64(r.(io.ByteReader))
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +438,7 @@ func (w encoder) EncodeString(value string) int {
 func (stringType) DecoderGoString() string {
 	return `
 func decodeString(r io.Reader) (string, error) {
-	length, err := decodeVarint(r.(io.ByteReader))
+	length, err := decodeUint64(r.(io.ByteReader))
 	if err != nil {
 		return "", err
 	}

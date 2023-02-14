@@ -91,29 +91,6 @@ func byteLen[T number](v T) int {
 	return 0
 }
 
-func decodeVarint(r io.ByteReader) (uint64, error) {
-	var x uint64
-	var s uint
-	var i int
-	for {
-		byt, err := r.ReadByte()
-		if err != nil {
-			return x, err
-		}
-		i++
-		if i == MaxVarintLen64 {
-			return 0, errors.New("varint overflow") // overflow
-		}
-		if byt < 0x80 {
-			if i == MaxVarintLen64-1 && byt > 1 {
-				return 0, errors.New("varint overflow") // overflow
-			}
-			return x | uint64(byt)<<s, nil
-		}
-		x |= uint64(byt&0x7f) << s
-		s += 7
-	}
-}
 `
 
 }

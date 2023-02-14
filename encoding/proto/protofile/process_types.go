@@ -120,6 +120,9 @@ e := newEncoder(
 			sb.WriteString(fmt.Sprintf(
 				`			byteLen(x.%s)`, field.GoName))
 			nextPlusSeparator(sb, idx, len(g.Fields))
+		case "float32":
+			sb.WriteString("\t\t\t4")
+			nextPlusSeparator(sb, idx, len(g.Fields))
 		default:
 			sb.WriteString("\t\t\t8")
 			nextPlusSeparator(sb, idx, len(g.Fields))
@@ -306,7 +309,7 @@ func (g *GoType) DecoderGoString(f GoFile) string {
 		sb.WriteString(fmt.Sprintf(
 			`%s, err := %s(r`, field.ProtoName, decoderFn))
 		switch field.GoType {
-		case "[]byte", "string", "float32", "float64":
+		case "[]byte", "string":
 			sb.WriteString(".(io.Reader)")
 		}
 		sb.WriteString(fmt.Sprintf(

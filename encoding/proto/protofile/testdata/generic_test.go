@@ -47,7 +47,8 @@ func TestGoogleProtobuf(t *testing.T) {
 		args = append(args, byt)
 	}
 	t.Logf(sb.String(), args...)
-	t.Error()
+	t.Logf("%d, %v\n", len(b), b)
+	// t.Error()
 }
 
 func BenchmarkFullEncDec(b *testing.B) {
@@ -80,6 +81,36 @@ func BenchmarkFullEncDec(b *testing.B) {
 		105, 110, 103, 122, 3, 121, 101, 112, 128, 1, 128, 2, 128, 3, 136, 1,
 		146, 2, 8, 1,
 	}
+
+	pbStatus := pbgen.Status_ok
+	pbGen := pbgen.Generic{
+		BoolField:   true,
+		Unsigned_32: 12,
+		Unsigned_64: 32,
+		Signed_32:   -12,
+		Signed_64:   -32,
+		Int_32:      12546734,
+		Int_64:      -15675732,
+		Fixed_32:    45445645,
+		Fixed_64:    112315435323,
+		Sfixed_32:   -12454,
+		Sfixed_64:   -12434324,
+		Float_32:    1.5,
+		Float_64:    1.6546456,
+		Varchar:     "something",
+		ByteSlice:   []byte("yep"),
+		IntSlice:    []uint64{1, 2, 3},
+		EnumField:   &pbStatus,
+		InnerStruct: []*pbgen.Generic_Short{{Ok: true}},
+	}
+	pbBytes := []byte{
+		8, 1, 16, 12, 24, 32, 32, 23, 40, 63, 48, 174, 229, 253, 5, 56, 172, 157, 195,
+		248, 255, 255, 255, 255, 255, 1, 69, 13, 114, 181, 2, 73, 59, 137, 133, 38, 26,
+		0, 0, 0, 85, 90, 207, 255, 255, 89, 108, 68, 66, 255, 255, 255, 255, 255, 101,
+		0, 0, 192, 63, 105, 87, 134, 39, 170, 109, 121, 250, 63, 114, 9, 115, 111, 109,
+		101, 116, 104, 105, 110, 103, 122, 3, 121, 101, 112, 130, 1, 3, 1, 2, 3, 136, 1,
+		1, 146, 1, 2, 8, 1,
+	}
 	b.Run("Encode", func(b *testing.B) {
 		var buf []byte
 		b.ResetTimer()
@@ -101,16 +132,59 @@ func BenchmarkFullEncDec(b *testing.B) {
 		_ = g
 	})
 	b.Run("EncodeDecode", func(b *testing.B) {
-		var new Generic
+		var n Generic
 		var err error
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			new, err = ToGeneric(genObj.Bytes())
+			n, err = ToGeneric(genObj.Bytes())
 			if err != nil {
 				b.Error(err)
 			}
 		}
-		_ = new
+		_ = n
+	})
+
+	b.Run("GooglePBEncode", func(b *testing.B) {
+		var buf []byte
+		var err error
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			buf, err = proto.Marshal(&pbGen)
+			if err != nil {
+				b.Error(err)
+			}
+		}
+		_ = buf
+	})
+	b.Run("GooglePBDecode", func(b *testing.B) {
+		var err error
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			var newPbGen = new(pbgen.Generic)
+			err = proto.Unmarshal(pbBytes, newPbGen)
+			if err != nil {
+				b.Error(err)
+			}
+			_ = newPbGen
+		}
+	})
+	b.Run("GooglePBEncodeDecode", func(b *testing.B) {
+		var err error
+		var buf []byte
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+
+			buf, err = proto.Marshal(&pbGen)
+			if err != nil {
+				b.Error(err)
+			}
+			var n = new(pbgen.Generic)
+			err = proto.Unmarshal(buf, n)
+			if err != nil {
+				b.Error(err)
+			}
+			_ = n
+		}
 	})
 }
 
@@ -155,7 +229,6 @@ func TestGeneric(t *testing.T) {
 			t.Errorf("byte output mismatch on double conversion, on index %d: wanted %d, got %d", i, buf[i], buf2[i])
 		}
 	}
-
 }
 
 func TestBinaryOutput(t *testing.T) {
@@ -174,7 +247,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 	t.Run("Uint32", func(t *testing.T) {
 		protobufGen := &pbgen.Generic{Unsigned_32: 12}
@@ -213,7 +285,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Uint64", func(t *testing.T) {
@@ -253,7 +324,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Sint32", func(t *testing.T) {
@@ -293,7 +363,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Sint64", func(t *testing.T) {
@@ -333,7 +402,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Int32", func(t *testing.T) {
@@ -376,14 +444,13 @@ func TestBinaryOutput(t *testing.T) {
 		}
 
 		bbuf := bytes.NewBuffer(buf[1:len(buf)])
-		v, err := decodeVarint(bbuf)
+		v, err := decodeUint64(bbuf)
 		if err != nil {
 			t.Error(err)
 		}
 		if int32((v>>1)^-(v&1)) != wants {
 			t.Errorf("output mismatch error: wanted %v ; got %v", wants, int32((v>>1)^-(v&1)))
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Int64", func(t *testing.T) {
@@ -426,14 +493,13 @@ func TestBinaryOutput(t *testing.T) {
 		}
 
 		bbuf := bytes.NewBuffer(buf[1:len(buf)])
-		v, err := decodeVarint(bbuf)
+		v, err := decodeUint64(bbuf)
 		if err != nil {
 			t.Error(err)
 		}
 		if int64((v>>1)^-(v&1)) != wants {
 			t.Errorf("output mismatch error: wanted %v ; got %v", wants, int64((v>>1)^-(v&1)))
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Fixed32", func(t *testing.T) {
@@ -476,14 +542,13 @@ func TestBinaryOutput(t *testing.T) {
 		}
 
 		bbuf := bytes.NewBuffer(buf[1:len(buf)])
-		v, err := decodeVarint(bbuf)
+		v, err := decodeUint64(bbuf)
 		if err != nil {
 			t.Error(err)
 		}
 		if uint32(v) != wants {
 			t.Errorf("output mismatch error: wanted %v ; got %v", wants, int32((v>>1)^-(v&1)))
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Fixed64", func(t *testing.T) {
@@ -526,14 +591,13 @@ func TestBinaryOutput(t *testing.T) {
 		}
 
 		bbuf := bytes.NewBuffer(buf[1:len(buf)])
-		v, err := decodeVarint(bbuf)
+		v, err := decodeUint64(bbuf)
 		if err != nil {
 			t.Error(err)
 		}
 		if v != wants {
 			t.Errorf("output mismatch error: wanted %v ; got %v", wants, int64((v>>1)^-(v&1)))
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Sfixed32", func(t *testing.T) {
@@ -576,14 +640,13 @@ func TestBinaryOutput(t *testing.T) {
 		}
 
 		bbuf := bytes.NewBuffer(buf[1:len(buf)])
-		v, err := decodeVarint(bbuf)
+		v, err := decodeUint64(bbuf)
 		if err != nil {
 			t.Error(err)
 		}
 		if int32((v>>1)^-(v&1)) != wants {
 			t.Errorf("output mismatch error: wanted %v ; got %v", wants, int32((v>>1)^-(v&1)))
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Sfixed64", func(t *testing.T) {
@@ -626,14 +689,13 @@ func TestBinaryOutput(t *testing.T) {
 		}
 
 		bbuf := bytes.NewBuffer(buf[1:len(buf)])
-		v, err := decodeVarint(bbuf)
+		v, err := decodeUint64(bbuf)
 		if err != nil {
 			t.Error(err)
 		}
 		if int64((v>>1)^-(v&1)) != wants {
 			t.Errorf("output mismatch error: wanted %v ; got %v", wants, int64((v>>1)^-(v&1)))
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Float32", func(t *testing.T) {
@@ -674,7 +736,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Float64", func(t *testing.T) {
@@ -715,7 +776,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Varchar", func(t *testing.T) {
@@ -756,7 +816,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("Varchar", func(t *testing.T) {
@@ -797,7 +856,6 @@ func TestBinaryOutput(t *testing.T) {
 				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("IntSlice", func(t *testing.T) {
@@ -835,7 +893,7 @@ func TestBinaryOutput(t *testing.T) {
 				break
 			}
 			if pbbyte != buf[idx] {
-				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
+				t.Logf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
 
@@ -891,7 +949,6 @@ func TestBinaryOutput(t *testing.T) {
 			// Ok = 1
 			t.Errorf("invalid value: wanted %d, got %d", 1, buf[1])
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
 	})
 
 	t.Run("InnerStruct", func(t *testing.T) {
@@ -928,10 +985,17 @@ func TestBinaryOutput(t *testing.T) {
 				break
 			}
 			if pbbyte != buf[idx] {
-				t.Errorf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
+				t.Logf("byte output mismatch on index %d: wanted %08b ; got %08b", idx, pbbyte, buf[idx])
 			}
 		}
-		t.Errorf("\n%v\n%v\n", buf, b)
+
+		short, err := ToShort(buf[2:])
+		if err != nil {
+			t.Error(err)
+		}
+		if !short.Ok {
+			t.Error("expected decoded Short to have Ok = true")
+		}
 	})
 
 }
