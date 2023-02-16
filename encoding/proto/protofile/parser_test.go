@@ -13,12 +13,12 @@ var protofile []byte
 
 func TestParser(t *testing.T) {
 	r := (gio.Reader[byte])(bytes.NewReader(protofile))
-	goFile, err := Parse(r)
+	n, err := Parse(r)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Log(goFile.GoString())
-
-	t.Error()
+	if n == 0 {
+		t.Errorf("zero bytes written")
+	}
 }
