@@ -6,6 +6,13 @@ import (
 	"strings"
 )
 
+func NewGoType() *GoType {
+	return &GoType{
+		uniqueIDs:   make(map[int]struct{}),
+		uniqueNames: make(map[string]struct{}),
+	}
+}
+
 type GoField struct {
 	IsRepeated bool   `json:"is_repeated,omitempty"`
 	IsOptional bool   `json:"is_optional,omitempty"`

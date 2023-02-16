@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+func NewGoEnum() *GoEnum {
+	return &GoEnum{
+		uniqueIDs:   make(map[int]struct{}),
+		uniqueNames: make(map[string]struct{}),
+	}
+}
+
 type EnumField struct {
 	Index     int    `json:"index"`
 	GoName    string `json:"go_name,omitempty"`

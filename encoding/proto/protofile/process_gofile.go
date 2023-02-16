@@ -1,9 +1,22 @@
 package protofile
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
+
+func NewGoFile() *GoFile {
+	return &GoFile{
+		UniqueTypes:   make(map[string]bool),
+		concreteTypes: make(map[string]ConcreteType),
+		importsList: map[string]struct{}{
+			"bytes":  {},
+			"errors": {},
+			"io":     {},
+		},
+	}
+}
 
 type GoFile struct {
 	Path          string          `json:"path,omitempty"`
@@ -16,30 +29,41 @@ type GoFile struct {
 	minAlloc      int
 }
 
-func (t GoFile) GoString() string {
-	sb := new(strings.Builder)
-	sb.WriteString(t.HeaderGoString())
+func (t GoFile) goStringBuilder() interface {
+	String() string
+	Bytes() []byte
+} {
+	buf := new(bytes.Buffer)
+	buf.WriteString(t.HeaderGoString())
 	for _, typ := range t.Types {
-		sb.WriteString(typ.TypeGoString())
-		sb.WriteString(typ.EncoderGoString(t))
+		buf.WriteString(typ.TypeGoString())
+		buf.WriteString(typ.EncoderGoString(t))
 	}
 	for _, enum := range t.Enums {
-		sb.WriteString(enum.TypeGoString())
+		buf.WriteString(enum.TypeGoString())
 	}
 
-	sb.WriteString(t.EncoderGoString())
+	buf.WriteString(t.EncoderGoString())
 
 	for _, typ := range t.Types {
-		sb.WriteString(typ.DecoderGoString(t))
+		buf.WriteString(typ.DecoderGoString(t))
 	}
 	for _, conc := range t.concreteTypes {
-		sb.WriteString(conc.EncoderGoString())
+		buf.WriteString(conc.EncoderGoString())
 	}
 	for _, conc := range t.concreteTypes {
-		sb.WriteString(conc.DecoderGoString())
+		buf.WriteString(conc.DecoderGoString())
 	}
 
-	return sb.String()
+	return buf
+}
+
+func (t GoFile) GoBytes() []byte {
+	return t.goStringBuilder().Bytes()
+}
+
+func (t GoFile) GoString() string {
+	return t.goStringBuilder().String()
 }
 
 func (g GoFile) EncoderGoString() string {
