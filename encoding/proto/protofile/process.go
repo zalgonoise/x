@@ -3,6 +3,7 @@ package protofile
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/zalgonoise/parse"
@@ -25,89 +26,104 @@ var (
 	ErrInvalidType       = errors.New("invalid, undeclared or unsupported type")
 )
 
-func processFn[C ProtoToken, T byte, R *GoFile](t *parse.Tree[C, T]) (R, error) {
-	var goFile = new(GoFile)
-	goFile.UniqueTypes = make(map[string]bool)
-	goFile.concreteTypes = make(map[string]ConcreteType)
-	goFile.importsList = make(map[string]struct{})
-	goFile.importsList["bytes"] = struct{}{}
-	goFile.importsList["errors"] = struct{}{}
-	goFile.importsList["io"] = struct{}{}
+func processFn[C ProtoToken, T byte, R int](tree *parse.Tree[C, T]) (R, error) {
+	var (
+		goFile   = NewGoFile()
+		n      R = -1
+	)
 
-	for _, n := range t.List() {
-		switch n.Type {
+	for _, node := range tree.List() {
+		switch node.Type {
 		case C(TokenSYNTAX):
-			err := processSyntax(goFile, n)
+			err := processSyntax(goFile, node)
 			if err != nil {
-				return (R)(goFile), err
+				return n, err
 			}
 		case C(TokenPACKAGE):
-			err := processPackage(goFile, n)
+			err := processPackage(goFile, node)
 			if err != nil {
-				return (R)(goFile), err
+				return n, err
 			}
 		case C(TokenOPTION):
-			err := processOption(goFile, n)
+			err := processOption(goFile, node)
 			if err != nil {
-				return (R)(goFile), err
+				return n, err
 			}
 		case C(TokenENUM):
-			err := processEnum(goFile, n)
+			err := processEnum(goFile, node)
 			if err != nil {
-				return (R)(goFile), err
+				return n, err
 			}
 		case C(TokenMESSAGE):
-			err := processMessage(goFile, n)
+			err := processMessage(goFile, node)
 			if err != nil {
-				return (R)(goFile), err
+				return n, err
 			}
 		default:
-			return (R)(goFile), fmt.Errorf("invalid top-level token: %d -- %s", n.Type, toString(n.Value))
+			return n, fmt.Errorf("invalid top-level token: %d -- %s", node.Type, toString(node.Value))
 		}
 	}
-	return (R)(goFile), nil
+
+	return createPbGo[R](goFile)
 }
 
-func processSyntax[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
-	if len(n.Edges) != 1 {
+func createPbGo[T int](goFile *GoFile) (T, error) {
+	err := os.MkdirAll(goFile.Path, os.ModeDir|(OS_USER_RWX|OS_ALL_R))
+	if err != nil {
+		return -1, fmt.Errorf("failed to create folder in %s: %w", goFile.Path, err)
+	}
+	f, err := os.Create(goFile.Path + "/" + goFile.Package + ".pb.go")
+	if err != nil {
+		return -1, fmt.Errorf("failed to create .pb.go file in %s: %w", goFile.Path, err)
+	}
+
+	n, err := f.Write(goFile.GoBytes())
+	if err != nil {
+		return -1, fmt.Errorf("failed to write data to .pb.go file in %s: %w", goFile.Path, err)
+	}
+	return (T)(n), nil
+}
+
+func processSyntax[C ProtoToken, T byte](goFile *GoFile, node *parse.Node[C, T]) error {
+	if len(node.Edges) != 1 {
 		return ErrInvalidEdgeAmount
 	}
 
-	if n.Edges[0].Type != C(TokenVALUE) || toString(n.Edges[0].Value) != supportedSyntax {
+	if node.Edges[0].Type != C(TokenVALUE) || toString(node.Edges[0].Value) != supportedSyntax {
 		return ErrInvalidSyntax
 	}
 	return nil
 }
 
-func processPackage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
-	if len(n.Edges) != 1 {
+func processPackage[C ProtoToken, T byte](goFile *GoFile, node *parse.Node[C, T]) error {
+	if len(node.Edges) != 1 {
 		return ErrInvalidEdgeAmount
 	}
 
-	if n.Edges[0].Type != C(TokenVALUE) {
+	if node.Edges[0].Type != C(TokenVALUE) {
 		return ErrMissingPackage
 	}
-	goFile.Package = toString(n.Edges[0].Value)
+	goFile.Package = toString(node.Edges[0].Value)
 	if goFile.Package == "" {
 		return ErrEmptyPackage
 	}
 	return nil
 }
 
-func processOption[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
-	if len(n.Edges) != 1 {
+func processOption[C ProtoToken, T byte](goFile *GoFile, node *parse.Node[C, T]) error {
+	if len(node.Edges) != 1 {
 		return ErrInvalidEdgeAmount
 	}
-	if n.Edges[0].Type != (C)(TokenTYPE) ||
-		toString(n.Edges[0].Value) != supportedOption {
+	if node.Edges[0].Type != (C)(TokenTYPE) ||
+		toString(node.Edges[0].Value) != supportedOption {
 		return ErrInvalidOption
 	}
 
-	if len(n.Edges[0].Edges) != 1 ||
-		n.Edges[0].Edges[0].Type != (C)(TokenVALUE) {
+	if len(node.Edges[0].Edges) != 1 ||
+		node.Edges[0].Edges[0].Type != (C)(TokenVALUE) {
 		return ErrInvalidTokenType
 	}
-	goFile.Path = toString(n.Edges[0].Edges[0].Value)
+	goFile.Path = toString(node.Edges[0].Edges[0].Value)
 	if goFile.Path == "" {
 		return ErrEmptyPath
 	}
@@ -115,31 +131,32 @@ func processOption[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) er
 
 }
 
-func processEnum[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
-	if len(n.Edges) != 1 && len(n.Edges[0].Edges) == 0 {
+func processEnum[C ProtoToken, T byte](goFile *GoFile, node *parse.Node[C, T]) error {
+	if len(node.Edges) != 1 && len(node.Edges[0].Edges) == 0 {
 		return ErrInvalidEdgeAmount
 	}
-	if n.Edges[0].Type != (C)(TokenTYPE) {
+	if node.Edges[0].Type != (C)(TokenTYPE) {
 		return ErrInvalidTokenType
 	}
 
-	var jerr []error
-	enum := new(GoEnum)
-	enum.uniqueIDs = make(map[int]struct{})
-	enum.uniqueNames = make(map[string]struct{})
+	var (
+		jerr []error
+		enum = NewGoEnum()
+	)
 
-	name := toString(n.Edges[0].Value)
+	name := toString(node.Edges[0].Value)
 	if name == "" {
 		return ErrEmptyName
 	}
 	if _, ok := goFile.UniqueTypes[name]; ok {
 		return fmt.Errorf("%w: %s", ErrAlreadyExistsName, name)
 	}
+
 	goFile.UniqueTypes[name] = true
 	enum.ProtoName = name
 	enum.GoName = fmtPascal(name)
 
-	for _, e := range n.Edges[0].Edges {
+	for _, e := range node.Edges[0].Edges {
 		err := processEnumFields(enum, e)
 		if err != nil {
 			jerr = append(jerr, err)
@@ -153,20 +170,20 @@ func processEnum[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) erro
 	return nil
 }
 
-func processEnumFields[C ProtoToken, T byte](enum *GoEnum, n *parse.Node[C, T]) error {
-	if len(n.Edges) != 1 {
+func processEnumFields[C ProtoToken, T byte](enum *GoEnum, node *parse.Node[C, T]) error {
+	if len(node.Edges) != 1 {
 		return ErrInvalidEdgeAmount
 	}
 
-	if n.Type != (C)(TokenVALUE) {
+	if node.Type != (C)(TokenVALUE) {
 		return ErrInvalidTokenType
 	}
 
-	idx, err := strconv.Atoi(toString(n.Value))
+	idx, err := strconv.Atoi(toString(node.Value))
 	if err != nil {
 		return err
 	}
-	name := toString(n.Edges[0].Value)
+	name := toString(node.Edges[0].Value)
 	if name == "" {
 		return ErrEmptyName
 	}
@@ -189,17 +206,17 @@ func processEnumFields[C ProtoToken, T byte](enum *GoEnum, n *parse.Node[C, T]) 
 	return nil
 }
 
-func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) error {
-	if len(n.Edges) != 1 {
+func processMessage[C ProtoToken, T byte](goFile *GoFile, node *parse.Node[C, T]) error {
+	if len(node.Edges) != 1 {
 		return ErrInvalidEdgeAmount
 	}
 
-	var jerr []error
-	goType := new(GoType)
-	goType.uniqueIDs = make(map[int]struct{})
-	goType.uniqueNames = make(map[string]struct{})
+	var (
+		jerr   []error
+		goType = NewGoType()
+	)
 
-	goType.Name = toString(n.Edges[0].Value)
+	goType.Name = toString(node.Edges[0].Value)
 	if goType.Name == "" {
 		return ErrEmptyName
 	}
@@ -208,7 +225,7 @@ func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) e
 	}
 	goFile.UniqueTypes[goType.Name] = false
 
-	for _, e := range n.Edges[0].Edges {
+	for _, e := range node.Edges[0].Edges {
 		err := processMessageFields(goType, goFile, e)
 		if err != nil {
 			jerr = append(jerr, err)
@@ -221,12 +238,12 @@ func processMessage[C ProtoToken, T byte](goFile *GoFile, n *parse.Node[C, T]) e
 	return nil
 }
 
-func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, n *parse.Node[C, T]) error {
+func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, node *parse.Node[C, T]) error {
 	field := new(GoField)
 
-	switch n.Type {
+	switch node.Type {
 	case (C)(TokenVALUE):
-		idx, err := strconv.Atoi(toString(n.Value))
+		idx, err := strconv.Atoi(toString(node.Value))
 		if err != nil {
 			return err
 		}
@@ -235,7 +252,7 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 		}
 		goType.uniqueIDs[idx] = struct{}{}
 		field.ProtoIndex = idx
-		for _, e := range n.Edges {
+		for _, e := range node.Edges {
 			switch e.Type {
 			case (C)(TokenMESSAGE):
 				return processMessage(goFile, e)
@@ -278,7 +295,7 @@ func processMessageFields[C ProtoToken, T byte](goType *GoType, goFile *GoFile, 
 			}
 		}
 	case (C)(TokenMESSAGE):
-		return processMessage(goFile, n)
+		return processMessage(goFile, node)
 	}
 
 	var wireType int
