@@ -26,7 +26,7 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 	var err error
 	var errs []error
 
-	if numChannels != 1 && numChannels != 2 {
+	if _, ok := validNumChannels[numChannels]; !ok {
 		errs = append(errs, ErrInvalidNumChannels)
 		numChannels = 1
 	}

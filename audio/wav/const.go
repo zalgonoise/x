@@ -20,6 +20,9 @@ const (
 	bitDepth16 uint16 = 16
 	bitDepth24 uint16 = 24
 	bitDepth32 uint16 = 32
+
+	channelsMono   uint16 = 1
+	channelsStereo uint16 = 2
 )
 
 var (
@@ -36,5 +39,9 @@ var (
 		bitDepth16: {},
 		bitDepth24: {},
 		bitDepth32: {},
+	}
+	validNumChannels = map[uint16]struct{}{
+		channelsMono:   {},
+		channelsStereo: {},
 	}
 )
