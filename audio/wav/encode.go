@@ -44,27 +44,38 @@ func (w *Wav) genData(multiplier int, fn func(int, []byte) []byte) []byte {
 }
 
 func (w *Wav) bytes(data []byte) []byte {
-	var size = 36 + w.Header.Subchunk2Size
+	var size uint32 = 4
 	var chunkHeaders [][]byte
 
-	if len(w.Chunks) > 1 {
-		// append junk data
-		chunkHeaders = append(chunkHeaders, w.Junk)
-		for i := 1; i < len(w.Chunks); i++ {
-			size += w.Chunks[i].Subchunk2Size
-			chunkHeaders = append(chunkHeaders, w.Chunks[i].Bytes())
+	for _, chunk := range w.Chunks {
+		chunkHeaders = append(chunkHeaders, chunk.Bytes())
+
+		size += 8 + chunk.Subchunk2Size
+		switch string(chunk.Subchunk2ID[:]) {
+		case junkSubchunkIDString:
+			if chunk.Subchunk2Size == 0 {
+				chunk.Subchunk2Size = uint32(len(w.Junk))
+			}
+			chunkHeaders = append(chunkHeaders, w.Junk)
+
+		case dataSubchunkIDString:
+			if chunk.Subchunk2Size == 0 {
+				chunk.Subchunk2Size = uint32(len(data))
+			}
+			chunkHeaders = append(chunkHeaders, data)
 		}
 	}
 
-	out := bytes.NewBuffer(make([]byte, 0, size))
+	if w.Header.ChunkSize == 0 {
+		w.Header.ChunkSize = size
+	}
+	out := bytes.NewBuffer(make([]byte, 0, size+32))
 	_, _ = out.Write(w.Header.Bytes())
 
-	if len(chunkHeaders) > 0 {
-		for i := 0; i < len(chunkHeaders); i++ {
-			_, _ = out.Write(chunkHeaders[i])
-		}
+	for _, chunk := range chunkHeaders {
+		_, _ = out.Write(chunk)
 	}
-	_, _ = out.Write(data)
+
 	return out.Bytes()
 }
 

@@ -1,38 +1,48 @@
 package wav
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 func Decode(buf []byte) (*Wav, error) {
-	if len(buf) < 44 {
+	if len(buf) < headerLen {
 		return nil, ErrShortBuffer
 	}
 	wav := new(Wav)
 
-	var offset = 44
+	var offset = headerLen
 	header, err := HeaderFrom(buf[:offset])
 	if err != nil {
 		return nil, err
 	}
 	wav.Header = header
+	fmt.Println(wav.Header, wav.Header.BitsPerSample)
 
-	if string(header.Subchunk2ID[:]) == "junk" {
-		wav.Junk = buf[offset : offset+int(header.Subchunk2Size)]
-		offset += int(header.Subchunk2Size)
+	// data markers
+	var start, end int
+
+	for offset < len(buf)-1 {
 		data, err := SubChunkFrom(buf[offset : offset+8])
 		if err != nil {
 			return nil, err
 		}
-		wav.Chunks = append(wav.Chunks,
-			&SubChunk{
-				Subchunk2ID:   junkSubchunk2ID,
-				Subchunk2Size: header.Subchunk2Size,
-			},
-			data,
-		)
 		offset += 8
+		wav.Chunks = append(wav.Chunks, data)
+		switch string(data.Subchunk2ID[:]) {
+		case dataSubchunkIDString:
+			start = offset
+			end = offset + int(data.Subchunk2Size)
+			if len(buf) > end {
+				end = len(buf)
+			}
+		case junkSubchunkIDString:
+			wav.Junk = buf[offset : offset+int(data.Subchunk2Size)]
+		}
+		offset += int(data.Subchunk2Size)
 	}
 
-	err = wav.parseData(buf[offset:])
+	err = wav.parseData(buf[start:end])
 	if err != nil {
 		return nil, err
 	}

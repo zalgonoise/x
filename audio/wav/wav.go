@@ -13,6 +13,7 @@ const (
 	ErrInvalidSampleRate  err = "invalid sample rate"
 	ErrInvalidBitDepth    err = "invalid bit depth"
 	ErrShortBuffer        err = "data buffer is too short"
+	ErrZeroChunks         err = "no buffered chunks available"
 )
 
 type Wav struct {
@@ -61,8 +62,6 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 			ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
 			BlockAlign:    bitDepth * numChannels / 8,
 			BitsPerSample: bitDepth,
-			Subchunk2ID:   defaultSubchunk2ID,
-			Subchunk2Size: 0,
 		},
 		Chunks: []*SubChunk{
 			{

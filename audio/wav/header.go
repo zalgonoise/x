@@ -17,8 +17,6 @@ type WavHeader struct {
 	ByteRate      uint32  // 29-32
 	BlockAlign    uint16  // 33-34
 	BitsPerSample uint16  // 35-36
-	Subchunk2ID   [4]byte // 37-40
-	Subchunk2Size uint32  // 41-44
 }
 
 func HeaderFrom(buf []byte) (*WavHeader, error) {
@@ -32,7 +30,7 @@ func HeaderFrom(buf []byte) (*WavHeader, error) {
 }
 
 func (h *WavHeader) Bytes() []byte {
-	buf := bytes.NewBuffer(make([]byte, 0, 44))
+	buf := bytes.NewBuffer(make([]byte, 0, headerLen))
 	_ = binary.Write(buf, binary.LittleEndian, h)
 	return buf.Bytes()
 }

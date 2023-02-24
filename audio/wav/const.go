@@ -1,5 +1,12 @@
 package wav
 
+const (
+	dataSubchunkIDString = "data"
+	junkSubchunkIDString = "junk"
+
+	headerLen = 36
+)
+
 var (
 	defaultChunkID     = [4]byte{82, 73, 70, 70}
 	defaultFormat      = [4]byte{87, 65, 86, 69}
