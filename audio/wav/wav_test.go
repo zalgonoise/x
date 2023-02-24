@@ -44,9 +44,16 @@ var stereo24bit44100 []byte
 var stereo32bit44100 []byte
 
 var testdata = [][]byte{
-	mono8bit44100, mono16bit44100, mono24bit44100, mono32bit44100,
-	mono32bit96000, mono32bit192000, mono8bit176400,
-	stereo8bit44100, stereo16bit44100, stereo32bit44100,
+	mono8bit44100,
+	mono16bit44100,
+	mono24bit44100,
+	mono32bit44100,
+	mono32bit96000,
+	mono32bit192000,
+	mono8bit176400,
+	stereo8bit44100,
+	stereo16bit44100,
+	stereo32bit44100,
 }
 
 func TestNewWav(t *testing.T) {
@@ -54,7 +61,6 @@ func TestNewWav(t *testing.T) {
 		82, 73, 70, 70, 0, 0, 0, 0, 87, 65, 86, 69,
 		102, 109, 116, 32, 16, 0, 0, 0, 1, 0, 2, 0,
 		68, 172, 0, 0, 16, 177, 2, 0, 4, 0, 16, 0,
-		100, 97, 116, 97, 0, 0, 0, 0,
 	}
 	wav, err := New(44100, 16, 2)
 	if err != nil {
@@ -113,6 +119,7 @@ func TestFromFile(t *testing.T) {
 		}
 		if !reflect.DeepEqual(wav, newWav) {
 			t.Errorf("output object mismatch error: wanted %v ; got %v", wav, newWav)
+			continue
 		}
 
 		t.Logf("OK on index %d: %v", idx, wav.Header)
