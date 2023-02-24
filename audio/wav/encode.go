@@ -5,6 +5,36 @@ import (
 	"encoding/binary"
 )
 
+func (w *Wav) Read(buf []byte) (n int, err error) {
+	switch w.Header.BitsPerSample {
+	case bitDepth8:
+		data := w.genData(1, func(v int, b []byte) []byte {
+			return append(b, byte(v))
+		})
+		return w.bytesTo(buf, data)
+	case bitDepth16:
+		data := w.genData(2, func(v int, b []byte) []byte {
+			return binary.LittleEndian.AppendUint16(b, uint16(v))
+		})
+		return w.bytesTo(buf, data)
+
+	case bitDepth24:
+		data := w.genData(3, func(v int, b []byte) []byte {
+			return encode24BitLE(b, int32(v))
+		})
+		return w.bytesTo(buf, data)
+
+	case bitDepth32:
+		data := w.genData(4, func(v int, b []byte) []byte {
+			return binary.LittleEndian.AppendUint32(b, uint32(v))
+		})
+		return w.bytesTo(buf, data)
+
+	default:
+		return 0, ErrInvalidBitDepth
+	}
+}
+
 func (w *Wav) Bytes() ([]byte, error) {
 	switch w.Header.BitsPerSample {
 	case bitDepth8:
@@ -77,6 +107,56 @@ func (w *Wav) bytes(data []byte) []byte {
 	}
 
 	return out.Bytes()
+}
+
+func (w *Wav) bytesTo(dst []byte, data []byte) (n int, err error) {
+	var size uint32 = 4
+	var chunkHeaders [][]byte
+
+	for _, chunk := range w.Chunks {
+		chunkHeaders = append(chunkHeaders, chunk.Bytes())
+
+		size += 8 + chunk.Subchunk2Size
+		switch string(chunk.Subchunk2ID[:]) {
+		case junkSubchunkIDString:
+			if chunk.Subchunk2Size == 0 {
+				chunk.Subchunk2Size = uint32(len(w.Junk))
+			}
+			chunkHeaders = append(chunkHeaders, w.Junk)
+
+		case dataSubchunkIDString:
+			if chunk.Subchunk2Size == 0 {
+				chunk.Subchunk2Size = uint32(len(data))
+			}
+			chunkHeaders = append(chunkHeaders, data)
+		}
+	}
+
+	if w.Header.ChunkSize == 0 {
+		w.Header.ChunkSize = size
+	}
+
+	header := w.Header.Bytes()
+
+	if len(dst) < len(header) {
+		return n, ErrShortHeaderBuffer
+	}
+	for idx := range header {
+		dst[n+idx] = header[idx]
+	}
+	n += len(header)
+
+	for _, chunk := range chunkHeaders {
+		if len(dst) < n+len(chunk) {
+			return n, ErrShortDataBuffer
+		}
+		for idx := range chunk {
+			dst[n+idx] = chunk[idx]
+		}
+		n += len(chunk)
+	}
+
+	return n, nil
 }
 
 func encode24BitLE(buf []byte, v int32) []byte {

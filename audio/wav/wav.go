@@ -12,7 +12,8 @@ const (
 	ErrInvalidNumChannels err = "invalid number of channels"
 	ErrInvalidSampleRate  err = "invalid sample rate"
 	ErrInvalidBitDepth    err = "invalid bit depth"
-	ErrShortBuffer        err = "data buffer is too short"
+	ErrShortDataBuffer    err = "data buffer is too short"
+	ErrShortHeaderBuffer  err = "header buffer is too short"
 	ErrZeroChunks         err = "no buffered chunks available"
 )
 

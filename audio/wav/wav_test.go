@@ -79,7 +79,7 @@ func TestNewWav(t *testing.T) {
 	}
 }
 
-func TestFromFile(t *testing.T) {
+func TestWavDecodeEncode(t *testing.T) {
 	for idx, test := range testdata {
 		wav, err := Decode(test)
 		if err != nil {
@@ -124,4 +124,99 @@ func TestFromFile(t *testing.T) {
 
 		t.Logf("OK on index %d: %v", idx, wav.Header)
 	}
+}
+
+func TestWavWriteRead(t *testing.T) {
+	for idx, test := range testdata {
+		wav := new(Wav)
+		_, err := wav.Write(test)
+		if err != nil {
+			t.Errorf("decoding error on index %d: %v", idx, err)
+			continue
+		}
+		buf := make([]byte, len(test))
+		_, err = wav.Read(buf)
+		if err != nil {
+			t.Errorf("encoding error on index %d: %v", idx, err)
+			continue
+		}
+		if len(buf) != len(test) {
+			t.Errorf("output length mismatch error: wanted %d ; got %d", len(test), len(buf))
+		}
+		for i := 0; i < len(test); i++ {
+			if buf[i] != test[i] {
+				t.Errorf("byte mismatch on index %d: wanted %d; got %d -- total len: %d", i, test[i], buf[i], len(buf))
+				continue
+			}
+		}
+
+		newWav := new(Wav)
+		_, err = newWav.Write(buf)
+		if err != nil {
+			t.Errorf("2nd-pass decoding error on index %d: %v", idx, err)
+			continue
+		}
+
+		newBuf := make([]byte, len(test))
+
+		_, err = newWav.Read(newBuf)
+		if err != nil {
+			t.Errorf("2nd-pass encoding error on index %d: %v", idx, err)
+			continue
+		}
+
+		cmp := bytes.Compare(buf, newBuf)
+		if cmp != 0 {
+			t.Errorf("2nd-pass encoding mismatches the 1st-pass encoding: compare 1st-2nd: %d", cmp)
+			continue
+		}
+		if !reflect.DeepEqual(wav, newWav) {
+			t.Errorf("output object mismatch error: wanted %v ; got %v", wav, newWav)
+			continue
+		}
+
+		t.Logf("OK on index %d: %v", idx, wav.Header)
+	}
+}
+
+func TestWavSegmentedWrite(t *testing.T) {
+	for idx, test := range testdata {
+		wav := new(Wav)
+
+		_, err := wav.Write(test[:36])
+		if err != nil {
+			t.Errorf("decoding error on index %d: %v", idx, err)
+			continue
+		}
+
+		// get the junk chunk and a portion of the data chunk
+		_, err = wav.Write(test[36:128])
+		if err != nil {
+			t.Errorf("decoding error on index %d: %v", idx, err)
+			continue
+		}
+
+		// get the rest of the data
+		_, err = wav.Write(test[128:])
+		if err != nil {
+			t.Errorf("decoding error on index %d: %v", idx, err)
+			continue
+		}
+
+		buf := make([]byte, len(test))
+		_, err = wav.Read(buf)
+		if err != nil {
+			t.Errorf("encoding error on index %d: %v", idx, err)
+			continue
+		}
+
+		cmp := bytes.Compare(test, buf)
+		if cmp != 0 {
+			t.Errorf("encoding mismatches the original data: compare: %d", cmp)
+			continue
+		}
+
+		t.Logf("OK on index %d: %v", idx, wav.Header)
+	}
+
 }
