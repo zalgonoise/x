@@ -92,12 +92,13 @@ func TestWavDecodeEncode(t *testing.T) {
 			continue
 		}
 		if len(buf) != len(test) {
-			t.Errorf("output length mismatch error: wanted %d ; got %d", len(test), len(buf))
+			t.Errorf("output length mismatch error on index %d: wanted %d ; got %d", idx, len(test), len(buf))
+
 		}
-		for i := 0; i < len(test); i++ {
+		for i := 0; i < len(buf); i++ {
 			if buf[i] != test[i] {
-				t.Errorf("byte mismatch on index %d: wanted %d; got %d -- total len: %d", i, test[i], buf[i], len(buf))
-				continue
+				t.Errorf("byte mismatch on index %d: #%d wanted %d; got %d -- total len: %d", idx, i, test[i], buf[i], len(buf))
+				break
 			}
 		}
 
@@ -134,6 +135,7 @@ func TestWavWriteRead(t *testing.T) {
 			t.Errorf("decoding error on index %d: %v", idx, err)
 			continue
 		}
+
 		buf := make([]byte, len(test))
 		_, err = wav.Read(buf)
 		if err != nil {
@@ -145,8 +147,8 @@ func TestWavWriteRead(t *testing.T) {
 		}
 		for i := 0; i < len(test); i++ {
 			if buf[i] != test[i] {
-				t.Errorf("byte mismatch on index %d: wanted %d; got %d -- total len: %d", i, test[i], buf[i], len(buf))
-				continue
+				t.Errorf("byte mismatch on index %d: #%d wanted %d; got %d -- total len: %d", idx, i, test[i], buf[i], len(buf))
+				return
 			}
 		}
 
