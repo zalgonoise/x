@@ -1,162 +1,53 @@
 package wav
 
-import (
-	"bytes"
-	"encoding/binary"
-)
-
 func (w *Wav) Read(buf []byte) (n int, err error) {
-	switch w.Header.BitsPerSample {
-	case bitDepth8:
-		data := w.genData(1, func(v int, b []byte) []byte {
-			return append(b, byte(v))
-		})
-		return w.bytesTo(buf, data)
-	case bitDepth16:
-		data := w.genData(2, func(v int, b []byte) []byte {
-			return binary.LittleEndian.AppendUint16(b, uint16(v))
-		})
-		return w.bytesTo(buf, data)
+	var size int = 4
+	var data = make([][]byte, (len(w.Chunks)*2)+1)
 
-	case bitDepth24:
-		data := w.genData(3, func(v int, b []byte) []byte {
-			return encode24BitLE(b, int32(v))
-		})
-		return w.bytesTo(buf, data)
-
-	case bitDepth32:
-		data := w.genData(4, func(v int, b []byte) []byte {
-			return binary.LittleEndian.AppendUint32(b, uint32(v))
-		})
-		return w.bytesTo(buf, data)
-
-	default:
-		return 0, ErrInvalidBitDepth
+	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
+		header := w.Chunks[i].Header()
+		data[j] = header.Bytes()
+		data[j+1] = w.Chunks[i].Generate()
+		size += 8 + len(data[j+1])
 	}
+	if w.Header.ChunkSize == 0 {
+		w.Header.ChunkSize = uint32(size)
+	}
+	data[0] = w.Header.Bytes()
+
+	for i := range data {
+		m := copy(buf[n:], data[i])
+		n += m
+		if m < len(data[i]) {
+			return n, ErrShortDataBuffer
+		}
+	}
+	return n, nil
 }
 
 func (w *Wav) Bytes() ([]byte, error) {
-	switch w.Header.BitsPerSample {
-	case bitDepth8:
-		data := w.genData(1, func(v int, b []byte) []byte {
-			return append(b, byte(v))
-		})
-		return w.bytes(data), nil
-	case bitDepth16:
-		data := w.genData(2, func(v int, b []byte) []byte {
-			return binary.LittleEndian.AppendUint16(b, uint16(v))
-		})
-		return w.bytes(data), nil
+	var n int
+	var size int = 4
+	var data = make([][]byte, (len(w.Chunks)*2)+1)
 
-	case bitDepth24:
-		data := w.genData(3, func(v int, b []byte) []byte {
-			return encode24BitLE(b, int32(v))
-		})
-		return w.bytes(data), nil
-
-	case bitDepth32:
-		data := w.genData(4, func(v int, b []byte) []byte {
-			return binary.LittleEndian.AppendUint32(b, uint32(v))
-		})
-		return w.bytes(data), nil
-
-	default:
-		return nil, ErrInvalidBitDepth
+	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
+		data[j] = w.Chunks[i].Header().Bytes()
+		data[j+1] = w.Chunks[i].Generate()
+		size += 8 + len(data[j+1])
 	}
-}
-
-func (w *Wav) genData(multiplier int, fn func(int, []byte) []byte) []byte {
-	data := make([]byte, 0, len(w.Data)*multiplier)
-	for i := 0; i < len(w.Data); i++ {
-		data = fn(w.Data[i], data)
-	}
-	return data
-}
-
-func (w *Wav) bytes(data []byte) []byte {
-	var size uint32 = 4
-	var chunkHeaders [][]byte
-
-	for _, chunk := range w.Chunks {
-		chunkHeaders = append(chunkHeaders, chunk.Bytes())
-
-		size += 8 + chunk.Subchunk2Size
-		switch string(chunk.Subchunk2ID[:]) {
-		case junkSubchunkIDString:
-			if chunk.Subchunk2Size == 0 {
-				chunk.Subchunk2Size = uint32(len(w.Junk))
-			}
-			chunkHeaders = append(chunkHeaders, w.Junk)
-
-		case dataSubchunkIDString:
-			if chunk.Subchunk2Size == 0 {
-				chunk.Subchunk2Size = uint32(len(data))
-			}
-			chunkHeaders = append(chunkHeaders, data)
-		}
-	}
-
 	if w.Header.ChunkSize == 0 {
-		w.Header.ChunkSize = size
+		w.Header.ChunkSize = uint32(size)
 	}
-	out := bytes.NewBuffer(make([]byte, 0, size+32))
-	_, _ = out.Write(w.Header.Bytes())
+	data[0] = w.Header.Bytes()
 
-	for _, chunk := range chunkHeaders {
-		_, _ = out.Write(chunk)
-	}
-
-	return out.Bytes()
-}
-
-func (w *Wav) bytesTo(dst []byte, data []byte) (n int, err error) {
-	var size uint32 = 4
-	var chunkHeaders [][]byte
-
-	for _, chunk := range w.Chunks {
-		chunkHeaders = append(chunkHeaders, chunk.Bytes())
-
-		size += 8 + chunk.Subchunk2Size
-		switch string(chunk.Subchunk2ID[:]) {
-		case junkSubchunkIDString:
-			if chunk.Subchunk2Size == 0 {
-				chunk.Subchunk2Size = uint32(len(w.Junk))
-			}
-			chunkHeaders = append(chunkHeaders, w.Junk)
-
-		case dataSubchunkIDString:
-			if chunk.Subchunk2Size == 0 {
-				chunk.Subchunk2Size = uint32(len(data))
-			}
-			chunkHeaders = append(chunkHeaders, data)
+	buf := make([]byte, size+32)
+	for i := range data {
+		n += copy(buf[n:], data[i])
+		if n < len(data[i]) {
+			return nil, ErrShortDataBuffer
 		}
 	}
-
-	if w.Header.ChunkSize == 0 {
-		w.Header.ChunkSize = size
-	}
-
-	header := w.Header.Bytes()
-
-	if len(dst) < len(header) {
-		return n, ErrShortHeaderBuffer
-	}
-	for idx := range header {
-		dst[n+idx] = header[idx]
-	}
-	n += len(header)
-
-	for _, chunk := range chunkHeaders {
-		if len(dst) < n+len(chunk) {
-			return n, ErrShortDataBuffer
-		}
-		for idx := range chunk {
-			dst[n+idx] = chunk[idx]
-		}
-		n += len(chunk)
-	}
-
-	return n, nil
+	return buf, nil
 }
 
 func encode24BitLE(buf []byte, v int32) []byte {

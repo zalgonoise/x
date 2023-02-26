@@ -1,135 +1,106 @@
 package wav
 
 import (
-	"encoding/binary"
+	"errors"
+	"io"
 )
 
 func (w *Wav) Write(buf []byte) (n int, err error) {
-	var offset int
-	if w.Header == nil {
-		offset += headerLen
-		header, err := HeaderFrom(buf[:offset])
-		if err != nil {
-			return offset, err
-		}
+	if len(buf) < headerLen {
+		return 0, ErrShortDataBuffer
+	}
+
+	var (
+		offset int
+		header *WavHeader
+		end    int = headerLen
+	)
+
+	if header, err = HeaderFrom(buf[:end]); err == nil {
+		offset += end
 		w.Header = header
 	}
-	if len(w.Chunks) == 0 {
-		// data markers
-		var start, end int
-		for offset < len(buf)-1 {
-			data, err := SubChunkFrom(buf[offset : offset+8])
-			if err != nil {
-				return offset, err
-			}
-			offset += 8
-			w.Chunks = append(w.Chunks, data)
-			switch string(data.Subchunk2ID[:]) {
-			case dataSubchunkIDString:
-				start = offset
-				end = offset + int(data.Subchunk2Size)
-				if end > len(buf) {
-					end = len(buf)
-				}
-			case junkSubchunkIDString:
-				w.Junk = buf[offset : offset+int(data.Subchunk2Size)]
-			}
-			offset += int(data.Subchunk2Size)
-		}
-
-		err = w.parseData(buf[start:end])
-		if err != nil {
-			return offset, err
-		}
-		return end, nil
-	}
-	err = w.parseData(buf)
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrInvalidHeader) {
 		return offset, err
 	}
-	return len(buf), nil
+	if w.Header == nil {
+		return offset, ErrMissingHeader
+	}
+
+	for offset < len(buf) {
+		// try to read subchunk headers
+		end = 8
+		if offset+end < len(buf) {
+			if subchunk, err := SubChunkFrom(buf[offset : offset+end]); err == nil {
+				offset += end
+				chunk := NewDataChunk(w.Header.BitsPerSample, subchunk)
+				w.Data = chunk
+
+				end = int(subchunk.Subchunk2Size)
+				if offset+end+8 > len(buf) {
+					end += len(buf) - (offset + end)
+				}
+
+				chunk.Parse(buf[offset:offset+end], 0)
+				w.Chunks = append(w.Chunks, chunk)
+				offset += end
+				continue
+			}
+		}
+
+		if w.Data != nil {
+			w.Data.Parse(buf[offset:], offset)
+			return len(buf) - offset, nil
+		}
+		return offset, err
+
+	}
+	return offset, nil
 }
 
-func Decode(buf []byte) (*Wav, error) {
+func Decode(buf []byte) (w *Wav, err error) {
 	if len(buf) < headerLen {
 		return nil, ErrShortDataBuffer
 	}
-	wav := new(Wav)
+	w = new(Wav)
 
-	var offset = headerLen
-	header, err := HeaderFrom(buf[:offset])
-	if err != nil {
+	var (
+		offset int
+		header *WavHeader
+	)
+
+	if header, err = HeaderFrom(buf[:headerLen]); err != nil && w.Header == nil {
 		return nil, err
 	}
-	wav.Header = header
+	offset += headerLen
+	w.Header = header
 
-	// data markers
-	var start, end int
-
-	for offset < len(buf)-1 {
-		data, err := SubChunkFrom(buf[offset : offset+8])
-		if err != nil {
-			return nil, err
+	for offset+8 < len(buf) {
+		var (
+			subchunk *SubChunk
+			err      error
+		)
+		if subchunk, err = SubChunkFrom(buf[offset : offset+8]); err != nil {
+			if errors.Is(err, io.EOF) {
+				return w, nil
+			}
+			return w, err
 		}
 		offset += 8
-		wav.Chunks = append(wav.Chunks, data)
-		switch string(data.Subchunk2ID[:]) {
-		case dataSubchunkIDString:
-			start = offset
-			end = offset + int(data.Subchunk2Size)
-			if len(buf) > end {
-				end = len(buf)
-			}
-		case junkSubchunkIDString:
-			wav.Junk = buf[offset : offset+int(data.Subchunk2Size)]
+		if offset+int(subchunk.Subchunk2Size) > len(buf) {
+			return w, nil
 		}
-		offset += int(data.Subchunk2Size)
+		chunk := NewDataChunk(w.Header.BitsPerSample, subchunk)
+		if offset+int(subchunk.Subchunk2Size)+8 > len(buf) {
+			chunk.Parse(buf[offset:], 0)
+		} else {
+			chunk.Parse(buf[offset:offset+int(subchunk.Subchunk2Size)], 0)
+		}
+
+		w.Chunks = append(w.Chunks, chunk)
+		offset += int(subchunk.Subchunk2Size)
 	}
-
-	err = wav.parseData(buf[start:end])
-	if err != nil {
-		return nil, err
-	}
-	return wav, nil
-}
-
-func (w *Wav) parseData(buf []byte) error {
-	// var offset int
-	switch w.Header.BitsPerSample {
-	case bitDepth8:
-		data := make([]int, len(buf))
-		for i := 0; i < len(buf); i++ {
-			data[i] = int(int8(buf[i]))
-		}
-		w.Data = append(w.Data, data...)
-		return nil
-	case bitDepth16:
-		data := make([]int, len(buf)/2)
-		for i, j := 0, 0; i+1 < len(buf); i, j = i+2, j+1 {
-			data[j] = int(int16(binary.LittleEndian.Uint16(buf[i : i+2])))
-		}
-		w.Data = append(w.Data, data...)
-		return nil
-
-	case bitDepth24:
-		data := make([]int, len(buf)/3)
-		for i, j := 0, 0; i+2 < len(buf); i, j = i+3, j+1 {
-			data[j] = int(int32(decode24BitLE(buf[i : i+3])))
-		}
-		w.Data = append(w.Data, data...)
-		return nil
-
-	case bitDepth32:
-		data := make([]int, len(buf)/4)
-		for i, j := 0, 0; i+3 < len(buf); i, j = i+4, j+1 {
-			data[j] = int(int32(binary.LittleEndian.Uint32(buf[i : i+4])))
-		}
-		w.Data = append(w.Data, data...)
-		return nil
-
-	default:
-		return ErrInvalidBitDepth
-	}
+	return w, nil
 }
 
 func decode24BitLE(buf []byte) int32 {
