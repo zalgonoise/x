@@ -15,13 +15,13 @@ const (
 	ErrShortDataBuffer    err = "data buffer is too short"
 	ErrShortHeaderBuffer  err = "header buffer is too short"
 	ErrZeroChunks         err = "no buffered chunks available"
+	ErrMissingHeader      err = "missing header metadata"
 )
 
 type Wav struct {
 	Header *WavHeader
-	Chunks []*SubChunk
-	Junk   []byte
-	Data   []int
+	Chunks []DataChunk
+	Data   DataChunk
 }
 
 func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
@@ -64,11 +64,6 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 			BlockAlign:    bitDepth * numChannels / 8,
 			BitsPerSample: bitDepth,
 		},
-		Chunks: []*SubChunk{
-			{
-				Subchunk2ID:   defaultSubchunk2ID,
-				Subchunk2Size: 0,
-			},
-		},
+		Chunks: []DataChunk{NewDataChunk(bitDepth, nil)},
 	}, err
 }
