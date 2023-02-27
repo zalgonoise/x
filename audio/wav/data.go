@@ -93,12 +93,13 @@ func (d *DataChunk16bit) Parse(buf []byte, offset int) {
 }
 
 func (d *DataChunk16bit) Generate() []byte {
-	data := make([]byte, len(d.Data)*2)
-	for i, j := 0, 0; i < len(d.Data); i, j = i+1, j+2 {
+	n := len(d.Data)
+	data := make([]byte, n*2)
+	for i, j := 0, 0; i < n; i, j = i+1, j+2 {
 		bin := *(*[2]byte)(unsafe.Pointer(&d.Data[i]))
-		data[j] = bin[0]
-		data[j+1] = bin[1]
+		copy(data[j:j+2], bin[:])
 	}
+
 	return data
 }
 
@@ -128,9 +129,11 @@ func (d *DataChunk24bit) Parse(buf []byte, offset int) {
 }
 
 func (d *DataChunk24bit) Generate() []byte {
-	data := make([]byte, 0, len(d.Data)*3)
-	for i := 0; i < len(d.Data); i++ {
-		data = encode24BitLE(data, int32(d.Data[i]))
+	n := len(d.Data)
+	data := make([]byte, n*3)
+	for i, j := 0, 0; i < n; i, j = i+1, j+3 {
+		bin := *(*[3]byte)(unsafe.Pointer(&d.Data[i]))
+		copy(data[j:j+3], bin[:])
 	}
 	return data
 }
