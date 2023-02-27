@@ -2,7 +2,20 @@ package wav
 
 import (
 	"encoding/binary"
+	"unsafe"
 )
+
+type bitDepthTypes interface {
+	int8 | int16 | int32 | byte
+}
+
+func conv[F, T bitDepthTypes](a []F, steps int, fn func([]F) T) []T {
+	out := make([]T, len(a)/steps)
+	for i, j := 0, 0; i+steps-1 < len(a); i, j = i+steps, j+1 {
+		out[j] = fn(a[i : i+steps])
+	}
+	return out
+}
 
 type DataChunk interface {
 	Parse(buf []byte, offset int)
@@ -19,8 +32,7 @@ type DataChunkJunk struct {
 
 func (d *DataChunkJunk) Parse(buf []byte, offset int) {
 	if d.Data == nil {
-		d.Data = make([]byte, len(buf))
-		copy(d.Data, buf)
+		d.Data = buf
 		if d.Subchunk2Size == 0 {
 			d.Subchunk2Size = uint32(len(buf))
 		}
@@ -44,28 +56,18 @@ type DataChunk8bit struct {
 
 func (d *DataChunk8bit) Parse(buf []byte, offset int) {
 	if d.Data == nil {
-		d.Data = make([]int8, len(buf))
-		for i := 0; i < len(buf); i++ {
-			d.Data[i] = int8(buf[i])
-		}
+		// fast cast to int8
+		d.Data = *(*[]int8)(unsafe.Pointer(&buf))
 		if d.Subchunk2Size == 0 {
 			d.Subchunk2Size = uint32(len(buf))
 		}
 		return
 	}
-	new := make([]int8, len(buf))
-	for i := 0; i < len(buf); i++ {
-		new[i] = int8(buf[i])
-	}
-	d.Data = append(d.Data, new...)
+	d.Data = append(d.Data, *(*[]int8)(unsafe.Pointer(&buf))...)
 }
 
 func (d *DataChunk8bit) Generate() []byte {
-	data := make([]byte, len(d.Data))
-	for i := 0; i < len(d.Data); i++ {
-		data[i] = byte(d.Data[i])
-	}
-	return data
+	return *(*[]byte)(unsafe.Pointer(&d.Data))
 }
 
 func (d *DataChunk8bit) Header() *SubChunk { return d.SubChunk }
@@ -79,26 +81,23 @@ type DataChunk16bit struct {
 
 func (d *DataChunk16bit) Parse(buf []byte, offset int) {
 	if d.Data == nil {
-		d.Data = make([]int16, len(buf)/2)
-		for i, j := 0, 0; i+1 < len(buf); i, j = i+2, j+1 {
-			d.Data[j] = int16(binary.LittleEndian.Uint16(buf[i : i+2]))
-		}
+		d.Data = *(*[]int16)(unsafe.Pointer(&buf))
+		d.Data = d.Data[:len(buf)/2]
 		if d.Subchunk2Size == 0 {
 			d.Subchunk2Size = uint32(len(buf))
 		}
 		return
 	}
-	new := make([]int16, len(buf)/2)
-	for i, j := 0, 0; i+1 < len(buf); i, j = i+2, j+1 {
-		new[j] = int16(binary.LittleEndian.Uint16(buf[i : i+2]))
-	}
-	d.Data = append(d.Data, new...)
+	new := *(*[]int16)(unsafe.Pointer(&buf))
+	d.Data = append(d.Data, new[:len(buf)/2]...)
 }
 
 func (d *DataChunk16bit) Generate() []byte {
-	data := make([]byte, 0, len(d.Data)*2)
-	for i := 0; i < len(d.Data); i++ {
-		data = binary.LittleEndian.AppendUint16(data, uint16(d.Data[i]))
+	data := make([]byte, len(d.Data)*2)
+	for i, j := 0, 0; i < len(d.Data); i, j = i+1, j+2 {
+		bin := *(*[2]byte)(unsafe.Pointer(&d.Data[i]))
+		data[j] = bin[0]
+		data[j+1] = bin[1]
 	}
 	return data
 }
@@ -114,21 +113,18 @@ type DataChunk24bit struct {
 
 func (d *DataChunk24bit) Parse(buf []byte, offset int) {
 	if d.Data == nil {
-		d.Data = make([]int32, len(buf)/3)
-		for i, j := 0, 0; i+2 < len(buf); i, j = i+3, j+1 {
-			d.Data[j] = int32(decode24BitLE(buf[i : i+3]))
-		}
+		d.Data = conv(buf, 3, func(buf []byte) int32 {
+			return decode24BitLE(buf)
+		})
 		if d.Subchunk2Size == 0 {
 			d.Subchunk2Size = uint32(len(buf))
 		}
 		return
 	}
-	new := make([]int32, len(buf)/3)
-	for i, j := 0, 0; i+2 < len(buf); i, j = i+3, j+1 {
-		new[j] = int32(decode24BitLE(buf[i : i+3]))
-	}
 
-	d.Data = append(d.Data, new...)
+	d.Data = append(d.Data, conv(buf, 3, func(buf []byte) int32 {
+		return decode24BitLE(buf)
+	})...)
 }
 
 func (d *DataChunk24bit) Generate() []byte {
@@ -150,20 +146,17 @@ type DataChunk32bit struct {
 
 func (d *DataChunk32bit) Parse(buf []byte, offset int) {
 	if d.Data == nil {
-		d.Data = make([]int32, len(buf)/4)
-		for i, j := 0, 0; i+3 < len(buf); i, j = i+4, j+1 {
-			d.Data[j] = int32(binary.LittleEndian.Uint32(buf[i : i+4]))
-		}
+		d.Data = conv(buf, 4, func(buf []byte) int32 {
+			return int32(binary.LittleEndian.Uint32(buf))
+		})
 		if d.Subchunk2Size == 0 {
 			d.Subchunk2Size = uint32(len(buf))
 		}
 		return
 	}
-	new := make([]int32, len(buf)/4)
-	for i, j := 0, 0; i+3 < len(buf); i, j = i+4, j+1 {
-		new[j] = int32(binary.LittleEndian.Uint32(buf[i : i+4]))
-	}
-	d.Data = append(d.Data, new...)
+	d.Data = append(d.Data, conv(buf, 4, func(buf []byte) int32 {
+		return int32(binary.LittleEndian.Uint32(buf))
+	})...)
 }
 
 func (d *DataChunk32bit) Generate() []byte {
