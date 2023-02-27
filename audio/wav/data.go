@@ -92,14 +92,17 @@ func (d *DataChunk16bit) Parse(buf []byte, offset int) {
 }
 
 func (d *DataChunk16bit) Generate() []byte {
-	n := len(d.Data)
-	data := make([]byte, n*2)
-	for i, j := 0, 0; i < n; i, j = i+1, j+2 {
-		bin := *(*[2]byte)(unsafe.Pointer(&d.Data[i]))
-		copy(data[j:j+2], bin[:])
+	data := make([]byte, len(d.Data)*2)
+	for i := range d.Data {
+		append2Bytes(i, data, *(*[2]byte)(unsafe.Pointer(&d.Data[i])))
 	}
 
 	return data
+}
+
+// can't inline a pointer cast and convert an array to a slice
+func append2Bytes(idx int, dst []byte, src [2]byte) {
+	copy(dst[idx*2:], src[:])
 }
 
 func (d *DataChunk16bit) Header() *SubChunk { return d.SubChunk }
@@ -128,13 +131,16 @@ func (d *DataChunk24bit) Parse(buf []byte, offset int) {
 }
 
 func (d *DataChunk24bit) Generate() []byte {
-	n := len(d.Data)
-	data := make([]byte, n*3)
-	for i, j := 0, 0; i < n; i, j = i+1, j+3 {
-		bin := *(*[3]byte)(unsafe.Pointer(&d.Data[i]))
-		copy(data[j:j+3], bin[:])
+	data := make([]byte, len(d.Data)*3)
+	for i := range d.Data {
+		append3Bytes(i, data, *(*[3]byte)(unsafe.Pointer(&d.Data[i])))
 	}
 	return data
+}
+
+// can't inline a pointer cast and convert an array to a slice
+func append3Bytes(idx int, dst []byte, src [3]byte) {
+	copy(dst[idx*3:], src[:])
 }
 
 func (d *DataChunk24bit) Header() *SubChunk { return d.SubChunk }
@@ -160,13 +166,16 @@ func (d *DataChunk32bit) Parse(buf []byte, offset int) {
 }
 
 func (d *DataChunk32bit) Generate() []byte {
-	n := len(d.Data)
-	data := make([]byte, n*4)
-	for i, j := 0, 0; i < n; i, j = i+1, j+4 {
-		bin := *(*[4]byte)(unsafe.Pointer(&d.Data[i]))
-		copy(data[j:j+4], bin[:])
+	data := make([]byte, len(d.Data)*4)
+	for i := range d.Data {
+		append4Bytes(i, data, *(*[4]byte)(unsafe.Pointer(&d.Data[i])))
 	}
 	return data
+}
+
+// can't inline a pointer cast and convert an array to a slice
+func append4Bytes(idx int, dst []byte, src [4]byte) {
+	copy(dst[idx*4:], src[:])
 }
 
 func (d *DataChunk32bit) Header() *SubChunk { return d.SubChunk }
