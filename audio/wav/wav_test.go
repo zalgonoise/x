@@ -145,9 +145,17 @@ func BenchmarkWav(b *testing.B) {
 
 func TestNewWav(t *testing.T) {
 	wants := []byte{
-		82, 73, 70, 70, 0, 0, 0, 0, 87, 65, 86, 69,
-		102, 109, 116, 32, 16, 0, 0, 0, 1, 0, 2, 0,
-		68, 172, 0, 0, 16, 177, 2, 0, 4, 0, 16, 0,
+		82, 73, 70, 70, // ChunkID
+		0, 0, 0, 0, // ChunkSize
+		87, 65, 86, 69, // Format
+		102, 109, 116, 32, // Subchunk1ID
+		16, 0, 0, 0, // Subchunk1Size
+		1, 0, // AudioFormat
+		2, 0, // NumChannels
+		68, 172, 0, 0, // SampleRate
+		16, 177, 2, 0, // ByteRate
+		4, 0, // BlockAlign
+		16, 0, // BitsPerSample
 	}
 	wav, err := New(44100, 16, 2)
 	if err != nil {
