@@ -2,26 +2,14 @@ package wav
 
 import (
 	"errors"
-)
 
-type err string
-
-func (e err) Error() string { return (string)(e) }
-
-const (
-	ErrInvalidNumChannels err = "invalid number of channels"
-	ErrInvalidSampleRate  err = "invalid sample rate"
-	ErrInvalidBitDepth    err = "invalid bit depth"
-	ErrShortDataBuffer    err = "data buffer is too short"
-	ErrShortHeaderBuffer  err = "header buffer is too short"
-	ErrZeroChunks         err = "no buffered chunks available"
-	ErrMissingHeader      err = "missing header metadata"
+	"github.com/zalgonoise/x/audio/wav/data"
 )
 
 type Wav struct {
 	Header *WavHeader
-	Chunks []DataChunk
-	Data   DataChunk
+	Chunks []data.Chunk
+	Data   data.Chunk
 }
 
 func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
@@ -50,6 +38,7 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 		err = errors.Join(errs...)
 	}
 
+	blankData := NewChunk(bitDepth, nil)
 	return &Wav{
 		Header: &WavHeader{
 			ChunkID:       defaultChunkID,
@@ -64,6 +53,7 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 			BlockAlign:    bitDepth * numChannels / 8,
 			BitsPerSample: bitDepth,
 		},
-		Chunks: []DataChunk{NewDataChunk(bitDepth, nil)},
+		Chunks: []data.Chunk{blankData},
+		Data:   blankData,
 	}, err
 }

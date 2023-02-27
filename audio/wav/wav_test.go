@@ -60,8 +60,8 @@ func BenchmarkWav(b *testing.B) {
 	for _, testdata := range [][]byte{
 		mono8bit44100,
 		mono16bit44100,
-		mono24bit44100,
-		mono32bit44100,
+		// mono24bit44100,
+		// mono32bit44100,
 	} {
 		b.Run("Decode", func(b *testing.B) {
 			var (

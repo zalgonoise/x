@@ -1,187 +1,8 @@
 package wav
 
-import (
-	"unsafe"
-)
+import "github.com/zalgonoise/x/audio/wav/data"
 
-type bitDepthTypes interface {
-	int8 | int16 | int32 | byte
-}
-
-func conv[F, T bitDepthTypes](a []F, steps int, fn func([]F) T) []T {
-	out := make([]T, len(a)/steps)
-	for i, j := 0, 0; i+steps-1 < len(a); i, j = i+steps, j+1 {
-		out[j] = fn(a[i : i+steps])
-	}
-	return out
-}
-
-type DataChunk interface {
-	Parse(buf []byte, offset int)
-	Generate() []byte
-	Header() *SubChunk
-	BitDepth() uint16
-}
-
-type DataChunkJunk struct {
-	*SubChunk
-	Data  []byte
-	Depth uint16
-}
-
-func (d *DataChunkJunk) Parse(buf []byte, offset int) {
-	if d.Data == nil {
-		d.Data = buf
-		if d.Subchunk2Size == 0 {
-			d.Subchunk2Size = uint32(len(buf))
-		}
-		return
-	}
-	d.Data = append(d.Data, buf...)
-}
-
-func (d *DataChunkJunk) Generate() []byte {
-	return d.Data
-}
-
-func (d *DataChunkJunk) Header() *SubChunk { return d.SubChunk }
-func (d *DataChunkJunk) BitDepth() uint16  { return d.Depth }
-
-type DataChunk8bit struct {
-	*SubChunk
-	Data  []int8
-	Depth uint16
-}
-
-func (d *DataChunk8bit) Parse(buf []byte, offset int) {
-	if d.Data == nil {
-		// fast cast to int8
-		d.Data = *(*[]int8)(unsafe.Pointer(&buf))
-		if d.Subchunk2Size == 0 {
-			d.Subchunk2Size = uint32(len(buf))
-		}
-		return
-	}
-	d.Data = append(d.Data, *(*[]int8)(unsafe.Pointer(&buf))...)
-}
-
-func (d *DataChunk8bit) Generate() []byte {
-	return *(*[]byte)(unsafe.Pointer(&d.Data))
-}
-
-func (d *DataChunk8bit) Header() *SubChunk { return d.SubChunk }
-func (d *DataChunk8bit) BitDepth() uint16  { return d.Depth }
-
-type DataChunk16bit struct {
-	*SubChunk
-	Data  []int16
-	Depth uint16
-}
-
-func (d *DataChunk16bit) Parse(buf []byte, offset int) {
-	if d.Data == nil {
-		d.Data = *(*[]int16)(unsafe.Pointer(&buf))
-		d.Data = d.Data[:len(buf)/2]
-		if d.Subchunk2Size == 0 {
-			d.Subchunk2Size = uint32(len(buf))
-		}
-		return
-	}
-	new := *(*[]int16)(unsafe.Pointer(&buf))
-	d.Data = append(d.Data, new[:len(buf)/2]...)
-}
-
-func (d *DataChunk16bit) Generate() []byte {
-	data := make([]byte, len(d.Data)*2)
-	for i := range d.Data {
-		append2Bytes(i, data, *(*[2]byte)(unsafe.Pointer(&d.Data[i])))
-	}
-
-	return data
-}
-
-// can't inline a pointer cast and convert an array to a slice
-func append2Bytes(idx int, dst []byte, src [2]byte) {
-	copy(dst[idx*2:], src[:])
-}
-
-func (d *DataChunk16bit) Header() *SubChunk { return d.SubChunk }
-func (d *DataChunk16bit) BitDepth() uint16  { return d.Depth }
-
-type DataChunk24bit struct {
-	*SubChunk
-	Data  []int32
-	Depth uint16
-}
-
-func (d *DataChunk24bit) Parse(buf []byte, offset int) {
-	if d.Data == nil {
-		d.Data = conv(buf, 3, func(buf []byte) int32 {
-			return decode24BitLE(buf)
-		})
-		if d.Subchunk2Size == 0 {
-			d.Subchunk2Size = uint32(len(buf))
-		}
-		return
-	}
-
-	d.Data = append(d.Data, conv(buf, 3, func(buf []byte) int32 {
-		return decode24BitLE(buf)
-	})...)
-}
-
-func (d *DataChunk24bit) Generate() []byte {
-	data := make([]byte, len(d.Data)*3)
-	for i := range d.Data {
-		append3Bytes(i, data, *(*[3]byte)(unsafe.Pointer(&d.Data[i])))
-	}
-	return data
-}
-
-// can't inline a pointer cast and convert an array to a slice
-func append3Bytes(idx int, dst []byte, src [3]byte) {
-	copy(dst[idx*3:], src[:])
-}
-
-func (d *DataChunk24bit) Header() *SubChunk { return d.SubChunk }
-func (d *DataChunk24bit) BitDepth() uint16  { return d.Depth }
-
-type DataChunk32bit struct {
-	*SubChunk
-	Data  []int32
-	Depth uint16
-}
-
-func (d *DataChunk32bit) Parse(buf []byte, offset int) {
-	if d.Data == nil {
-		d.Data = *(*[]int32)(unsafe.Pointer(&buf))
-		d.Data = d.Data[:len(buf)/4]
-		if d.Subchunk2Size == 0 {
-			d.Subchunk2Size = uint32(len(buf))
-		}
-		return
-	}
-	new := *(*[]int32)(unsafe.Pointer(&buf))
-	d.Data = append(d.Data, new[:len(buf)/4]...)
-}
-
-func (d *DataChunk32bit) Generate() []byte {
-	data := make([]byte, len(d.Data)*4)
-	for i := range d.Data {
-		append4Bytes(i, data, *(*[4]byte)(unsafe.Pointer(&d.Data[i])))
-	}
-	return data
-}
-
-// can't inline a pointer cast and convert an array to a slice
-func append4Bytes(idx int, dst []byte, src [4]byte) {
-	copy(dst[idx*4:], src[:])
-}
-
-func (d *DataChunk32bit) Header() *SubChunk { return d.SubChunk }
-func (d *DataChunk32bit) BitDepth() uint16  { return d.Depth }
-
-func NewDataChunk(bitDepth uint16, subchunk *SubChunk) DataChunk {
+func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader) data.Chunk {
 	if subchunk != nil && string(subchunk.Subchunk2ID[:]) == junkSubchunkIDString {
 		bitDepth = 0
 	}
@@ -189,43 +10,43 @@ func NewDataChunk(bitDepth uint16, subchunk *SubChunk) DataChunk {
 	switch bitDepth {
 	case 0:
 		if subchunk == nil {
-			subchunk = NewJunkSubChunk()
+			subchunk = data.NewJunkHeader()
 		}
-		return &DataChunkJunk{
-			SubChunk: subchunk,
-			Depth:    0,
+		return &data.ChunkJunk{
+			ChunkHeader: subchunk,
+			Depth:       0,
 		}
 	case bitDepth8:
 		if subchunk == nil {
-			subchunk = NewDataSubChunk()
+			subchunk = data.NewDataHeader()
 		}
-		return &DataChunk8bit{
-			SubChunk: subchunk,
-			Depth:    bitDepth8,
+		return &data.Chunk8bit{
+			ChunkHeader: subchunk,
+			Depth:       bitDepth8,
 		}
 	case bitDepth16:
 		if subchunk == nil {
-			subchunk = NewDataSubChunk()
+			subchunk = data.NewDataHeader()
 		}
-		return &DataChunk16bit{
-			SubChunk: subchunk,
-			Depth:    bitDepth16,
+		return &data.Chunk16bit{
+			ChunkHeader: subchunk,
+			Depth:       bitDepth16,
 		}
 	case bitDepth24:
 		if subchunk == nil {
-			subchunk = NewDataSubChunk()
+			subchunk = data.NewDataHeader()
 		}
-		return &DataChunk24bit{
-			SubChunk: subchunk,
-			Depth:    bitDepth24,
+		return &data.Chunk24bit{
+			ChunkHeader: subchunk,
+			Depth:       bitDepth24,
 		}
 	case bitDepth32:
 		if subchunk == nil {
-			subchunk = NewDataSubChunk()
+			subchunk = data.NewDataHeader()
 		}
-		return &DataChunk32bit{
-			SubChunk: subchunk,
-			Depth:    bitDepth32,
+		return &data.Chunk32bit{
+			ChunkHeader: subchunk,
+			Depth:       bitDepth32,
 		}
 	default:
 		return nil

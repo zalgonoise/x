@@ -5,8 +5,6 @@ import (
 	"encoding/binary"
 )
 
-const ErrInvalidHeader err = "invalid WAV header"
-
 type WavHeader struct {
 	ChunkID       [4]byte // 1-4
 	ChunkSize     uint32  // 5-8

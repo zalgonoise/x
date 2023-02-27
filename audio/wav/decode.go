@@ -2,7 +2,8 @@ package wav
 
 import (
 	"errors"
-	"io"
+
+	"github.com/zalgonoise/x/audio/wav/data"
 )
 
 func (w *Wav) Write(buf []byte) (n int, err error) {
@@ -31,12 +32,14 @@ func (w *Wav) Write(buf []byte) (n int, err error) {
 		// try to read subchunk headers
 		end = 8
 		if offset+end < len(buf) {
-			if subchunk, err := SubChunkFrom(buf[offset : offset+end]); err == nil {
+			if subchunk, err := data.HeaderFrom(buf[offset : offset+end]); err == nil {
 				offset += end
-				chunk := NewDataChunk(w.Header.BitsPerSample, subchunk)
+				chunk := NewChunk(w.Header.BitsPerSample, subchunk)
 				w.Data = chunk
 
 				end = int(subchunk.Subchunk2Size)
+				// grab remaining bytes if the byte slice isn't long enough
+				// for a subchunk read
 				if offset+end+8 > len(buf) {
 					end += len(buf) - (offset + end)
 				}
@@ -52,8 +55,7 @@ func (w *Wav) Write(buf []byte) (n int, err error) {
 			w.Data.Parse(buf[offset:], offset)
 			return len(buf) - offset, nil
 		}
-		return offset, err
-
+		return offset, ErrMissingDataBuffer
 	}
 	return offset, nil
 }
@@ -63,50 +65,9 @@ func Decode(buf []byte) (w *Wav, err error) {
 		return nil, ErrShortDataBuffer
 	}
 	w = new(Wav)
-
-	var (
-		offset int
-		header *WavHeader
-	)
-
-	if header, err = HeaderFrom(buf[:headerLen]); err != nil && w.Header == nil {
+	_, err = w.Write(buf)
+	if err != nil {
 		return nil, err
 	}
-	offset += headerLen
-	w.Header = header
-
-	for offset+8 < len(buf) {
-		var (
-			subchunk *SubChunk
-			err      error
-		)
-		if subchunk, err = SubChunkFrom(buf[offset : offset+8]); err != nil {
-			if errors.Is(err, io.EOF) {
-				return w, nil
-			}
-			return w, err
-		}
-		offset += 8
-		if offset+int(subchunk.Subchunk2Size) > len(buf) {
-			return w, nil
-		}
-		chunk := NewDataChunk(w.Header.BitsPerSample, subchunk)
-		if offset+int(subchunk.Subchunk2Size)+8 > len(buf) {
-			chunk.Parse(buf[offset:], 0)
-		} else {
-			chunk.Parse(buf[offset:offset+int(subchunk.Subchunk2Size)], 0)
-		}
-
-		w.Chunks = append(w.Chunks, chunk)
-		offset += int(subchunk.Subchunk2Size)
-	}
 	return w, nil
-}
-
-func decode24BitLE(buf []byte) int32 {
-	value := int32(buf[0]) | (int32(buf[1]) << 8) | (int32(buf[2]) << 16)
-	if value&0x00800000 != 0 {
-		value |= -16777216 // handle signed integers
-	}
-	return value
 }

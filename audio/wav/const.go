@@ -11,8 +11,6 @@ var (
 	defaultChunkID     = [4]byte{82, 73, 70, 70}
 	defaultFormat      = [4]byte{87, 65, 86, 69}
 	defaultSubchunk1ID = [4]byte{102, 109, 116, 32}
-	defaultSubchunk2ID = [4]byte{100, 97, 116, 97}
-	junkSubchunk2ID    = [4]byte{106, 117, 110, 107}
 )
 
 const (
