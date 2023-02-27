@@ -1,7 +1,6 @@
 package wav
 
 import (
-	"encoding/binary"
 	"unsafe"
 )
 
@@ -149,23 +148,23 @@ type DataChunk32bit struct {
 
 func (d *DataChunk32bit) Parse(buf []byte, offset int) {
 	if d.Data == nil {
-		d.Data = conv(buf, 4, func(buf []byte) int32 {
-			return int32(binary.LittleEndian.Uint32(buf))
-		})
+		d.Data = *(*[]int32)(unsafe.Pointer(&buf))
+		d.Data = d.Data[:len(buf)/4]
 		if d.Subchunk2Size == 0 {
 			d.Subchunk2Size = uint32(len(buf))
 		}
 		return
 	}
-	d.Data = append(d.Data, conv(buf, 4, func(buf []byte) int32 {
-		return int32(binary.LittleEndian.Uint32(buf))
-	})...)
+	new := *(*[]int32)(unsafe.Pointer(&buf))
+	d.Data = append(d.Data, new[:len(buf)/4]...)
 }
 
 func (d *DataChunk32bit) Generate() []byte {
-	data := make([]byte, 0, len(d.Data)*4)
-	for i := 0; i < len(d.Data); i++ {
-		data = binary.LittleEndian.AppendUint32(data, uint32(d.Data[i]))
+	n := len(d.Data)
+	data := make([]byte, n*4)
+	for i, j := 0, 0; i < n; i, j = i+1, j+4 {
+		bin := *(*[4]byte)(unsafe.Pointer(&d.Data[i]))
+		copy(data[j:j+4], bin[:])
 	}
 	return data
 }
