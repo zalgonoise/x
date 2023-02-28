@@ -1,0 +1,142 @@
+package wav
+
+import (
+	"context"
+	"fmt"
+	"io"
+
+	"github.com/zalgonoise/gbuf"
+	"github.com/zalgonoise/x/audio/wav/data"
+)
+
+type WavBuffer struct {
+	Header *WavHeader
+	buf    *gbuf.RingFilter[byte]
+	Chunks []data.Chunk
+	Data   data.Chunk
+	r      io.Reader
+}
+
+func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
+	err := w.stream(ctx)
+	if err != nil {
+		errCh <- err
+		return
+	}
+}
+
+func NewStream(r io.Reader, sampleRate uint32) *WavBuffer {
+	w := new(WavBuffer)
+	w.r = r
+	w.buf = gbuf.NewRingFilter(int(sampleRate), w.chunkFn)
+	return w
+}
+
+func (w *WavBuffer) headerFn(buf []byte) error {
+	header, err := HeaderFrom(buf)
+	if err != nil {
+		return err
+	}
+	w.Header = header
+	return nil
+}
+
+func (w *WavBuffer) subChunkFn(buf []byte) error {
+
+	subchunk, err := data.HeaderFrom(buf)
+	if err != nil {
+		return err
+	}
+	chunk := NewChunk(w.Header.BitsPerSample, subchunk)
+	w.Chunks = append(w.Chunks, chunk)
+	w.Data = chunk
+	return nil
+}
+
+func (w *WavBuffer) chunkFn(buf []byte) error {
+	w.Data.Parse(buf, 0)
+	return nil
+}
+
+func (w *WavBuffer) stream(ctx context.Context) error {
+	hbuf := make([]byte, 36)
+	if _, err := w.r.Read(hbuf); err != nil {
+		return err
+	}
+	if err := w.headerFn(hbuf); err != nil && w.Header == nil {
+		return err
+	}
+	scbuf := make([]byte, 8)
+	if _, err := w.r.Read(scbuf); err != nil {
+		return err
+	}
+	if err := w.subChunkFn(scbuf); err != nil {
+		return err
+	}
+
+	var err error
+
+	go func() {
+		if _, err = w.buf.ReadFrom(w.r); err != nil {
+			return
+		}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err != nil {
+				return err
+			}
+			v := w.buf.Value()
+			if len(v) > 0 {
+				err := w.chunkFn(v)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		default:
+		}
+	}
+}
+
+func (w *WavBuffer) Bytes() ([]byte, error) {
+	var n int
+	size, data := w.encode()
+
+	buf := make([]byte, size+32)
+	for i := range data {
+		n += copy(buf[n:], data[i])
+	}
+	return buf, nil
+}
+
+func (w *WavBuffer) encode() (size int, byteData [][]byte) {
+	size = 4
+	byteData = make([][]byte, 3)
+
+	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
+		byteData[j] = w.Chunks[i].Header().Bytes()
+		byteData[j+1] = w.Chunks[i].Generate()
+		size += 8 + len(byteData[j+1])
+	}
+
+	if w.Header.ChunkSize == 0 {
+		w.Header.ChunkSize = uint32(size)
+	}
+	byteData[0] = w.Header.Bytes()
+	return size, byteData
+}
+
+func (w *WavBuffer) Read(buf []byte) (n int, err error) {
+	size, data := w.encode()
+	if len(buf) < size {
+		return n, fmt.Errorf("%w: input buffer with length %d cannot fit %d bytes", ErrShortDataBuffer, len(buf), size)
+	}
+
+	for i := range data {
+		n += copy(buf[n:], data[i])
+	}
+	return size, nil
+}
