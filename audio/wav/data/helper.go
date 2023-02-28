@@ -26,7 +26,9 @@ func decode24BitLE(buf []byte) int32 {
 
 // can't inline a pointer cast and convert an array to a slice
 func append2Bytes(idx int, dst []byte, src [2]byte) {
-	copy(dst[idx*2:], src[:])
+	if idx*2 < len(dst) {
+		copy(dst[idx*2:], src[:])
+	}
 }
 
 // can't inline a pointer cast and convert an array to a slice
