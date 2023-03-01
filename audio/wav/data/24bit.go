@@ -8,7 +8,7 @@ type Chunk24bit struct {
 	Depth uint16
 }
 
-func (d *Chunk24bit) Parse(buf []byte, offset int) {
+func (d *Chunk24bit) Parse(buf []byte) {
 	if d.Data == nil {
 		d.Data = conv(buf, 3, func(buf []byte) int32 {
 			return decode24BitLE(buf)
@@ -34,3 +34,5 @@ func (d *Chunk24bit) Generate() []byte {
 
 func (d *Chunk24bit) Header() *ChunkHeader { return d.ChunkHeader }
 func (d *Chunk24bit) BitDepth() uint16     { return d.Depth }
+func (d *Chunk24bit) Reset()               { d.Data = nil }
+func (d *Chunk24bit) Value() []int         { return to[int32, int](d.Data) }

@@ -6,7 +6,7 @@ type ChunkJunk struct {
 	Depth uint16
 }
 
-func (d *ChunkJunk) Parse(buf []byte, offset int) {
+func (d *ChunkJunk) Parse(buf []byte) {
 	if d.Data == nil {
 		d.Data = buf
 		if d.Subchunk2Size == 0 {
@@ -23,3 +23,5 @@ func (d *ChunkJunk) Generate() []byte {
 
 func (d *ChunkJunk) Header() *ChunkHeader { return d.ChunkHeader }
 func (d *ChunkJunk) BitDepth() uint16     { return d.Depth }
+func (d *ChunkJunk) Reset()               { d.Data = nil }
+func (d *ChunkJunk) Value() []int         { return to[byte, int](d.Data) }
