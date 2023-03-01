@@ -22,10 +22,12 @@ var (
 )
 
 type Chunk interface {
-	Parse(buf []byte, offset int)
+	Parse(buf []byte)
 	Generate() []byte
 	Header() *ChunkHeader
 	BitDepth() uint16
+	Reset()
+	Value() []int
 }
 
 type ChunkHeader struct {
