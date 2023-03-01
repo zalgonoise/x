@@ -1,13 +1,21 @@
 package data
 
-type bitDepthTypes interface {
-	int8 | int16 | int32 | byte
+type BitDepthTypes interface {
+	int8 | int16 | int32 | byte | int
 }
 
-func conv[F, T bitDepthTypes](a []F, steps int, fn func([]F) T) []T {
+func conv[F, T BitDepthTypes](a []F, steps int, fn func([]F) T) []T {
 	out := make([]T, len(a)/steps)
 	for i, j := 0, 0; i+steps-1 < len(a); i, j = i+steps, j+1 {
 		out[j] = fn(a[i : i+steps])
+	}
+	return out
+}
+
+func to[F, T BitDepthTypes](from []F) []T {
+	out := make([]T, len(from))
+	for i := range from {
+		out[i] = (T)(from[i])
 	}
 	return out
 }
