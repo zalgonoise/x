@@ -1,4 +1,8 @@
 github.com/zalgonoise/gbuf v0.0.0-20230221231920-ad7f9de153dc h1:ADORWOeasyssh/85ZvzjuPrXrZ63UtAtgb1/zFKprLw=
 github.com/zalgonoise/gbuf v0.0.0-20230221231920-ad7f9de153dc/go.mod h1:4sHJlRBmY2K5qsEtdKD7gSYiWAzQjMKwWo7vpkyNUjc=
+github.com/zalgonoise/gbuf v0.0.0-20230301221105-2afdb79c37d2 h1:cJbhYrlS0ESer5nMmwLYJq7A/wlJ5r5f+0lIHg87/OY=
+github.com/zalgonoise/gbuf v0.0.0-20230301221105-2afdb79c37d2/go.mod h1:4sHJlRBmY2K5qsEtdKD7gSYiWAzQjMKwWo7vpkyNUjc=
+github.com/zalgonoise/gbuf v0.0.0-20230301225204-a38f80b049c6 h1:+ix98ulSJJst6xGBIMb+VALNaf8PV/4Dpa1FC8NBBkU=
+github.com/zalgonoise/gbuf v0.0.0-20230301225204-a38f80b049c6/go.mod h1:4sHJlRBmY2K5qsEtdKD7gSYiWAzQjMKwWo7vpkyNUjc=
 github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0 h1:44zHj6dgTnGhtGRrVaiBoDu3R5H4+sJT0geLPNIdkZE=
 github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0/go.mod h1:nhc82H2KvRf8/28o3RGBnJM/k7NapcDGPegqGIOqATY=
