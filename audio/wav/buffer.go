@@ -29,10 +29,9 @@ func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
 	}
 }
 
-func NewStream(r io.Reader, sampleRate uint32) *WavBuffer {
+func NewStream(r io.Reader) *WavBuffer {
 	w := new(WavBuffer)
 	w.Reader = r
-
 	return w
 }
 
