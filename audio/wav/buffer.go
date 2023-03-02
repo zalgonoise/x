@@ -13,12 +13,12 @@ import (
 
 type WavBuffer struct {
 	Header  *WavHeader
-	buf     *bytes.Buffer
-	Ring    *gbuf.RingFilter[byte]
 	Chunks  []data.Chunk
 	Data    data.Chunk
-	Filters []func(w *WavBuffer, data []int, raw []byte) error
+	Filters []StreamFilter
 	Reader  io.Reader
+	buf     *bytes.Buffer
+	ring    *gbuf.RingFilter[byte]
 }
 
 func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
@@ -32,11 +32,11 @@ func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
 func NewStream(r io.Reader, sampleRate uint32) *WavBuffer {
 	w := new(WavBuffer)
 	w.Reader = r
-	w.Ring = gbuf.NewRingFilter(int(sampleRate)*2, w.processChunk)
+
 	return w
 }
 
-func (w *WavBuffer) WithFilter(fns ...func(*WavBuffer, []int, []byte) error) {
+func (w *WavBuffer) WithFilter(fns ...StreamFilter) {
 	for _, fn := range fns {
 		if fn != nil {
 			w.Filters = append(w.Filters, fn)
@@ -66,6 +66,9 @@ func (w *WavBuffer) parseSubChunk(buf []byte) error {
 
 func (w *WavBuffer) processChunk(buf []byte) error {
 	w.Data.Parse(buf)
+	if len(w.Filters) == 0 {
+		return nil
+	}
 	v := w.Data.Value()
 	defer w.Data.Reset()
 	for _, fn := range w.Filters {
@@ -85,6 +88,7 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 	if err := w.parseHeader(hbuf); err != nil && w.Header == nil {
 		return err
 	}
+	w.ring = gbuf.NewRingFilter(int(w.Header.ByteRate), w.processChunk)
 	scbuf := make([]byte, 8)
 	if _, err := w.Reader.Read(scbuf); err != nil {
 		return err
@@ -95,7 +99,7 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 
 	var err error
 	go func() {
-		if _, err = w.Ring.ReadFrom(w.Reader); err != nil {
+		if _, err = w.ring.ReadFrom(w.Reader); err != nil {
 			return
 		}
 	}()
