@@ -146,9 +146,24 @@ func FlushFor(writer io.Writer, dur time.Duration) StreamFilter {
 
 		rate := (int64)(time.Second) / (int64)(w.Header.ByteRate)
 		blockSize := (int64)(dur) / rate
+		rec := bytes.NewBuffer(make([]byte, int(blockSize)+len(raw)))
+		rec.Write(raw)
 		r := io.LimitReader(w.Reader, blockSize)
-		_, err = io.Copy(writer, r)
+		rec.ReadFrom(r)
 		if err != nil && !errors.Is(err, io.EOF) {
+			return err
+		}
+		new, err := New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
+		if err != nil {
+			return err
+		}
+		new.Write(rec.Bytes())
+		b, err := new.Bytes()
+		if err != nil {
+			return err
+		}
+		_, err = writer.Write(b)
+		if err != nil {
 			return err
 		}
 		return nil
