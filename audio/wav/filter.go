@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/gio"
+	"github.com/zalgonoise/x/audio/wav/data"
 )
 
 // StreamFilter is a pluggable function that will scan, analyze, process
@@ -138,33 +139,45 @@ func FlushTo(writer io.Writer) StreamFilter {
 // FlushFor writes the raw signal to the input `writer`, then keeps recording
 // from the WavBuffer reader for `dur` duration.
 func FlushFor(writer io.Writer, dur time.Duration) StreamFilter {
-	return func(w *WavBuffer, data []int, raw []byte) error {
-		_, err := writer.Write(raw)
+	return func(w *WavBuffer, audioData []int, raw []byte) error {
+		var err error
+
+		rate := (int64)(time.Second) / (int64)(w.Header.ByteRate)
+		blockSize := (int64)(dur) / rate
+
+		w.Header.ChunkSize = uint32(blockSize) + uint32(len(raw)) + 4
+		_, err = writer.Write(w.Header.Bytes())
 		if err != nil {
 			return err
 		}
 
-		rate := (int64)(time.Second) / (int64)(w.Header.ByteRate)
-		blockSize := (int64)(dur) / rate
-		rec := bytes.NewBuffer(make([]byte, int(blockSize)+len(raw)))
-		rec.Write(raw)
+		dataHeader := data.NewDataHeader()
+		dataHeader.Subchunk2Size = uint32(blockSize) + uint32(len(raw))
+		_, err = writer.Write(dataHeader.Bytes())
+		if err != nil {
+			return err
+		}
+
+		_, err = writer.Write(raw)
+		if err != nil {
+			return err
+		}
+
+		rec := make([]byte, blockSize)
 		r := io.LimitReader(w.Reader, blockSize)
-		rec.ReadFrom(r)
+		_, err = r.Read(rec)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
-		new, err := New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
+		_, err = writer.Write(rec)
 		if err != nil {
 			return err
 		}
-		new.Write(rec.Bytes())
-		b, err := new.Bytes()
-		if err != nil {
-			return err
-		}
-		_, err = writer.Write(b)
-		if err != nil {
-			return err
+		if c, ok := (writer).(io.Closer); ok {
+			err = c.Close()
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	}
