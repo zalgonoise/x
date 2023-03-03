@@ -1,8 +1,10 @@
 package stream
 
 import (
+	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/logx"
@@ -15,6 +17,7 @@ import (
 
 func New(cfg *conf.Config, r io.Reader) (*wav.WavBuffer, error) {
 	w := wav.NewStream(r)
+	w.Ratio(cfg.BufferSize)
 
 	switch cfg.Mode {
 	case mode.Monitor:
@@ -48,23 +51,23 @@ func monitorMode(cfg *conf.Config, w *wav.WavBuffer) {
 }
 
 func recordMode(cfg *conf.Config, w *wav.WavBuffer) error {
-	output, err := os.Create(*cfg.Dir)
+	output, err := os.Create(fmt.Sprintf("%s_%s.wav", *cfg.Dir, time.Now().Format(time.RFC3339)))
 	if err != nil {
 		return err
 	}
 	w.WithFilter(
-		wav.FlushFor(output, *cfg.Dur),
+		wav.FlushFor(output, *cfg.RecTime),
 	)
 	return nil
 }
 
 func filterMode(cfg *conf.Config, w *wav.WavBuffer) error {
-	output, err := os.Create(*cfg.Dir)
+	output, err := os.Create(fmt.Sprintf("%s_%s.wav", *cfg.Dir, time.Now().Format(time.RFC3339)))
 	if err != nil {
 		return err
 	}
 	w.WithFilter(
-		wav.LevelThreshold(*cfg.Peak, wav.FlushFor(output, *cfg.Dur)),
+		wav.LevelThreshold(*cfg.Peak, wav.FlushFor(output, *cfg.RecTime)),
 	)
 	return nil
 }
