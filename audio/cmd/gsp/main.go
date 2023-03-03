@@ -15,14 +15,16 @@ import (
 func ParseFlags() (*conf.Config, error) {
 	url := flag.String("url", "", "the URL for the WAV audio stream")
 	dur := flag.String("dur", "", "duration until the operation times out")
+	recTime := flag.String("rec", "", "duration of each recording")
 	mode := flag.String("mode", "monitor", "operation mode (monitor, record, filter)")
 	peak := flag.Int("peak", 0, "filter peak value to trigger recording the incoming signal")
 	dir := flag.String("d", "./sound_capture.wav", "the path to the destination file")
 	term := flag.Bool("t", true, "print monitor values to standard out")
+	bufferSize := flag.Float64("s", 1.0, "buffer size as a ratio in seconds. 1.0 cycles the buffer once every second. 0.5 cycles twice per second. 2.0 cycles every two seconds; etc.")
 
 	flag.Parse()
 
-	return conf.New(*url, *mode, dur, dir, peak, *term)
+	return conf.New(*url, *mode, *bufferSize, dur, recTime, dir, peak, *term)
 }
 
 func main() {
