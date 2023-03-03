@@ -16,18 +16,25 @@ const (
 	ErrModeNotSupported err = "gsp/conf: operation is not supported"
 	ErrEmptyDirectory   err = "gsp/conf: recording operation without a target file path"
 	ErrEmptyThreshold   err = "gsp/conf: peak threshold is unset"
+	ErrShortDuration    err = "gsp/conf: runtime duration is shorter than recording time"
+)
+
+const (
+	defaultRecTime time.Duration = time.Second * 30
 )
 
 type Config struct {
-	URL  string
-	Mode mode.Mode
-	Dur  *time.Duration
-	Peak *int
-	Dir  *string
-	Term bool
+	URL        string
+	Mode       mode.Mode
+	Dur        *time.Duration
+	RecTime    *time.Duration
+	BufferSize float64
+	Peak       *int
+	Dir        *string
+	Term       bool
 }
 
-func New(url, mod string, dur, dir *string, peak *int, term bool) (*Config, error) {
+func New(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *int, term bool) (*Config, error) {
 	if url == "" {
 		return nil, ErrEmptyURL
 	}
@@ -49,12 +56,34 @@ func New(url, mod string, dur, dir *string, peak *int, term bool) (*Config, erro
 		return nil, fmt.Errorf("%w: invalid mode: %s", ErrModeNotSupported, mod)
 	}
 
+	c.BufferSize = bufferSize
+	if c.BufferSize == 0 {
+		c.BufferSize = 1.0
+	}
+
+	switch c.Mode {
+	case mode.Record, mode.Filter:
+		var rt = defaultRecTime
+		if recTime != nil {
+			d, err := time.ParseDuration(*recTime)
+			if err != nil {
+				return nil, err
+			}
+			rt = d
+		}
+		c.RecTime = &rt
+	}
+
 	if dur != nil {
 		d, err := time.ParseDuration(*dur)
 		if err != nil {
 			return nil, err
 		}
 		c.Dur = &d
+	}
+
+	if *c.Dur < *c.RecTime {
+		return nil, ErrShortDuration
 	}
 
 	if dir == nil || *dir == "" {
