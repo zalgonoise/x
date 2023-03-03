@@ -11,6 +11,10 @@ import (
 	"github.com/zalgonoise/x/audio/wav/data"
 )
 
+const (
+	minBufferSize = 16
+)
+
 type WavBuffer struct {
 	Header  *WavHeader
 	Chunks  []data.Chunk
@@ -19,6 +23,7 @@ type WavBuffer struct {
 	Reader  io.Reader
 	buf     *bytes.Buffer
 	ring    *gbuf.RingFilter[byte]
+	ratio   float64
 }
 
 func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
@@ -30,9 +35,10 @@ func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
 }
 
 func NewStream(r io.Reader) *WavBuffer {
-	w := new(WavBuffer)
-	w.Reader = r
-	return w
+	return &WavBuffer{
+		Reader: r,
+		ratio:  1.0,
+	}
 }
 
 func (w *WavBuffer) WithFilter(fns ...StreamFilter) {
@@ -41,6 +47,13 @@ func (w *WavBuffer) WithFilter(fns ...StreamFilter) {
 			w.Filters = append(w.Filters, fn)
 		}
 	}
+}
+
+func (w *WavBuffer) Ratio(ratio float64) {
+	if ratio == 0 {
+		return
+	}
+	w.ratio = ratio
 }
 
 func (w *WavBuffer) parseHeader(buf []byte) error {
@@ -87,7 +100,11 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 	if err := w.parseHeader(hbuf); err != nil && w.Header == nil {
 		return err
 	}
-	w.ring = gbuf.NewRingFilter(int(w.Header.ByteRate), w.processChunk)
+	bufferSize := int(w.Header.ByteRate)
+	if float64(bufferSize)*w.ratio >= minBufferSize {
+		bufferSize = int(float64(bufferSize) * w.ratio)
+	}
+	w.ring = gbuf.NewRingFilter(bufferSize, w.processChunk)
 	scbuf := make([]byte, 8)
 	if _, err := w.Reader.Read(scbuf); err != nil {
 		return err
