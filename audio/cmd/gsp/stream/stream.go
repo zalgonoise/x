@@ -51,6 +51,7 @@ func monitorMode(cfg *conf.Config, w *wav.WavBuffer) {
 }
 
 func recordMode(cfg *conf.Config, w *wav.WavBuffer) error {
+
 	output, err := os.Create(fmt.Sprintf("%s_%s.wav", *cfg.Dir, time.Now().Format(time.RFC3339)))
 	if err != nil {
 		return err
@@ -62,12 +63,8 @@ func recordMode(cfg *conf.Config, w *wav.WavBuffer) error {
 }
 
 func filterMode(cfg *conf.Config, w *wav.WavBuffer) error {
-	output, err := os.Create(fmt.Sprintf("%s_%s.wav", *cfg.Dir, time.Now().Format(time.RFC3339)))
-	if err != nil {
-		return err
-	}
 	w.WithFilter(
-		wav.LevelThreshold(*cfg.Peak, wav.FlushFor(output, *cfg.RecTime)),
+		wav.LevelThreshold(*cfg.Peak, wav.FlushToFileFor(*cfg.Dir, *cfg.RecTime)),
 	)
 	return nil
 }
