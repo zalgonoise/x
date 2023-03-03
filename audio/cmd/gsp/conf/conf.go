@@ -82,7 +82,7 @@ func New(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *i
 		c.Dur = &d
 	}
 
-	if *c.Dur < *c.RecTime {
+	if c.Dur != nil && c.RecTime != nil && *c.Dur < *c.RecTime {
 		return nil, ErrShortDuration
 	}
 
