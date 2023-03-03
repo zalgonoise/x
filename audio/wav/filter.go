@@ -3,7 +3,9 @@ package wav
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/zalgonoise/gio"
@@ -163,22 +165,72 @@ func FlushFor(writer io.Writer, dur time.Duration) StreamFilter {
 			return err
 		}
 
-		rec := make([]byte, blockSize)
+		rec := bytes.NewBuffer(make([]byte, 0, blockSize))
 		r := io.LimitReader(w.Reader, blockSize)
-		_, err = r.Read(rec)
+		_, err = rec.ReadFrom(r)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
-		_, err = writer.Write(rec)
+		_, err = writer.Write(rec.Bytes())
 		if err != nil {
 			return err
 		}
+
 		if c, ok := (writer).(io.Closer); ok {
 			err = c.Close()
 			if err != nil {
 				return err
 			}
 		}
+
+		return nil
+	}
+}
+
+// FlushToFileFor writes the raw signal to a file with the path and name pattern `name`,
+// then keeps recording from the WavBuffer reader for `dur` duration.
+func FlushToFileFor(name string, dur time.Duration) StreamFilter {
+	return func(w *WavBuffer, audioData []int, raw []byte) error {
+		var err error
+		writer, err := os.Create(fmt.Sprintf("%s_%s.wav", name, time.Now().Format(time.RFC3339)))
+
+		rate := (int64)(time.Second) / (int64)(w.Header.ByteRate)
+		blockSize := (int64)(dur) / rate
+
+		w.Header.ChunkSize = uint32(blockSize) + uint32(len(raw)) + 4
+		_, err = writer.Write(w.Header.Bytes())
+		if err != nil {
+			return err
+		}
+
+		dataHeader := data.NewDataHeader()
+		dataHeader.Subchunk2Size = uint32(blockSize) + uint32(len(raw))
+		_, err = writer.Write(dataHeader.Bytes())
+		if err != nil {
+			return err
+		}
+
+		_, err = writer.Write(raw)
+		if err != nil {
+			return err
+		}
+
+		rec := bytes.NewBuffer(make([]byte, 0, blockSize))
+		r := io.LimitReader(w.Reader, blockSize)
+		_, err = rec.ReadFrom(r)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
+		}
+		_, err = writer.Write(rec.Bytes())
+		if err != nil {
+			return err
+		}
+
+		err = writer.Close()
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 }
