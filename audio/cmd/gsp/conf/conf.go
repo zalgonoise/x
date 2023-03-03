@@ -94,6 +94,11 @@ func New(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *i
 			return nil, ErrEmptyDirectory
 		}
 	}
+	dirExt := *dir
+	if string(dirExt[len(dirExt)-4:]) == ".wav" {
+		dirExt = string(dirExt[:len(dirExt)-4])
+		dir = &dirExt
+	}
 	c.Dir = dir
 	return c, nil
 }
