@@ -1,7 +1,6 @@
 package wav
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -21,7 +20,6 @@ type WavBuffer struct {
 	Data    data.Chunk
 	Filters []StreamFilter
 	Reader  io.Reader
-	buf     *bytes.Buffer
 	ring    *gbuf.RingFilter[byte]
 	ratio   float64
 }
