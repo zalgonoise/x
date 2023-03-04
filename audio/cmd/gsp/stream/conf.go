@@ -1,10 +1,8 @@
-package conf
+package stream
 
 import (
 	"fmt"
 	"time"
-
-	"github.com/zalgonoise/x/audio/cmd/gsp/mode"
 )
 
 type err string
@@ -25,7 +23,7 @@ const (
 
 type Config struct {
 	URL        string
-	Mode       mode.Mode
+	Mode       Mode
 	Dur        *time.Duration
 	RecTime    *time.Duration
 	BufferSize float64
@@ -34,26 +32,15 @@ type Config struct {
 	Term       bool
 }
 
-func New(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *int, term bool) (*Config, error) {
+func NewConfig(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *int, term bool) (*Config, error) {
 	if url == "" {
 		return nil, ErrEmptyURL
 	}
 	c := new(Config)
 	c.URL = url
 
-	switch mod {
-	case "monitor":
-		c.Mode = mode.Monitor
-	case "record":
-		c.Mode = mode.Record
-	case "filter":
-		c.Mode = mode.Filter
-		if peak == nil || *peak == 0 {
-			return nil, ErrEmptyThreshold
-		}
-		c.Peak = peak
-	default:
-		return nil, fmt.Errorf("%w: invalid mode: %s", ErrModeNotSupported, mod)
+	if err := c.validateMode(mod, peak); err != nil {
+		return nil, err
 	}
 
 	c.BufferSize = bufferSize
@@ -61,13 +48,41 @@ func New(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *i
 		c.BufferSize = 1.0
 	}
 
+	if err := c.validateDur(dur, recTime); err != nil {
+		return nil, err
+	}
+	if err := c.validateDir(dir); err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (c *Config) validateMode(mod string, peak *int) error {
+	switch mod {
+	case "monitor":
+		c.Mode = Monitor
+	case "record":
+		c.Mode = Record
+	case "filter":
+		c.Mode = Filter
+		if peak == nil || *peak == 0 {
+			return ErrEmptyThreshold
+		}
+		c.Peak = peak
+	default:
+		return fmt.Errorf("%w: invalid mode: %s", ErrModeNotSupported, mod)
+	}
+	return nil
+}
+
+func (c *Config) validateDur(dur, recTime *string) error {
 	switch c.Mode {
-	case mode.Record, mode.Filter:
+	case Record, Filter:
 		var rt = defaultRecTime
 		if recTime != nil {
 			d, err := time.ParseDuration(*recTime)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			rt = d
 		}
@@ -77,21 +92,26 @@ func New(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *i
 	if dur != nil {
 		d, err := time.ParseDuration(*dur)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		c.Dur = &d
 	}
 
 	if c.Dur != nil && c.RecTime != nil && *c.Dur < *c.RecTime {
-		return nil, ErrShortDuration
+		return ErrShortDuration
 	}
 
+	return nil
+}
+
+func (c *Config) validateDir(dir *string) error {
 	if dir == nil || *dir == "" {
 		switch c.Mode {
-		case mode.Monitor:
+		case Monitor:
 			c.Term = true
+			return nil
 		default:
-			return nil, ErrEmptyDirectory
+			return ErrEmptyDirectory
 		}
 	}
 	dirExt := *dir
@@ -100,5 +120,5 @@ func New(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *i
 		dir = &dirExt
 	}
 	c.Dir = dir
-	return c, nil
+	return nil
 }

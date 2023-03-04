@@ -10,24 +10,22 @@ import (
 	"github.com/zalgonoise/logx"
 	"github.com/zalgonoise/logx/handlers/texth"
 	"github.com/zalgonoise/logx/level"
-	"github.com/zalgonoise/x/audio/cmd/gsp/conf"
-	"github.com/zalgonoise/x/audio/cmd/gsp/mode"
 	"github.com/zalgonoise/x/audio/wav"
 )
 
-func New(cfg *conf.Config, r io.Reader) (*wav.WavBuffer, error) {
+func New(cfg *Config, r io.Reader) (*wav.WavBuffer, error) {
 	w := wav.NewStream(r)
 	w.Ratio(cfg.BufferSize)
 
 	switch cfg.Mode {
-	case mode.Monitor:
+	case Monitor:
 		monitorMode(cfg, w)
-	case mode.Filter:
+	case Filter:
 		err := filterMode(cfg, w)
 		if err != nil {
 			return nil, err
 		}
-	case mode.Record:
+	case Record:
 		err := recordMode(cfg, w)
 		if err != nil {
 			return nil, err
@@ -36,7 +34,7 @@ func New(cfg *conf.Config, r io.Reader) (*wav.WavBuffer, error) {
 	return w, nil
 }
 
-func monitorMode(cfg *conf.Config, w *wav.WavBuffer) {
+func monitorMode(cfg *Config, w *wav.WavBuffer) {
 	logger := logx.New(texth.New(os.Stdout))
 	var maxCh = make(chan int)
 	go func() {
@@ -50,7 +48,7 @@ func monitorMode(cfg *conf.Config, w *wav.WavBuffer) {
 	)
 }
 
-func recordMode(cfg *conf.Config, w *wav.WavBuffer) error {
+func recordMode(cfg *Config, w *wav.WavBuffer) error {
 
 	output, err := os.Create(fmt.Sprintf("%s_%s.wav", *cfg.Dir, time.Now().Format(time.RFC3339)))
 	if err != nil {
@@ -62,7 +60,7 @@ func recordMode(cfg *conf.Config, w *wav.WavBuffer) error {
 	return nil
 }
 
-func filterMode(cfg *conf.Config, w *wav.WavBuffer) error {
+func filterMode(cfg *Config, w *wav.WavBuffer) error {
 	w.WithFilter(
 		wav.LevelThreshold(*cfg.Peak, wav.FlushToFileFor(*cfg.Dir, *cfg.RecTime)),
 	)

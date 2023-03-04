@@ -8,11 +8,10 @@ import (
 	"github.com/zalgonoise/logx"
 	"github.com/zalgonoise/logx/handlers/texth"
 	"github.com/zalgonoise/x/audio/cmd/gsp/client"
-	"github.com/zalgonoise/x/audio/cmd/gsp/conf"
 	"github.com/zalgonoise/x/audio/cmd/gsp/stream"
 )
 
-func ParseFlags() (*conf.Config, error) {
+func ParseFlags() (*stream.Config, error) {
 	url := flag.String("url", "", "the URL for the WAV audio stream")
 	dur := flag.String("dur", "", "duration until the operation times out")
 	recTime := flag.String("rec", "", "duration of each recording")
@@ -24,7 +23,7 @@ func ParseFlags() (*conf.Config, error) {
 
 	flag.Parse()
 
-	return conf.New(*url, *mode, *bufferSize, dur, recTime, dir, peak, *term)
+	return stream.NewConfig(*url, *mode, *bufferSize, dur, recTime, dir, peak, *term)
 }
 
 func main() {
