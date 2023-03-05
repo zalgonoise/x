@@ -40,6 +40,14 @@ func New(url string, timeout *time.Duration) (Doer, context.CancelFunc, error) {
 	if url == "" {
 		return nil, nil, ErrEmptyURL
 	}
+	if len(url) > 0 {
+		if url[0] == '"' {
+			url = url[1:]
+		}
+		if url[len(url)-1] == '"' {
+			url = url[:len(url)-1]
+		}
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	if timeout != nil {
 		ctx, cancel = context.WithTimeout(ctx, *timeout)
