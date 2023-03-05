@@ -112,6 +112,45 @@ func LevelThreshold(peak int, fn StreamFilter) StreamFilter {
 	}
 }
 
+// LevelThresholdFn triggers the input StreamFilter `fn` whenever the signal is
+// either equal and below or equal and above the threshold level `peak`.
+//
+// Before calling this StreamFilter function, it will first call the input `alertFn`
+// that emits the item that surpasses the peak threshold value.
+//
+// It will look for equal and below (item <= peak) if the peak is a negative value
+// it will look for equal and above (item >= peak) if the peak is a positive value
+func LevelThresholdFn(peak int, alertFn func(int), fn StreamFilter) StreamFilter {
+	if peak < 0 {
+		return func(w *WavBuffer, data []int, raw []byte) error {
+			for idx := range data {
+				if data[idx] <= peak {
+					alertFn(data[idx])
+					err := fn(w, data, raw)
+					if err != nil {
+						return err
+					}
+					return nil
+				}
+			}
+			return nil
+		}
+	}
+	return func(w *WavBuffer, data []int, raw []byte) error {
+		for idx := range data {
+			if data[idx] >= peak {
+				alertFn(data[idx])
+				err := fn(w, data, raw)
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+		}
+		return nil
+	}
+}
+
 // Flush writes the raw signal to the input buffer `dst`, returning an
 // error if it is a short write
 func Flush(dst []byte) StreamFilter {
