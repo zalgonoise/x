@@ -3,6 +3,8 @@ package stream
 import (
 	"fmt"
 	"time"
+
+	"github.com/zalgonoise/x/ptr"
 )
 
 type err string
@@ -12,6 +14,10 @@ func (e err) Error() string { return (string)(e) }
 const (
 	ErrEmptyURL         err = "gsp/conf: empty URL"
 	ErrModeNotSupported err = "gsp/conf: operation is not supported"
+	ErrModeUnset        err = "gsp/conf: operation is undefined"
+	ErrRecTimeUnset     err = "gsp/conf: recording time is undefined"
+	ErrDurationUnset    err = "gsp/conf: runtime duration is undefined"
+	ErrInvalidRatio     err = "gsp/conf: buffer size ratio cannot be zero or below"
 	ErrEmptyDirectory   err = "gsp/conf: recording operation without a target file path"
 	ErrEmptyThreshold   err = "gsp/conf: peak threshold is unset"
 	ErrShortDuration    err = "gsp/conf: runtime duration is shorter than recording time"
@@ -21,6 +27,12 @@ const (
 	defaultRecTime time.Duration = time.Second * 30
 )
 
+var Default = Config{
+	Mode:       Monitor,
+	Dur:        ptr.To(time.Second * 30),
+	BufferSize: 0.5,
+}
+
 type Config struct {
 	URL        string
 	Mode       Mode
@@ -29,96 +41,103 @@ type Config struct {
 	BufferSize float64
 	Peak       *int
 	Dir        *string
-	Term       bool
+	Prom       bool
 }
 
-func NewConfig(url, mod string, bufferSize float64, dur, recTime, dir *string, peak *int, term bool) (*Config, error) {
-	if url == "" {
-		return nil, ErrEmptyURL
+func (c *Config) Merge(input *Config) *Config {
+	if input.URL != "" {
+		c.URL = input.URL
 	}
-	c := new(Config)
-	c.URL = url
-
-	if err := c.validateMode(mod, peak); err != nil {
-		return nil, err
+	if input.Mode != Unset {
+		c.Mode = input.Mode
 	}
-
-	c.BufferSize = bufferSize
-	if c.BufferSize == 0 {
-		c.BufferSize = 1.0
+	if input.Dur != nil {
+		c.Dur = input.Dur
 	}
-
-	if err := c.validateDur(dur, recTime); err != nil {
-		return nil, err
+	if input.RecTime != nil {
+		c.RecTime = input.RecTime
 	}
-	if err := c.validateDir(dir); err != nil {
-		return nil, err
+	if input.BufferSize > 0 {
+		c.BufferSize = input.BufferSize
 	}
-	return c, nil
+	if input.Peak != nil {
+		c.Peak = input.Peak
+	}
+	if input.Dir != nil {
+		c.Dir = input.Dir
+	}
+	if input.Prom {
+		c.Prom = input.Prom
+	}
+	return c
 }
 
-func (c *Config) validateMode(mod string, peak *int) error {
-	switch mod {
-	case "monitor":
-		c.Mode = Monitor
-	case "record":
-		c.Mode = Record
-	case "filter":
-		c.Mode = Filter
-		if peak == nil || *peak == 0 {
+func (c *Config) Validate() error {
+	if c.URL == "" {
+		return ErrEmptyURL
+	}
+
+	switch c.Mode {
+	case Monitor:
+	case Record:
+		if c.RecTime == nil {
+			return ErrRecTimeUnset
+		}
+		if c.Dir == nil {
+			return ErrEmptyDirectory
+		}
+	case Filter:
+		if c.RecTime == nil {
+			return ErrRecTimeUnset
+		}
+		if c.Peak == nil || *c.Peak == 0 {
 			return ErrEmptyThreshold
 		}
-		c.Peak = peak
+		if c.Dir == nil {
+			return ErrEmptyDirectory
+		}
+	case Unset:
+		return ErrModeUnset
 	default:
-		return fmt.Errorf("%w: invalid mode: %s", ErrModeNotSupported, mod)
-	}
-	return nil
-}
-
-func (c *Config) validateDur(dur, recTime *string) error {
-	switch c.Mode {
-	case Record, Filter:
-		var rt = defaultRecTime
-		if recTime != nil {
-			d, err := time.ParseDuration(*recTime)
-			if err != nil {
-				return err
-			}
-			rt = d
-		}
-		c.RecTime = &rt
+		return fmt.Errorf("%w: invalid mode: %d", ErrModeNotSupported, c.Mode)
 	}
 
-	if dur != nil {
-		d, err := time.ParseDuration(*dur)
-		if err != nil {
-			return err
-		}
-		c.Dur = &d
+	if c.Dur == nil {
+		return ErrDurationUnset
 	}
 
-	if c.Dur != nil && c.RecTime != nil && *c.Dur < *c.RecTime {
+	if c.RecTime != nil && *c.Dur < *c.RecTime {
 		return ErrShortDuration
 	}
 
+	if c.BufferSize <= 0 {
+		return ErrInvalidRatio
+	}
+
 	return nil
 }
 
-func (c *Config) validateDir(dir *string) error {
-	if dir == nil || *dir == "" {
-		switch c.Mode {
-		case Monitor:
-			c.Term = true
-			return nil
-		default:
-			return ErrEmptyDirectory
+func newConfig(opts ...Option) *Config {
+	conf := &Default
+
+	for _, opt := range opts {
+		if opt != nil {
+			opt.Apply(conf)
 		}
 	}
-	dirExt := *dir
-	if string(dirExt[len(dirExt)-4:]) == ".wav" {
-		dirExt = string(dirExt[:len(dirExt)-4])
-		dir = &dirExt
+
+	return conf
+}
+
+type Option interface {
+	// Apply sets the configuration on the input Config `c`
+	Apply(c *Config)
+}
+
+func NewConfig(opts ...Option) (*Config, error) {
+	c := newConfig(opts...)
+	if err := c.Validate(); err != nil {
+		return nil, err
 	}
-	c.Dir = dir
-	return nil
+	return c, nil
 }
