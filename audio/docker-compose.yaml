@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+
+  gsp-monitor:
+    build:
+      context: . 
+      dockerfile: ./Dockerfile
+    container_name: gsp-monitor
+    restart: unless-stopped
+    environment:
+      - GSP_URL=${GSP_URL}
+      - GSP_DUR=4h
+      - GSP_SIZE=0.5
+      - GSP_PROM=true
+    ports:
+      - 13088:13088
+  
+  prom:
+    image: prom/prometheus
+    container_name: prom
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_SECRET}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
