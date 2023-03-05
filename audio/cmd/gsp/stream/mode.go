@@ -3,7 +3,8 @@ package stream
 type Mode int
 
 const (
-	Monitor Mode = iota
+	Unset Mode = iota
+	Monitor
 	Record
 	Filter
 )
