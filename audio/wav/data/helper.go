@@ -1,5 +1,7 @@
 package data
 
+// BitDepthTypes is a type constraint joining all the different
+// data types used by the supported bit depths
 type BitDepthTypes interface {
 	int8 | int16 | int32 | byte | int
 }
