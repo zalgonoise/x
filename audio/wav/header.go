@@ -5,6 +5,12 @@ import (
 	"encoding/binary"
 )
 
+// WavHeader describes the header of a WAV file (or buffer).
+//
+// The structure is defined as seen in the WAV file format, and can
+// be quickly encoded / decoded into binary format as-is
+//
+// Reference: http://soundfile.sapp.org/doc/WaveFormat/
 type WavHeader struct {
 	ChunkID       [4]byte // 1-4
 	ChunkSize     uint32  // 5-8
@@ -19,6 +25,8 @@ type WavHeader struct {
 	BitsPerSample uint16  // 35-36
 }
 
+// HeaderFrom extracts a WAV header from an input chunk of bytes; returning a
+// pointer to a WavHeader, and an error if the data is invalid
 func HeaderFrom(buf []byte) (*WavHeader, error) {
 	r := bytes.NewReader(buf)
 	var header = new(WavHeader)
@@ -33,6 +41,8 @@ func HeaderFrom(buf []byte) (*WavHeader, error) {
 	return header, nil
 }
 
+// Bytes casts a WavHeader as a slice of bytes, by binary-encoding the
+// object with a little-endian (LE) byte order
 func (h *WavHeader) Bytes() []byte {
 	buf := bytes.NewBuffer(make([]byte, 0, headerLen))
 	_ = binary.Write(buf, binary.LittleEndian, h)
