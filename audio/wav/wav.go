@@ -6,12 +6,26 @@ import (
 	"github.com/zalgonoise/x/audio/wav/data"
 )
 
+// Wav describes the structure of WAV-encoded audio data, containing
+// the WAV header (the audio metadata), a list of data.Chunk representing
+// WAV subchunks (allocated usually to "data", or the PCM audio buffer, but
+// also "junk"), and also a Data reference that is used as a pointer to the
+// currently active (PCM data) chunk
 type Wav struct {
 	Header *WavHeader
 	Chunks []data.Chunk
 	Data   data.Chunk
 }
 
+// New creates a new Wav, configured with the input sample rate `sampleRate`
+// (44100, 48000, etc), bit depth `bitDepth` (8, 16, 24 or 32), and a number of
+// channels `numChannles` (either 1 or 2, for mono and stereo).
+//
+// This call returns a pointer to a Wav, and an error which is raised if the input
+// data is invalid or unsupported.
+//
+// The returned Wav object will have its header set in every field except for
+// `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
 func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 	var err error
 	var errs []error

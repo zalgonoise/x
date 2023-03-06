@@ -2,6 +2,17 @@ package wav
 
 import "github.com/zalgonoise/x/audio/wav/data"
 
+// NewChunk is a factory for data.Chunk interfaces.
+//
+// The data.Chunk are interfaces wrapping different types, based on the
+// bit depth `bitDepth` value. These objects will store slices of integers of
+// different sizes (int8, int16, int32, and bytes for "junk"), and the
+// data.Chunk interface exposes the needed methods to work seamlessly with those
+// different data types
+//
+// Note: I wanted a cleaner approach to this using generics and type constraints,
+// but I was getting nowhere meaningful; and ended up breaking at a certain point
+// due to the way that Go handles a slice of a type and its conversions to a different type
 func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader) data.Chunk {
 	if subchunk != nil && string(subchunk.Subchunk2ID[:]) == junkSubchunkIDString {
 		bitDepth = 0

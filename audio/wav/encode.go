@@ -2,6 +2,13 @@ package wav
 
 import "fmt"
 
+// Read implements the io.Reader interface
+//
+// Read will write to the input slice of bytes `buf` the contents
+// of the Wav `w`.
+//
+// It returns the number of bytes written to the buffer, and an error if the buffer
+// is not big enough
 func (w *Wav) Read(buf []byte) (n int, err error) {
 	size, data := w.encode()
 	if len(buf) < size {
@@ -14,7 +21,8 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 	return size, nil
 }
 
-func (w *Wav) Bytes() ([]byte, error) {
+// Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding
+func (w *Wav) Bytes() []byte {
 	var n int
 	size, data := w.encode()
 
@@ -22,7 +30,7 @@ func (w *Wav) Bytes() ([]byte, error) {
 	for i := range data {
 		n += copy(buf[n:], data[i])
 	}
-	return buf, nil
+	return buf
 }
 
 func (w *Wav) encode() (size int, data [][]byte) {

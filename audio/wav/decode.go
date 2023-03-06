@@ -6,8 +6,16 @@ import (
 	"github.com/zalgonoise/x/audio/wav/data"
 )
 
+// Write implements the io.Writer interface
+//
+// Write will gradually build a Wav object from the data passed through the
+// slice of bytes `buf` input parameter. This method follows the lifetime of a
+// Wav file from start to finish, even if it is raw and without a header.
+//
+// The method returns the number of bytes read by the buffer, and an error if the
+// data is invalid (or too short)
 func (w *Wav) Write(buf []byte) (n int, err error) {
-	if len(buf) < headerLen {
+	if w.Header == nil && len(buf) < headerLen {
 		return 0, ErrShortDataBuffer
 	}
 
@@ -23,6 +31,8 @@ func (w *Wav) Write(buf []byte) (n int, err error) {
 	if err != nil && !errors.Is(err, ErrInvalidHeader) {
 		return n, err
 	}
+
+	// header is required beyond this point, as w.Header.BitsPerSample is necessary
 	if w.Header == nil {
 		return n, ErrMissingHeader
 	}
@@ -59,6 +69,9 @@ func (w *Wav) Write(buf []byte) (n int, err error) {
 	return n, nil
 }
 
+// Decode will parse the input slice of bytes `buf` and build a Wav object
+// with that data returning a pointer to one, and an error if the buffer is too
+// short, or if the data is invalid.
 func Decode(buf []byte) (w *Wav, err error) {
 	if len(buf) < headerLen {
 		return nil, ErrShortDataBuffer
