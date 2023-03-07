@@ -1,11 +1,14 @@
 package data
 
+// ChunkJunk is a Chunk used for storing "junk"-ID subchunk data
 type ChunkJunk struct {
 	*ChunkHeader
 	Data  []byte
 	Depth uint16
 }
 
+// Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
+// from raw bytes
 func (d *ChunkJunk) Parse(buf []byte) {
 	if d.Data == nil {
 		d.Data = buf
@@ -17,11 +20,19 @@ func (d *ChunkJunk) Parse(buf []byte) {
 	d.Data = append(d.Data, buf...)
 }
 
+// Generate will return a slice of bytes with the encoded PCM buffer
 func (d *ChunkJunk) Generate() []byte {
 	return d.Data
 }
 
+// Header returns the ChunkHeader of the Chunk
 func (d *ChunkJunk) Header() *ChunkHeader { return d.ChunkHeader }
-func (d *ChunkJunk) BitDepth() uint16     { return d.Depth }
-func (d *ChunkJunk) Reset()               { d.Data = nil }
-func (d *ChunkJunk) Value() []int         { return to[byte, int](d.Data) }
+
+// BitDepth returns the bit depth of the Chunk
+func (d *ChunkJunk) BitDepth() uint16 { return d.Depth }
+
+// Reset clears the data stored in the Chunk
+func (d *ChunkJunk) Reset() { d.Data = nil }
+
+// Value returns the PCM audio buffer from the Chunk, as a slice of int
+func (d *ChunkJunk) Value() []int { return to[byte, int](d.Data) }
