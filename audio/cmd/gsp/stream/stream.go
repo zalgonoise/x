@@ -10,6 +10,9 @@ import (
 	"github.com/zalgonoise/x/audio/wav"
 )
 
+// New creates a WAV stream from the input Config `cfg` and io.Reader `r`
+//
+// It returns a pointer to a wav.Buffer and an error if raised
 func New(cfg *Config, r io.Reader) (*wav.WavBuffer, error) {
 	w := wav.NewStream(r)
 	w.Ratio(cfg.BufferSize)
