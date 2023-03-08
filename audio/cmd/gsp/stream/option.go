@@ -10,13 +10,15 @@ type multiOption struct {
 	opts []Option
 }
 
+// Apply sets the configuration on the input Config `c`
 func (mo *multiOption) Apply(c *Config) {
 	for _, opt := range mo.opts {
 		opt.Apply(c)
 	}
 }
 
-func newMultiOption(opts ...Option) Option {
+// MultiOption merges a slice of Option into one
+func MultiOption(opts ...Option) Option {
 	if len(opts) == 0 {
 		return nil
 	}
@@ -36,38 +38,57 @@ func newMultiOption(opts ...Option) Option {
 
 type optURL string
 
+// Apply sets the configuration on the input Config `c`
 func (o optURL) Apply(c *Config) {
 	c.URL = (string)(o)
 }
 
+// WithURL returns an Option to set the Config URL as string `url`
 func WithURL(url string) Option {
+	if url == "" {
+		return nil
+	}
 	return optURL(url)
 }
 
 type optMode Mode
 
+// Apply sets the configuration on the input Config `c`
 func (o optMode) Apply(c *Config) {
 	c.Mode = (Mode)(o)
 }
 
+// WithMonitorMode returns an Option to set the Config Mode as Monitor
 func WithMonitorMode() Option {
 	return optMode(Monitor)
 }
+
+// WithRecordMode returns an Option to set the Config Mode as Record, configuring it with a string `path` and a
+// time.Duration `recTime`
 func WithRecordMode(path string, recTime time.Duration) Option {
-	if path == "" || recTime == 0 {
+	if path == "" {
 		return nil
 	}
-	return newMultiOption(
+	if recTime == 0 {
+		recTime = defaultRecTime
+	}
+	return MultiOption(
 		optMode(Record),
 		optDir(path),
 		optRecTime(recTime),
 	)
 }
+
+// WithFilterMode returns an Option to set the Config Mode as Filter, configuring it with an int `peak`,
+// a string `path` and a time.Duration `recTime`
 func WithFilterMode(peak int, path string, recTime time.Duration) Option {
-	if peak == 0 || path == "" || recTime == 0 {
+	if peak == 0 || path == "" {
 		return nil
 	}
-	return newMultiOption(
+	if recTime == 0 {
+		recTime = defaultRecTime
+	}
+	return MultiOption(
 		optPeak(peak),
 		optMode(Filter),
 		optDir(path),
@@ -75,6 +96,9 @@ func WithFilterMode(peak int, path string, recTime time.Duration) Option {
 	)
 }
 
+// WithMode returns an Option to set the Config Mode based on string `mode`; accepting also a pointer to
+// an int `peak` (if Filter is chosen); accepting a pointer to a string `path` (if Filter or Record is chosen);
+// and a pointer to a time.Duration `recTime` (if Filter or Record is chosen)
 func WithMode(mode string, peak *int, path *string, recTime *time.Duration) Option {
 	switch mode {
 	case "monitor":
@@ -96,26 +120,31 @@ func WithMode(mode string, peak *int, path *string, recTime *time.Duration) Opti
 
 type optDur time.Duration
 
+// Apply sets the configuration on the input Config `c`
 func (o optDur) Apply(c *Config) {
 	c.Dur = ptr.To((time.Duration)(o))
 }
 
+// WithDuration returns an Option to set the Config Dur as time.Duration `dur`
 func WithDuration(dur time.Duration) Option {
 	return optDur(dur)
 }
 
 type optRecTime time.Duration
 
+// Apply sets the configuration on the input Config `c`
 func (o optRecTime) Apply(c *Config) {
 	c.RecTime = ptr.To((time.Duration)(o))
 }
 
 type optBufferSize float64
 
+// Apply sets the configuration on the input Config `c`
 func (o optBufferSize) Apply(c *Config) {
 	c.BufferSize = (float64)(o)
 }
 
+// WithRatio returns an Option to set the Config BufferSize as float64 `ratio`
 func WithRatio(ratio float64) Option {
 	if ratio <= 0 {
 		return nil
@@ -125,12 +154,14 @@ func WithRatio(ratio float64) Option {
 
 type optPeak int
 
+// Apply sets the configuration on the input Config `c`
 func (o optPeak) Apply(c *Config) {
 	c.Peak = ptr.To((int)(o))
 }
 
 type optDir string
 
+// Apply sets the configuration on the input Config `c`
 func (o optDir) Apply(c *Config) {
 	if string(o[len(o)-4:]) == ".wav" {
 		o = optDir(o[:len(o)-4])
@@ -140,9 +171,12 @@ func (o optDir) Apply(c *Config) {
 
 type optProm bool
 
+// Apply sets the configuration on the input Config `c`
 func (o optProm) Apply(c *Config) {
 	c.Prom = (bool)(o)
 }
+
+// WithPrometheus returns an Option to set the Config Prom as bool `v`
 func WithPrometheus(v bool) Option {
 	return optProm(v)
 }
