@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// ParseFlags will consume the CLI flags as the app is executed
 func ParseFlags() (*Config, error) {
 	url := flag.String("url", "", "the URL for the WAV audio stream")
 	dur := flag.String("dur", "", "duration until the operation times out")
@@ -34,7 +35,7 @@ func ParseFlags() (*Config, error) {
 		}
 	}
 
-	c := newConfig(
+	c, _ := NewConfig(
 		WithURL(*url),
 		WithMode(*mode, peak, dir, rt),
 		WithRatio(*bufferSize),
@@ -48,6 +49,7 @@ func ParseFlags() (*Config, error) {
 	return c, nil
 }
 
+// ParseOSEnv will consume the OS environment variables associated with this app, when executed
 func ParseOSEnv() *Config {
 	var dur, recTime *time.Duration
 	var size float64
