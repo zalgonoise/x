@@ -14,6 +14,14 @@ const (
 	minBufferSize = 16
 )
 
+// WavBuffer is just like a Wav, but it's designed to support WAV audio streams
+// from an io.Writer.
+//
+// Besides sharing similar elements with a Wav object, it also stores a slice of
+// StreamFilter that are applied on each pass of data through the gbuf.RingBuffer.
+//
+// Its stored reader is also a public element of WavBuffer so that it can be reused
+// within a StreamFilter function.
 type WavBuffer struct {
 	Header  *WavHeader
 	Chunks  []data.Chunk
@@ -24,6 +32,11 @@ type WavBuffer struct {
 	ratio   float64
 }
 
+// Stream will kick off a stream read using the input context.Context `ctx` (for deadlines)
+// and the error channel `errCh` (to send errors to)
+//
+// While the Stream method is a blocking function, it is designed so it can be launched as a
+// goroutine
 func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
 	err := w.stream(ctx)
 	if err != nil {
@@ -32,6 +45,7 @@ func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
 	}
 }
 
+// NewStream uses the input io.Reader `r` to create a WavBuffer
 func NewStream(r io.Reader) *WavBuffer {
 	return &WavBuffer{
 		Reader: r,
@@ -39,19 +53,25 @@ func NewStream(r io.Reader) *WavBuffer {
 	}
 }
 
-func (w *WavBuffer) WithFilter(fns ...StreamFilter) {
+// WithFilter appends the input slice of StreamFilter `fns` to the WavBuffer Filters,
+// returning the same WavBuffer to allow chaining
+func (w *WavBuffer) WithFilter(fns ...StreamFilter) *WavBuffer {
 	for _, fn := range fns {
 		if fn != nil {
 			w.Filters = append(w.Filters, fn)
 		}
 	}
+	return w
 }
 
-func (w *WavBuffer) Ratio(ratio float64) {
+// Ratio sets the ring buffer's size ratio, short-circuiting if the input
+// float64 `ratio` is zero; returning the same WavBuffer to allow chaining
+func (w *WavBuffer) Ratio(ratio float64) *WavBuffer {
 	if ratio == 0 {
-		return
+		return w
 	}
 	w.ratio = ratio
+	return w
 }
 
 func (w *WavBuffer) parseHeader(buf []byte) error {
@@ -130,15 +150,16 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 	}
 }
 
-func (w *WavBuffer) Bytes() ([]byte, error) {
+// Bytes casts the WavBuffer data as a WAV-file-encoded slice of bytes
+func (w *WavBuffer) Bytes() []byte {
 	var n int
-	size, data := w.encode()
+	size, byteData := w.encode()
 
 	buf := make([]byte, size+32)
-	for i := range data {
-		n += copy(buf[n:], data[i])
+	for i := range byteData {
+		n += copy(buf[n:], byteData[i])
 	}
-	return buf, nil
+	return buf
 }
 
 func (w *WavBuffer) encode() (size int, byteData [][]byte) {
@@ -158,14 +179,18 @@ func (w *WavBuffer) encode() (size int, byteData [][]byte) {
 	return size, byteData
 }
 
+// Read implements the io.Reader interface
+//
+// It allows pushing the stored data to the input slice of bytes `buf`, returning
+// the number of bytes written and an error if raised (if the input buffer is too short)
 func (w *WavBuffer) Read(buf []byte) (n int, err error) {
-	size, data := w.encode()
+	size, byteData := w.encode()
 	if len(buf) < size {
 		return n, fmt.Errorf("%w: input buffer with length %d cannot fit %d bytes", ErrShortDataBuffer, len(buf), size)
 	}
 
-	for i := range data {
-		n += copy(buf[n:], data[i])
+	for i := range byteData {
+		n += copy(buf[n:], byteData[i])
 	}
 	return size, nil
 }
