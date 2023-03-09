@@ -34,6 +34,9 @@ func decode24BitLE(buf []byte) int32 {
 	return value
 }
 
+var _ = encode24BitLE // skip any unused declaration checks
+var _ = decode24BitLE // skip any unused declaration checks
+
 // can't inline a pointer cast and convert an array to a slice
 func append2Bytes(idx int, dst []byte, src [2]byte) {
 	if idx*2 < len(dst) {
