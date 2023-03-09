@@ -19,7 +19,7 @@ type Wav struct {
 
 // New creates a new Wav, configured with the input sample rate `sampleRate`
 // (44100, 48000, etc), bit depth `bitDepth` (8, 16, 24 or 32), and a number of
-// channels `numChannles` (either 1 or 2, for mono and stereo).
+// channels `numChannels` (either 1 or 2, for mono and stereo).
 //
 // This call returns a pointer to a Wav, and an error which is raised if the input
 // data is invalid or unsupported.
