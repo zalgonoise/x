@@ -30,10 +30,11 @@ type WavHeader struct {
 func HeaderFrom(buf []byte) (*WavHeader, error) {
 	r := bytes.NewReader(buf)
 	var header = new(WavHeader)
-	err := binary.Read(r, binary.LittleEndian, header)
-	if err != nil {
+
+	if err := binary.Read(r, binary.LittleEndian, header); err != nil {
 		return nil, err
 	}
+
 	if string(header.ChunkID[:]) != string(defaultChunkID[:]) ||
 		string(header.Format[:]) != string(defaultFormat[:]) {
 		return nil, ErrInvalidHeader
