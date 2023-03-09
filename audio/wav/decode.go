@@ -21,7 +21,7 @@ func (w *Wav) Write(buf []byte) (n int, err error) {
 
 	var (
 		header *WavHeader
-		end    int = headerLen
+		end    = headerLen
 	)
 
 	if header, err = HeaderFrom(buf[:end]); err == nil {
