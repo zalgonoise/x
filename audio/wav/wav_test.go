@@ -2,10 +2,9 @@ package wav_test
 
 import (
 	"bytes"
+	_ "embed"
 	"reflect"
 	"testing"
-
-	_ "embed"
 
 	. "github.com/zalgonoise/x/audio/wav"
 )
@@ -53,6 +52,7 @@ var testdata = [][]byte{
 	mono8bit176400,
 	stereo8bit44100,
 	stereo16bit44100,
+	stereo24bit44100,
 	stereo32bit44100,
 }
 
@@ -60,86 +60,91 @@ func BenchmarkWav(b *testing.B) {
 	for _, testdata := range [][]byte{
 		mono8bit44100,
 		mono16bit44100,
-		// mono24bit44100,
-		// mono32bit44100,
+		mono24bit44100,
+		mono32bit44100,
 	} {
-		b.Run("Decode", func(b *testing.B) {
-			var (
-				w   *Wav
-				err error
-			)
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+		b.Run(
+			"Decode", func(b *testing.B) {
+				var (
+					w   *Wav
+					err error
+				)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					w, err = Decode(testdata)
+					if err != nil {
+						b.Error(err)
+					}
+				}
+				_ = w
+			},
+		)
+		b.Run(
+			"Encode", func(b *testing.B) {
+				var (
+					w   *Wav
+					err error
+					buf []byte
+				)
+
 				w, err = Decode(testdata)
 				if err != nil {
 					b.Error(err)
+					return
 				}
-			}
-			_ = w
-		})
-		b.Run("Encode", func(b *testing.B) {
-			var (
-				w   *Wav
-				err error
-				buf []byte
-			)
 
-			w, err = Decode(testdata)
-			if err != nil {
-				b.Error(err)
-				return
-			}
-
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				buf, err = w.Bytes()
-				if err != nil {
-					b.Error(err)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					buf = w.Bytes()
 				}
-			}
-			_ = buf
-		})
+				_ = buf
+			},
+		)
 
-		b.Run("Write", func(b *testing.B) {
-			var (
-				w   *Wav
-				err error
-			)
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				w = new(Wav)
-				_, err = w.Write(testdata)
+		b.Run(
+			"Write", func(b *testing.B) {
+				var (
+					w   *Wav
+					err error
+				)
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					w = new(Wav)
+					_, err = w.Write(testdata)
+					if err != nil {
+						b.Error(err)
+						return
+					}
+				}
+				_ = w
+			},
+		)
+
+		b.Run(
+			"Read", func(b *testing.B) {
+				var (
+					w   *Wav
+					err error
+					buf []byte
+				)
+				w, err = Decode(testdata)
 				if err != nil {
 					b.Error(err)
 					return
 				}
-			}
-			_ = w
-		})
 
-		b.Run("Read", func(b *testing.B) {
-			var (
-				w   *Wav
-				err error
-				buf []byte
-			)
-			w, err = Decode(testdata)
-			if err != nil {
-				b.Error(err)
-				return
-			}
-
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				buf := make([]byte, len(testdata))
-				_, err = w.Read(buf)
-				if err != nil {
-					b.Error(err)
-					return
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					buf := make([]byte, len(testdata))
+					_, err = w.Read(buf)
+					if err != nil {
+						b.Error(err)
+						return
+					}
 				}
-			}
-			_ = buf
-		})
+				_ = buf
+			},
+		)
 	}
 }
 
@@ -181,11 +186,7 @@ func TestWavDecodeEncode(t *testing.T) {
 			t.Errorf("decoding error on index %d: %v", idx, err)
 			continue
 		}
-		buf, err := wav.Bytes()
-		if err != nil {
-			t.Errorf("encoding error on index %d: %v", idx, err)
-			continue
-		}
+		buf := wav.Bytes()
 		if len(buf) != len(test) {
 			t.Errorf("output length mismatch error on index %d: wanted %d ; got %d", idx, len(test), len(buf))
 
@@ -202,11 +203,7 @@ func TestWavDecodeEncode(t *testing.T) {
 			t.Errorf("2nd-pass decoding error on index %d: %v", idx, err)
 			continue
 		}
-		newBuf, err := newWav.Bytes()
-		if err != nil {
-			t.Errorf("2nd-pass encoding error on index %d: %v", idx, err)
-			continue
-		}
+		newBuf := newWav.Bytes()
 
 		cmp := bytes.Compare(buf, newBuf)
 		if cmp != 0 {

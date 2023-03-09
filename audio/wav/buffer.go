@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/zalgonoise/gbuf"
+
 	"github.com/zalgonoise/x/audio/wav/data"
 )
 
@@ -38,8 +39,7 @@ type WavBuffer struct {
 // While the Stream method is a blocking function, it is designed so it can be launched as a
 // goroutine
 func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
-	err := w.stream(ctx)
-	if err != nil {
+	if err := w.stream(ctx); err != nil {
 		errCh <- err
 		return
 	}
@@ -102,8 +102,7 @@ func (w *WavBuffer) processChunk(buf []byte) error {
 	v := w.Data.Value()
 	defer w.Data.Reset()
 	for _, fn := range w.Filters {
-		err := fn(w, v, buf)
-		if err != nil {
+		if err := fn(w, v, buf); err != nil {
 			return err
 		}
 	}
@@ -115,9 +114,11 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 	if _, err := w.Reader.Read(hbuf); err != nil {
 		return err
 	}
+
 	if err := w.parseHeader(hbuf); err != nil && w.Header == nil {
 		return err
 	}
+
 	bufferSize := int(w.Header.ByteRate)
 	if float64(bufferSize)*w.ratio >= minBufferSize {
 		bufferSize = int(float64(bufferSize) * w.ratio)
@@ -127,6 +128,7 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 	if _, err := w.Reader.Read(scbuf); err != nil {
 		return err
 	}
+
 	if err := w.parseSubChunk(scbuf); err != nil {
 		return err
 	}
