@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/gio"
+
 	"github.com/zalgonoise/x/audio/wav/data"
 )
 
@@ -39,8 +40,7 @@ func MaxValuesTo(writer gio.Writer[int]) StreamFilter {
 				max[0] = data[idx]
 			}
 		}
-		_, err := writer.Write(max)
-		if err != nil {
+		if _, err := writer.Write(max); err != nil {
 			return err
 		}
 		return nil
@@ -70,8 +70,7 @@ func MinValuesTo(writer gio.Writer[int]) StreamFilter {
 				min[0] = data[idx]
 			}
 		}
-		_, err := writer.Write(min)
-		if err != nil {
+		if _, err := writer.Write(min); err != nil {
 			return err
 		}
 		return nil
@@ -88,8 +87,7 @@ func LevelThreshold(peak int, fn StreamFilter) StreamFilter {
 		return func(w *WavBuffer, data []int, raw []byte) error {
 			for idx := range data {
 				if data[idx] <= peak {
-					err := fn(w, data, raw)
-					if err != nil {
+					if err := fn(w, data, raw); err != nil {
 						return err
 					}
 					return nil
@@ -101,8 +99,7 @@ func LevelThreshold(peak int, fn StreamFilter) StreamFilter {
 	return func(w *WavBuffer, data []int, raw []byte) error {
 		for idx := range data {
 			if data[idx] >= peak {
-				err := fn(w, data, raw)
-				if err != nil {
+				if err := fn(w, data, raw); err != nil {
 					return err
 				}
 				return nil
@@ -126,8 +123,7 @@ func LevelThresholdFn(peak int, alertFn func(int), fn StreamFilter) StreamFilter
 			for idx := range data {
 				if data[idx] <= peak {
 					alertFn(data[idx])
-					err := fn(w, data, raw)
-					if err != nil {
+					if err := fn(w, data, raw); err != nil {
 						return err
 					}
 					return nil
@@ -140,8 +136,7 @@ func LevelThresholdFn(peak int, alertFn func(int), fn StreamFilter) StreamFilter
 		for idx := range data {
 			if data[idx] >= peak {
 				alertFn(data[idx])
-				err := fn(w, data, raw)
-				if err != nil {
+				if err := fn(w, data, raw); err != nil {
 					return err
 				}
 				return nil
@@ -187,31 +182,27 @@ func FlushFor(writer io.Writer, dur time.Duration) StreamFilter {
 		blockSize := (int64)(dur) / rate
 
 		w.Header.ChunkSize = uint32(blockSize) + uint32(len(raw)) + 4
-		_, err = writer.Write(w.Header.Bytes())
-		if err != nil {
+		if _, err = writer.Write(w.Header.Bytes()); err != nil {
 			return err
 		}
 
 		dataHeader := data.NewDataHeader()
 		dataHeader.Subchunk2Size = uint32(blockSize) + uint32(len(raw))
-		_, err = writer.Write(dataHeader.Bytes())
-		if err != nil {
+		if _, err = writer.Write(dataHeader.Bytes()); err != nil {
 			return err
 		}
 
-		_, err = writer.Write(raw)
-		if err != nil {
+		if _, err = writer.Write(raw); err != nil {
 			return err
 		}
 
 		rec := bytes.NewBuffer(make([]byte, 0, blockSize))
 		r := io.LimitReader(w.Reader, blockSize)
-		_, err = rec.ReadFrom(r)
-		if err != nil && !errors.Is(err, io.EOF) {
+		if _, err = rec.ReadFrom(r); err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
-		_, err = writer.Write(rec.Bytes())
-		if err != nil {
+
+		if _, err = writer.Write(rec.Bytes()); err != nil {
 			return err
 		}
 
@@ -237,40 +228,31 @@ func FlushToFileFor(name string, dur time.Duration) StreamFilter {
 		blockSize := (int64)(dur) / rate
 
 		w.Header.ChunkSize = uint32(blockSize) + uint32(len(raw)) + 4
-		_, err = writer.Write(w.Header.Bytes())
-		if err != nil {
+		if _, err = writer.Write(w.Header.Bytes()); err != nil {
 			return err
 		}
 
 		dataHeader := data.NewDataHeader()
 		dataHeader.Subchunk2Size = uint32(blockSize) + uint32(len(raw))
-		_, err = writer.Write(dataHeader.Bytes())
-		if err != nil {
+		if _, err = writer.Write(dataHeader.Bytes()); err != nil {
 			return err
 		}
 
-		_, err = writer.Write(raw)
-		if err != nil {
+		if _, err = writer.Write(raw); err != nil {
 			return err
 		}
 
 		rec := bytes.NewBuffer(make([]byte, 0, blockSize))
 		r := io.LimitReader(w.Reader, blockSize)
-		_, err = rec.ReadFrom(r)
-		if err != nil && !errors.Is(err, io.EOF) {
-			return err
-		}
-		_, err = writer.Write(rec.Bytes())
-		if err != nil {
+		if _, err = rec.ReadFrom(r); err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
-		err = writer.Close()
-		if err != nil {
+		if _, err = writer.Write(rec.Bytes()); err != nil {
 			return err
 		}
 
-		return nil
+		return writer.Close()
 	}
 }
 
@@ -289,7 +271,7 @@ func FlushCh(ch chan<- *Wav) StreamFilter {
 	}
 }
 
-// FlushFor creates a new Wav object for the input data, then keeps
+// FlushChFor creates a new Wav object for the input data, then keeps
 // recording from the WavBuffer reader for `dur` duration.
 //
 // When done, it sends the created Wav to the input Wav channel `ch`
@@ -306,7 +288,9 @@ func FlushChFor(ch chan<- *Wav, dur time.Duration) StreamFilter {
 		blockSize := (int64)(dur) / rate
 		r := io.LimitReader(w.Reader, blockSize)
 		buf := bytes.NewBuffer(make([]byte, 0, blockSize))
-		_, err = io.Copy(buf, r)
+		if _, err = io.Copy(buf, r); err != nil {
+			return err
+		}
 		wav.Data.Parse(buf.Bytes())
 		ch <- wav
 		return nil
