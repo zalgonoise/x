@@ -1,7 +1,6 @@
 package wav
 
 const (
-	dataSubchunkIDString = "data"
 	junkSubchunkIDString = "junk"
 
 	headerLen = 36
