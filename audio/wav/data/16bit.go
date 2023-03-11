@@ -20,8 +20,8 @@ func (d *Chunk16bit) Parse(buf []byte) {
 		}
 		return
 	}
-	new := *(*[]int16)(unsafe.Pointer(&buf))
-	d.Data = append(d.Data, new[:len(buf)/2]...)
+	newData := *(*[]int16)(unsafe.Pointer(&buf))
+	d.Data = append(d.Data, newData[:len(buf)/2]...)
 }
 
 // Generate will return a slice of bytes with the encoded PCM buffer
