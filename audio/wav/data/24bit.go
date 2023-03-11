@@ -1,6 +1,8 @@
 package data
 
-import "unsafe"
+import (
+	"unsafe"
+)
 
 // Chunk24bit is a Chunk used for 24 bit-depth PCM buffers
 type Chunk24bit struct {
@@ -13,18 +15,31 @@ type Chunk24bit struct {
 // from raw bytes
 func (d *Chunk24bit) Parse(buf []byte) {
 	if d.Data == nil {
-		d.Data = conv(buf, 3, func(buf []byte) int32 {
-			return decode24BitLE(buf)
-		})
+		buf32bit := copy24to32(buf)
+		d.Data = *(*[]int32)(unsafe.Pointer(&buf32bit))
+		d.Data = d.Data[:len(buf32bit)/4]
+		for i := range d.Data {
+			if d.Data[i]&0x00800000 != 0 {
+				d.Data[i] |= ^0xffffff // handle signed integers
+			}
+		}
+
 		if d.Subchunk2Size == 0 {
 			d.Subchunk2Size = uint32(len(buf))
 		}
 		return
 	}
 
-	d.Data = append(d.Data, conv(buf, 3, func(buf []byte) int32 {
-		return decode24BitLE(buf)
-	})...)
+	buf32bit := copy24to32(buf)
+	newData := *(*[]int32)(unsafe.Pointer(&buf32bit))
+	newData = newData[:len(buf32bit)/4]
+	for i := range newData {
+		if newData[i]&0x00800000 != 0 {
+			newData[i] |= ^0xffffff // handle signed integers
+		}
+	}
+
+	d.Data = append(d.Data, newData...)
 }
 
 // Generate will return a slice of bytes with the encoded PCM buffer

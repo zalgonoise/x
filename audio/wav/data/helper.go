@@ -6,14 +6,6 @@ type BitDepthTypes interface {
 	int8 | int16 | int32 | byte | int
 }
 
-func conv[F, T BitDepthTypes](a []F, steps int, fn func([]F) T) []T {
-	out := make([]T, len(a)/steps)
-	for i, j := 0, 0; i+steps-1 < len(a); i, j = i+steps, j+1 {
-		out[j] = fn(a[i : i+steps])
-	}
-	return out
-}
-
 func to[F, T BitDepthTypes](from []F) []T {
 	out := make([]T, len(from))
 	for i := range from {
@@ -22,20 +14,15 @@ func to[F, T BitDepthTypes](from []F) []T {
 	return out
 }
 
-func encode24BitLE(buf []byte, v int32) []byte {
-	return append(buf, byte(v), byte(v>>8), byte(v>>16))
-}
-
-func decode24BitLE(buf []byte) int32 {
-	value := int32(buf[0]) | (int32(buf[1]) << 8) | (int32(buf[2]) << 16)
-	if value&0x00800000 != 0 {
-		value |= -16777216 // handle signed integers
+func copy24to32(b []byte) []byte {
+	out := make([]byte, len(b)+len(b)/3)
+	for i, j := 0, 0; i < len(b); i, j = i+3, j+1 {
+		copy(out[j:], b[i:i+3])
+		j += 3
+		out[j] = 0
 	}
-	return value
+	return out
 }
-
-var _ = encode24BitLE // skip any unused declaration checks
-var _ = decode24BitLE // skip any unused declaration checks
 
 // can't inline a pointer cast and convert an array to a slice
 func append2Bytes(idx int, dst []byte, src [2]byte) {
