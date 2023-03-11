@@ -219,6 +219,24 @@ func TestWavDecodeEncode(t *testing.T) {
 	}
 }
 
+func TestWavOutputCompare(t *testing.T) {
+	for idx, test := range testdata {
+		wav := new(Wav)
+		_, err := wav.Write(test)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		b := wav.Bytes()
+		cmp := bytes.Compare(test, b)
+		if cmp != 0 {
+			t.Errorf("idx #%d: comparison failed with %d: len wants %d ; len got %d", idx, cmp, len(test), len(b))
+			return
+		}
+	}
+
+}
+
 func TestWavWriteRead(t *testing.T) {
 	for idx, test := range testdata {
 		wav := new(Wav)
