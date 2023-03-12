@@ -39,6 +39,8 @@ type Chunk interface {
 	Reset()
 	// Value returns the PCM audio buffer from the Chunk, as a slice of int
 	Value() []int
+	// Float returns the PCM audio buffer from the Chunk, as a slice of float64
+	Float() []float64
 }
 
 // ChunkHeader describes the (raw) structure of a WAV file subchunk, which usually
