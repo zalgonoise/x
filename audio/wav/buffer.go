@@ -99,10 +99,9 @@ func (w *WavBuffer) processChunk(buf []byte) error {
 	if len(w.Filters) == 0 {
 		return nil
 	}
-	v := w.Data.Value()
 	defer w.Data.Reset()
 	for _, fn := range w.Filters {
-		if err := fn(w, v, buf); err != nil {
+		if err := fn(w, buf); err != nil {
 			return err
 		}
 	}
