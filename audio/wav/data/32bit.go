@@ -2,6 +2,11 @@ package data
 
 import "unsafe"
 
+const (
+	maxInt32 float64 = 1<<31 - 1
+	// minInt32 float64 = ^1<<30 + 1
+)
+
 // Chunk32bit is a Chunk used for 32 bit-depth PCM buffers
 type Chunk32bit struct {
 	*ChunkHeader
@@ -44,3 +49,11 @@ func (d *Chunk32bit) Reset() { d.Data = nil }
 
 // Value returns the PCM audio buffer from the Chunk, as a slice of int
 func (d *Chunk32bit) Value() []int { return to[int32, int](d.Data) }
+
+func (d *Chunk32bit) Float() []float64 {
+	return conv[int32, float64](
+		d.Data, func(v int32) float64 {
+			return float64(v) / maxInt32
+		},
+	)
+}

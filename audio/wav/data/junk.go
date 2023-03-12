@@ -36,3 +36,7 @@ func (d *ChunkJunk) Reset() { d.Data = nil }
 
 // Value returns the PCM audio buffer from the Chunk, as a slice of int
 func (d *ChunkJunk) Value() []int { return to[byte, int](d.Data) }
+
+func (d *ChunkJunk) Float() []float64 {
+	return nil
+}

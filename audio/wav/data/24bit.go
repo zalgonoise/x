@@ -4,6 +4,11 @@ import (
 	"unsafe"
 )
 
+const (
+	maxInt24 float64 = 1<<23 - 1
+	// minInt24 float64 = ^1<<22 + 1
+)
+
 // Chunk24bit is a Chunk used for 24 bit-depth PCM buffers
 type Chunk24bit struct {
 	*ChunkHeader
@@ -62,3 +67,11 @@ func (d *Chunk24bit) Reset() { d.Data = nil }
 
 // Value returns the PCM audio buffer from the Chunk, as a slice of int
 func (d *Chunk24bit) Value() []int { return to[int32, int](d.Data) }
+
+func (d *Chunk24bit) Float() []float64 {
+	return conv[int32, float64](
+		d.Data, func(v int32) float64 {
+			return float64(v) / maxInt24
+		},
+	)
+}
