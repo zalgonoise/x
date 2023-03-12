@@ -3,7 +3,15 @@ package data
 // BitDepthTypes is a type constraint joining all the different
 // data types used by the supported bit depths
 type BitDepthTypes interface {
-	int8 | int16 | int32 | byte | int
+	int8 | int16 | int32 | byte | int | float64
+}
+
+func conv[F, T BitDepthTypes](from []F, fn func(F) T) []T {
+	out := make([]T, len(from))
+	for i := range from {
+		out[i] = fn(from[i])
+	}
+	return out
 }
 
 func to[F, T BitDepthTypes](from []F) []T {
