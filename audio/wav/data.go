@@ -1,6 +1,8 @@
 package wav
 
-import "github.com/zalgonoise/x/audio/wav/data"
+import (
+	"github.com/zalgonoise/x/audio/wav/data"
+)
 
 // NewChunk is a factory for data.Chunk interfaces.
 //
