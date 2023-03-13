@@ -20,11 +20,19 @@ type streamClient struct {
 	ctx    context.Context
 }
 
+// Doer interface describes an object with a http.Client with a http.Request
+// and a context.Context.
+//
+// The exposed methods allow issuing the http.Request, as well as one to
+// retrieve its set context.Context
 type Doer interface {
+	// Do issues the http.Request in the Doer, returning a http.Response and an error
 	Do() (*http.Response, error)
+	// Context returns the set context.Context
 	Context() context.Context
 }
 
+// Do issues the http.Request in the Doer, returning a http.Response and an error
 func (c *streamClient) Do() (*http.Response, error) {
 	if c.client == nil {
 		return http.DefaultClient.Do(c.req)
@@ -32,10 +40,14 @@ func (c *streamClient) Do() (*http.Response, error) {
 	return c.client.Do(c.req)
 }
 
+// Context returns the set context.Context
 func (c *streamClient) Context() context.Context {
 	return c.ctx
 }
 
+// New creates a basic Doer interface, based on the input URL `url` and timeout `timeout`
+//
+// This Doer is based on the default http.Client from Go's standard library
 func New(url string, timeout *time.Duration) (Doer, context.CancelFunc, error) {
 	if url == "" {
 		return nil, nil, ErrEmptyURL
@@ -66,6 +78,8 @@ func New(url string, timeout *time.Duration) (Doer, context.CancelFunc, error) {
 	return doer, cancel, nil
 }
 
+// WithClient is just like New, but it is configured with the input
+// http.Client `client`, instead
 func WithClient(url string, timeout *time.Duration, client *http.Client) (Doer, context.CancelFunc, error) {
 	doer, cancel, err := New(url, timeout)
 	if err != nil {
