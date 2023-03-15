@@ -53,7 +53,7 @@ const (
 //
 // 2. Ensuring the constant is the same value as the slice capacity (return an error if it doesn't match)
 //
-// 3. Return the first value of the slice, casted as an array of the needed size:
+// 3. Return the first value of the slice, cast as an array of the needed size:
 // *(*[{your-capacity}]T)(unsafe.Pointer(uintptr(sliceData[0])))
 //
 // So, if you needed to convert a 4-item-long ints slice into a 4-item-array, you could do so, and expect:
