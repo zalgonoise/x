@@ -6,13 +6,17 @@ import (
 	"time"
 )
 
+type err string
+
+func (e err) Error() string {
+	return (string)(e)
+}
+
 const (
 	minFailures    = 2
 	minInFlight    = 3
 	defaultTimeout = 100 * time.Millisecond
-)
 
-var (
 	ErrBreakerIsOpen err = "circuit breaker is open"
 )
 
