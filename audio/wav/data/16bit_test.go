@@ -19,6 +19,77 @@ var (
 	test16bitHeader = []byte{0x64, 0x61, 0x74, 0x61, 0x8, 0x49, 0x0, 0x0}
 )
 
+func BenchmarkChunk16bit(b *testing.B) {
+	b.Run(
+		"Parse", func(b *testing.B) {
+			b.Run(
+				"NewBuffer", func(b *testing.B) {
+					header, err := HeaderFrom(test16bitHeader)
+					if err != nil {
+						b.Error(err)
+						return
+					}
+
+					var chunk *Chunk16bit
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						chunk = &Chunk16bit{
+							ChunkHeader: header,
+							Depth:       16, // set by NewChunk()
+						}
+						chunk.Parse(test16bitPCM)
+					}
+					_ = chunk
+				},
+			)
+			b.Run(
+				"Append", func(b *testing.B) {
+					header, err := HeaderFrom(test16bitHeader)
+					if err != nil {
+						b.Error(err)
+						return
+					}
+
+					var chunk = &Chunk16bit{
+						ChunkHeader: header,
+						Depth:       16, // set by NewChunk()
+					}
+					chunk.Parse(test16bitPCM)
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						chunk.Parse(test16bitPCM)
+					}
+					_ = chunk
+				},
+			)
+		},
+	)
+	b.Run(
+		"Generate", func(b *testing.B) {
+			header, err := HeaderFrom(test16bitHeader)
+			if err != nil {
+				b.Error(err)
+				return
+			}
+
+			var (
+				chunk = &Chunk16bit{
+					ChunkHeader: header,
+					Depth:       16, // set by NewChunk()
+				}
+				buf []byte
+			)
+			chunk.Parse(test16bitPCM)
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				buf = chunk.Generate()
+			}
+			_ = buf
+		},
+	)
+}
+
 func Test16bitHeader(t *testing.T) {
 	header, err := HeaderFrom(test16bitHeader)
 	if err != nil {
