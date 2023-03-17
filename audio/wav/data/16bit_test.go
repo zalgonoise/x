@@ -25,7 +25,7 @@ func Test16bitHeader(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	chunk := &Chunk8bit{
+	chunk := &Chunk16bit{
 		ChunkHeader: header,
 		Depth:       16, // set by NewChunk()
 	}
@@ -45,7 +45,7 @@ func Test16bitParse(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	chunk := &Chunk8bit{
+	chunk := &Chunk16bit{
 		ChunkHeader: header,
 	}
 
