@@ -39,7 +39,7 @@ func (w *Wav) encode() (size int, data [][]byte) {
 
 	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
 		data[j] = w.Chunks[i].Header().Bytes()
-		data[j+1] = w.Chunks[i].Generate()
+		data[j+1] = w.Chunks[i].Bytes()
 		size += 8 + len(data[j+1])
 	}
 	if w.Header.ChunkSize == 0 {

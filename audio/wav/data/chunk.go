@@ -3,6 +3,8 @@ package data
 import (
 	"bytes"
 	"encoding/binary"
+
+	"github.com/zalgonoise/x/audio/wav/forms"
 )
 
 type err string
@@ -29,8 +31,8 @@ type Chunk interface {
 	// Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
 	// from raw bytes
 	Parse(buf []byte)
-	// Generate will return a slice of bytes with the encoded PCM buffer
-	Generate() []byte
+	// Bytes will return a slice of bytes with the encoded PCM buffer
+	Bytes() []byte
 	// Header returns the ChunkHeader of the Chunk
 	Header() *ChunkHeader
 	// BitDepth returns the bit depth of the Chunk
@@ -41,6 +43,8 @@ type Chunk interface {
 	Value() []int
 	// Float returns the PCM audio buffer from the Chunk, as a slice of float64
 	Float() []float64
+	// Generate creates a wave of the given form, frequency and duration within this Chunk
+	Generate(waveType forms.Type, freq, duration, sampleRate float64)
 }
 
 // ChunkHeader describes the (raw) structure of a WAV file subchunk, which usually

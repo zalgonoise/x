@@ -169,7 +169,7 @@ func (w *WavBuffer) encode() (size int, byteData [][]byte) {
 
 	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
 		byteData[j] = w.Chunks[i].Header().Bytes()
-		byteData[j+1] = w.Chunks[i].Generate()
+		byteData[j+1] = w.Chunks[i].Bytes()
 		size += 8 + len(byteData[j+1])
 	}
 
