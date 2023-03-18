@@ -23,6 +23,7 @@ services:
       - 9090:9090
     volumes:
       - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./prometheus/data:/prometheus
 
   grafana:
     image: grafana/grafana
@@ -32,4 +33,4 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_SECRET}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/data:/var/lib/grafana
