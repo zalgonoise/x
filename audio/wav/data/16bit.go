@@ -1,6 +1,10 @@
 package data
 
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/zalgonoise/x/audio/wav/forms"
+)
 
 const (
 	maxInt16 float64 = 1<<15 - 1
@@ -29,8 +33,8 @@ func (d *Chunk16bit) Parse(buf []byte) {
 	d.Data = append(d.Data, newData[:len(buf)/2]...)
 }
 
-// Generate will return a slice of bytes with the encoded PCM buffer
-func (d *Chunk16bit) Generate() []byte {
+// Bytes will return a slice of bytes with the encoded PCM buffer
+func (d *Chunk16bit) Bytes() []byte {
 	data := make([]byte, len(d.Data)*2)
 	for i := range d.Data {
 		append2Bytes(i, data, *(*[2]byte)(unsafe.Pointer(&d.Data[i])))
@@ -57,4 +61,28 @@ func (d *Chunk16bit) Float() []float64 {
 			return float64(v) / maxInt16
 		},
 	)
+}
+
+func (d *Chunk16bit) Generate(formType forms.Type, freq, duration, sampleRate float64) {
+	buffer := make([]int16, int(sampleRate*duration))
+	fn := formFunc16bit(formType)
+	if fn == nil {
+		return
+	}
+	fn(buffer, freq, float64(d.Depth), sampleRate)
+
+	if d.Data == nil {
+		d.Data = buffer
+		return
+	}
+	d.Data = append(d.Data, buffer...)
+}
+
+func formFunc16bit(typ forms.Type) forms.FormFunc[int16] {
+	switch typ {
+	case forms.SineWave:
+		return forms.Sine[int16]
+	default:
+		return nil
+	}
 }
