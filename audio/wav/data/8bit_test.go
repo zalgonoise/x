@@ -65,7 +65,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 		},
 	)
 	b.Run(
-		"Generate", func(b *testing.B) {
+		"Bytes", func(b *testing.B) {
 			header, err := HeaderFrom(test8bitHeader)
 			if err != nil {
 				b.Error(err)
@@ -83,7 +83,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				buf = chunk.Generate()
+				buf = chunk.Bytes()
 			}
 			_ = buf
 		},
@@ -121,7 +121,7 @@ func Test8bitParse(t *testing.T) {
 	}
 
 	chunk.Parse(test8bitPCM)
-	buf := chunk.Generate()
+	buf := chunk.Bytes()
 	if !bytes.Equal(test8bitPCM, buf) {
 		t.Errorf("output mismatch error: input is not the same as output")
 	}

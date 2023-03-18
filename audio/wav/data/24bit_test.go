@@ -81,7 +81,7 @@ func BenchmarkChunk24bit(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				buf = chunk.Generate()
+				buf = chunk.Bytes()
 			}
 			_ = buf
 		},
@@ -119,7 +119,7 @@ func Test24bitParse(t *testing.T) {
 	}
 
 	chunk.Parse(test24bitPCM)
-	buf := chunk.Generate()
+	buf := chunk.Bytes()
 	if !bytes.Equal(test24bitPCM, buf) {
 		t.Errorf("output mismatch error: input is not the same as output")
 	}

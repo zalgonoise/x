@@ -83,7 +83,7 @@ func BenchmarkChunk16bit(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				buf = chunk.Generate()
+				buf = chunk.Bytes()
 			}
 			_ = buf
 		},
@@ -121,7 +121,7 @@ func Test16bitParse(t *testing.T) {
 	}
 
 	chunk.Parse(test16bitPCM)
-	buf := chunk.Generate()
+	buf := chunk.Bytes()
 	if !bytes.Equal(test16bitPCM, buf) {
 		t.Errorf("output mismatch error: input is not the same as output")
 	}
