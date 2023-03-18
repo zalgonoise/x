@@ -2,6 +2,8 @@ package data
 
 import (
 	"unsafe"
+
+	"github.com/zalgonoise/x/audio/wav/forms"
 )
 
 const (
@@ -30,8 +32,8 @@ func (d *Chunk8bit) Parse(buf []byte) {
 	d.Data = append(d.Data, *(*[]int8)(unsafe.Pointer(&buf))...)
 }
 
-// Generate will return a slice of bytes with the encoded PCM buffer
-func (d *Chunk8bit) Generate() []byte {
+// Bytes will return a slice of bytes with the encoded PCM buffer
+func (d *Chunk8bit) Bytes() []byte {
 	return *(*[]byte)(unsafe.Pointer(&d.Data))
 }
 
@@ -53,4 +55,28 @@ func (d *Chunk8bit) Float() []float64 {
 			return float64(v) / maxInt8
 		},
 	)
+}
+
+func (d *Chunk8bit) Generate(formType forms.Type, freq, duration, sampleRate float64) {
+	buffer := make([]int8, int(sampleRate*duration))
+	fn := formFunc8bit(formType)
+	if fn == nil {
+		return
+	}
+	fn(buffer, freq, float64(d.Depth), sampleRate)
+
+	if d.Data == nil {
+		d.Data = buffer
+		return
+	}
+	d.Data = append(d.Data, buffer...)
+}
+
+func formFunc8bit(typ forms.Type) forms.FormFunc[int8] {
+	switch typ {
+	case forms.SineWave:
+		return forms.Sine[int8]
+	default:
+		return nil
+	}
 }
