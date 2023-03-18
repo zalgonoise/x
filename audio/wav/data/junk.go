@@ -1,5 +1,9 @@
 package data
 
+import (
+	"github.com/zalgonoise/x/audio/wav/forms"
+)
+
 // ChunkJunk is a Chunk used for storing "junk"-ID subchunk data
 type ChunkJunk struct {
 	*ChunkHeader
@@ -20,8 +24,8 @@ func (d *ChunkJunk) Parse(buf []byte) {
 	d.Data = append(d.Data, buf...)
 }
 
-// Generate will return a slice of bytes with the encoded PCM buffer
-func (d *ChunkJunk) Generate() []byte {
+// Bytes will return a slice of bytes with the encoded PCM buffer
+func (d *ChunkJunk) Bytes() []byte {
 	return d.Data
 }
 
@@ -40,3 +44,5 @@ func (d *ChunkJunk) Value() []int { return to[byte, int](d.Data) }
 func (d *ChunkJunk) Float() []float64 {
 	return nil
 }
+
+func (d *ChunkJunk) Generate(_ forms.Type, _, _, _ float64) {}
