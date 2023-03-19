@@ -1,9 +1,10 @@
 package data
 
 import (
+	"time"
 	"unsafe"
 
-	"github.com/zalgonoise/x/audio/wav/forms"
+	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 const (
@@ -63,13 +64,13 @@ func (d *Chunk16bit) Float() []float64 {
 	)
 }
 
-func (d *Chunk16bit) Generate(formType forms.Type, freq, duration, sampleRate float64) {
-	buffer := make([]int16, int(sampleRate*duration))
-	fn := formFunc16bit(formType)
+func (d *Chunk16bit) Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration) {
+	buffer := make([]int16, int(float64(sampleRate)*float64(dur)/float64(time.Second)))
+	fn := formFunc16bit(waveType)
 	if fn == nil {
 		return
 	}
-	fn(buffer, freq, float64(d.Depth), sampleRate)
+	fn(buffer, float64(freq), float64(d.Depth), float64(sampleRate))
 
 	if d.Data == nil {
 		d.Data = buffer
@@ -78,10 +79,16 @@ func (d *Chunk16bit) Generate(formType forms.Type, freq, duration, sampleRate fl
 	d.Data = append(d.Data, buffer...)
 }
 
-func formFunc16bit(typ forms.Type) forms.FormFunc[int16] {
+func formFunc16bit(typ osc.Type) osc.Oscillator[int16] {
 	switch typ {
-	case forms.SineWave:
-		return forms.Sine[int16]
+	case osc.SineWave:
+		return osc.Sine[int16]
+	case osc.SquareWave:
+		return osc.Square[int16]
+	case osc.TriangleWave:
+		return osc.Triangle[int16]
+	case osc.SawtoothWave:
+		return osc.Sawtooth[int16]
 	default:
 		return nil
 	}

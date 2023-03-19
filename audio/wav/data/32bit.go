@@ -1,9 +1,10 @@
 package data
 
 import (
+	"time"
 	"unsafe"
 
-	"github.com/zalgonoise/x/audio/wav/forms"
+	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 const (
@@ -62,13 +63,13 @@ func (d *Chunk32bit) Float() []float64 {
 	)
 }
 
-func (d *Chunk32bit) Generate(formType forms.Type, freq, duration, sampleRate float64) {
-	buffer := make([]int32, int(sampleRate*duration))
-	fn := formFunc24and32bit(formType)
+func (d *Chunk32bit) Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration) {
+	buffer := make([]int32, int(float64(sampleRate)*float64(dur)/float64(time.Second)))
+	fn := formFunc24and32bit(waveType)
 	if fn == nil {
 		return
 	}
-	fn(buffer, freq, float64(d.Depth), sampleRate)
+	fn(buffer, float64(freq), float64(d.Depth), float64(sampleRate))
 
 	if d.Data == nil {
 		d.Data = buffer
