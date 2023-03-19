@@ -3,8 +3,9 @@ package data
 import (
 	"bytes"
 	"encoding/binary"
+	"time"
 
-	"github.com/zalgonoise/x/audio/wav/forms"
+	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 type err string
@@ -44,7 +45,7 @@ type Chunk interface {
 	// Float returns the PCM audio buffer from the Chunk, as a slice of float64
 	Float() []float64
 	// Generate creates a wave of the given form, frequency and duration within this Chunk
-	Generate(waveType forms.Type, freq, duration, sampleRate float64)
+	Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration)
 }
 
 // ChunkHeader describes the (raw) structure of a WAV file subchunk, which usually
