@@ -1,6 +1,7 @@
 package osc_test
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -18,6 +19,73 @@ func TestSine(t *testing.T) {
 				t.Errorf("expected chunk data to be generated")
 			}
 			t.Logf("%+v", chunk.Value()[:1024])
+		},
+	)
+}
+
+func BenchmarkSineCompare(b *testing.B) {
+	var (
+		sampleRate float64 = 44100
+		depth      float64 = 16
+		freq       float64 = 2000
+		halfPeriod         = int(sampleRate / freq)
+	)
+
+	const (
+		tau float64 = math.Pi * 2
+	)
+
+	b.Run(
+		"sineImplementation", func(b *testing.B) {
+			// sine function has been improved in performance by setting Tau (2Pi) as a constant
+			// so that the multiplication isn't repeatedly computed; as well as bit-shifting a power of 2
+			// instead of calling math.Pow
+			//
+			// Before / After:
+			//
+			// goos: linux
+			// goarch: amd64
+			// cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
+			// BenchmarkSineCompare/sineImplementation/sine_20_3_23-4           1281918              1969 ns/op              48 B/op          1 allocs/op
+			// BenchmarkSineCompare/sineImplementation/sine_replacement-4       2662305               788.8 ns/op            48 B/op          1 allocs/op
+			b.Run(
+				"sine_20_3_23", func(b *testing.B) {
+					fn := func(buffer []int16, freq, depth, sampleRate float64) {
+						for i := 0; i < len(buffer); i++ {
+							sample := math.Sin(2.0 * math.Pi * freq * float64(i) / sampleRate)
+							buffer[i] = int16(sample * (math.Pow(2.0, depth)/2.0 - 1.0))
+						}
+					}
+					var buffer []int16
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						buffer = make([]int16, halfPeriod)
+						fn(buffer, freq, depth, sampleRate)
+					}
+					_ = buffer
+				},
+			)
+			b.Run(
+				"sine_replacement", func(b *testing.B) {
+					// tau is now a constant in the package
+					fn := func(buffer []int16, freq, depth, sampleRate float64) {
+						for i := 0; i < len(buffer); i++ {
+							// use tau here, no need to compute 2 * math.Pi
+							sample := math.Sin(tau * freq * float64(i) / sampleRate)
+							// bit shift here, instead of math.Pow(2.0, depth); which is equivalent to 2 << (depth-1)
+							buffer[i] = int16(sample * float64(int(2)<<int(depth-1)/2-1))
+						}
+					}
+					var buffer []int16
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						buffer = make([]int16, halfPeriod)
+						fn(buffer, freq, depth, sampleRate)
+					}
+					_ = buffer
+				},
+			)
+
 		},
 	)
 }
