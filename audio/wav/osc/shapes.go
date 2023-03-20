@@ -1,5 +1,9 @@
 package osc
 
+import (
+	"math"
+)
+
 type Type uint8
 
 const (
@@ -7,6 +11,10 @@ const (
 	SquareWave
 	TriangleWave
 	SawtoothWave
+)
+
+const (
+	tau float64 = math.Pi * 2
 )
 
 type bitDepths interface {
