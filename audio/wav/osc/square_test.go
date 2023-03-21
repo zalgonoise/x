@@ -86,8 +86,10 @@ func BenchmarkSquareCompare(b *testing.B) {
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
 						var (
+							// avoid floats when calculating halfPeriod
 							halfPeriod = int(sampleRate) / (2 * int(freq))
-							sampleInt  = int16(2<<int16(depth-2)) - 1
+							// bit-shift instead of calculating a power of 2 with math.Pow()
+							sampleInt = int16(2<<int16(depth-2)) - 1
 						)
 						after = make([]int16, halfPeriod)
 						fn(after, halfPeriod, sampleInt)
