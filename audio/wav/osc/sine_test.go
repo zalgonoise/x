@@ -29,6 +29,9 @@ func BenchmarkSineCompare(b *testing.B) {
 		depth      float64 = 16
 		freq       float64 = 2000
 		halfPeriod         = int(sampleRate / freq)
+
+		before []int16
+		after  []int16
 	)
 
 	const (
@@ -56,13 +59,12 @@ func BenchmarkSineCompare(b *testing.B) {
 							buffer[i] = int16(sample * (math.Pow(2.0, depth)/2.0 - 1.0))
 						}
 					}
-					var buffer []int16
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						buffer = make([]int16, halfPeriod)
-						fn(buffer, freq, depth, sampleRate)
+						before = make([]int16, halfPeriod)
+						fn(before, freq, depth, sampleRate)
 					}
-					_ = buffer
+					_ = before
 				},
 			)
 			b.Run(
@@ -76,16 +78,34 @@ func BenchmarkSineCompare(b *testing.B) {
 							buffer[i] = int16(sample * float64(int(2)<<int(depth-1)/2-1))
 						}
 					}
-					var buffer []int16
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						buffer = make([]int16, halfPeriod)
-						fn(buffer, freq, depth, sampleRate)
+						after = make([]int16, halfPeriod)
+						fn(after, freq, depth, sampleRate)
 					}
-					_ = buffer
+					_ = after
 				},
 			)
+		},
+	)
+	b.Run(
+		"EnsureSimilarResults", func(b *testing.B) {
+			if len(before) == 0 || len(after) == 0 {
+				b.Error("expected both before and after slices to be populated")
+				return
+			}
 
+			if len(before) != len(after) {
+				b.Errorf("output length mismatch error: wanted %d ; got %d", len(before), len(after))
+				return
+			}
+
+			for i := range before {
+				if before[i] != after[i] {
+					b.Errorf("output mismatch error on index #%d -- wanted %d ; got %d", i, before[i], after[i])
+					return
+				}
+			}
 		},
 	)
 }
