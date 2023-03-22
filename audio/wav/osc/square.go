@@ -1,6 +1,8 @@
 package osc
 
-func Square[T bitDepths](buffer []T, freq, depth, sampleRate float64) {
+// Square is an oscillator that writes a square wave of frequency `freq`, bit depth `depth`,
+// and sample rate `sampleRate`, into the buffer of type T `buffer`
+func Square[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
 	halfPeriod := int(sampleRate) / (2 * int(freq))
 	sampleInt := T(2<<int16(depth-2)) - 1
 
@@ -16,7 +18,7 @@ func Square[T bitDepths](buffer []T, freq, depth, sampleRate float64) {
 	square(buffer, halfPeriod, sampleInt)
 }
 
-func square[T bitDepths](buffer []T, halfPeriod int, sampleInt T) {
+func square[T BitDepths](buffer []T, halfPeriod int, sampleInt T) {
 	quarterPeriod := halfPeriod / 2
 
 	for i := 0; i < len(buffer); i++ {

@@ -4,7 +4,9 @@ import (
 	"math"
 )
 
-func Sawtooth[T bitDepths](buffer []T, freq, depth, sampleRate float64) {
+// Sawtooth is an oscillator that writes a sawtooth wave of frequency `freq`, bit depth `depth`,
+// and sample rate `sampleRate`, into the buffer of type T `buffer`
+func Sawtooth[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
 	halfPeriod := int(sampleRate / freq)
 	increment := 2.0 / float64(halfPeriod)
 	var sampleInt T
@@ -20,7 +22,7 @@ func Sawtooth[T bitDepths](buffer []T, freq, depth, sampleRate float64) {
 	sawtooth(buffer, halfPeriod, sampleInt, increment, depth)
 }
 
-func sawtooth[T bitDepths](buffer []T, halfPeriod int, sampleInt T, increment, depth float64) {
+func sawtooth[T BitDepths](buffer []T, halfPeriod int, sampleInt T, increment, depth float64) {
 	for i := 0; i < len(buffer); i++ {
 		if i%halfPeriod == 0 {
 			sampleInt = -T(math.Pow(2.0, depth-1) - 1.0)
