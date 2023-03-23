@@ -1,7 +1,9 @@
 package data
 
 import (
-	"github.com/zalgonoise/x/audio/wav/forms"
+	"time"
+
+	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 // ChunkJunk is a Chunk used for storing "junk"-ID subchunk data
@@ -45,4 +47,4 @@ func (d *ChunkJunk) Float() []float64 {
 	return nil
 }
 
-func (d *ChunkJunk) Generate(_ forms.Type, _, _, _ float64) {}
+func (d *ChunkJunk) Generate(_ osc.Type, _, _ int, _ time.Duration) {}
