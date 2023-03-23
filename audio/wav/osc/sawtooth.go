@@ -1,9 +1,5 @@
 package osc
 
-import (
-	"math"
-)
-
 // Sawtooth is an oscillator that writes a sawtooth wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
 func Sawtooth[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
@@ -23,11 +19,15 @@ func Sawtooth[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
 }
 
 func sawtooth[T BitDepths](buffer []T, halfPeriod int, sampleInt T, increment, depth float64) {
+	var base T = ^(2 << int(depth-2)) + 2
+	inc := T(increment * float64(^base))
+
 	for i := 0; i < len(buffer); i++ {
 		if i%halfPeriod == 0 {
-			sampleInt = -T(math.Pow(2.0, depth-1) - 1.0)
+			sampleInt = base
+		} else {
+			sampleInt += inc
 		}
-		sampleInt += T(increment * (math.Pow(2.0, depth-1) - 1.0))
 		buffer[i] = sampleInt
 	}
 }
