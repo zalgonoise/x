@@ -1,9 +1,5 @@
 package osc
 
-import (
-	"math"
-)
-
 // Triangle is an oscillator that writes a triangle wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
 func Triangle[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
@@ -24,15 +20,19 @@ func Triangle[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
 }
 
 func triangle[T BitDepths](buffer []T, halfPeriod int, sampleInt T, increment, depth float64) {
-	var swap bool
+	var (
+		swap          bool
+		stepValue     = T(increment * float64(int(2)<<int(depth-2)-1))
+		quarterPeriod = halfPeriod / 2
+	)
 	for i := 0; i < len(buffer); i++ {
-		if i%(halfPeriod/2) == 0 {
+		if i%(quarterPeriod) == 0 {
 			swap = !swap
 		}
 		if swap {
-			sampleInt += T(increment * (math.Pow(2.0, depth-1) - 1.0))
+			sampleInt += stepValue
 		} else {
-			sampleInt -= T(increment * (math.Pow(2.0, depth-1) - 1.0))
+			sampleInt -= stepValue
 		}
 		buffer[i] = sampleInt
 	}
