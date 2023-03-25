@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -34,16 +35,22 @@ func (p PrometheusPeak) WriteItem(v int) error {
 }
 
 // NewPromPeak creates a PrometheusPeak
-func NewPromPeak() PrometheusPeak {
-	p := PrometheusPeak{promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "peak_value",
-		Help: "input signal's peak value",
-	})}
+func NewPromPeak(port int) PrometheusPeak {
+	p := PrometheusPeak{
+		promauto.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "peak_value",
+				Help: "input signal's peak value",
+			},
+		),
+	}
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		if err := http.ListenAndServe(":13088", nil); err != nil {
-			// panic since probably the port is taken, and it's best to interrupt runtime
+		if err := http.ListenAndServe(
+			fmt.Sprintf(":%d", port), nil,
+		); err != nil {
+			// probably the port is taken, and it's best to interrupt runtime
 			panic(err)
 		}
 	}()
@@ -78,15 +85,21 @@ func (p PrometheusThreshold) WriteItem(_ int) error {
 }
 
 // NewPromThreshold creates a PrometheusThreshold
-func NewPromThreshold() PrometheusThreshold {
-	p := PrometheusThreshold{promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "over_threshold",
-		Help: "input signal's peak value is over threshold",
-	})}
+func NewPromThreshold(port int) PrometheusThreshold {
+	p := PrometheusThreshold{
+		promauto.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "over_threshold",
+				Help: "input signal's peak value is over threshold",
+			},
+		),
+	}
 
 	go func() {
 		http.Handle("/metrics", promhttp.Handler())
-		if err := http.ListenAndServe(":13089", nil); err != nil {
+		if err := http.ListenAndServe(
+			fmt.Sprintf(":%d", port), nil,
+		); err != nil {
 			// panic since probably the port is taken, and it's best to interrupt runtime
 			panic(err)
 		}
