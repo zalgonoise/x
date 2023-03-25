@@ -180,3 +180,25 @@ func (o optProm) Apply(c *Config) {
 func WithPrometheus(v bool) Option {
 	return optProm(v)
 }
+
+type optPromPort int
+
+// Apply sets the configuration on the input Config `c`
+func (o optPromPort) Apply(c *Config) {
+	c.Port = (int)(o)
+}
+
+func WithPort(v int) Option {
+	return optPromPort(v)
+}
+
+type optExitCode int
+
+// Apply sets the configuration on the input Config `c`
+func (o optExitCode) Apply(c *Config) {
+	c.ExitCode = (int)(o)
+}
+
+func WithExitCode(v int) Option {
+	return optExitCode(v)
+}
