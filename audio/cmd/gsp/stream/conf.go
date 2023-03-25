@@ -44,6 +44,8 @@ type Config struct {
 	Peak       *int           // Peak is the peak PCM integer value that will trigger recording the stream
 	Dir        *string        // Dir is the output directory (and filename prefix) where the recording(s) should be stored
 	Prom       bool           // Prom is a boolean to set the output as a Prometheus /metrics HTTP endpoint; instead of os.Stdout
+	Port       int            // Port defines an override to the Prometheus metrics port if defined
+	ExitCode   int            // ExitCode defines an override to the exit code of the application
 }
 
 // Merge combines Config `c` with Config `input`, returning a merged version
@@ -75,6 +77,12 @@ func (c *Config) Merge(input *Config) *Config {
 	}
 	if input.Prom {
 		c.Prom = input.Prom
+	}
+	if input.Port > 0 {
+		c.Port = input.Port
+	}
+	if input.ExitCode > 0 {
+		c.ExitCode = input.ExitCode
 	}
 	return c
 }
