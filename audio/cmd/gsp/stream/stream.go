@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/gio"
+
 	"github.com/zalgonoise/x/audio/wav"
 )
 
@@ -36,7 +37,7 @@ func New(cfg *Config, r io.Reader) (*wav.WavBuffer, error) {
 
 func monitorWriter(cfg *Config) gio.ItemWriter[int] {
 	if cfg.Prom {
-		return NewPromPeak()
+		return NewPromPeak(cfg.Port)
 	}
 	return NewLoggerPeak()
 }
@@ -68,7 +69,7 @@ func recordMode(cfg *Config, w *wav.WavBuffer) error {
 
 func filterWriter(cfg *Config) gio.ItemWriter[int] {
 	if cfg.Prom {
-		return NewPromThreshold()
+		return NewPromThreshold(cfg.Port)
 	}
 	return NewLoggerThreshold(*cfg.Peak)
 }
@@ -79,7 +80,8 @@ func filterMode(cfg *Config, w *wav.WavBuffer) error {
 		wav.LevelThresholdFn(
 			*cfg.Peak,
 			func(v int) { _ = writer.WriteItem(v) },
-			wav.FlushToFileFor(*cfg.Dir, *cfg.RecTime)),
+			wav.FlushToFileFor(*cfg.Dir, *cfg.RecTime),
+		),
 	)
 	return nil
 }
