@@ -16,7 +16,12 @@ func ParseFlags() (*Config, error) {
 	peak := flag.Int("peak", 0, "filter peak value to trigger recording the incoming signal")
 	dir := flag.String("d", "./sound_capture.wav", "the path to the destination file")
 	prom := flag.Bool("prom", false, "expose gauge / increment values as a prometheus metrics endpoint")
-	bufferSize := flag.Float64("s", 1.0, "buffer size as a ratio in seconds. 1.0 cycles the buffer once every second. 0.5 cycles twice per second. 2.0 cycles every two seconds; etc.")
+	promPort := flag.Int("port", 13088, "override port for the Prometheus metrics endpoint, if configured")
+	bufferSize := flag.Float64(
+		"s", 1.0,
+		"buffer size as a ratio in seconds. 1.0 cycles the buffer once every second. 0.5 cycles twice per second. 2.0 cycles every two seconds; etc.",
+	)
+	exitCode := flag.Int("exit", 0, "override exit code when exiting the application (for non-error executions)")
 
 	flag.Parse()
 
@@ -41,6 +46,8 @@ func ParseFlags() (*Config, error) {
 		WithRatio(*bufferSize),
 		WithDuration(rtd),
 		WithPrometheus(*prom),
+		WithPort(*promPort),
+		WithExitCode(*exitCode),
 	)
 	c = c.Merge(ParseOSEnv())
 	if err := c.Validate(); err != nil {
@@ -56,6 +63,8 @@ func ParseOSEnv() *Config {
 	var peak *int
 	var dir *string
 	var prom bool
+	var promPort int
+	var exitCode int
 
 	durStr := os.Getenv("GSP_DUR")
 	if durStr != "" {
@@ -97,6 +106,22 @@ func ParseOSEnv() *Config {
 		prom = true
 	}
 
+	promPortStr := os.Getenv("GSP_PROM_PORT")
+	if promPortStr != "" {
+		port, err := strconv.Atoi(promPortStr)
+		if err == nil && port > 1024 {
+			promPort = port
+		}
+	}
+
+	exitCodeStr := os.Getenv("GSP_EXIT_CODE")
+	if exitCodeStr != "" {
+		exit, err := strconv.Atoi(exitCodeStr)
+		if err == nil && exit > 0 {
+			exitCode = exit
+		}
+	}
+
 	return &Config{
 		URL:        os.Getenv("GSP_URL"),
 		Mode:       modeValues[os.Getenv("GSP_MODE")],
@@ -106,5 +131,7 @@ func ParseOSEnv() *Config {
 		Peak:       peak,
 		Dir:        dir,
 		Prom:       prom,
+		Port:       promPort,
+		ExitCode:   exitCode,
 	}
 }
