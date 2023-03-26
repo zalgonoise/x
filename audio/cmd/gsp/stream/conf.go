@@ -41,7 +41,7 @@ type Config struct {
 	Dur        *time.Duration // Dur delimits the app's runtime duration
 	RecTime    *time.Duration // RecTime delimits a recording's duration
 	BufferSize float64        // BufferSize is a ratio for the ring buffer's size (1.0 is 1 second; 0.5 is 500ms; etc)
-	Peak       *int           // Peak is the peak PCM integer value that will trigger recording the stream
+	Peak       []int          // Peak is the peak PCM integer value that will trigger recording the stream
 	Dir        *string        // Dir is the output directory (and filename prefix) where the recording(s) should be stored
 	Prom       bool           // Prom is a boolean to set the output as a Prometheus /metrics HTTP endpoint; instead of os.Stdout
 	Port       int            // Port defines an override to the Prometheus metrics port if defined
@@ -69,7 +69,7 @@ func (c *Config) Merge(input *Config) *Config {
 	if input.BufferSize > 0 {
 		c.BufferSize = input.BufferSize
 	}
-	if input.Peak != nil {
+	if len(input.Peak) > 0 {
 		c.Peak = input.Peak
 	}
 	if input.Dir != nil {
@@ -120,7 +120,7 @@ func (c *Config) Validate() error {
 		if c.RecTime == nil {
 			return ErrRecTimeUnset
 		}
-		if c.Peak == nil || *c.Peak == 0 {
+		if len(c.Peak) == 0 {
 			return ErrEmptyThreshold
 		}
 		if c.Dir == nil {
