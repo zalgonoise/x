@@ -20,40 +20,55 @@ func New(cfg *Config, r io.Reader) (*wav.WavBuffer, error) {
 
 	switch cfg.Mode {
 	case Monitor:
-		monitorMode(cfg, w)
+		if err := monitorMode(cfg, w); err != nil {
+			return nil, err
+		}
 	case Filter:
-		err := filterMode(cfg, w)
-		if err != nil {
+		if err := filterMode(cfg, w); err != nil {
 			return nil, err
 		}
 	case Record:
-		err := recordMode(cfg, w)
-		if err != nil {
+		if err := recordMode(cfg, w); err != nil {
 			return nil, err
 		}
 	}
 	return w, nil
 }
 
-func monitorWriter(cfg *Config) gio.ItemWriter[int] {
+func monitorWriter(cfg *Config) (gio.ItemWriter[int], []gio.ItemWriter[int], error) {
 	if cfg.Prom {
-		return NewPromPeak(cfg.Port)
+		w, peaksW, err := NewPromPeak(cfg.Port, cfg.Peak...)
+		if err != nil {
+			return nil, nil, err
+		}
+		return w, peaksW, nil
 	}
-	return NewLoggerPeak()
+	return NewLoggerPeak(cfg.Peak...), nil, nil
 }
 
-func monitorMode(cfg *Config, w *wav.WavBuffer) {
-	writer := monitorWriter(cfg)
+func monitorMode(cfg *Config, w *wav.WavBuffer) error {
+	writer, peaksWriters, err := monitorWriter(cfg)
+	if err != nil {
+		return err
+	}
 	var maxCh = make(chan int)
+
 	go func() {
-		for i := range maxCh {
-			_ = writer.WriteItem(i)
+		for {
+			select {
+			case value := <-maxCh:
+				_ = writer.WriteItem(value)
+				for idx := range peaksWriters {
+					_ = peaksWriters[idx].WriteItem(value)
+				}
+			}
 		}
 	}()
 
 	w.WithFilter(
 		wav.MaxValues(maxCh),
 	)
+	return nil
 }
 
 func recordMode(cfg *Config, w *wav.WavBuffer) error {
@@ -71,14 +86,17 @@ func filterWriter(cfg *Config) gio.ItemWriter[int] {
 	if cfg.Prom {
 		return NewPromThreshold(cfg.Port)
 	}
-	return NewLoggerThreshold(*cfg.Peak)
+	return NewLoggerThreshold(cfg.Peak[0])
 }
 
 func filterMode(cfg *Config, w *wav.WavBuffer) error {
+	if len(cfg.Peak) == 0 {
+		return ErrEmptyThreshold
+	}
 	writer := filterWriter(cfg)
 	w.WithFilter(
 		wav.LevelThresholdFn(
-			*cfg.Peak,
+			cfg.Peak[0],
 			func(v int) { _ = writer.WriteItem(v) },
 			wav.FlushToFileFor(*cfg.Dir, *cfg.RecTime),
 		),
