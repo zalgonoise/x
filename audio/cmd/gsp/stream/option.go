@@ -59,8 +59,15 @@ func (o optMode) Apply(c *Config) {
 }
 
 // WithMonitorMode returns an Option to set the Config Mode as Monitor
-func WithMonitorMode() Option {
-	return optMode(Monitor)
+func WithMonitorMode(peaks ...int) Option {
+	if len(peaks) == 0 {
+		return optMode(Monitor)
+	}
+
+	return MultiOption(
+		optPeak(peaks),
+		optMode(Monitor),
+	)
 }
 
 // WithRecordMode returns an Option to set the Config Mode as Record, configuring it with a string `path` and a
@@ -81,8 +88,8 @@ func WithRecordMode(path string, recTime time.Duration) Option {
 
 // WithFilterMode returns an Option to set the Config Mode as Filter, configuring it with an int `peak`,
 // a string `path` and a time.Duration `recTime`
-func WithFilterMode(peak int, path string, recTime time.Duration) Option {
-	if peak == 0 || path == "" {
+func WithFilterMode(peak []int, path string, recTime time.Duration) Option {
+	if len(peak) == 0 || path == "" {
 		return nil
 	}
 	if recTime == 0 {
@@ -99,20 +106,20 @@ func WithFilterMode(peak int, path string, recTime time.Duration) Option {
 // WithMode returns an Option to set the Config Mode based on string `mode`; accepting also a pointer to
 // an int `peak` (if Filter is chosen); accepting a pointer to a string `path` (if Filter or Record is chosen);
 // and a pointer to a time.Duration `recTime` (if Filter or Record is chosen)
-func WithMode(mode string, peak *int, path *string, recTime *time.Duration) Option {
+func WithMode(mode string, peak []int, path *string, recTime *time.Duration) Option {
 	switch mode {
 	case "monitor":
-		return WithMonitorMode()
+		return WithMonitorMode(peak...)
 	case "record":
 		if path == nil || recTime == nil {
 			return nil
 		}
 		return WithRecordMode(*path, *recTime)
 	case "filter":
-		if peak == nil || path == nil || recTime == nil {
+		if len(peak) == 0 || path == nil || recTime == nil {
 			return nil
 		}
-		return WithFilterMode(*peak, *path, *recTime)
+		return WithFilterMode(peak, *path, *recTime)
 	default:
 		return nil
 	}
@@ -152,11 +159,11 @@ func WithRatio(ratio float64) Option {
 	return optBufferSize(ratio)
 }
 
-type optPeak int
+type optPeak []int
 
 // Apply sets the configuration on the input Config `c`
 func (o optPeak) Apply(c *Config) {
-	c.Peak = ptr.To((int)(o))
+	c.Peak = o
 }
 
 type optDir string
