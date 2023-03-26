@@ -4,6 +4,7 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -13,7 +14,7 @@ func ParseFlags() (*Config, error) {
 	dur := flag.String("dur", "", "duration until the operation times out")
 	recTime := flag.String("rec", "", "duration of each recording")
 	mode := flag.String("mode", "monitor", "operation mode (monitor, record, filter)")
-	peak := flag.Int("peak", 0, "filter peak value to trigger recording the incoming signal")
+	peak := flag.String("peak", "", "filter peak value to trigger recording the incoming signal")
 	dir := flag.String("d", "./sound_capture.wav", "the path to the destination file")
 	prom := flag.Bool("prom", false, "expose gauge / increment values as a prometheus metrics endpoint")
 	promPort := flag.Int("port", 13088, "override port for the Prometheus metrics endpoint, if configured")
@@ -27,6 +28,8 @@ func ParseFlags() (*Config, error) {
 
 	var rt *time.Duration // record time
 	var rtd time.Duration // runtime dur
+	var peaks []int       // peaks string > []int
+
 	if recTime != nil {
 		rtdur, err := time.ParseDuration(*recTime)
 		if err == nil {
@@ -40,9 +43,19 @@ func ParseFlags() (*Config, error) {
 		}
 	}
 
+	if *peak != "" {
+		peaksStr := strings.Split(*peak, ",")
+		for i := range peaksStr {
+			v, err := strconv.Atoi(peaksStr[i])
+			if err == nil {
+				peaks = append(peaks, v)
+			}
+		}
+	}
+
 	c, _ := NewConfig(
 		WithURL(*url),
-		WithMode(*mode, peak, dir, rt),
+		WithMode(*mode, peaks, dir, rt),
 		WithRatio(*bufferSize),
 		WithDuration(rtd),
 		WithPrometheus(*prom),
@@ -60,7 +73,7 @@ func ParseFlags() (*Config, error) {
 func ParseOSEnv() *Config {
 	var dur, recTime *time.Duration
 	var size float64
-	var peak *int
+	var peaks []int
 	var dir *string
 	var prom bool
 	var promPort int
@@ -90,9 +103,11 @@ func ParseOSEnv() *Config {
 	}
 	peakStr := os.Getenv("GSP_PEAK")
 	if peakStr != "" {
-		p, err := strconv.Atoi(peakStr)
-		if err == nil && p > 0 {
-			peak = &p
+		peaksStr := strings.Split(peakStr, ",")
+		for i := range peaksStr {
+			if v, err := strconv.Atoi(peaksStr[i]); err != nil {
+				peaks = append(peaks, v)
+			}
 		}
 	}
 
@@ -128,7 +143,7 @@ func ParseOSEnv() *Config {
 		Dur:        dur,
 		RecTime:    recTime,
 		BufferSize: size,
-		Peak:       peak,
+		Peak:       peaks,
 		Dir:        dir,
 		Prom:       prom,
 		Port:       promPort,
