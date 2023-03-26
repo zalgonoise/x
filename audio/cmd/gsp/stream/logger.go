@@ -11,7 +11,8 @@ import (
 
 // LoggerPeak is an int Writer for registering PCM peak level items on Monitor Mode, into a logx.Logger
 type LoggerPeak struct {
-	log logx.Logger
+	log        logx.Logger
+	thresholds []int
 }
 
 // Write implements the gio.Writer interface
@@ -20,7 +21,10 @@ type LoggerPeak struct {
 // to a destination; in this case a logx.Logger
 func (l LoggerPeak) Write(v []int) (n int, err error) {
 	for i := range v {
-		l.log.Log(level.Info, "peak level", attr.Int("value", v[i]))
+		err := l.WriteItem(v[i])
+		if err != nil {
+			return i, err
+		}
 	}
 	return len(v), nil
 }
@@ -30,13 +34,22 @@ func (l LoggerPeak) Write(v []int) (n int, err error) {
 // Its purpose is to expose a general means of writing incoming peak level values
 // to a destination; in this case a logx.Logger
 func (l LoggerPeak) WriteItem(v int) error {
-	l.log.Log(level.Info, "peak level", attr.Int("value", v))
+	l.log.Info("peak level", attr.Int("value", v))
+	for i := range l.thresholds {
+		if (l.thresholds[i] > 0 && v > l.thresholds[i]) || (l.thresholds[i] < 0 && v < l.thresholds[i]) {
+			l.log.Warn(
+				"over threshold",
+				attr.Int("value", v),
+				attr.Int("threshold", l.thresholds[i]),
+			)
+		}
+	}
 	return nil
 }
 
 // NewLoggerPeak creates a LoggerPeak
-func NewLoggerPeak() LoggerPeak {
-	return LoggerPeak{logx.New(texth.New(os.Stdout))}
+func NewLoggerPeak(peaks ...int) LoggerPeak {
+	return LoggerPeak{logx.New(texth.New(os.Stdout)), peaks}
 }
 
 // LoggerThreshold is an int Writer for registering PCM peak level items on Filter Mode, when it surpasses
@@ -52,7 +65,8 @@ type LoggerThreshold struct {
 // to a destination; in this case a logx.Logger
 func (l LoggerThreshold) Write(v []int) (n int, err error) {
 	for i := range v {
-		l.log.Log(level.Info, "over threshold",
+		l.log.Log(
+			level.Info, "over threshold",
 			attr.Int("limit", l.threshold),
 			attr.Int("value", v[i]),
 		)
@@ -65,7 +79,8 @@ func (l LoggerThreshold) Write(v []int) (n int, err error) {
 // Its purpose is to expose a general means of writing incoming peak level values
 // to a destination; in this case a logx.Logger
 func (l LoggerThreshold) WriteItem(v int) error {
-	l.log.Log(level.Info, "over threshold",
+	l.log.Log(
+		level.Info, "over threshold",
 		attr.Int("limit", l.threshold),
 		attr.Int("value", v),
 	)
