@@ -195,6 +195,7 @@ func (o optPromPort) Apply(c *Config) {
 	c.Port = (int)(o)
 }
 
+// WithPort returns an Option to set the Config Port (for the Prometheus metrics server) as int `v`
 func WithPort(v int) Option {
 	return optPromPort(v)
 }
@@ -206,6 +207,7 @@ func (o optExitCode) Apply(c *Config) {
 	c.ExitCode = (int)(o)
 }
 
+// WithExitCode returns an Option to set the Config ExitCode as int `v`
 func WithExitCode(v int) Option {
 	return optExitCode(v)
 }
