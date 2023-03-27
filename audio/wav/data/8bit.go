@@ -50,6 +50,7 @@ func (d *Chunk8bit) Reset() { d.Data = nil }
 // Value returns the PCM audio buffer from the Chunk, as a slice of int
 func (d *Chunk8bit) Value() []int { return to[int8, int](d.Data) }
 
+// Float returns the PCM audio buffer from the Chunk, as a slice of float64
 func (d *Chunk8bit) Float() []float64 {
 	return conv[int8, float64](
 		d.Data, func(v int8) float64 {
@@ -58,6 +59,7 @@ func (d *Chunk8bit) Float() []float64 {
 	)
 }
 
+// Generate creates a wave of the given form, frequency and duration within this Chunk
 func (d *Chunk8bit) Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration) {
 	buffer := make([]int8, int(float64(sampleRate)*float64(dur)/float64(time.Second)))
 	fn := formFunc8bit(waveType)
