@@ -32,6 +32,9 @@ type Chunk interface {
 	// Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
 	// from raw bytes
 	Parse(buf []byte)
+	// ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
+	// from floating-point audio data
+	ParseFloat(buf []float64)
 	// Bytes will return a slice of bytes with the encoded PCM buffer
 	Bytes() []byte
 	// Header returns the ChunkHeader of the Chunk
