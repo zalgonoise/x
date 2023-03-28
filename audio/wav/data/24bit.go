@@ -50,6 +50,16 @@ func (d *Chunk24bit) Parse(buf []byte) {
 	d.Data = append(d.Data, newData...)
 }
 
+// ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
+// from floating-point audio data
+func (d *Chunk24bit) ParseFloat(buf []float64) {
+	d.Data = conv[float64, int32](
+		buf, func(f float64) int32 {
+			return int32(f * maxInt24)
+		},
+	)
+}
+
 // Bytes will return a slice of bytes with the encoded PCM buffer
 func (d *Chunk24bit) Bytes() []byte {
 	data := make([]byte, len(d.Data)*3)
