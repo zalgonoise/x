@@ -130,8 +130,23 @@ func Test8bitParse(t *testing.T) {
 		t.Errorf("expected integer PCM buffer to be longer than zero")
 	}
 
-	if f := chunk.Float(); len(f) == 0 {
+	f := chunk.Float()
+	if len(f) == 0 {
 		t.Errorf("expected float PCM buffer to be longer than zero")
+		return
+	}
+	newChunk := &Chunk8bit{
+		ChunkHeader: header,
+	}
+	newChunk.ParseFloat(f)
+
+	if len(chunk.Data) != len(newChunk.Data) {
+		t.Errorf("float data length mismatch error: wanted %d ; got %d", len(chunk.Data), len(newChunk.Data))
+	}
+	for i := range chunk.Data {
+		if chunk.Data[i] != newChunk.Data[i] {
+			t.Errorf("float data output mismatch error on index #%d: wanted %d ; got %d", i, chunk.Data[i], newChunk.Data[i])
+		}
 	}
 
 	if chunk.Reset(); chunk.Data != nil {

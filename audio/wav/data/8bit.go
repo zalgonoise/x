@@ -33,6 +33,16 @@ func (d *Chunk8bit) Parse(buf []byte) {
 	d.Data = append(d.Data, *(*[]int8)(unsafe.Pointer(&buf))...)
 }
 
+// ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
+// from floating-point audio data
+func (d *Chunk8bit) ParseFloat(buf []float64) {
+	d.Data = conv[float64, int8](
+		buf, func(f float64) int8 {
+			return int8(f * maxInt8)
+		},
+	)
+}
+
 // Bytes will return a slice of bytes with the encoded PCM buffer
 func (d *Chunk8bit) Bytes() []byte {
 	return *(*[]byte)(unsafe.Pointer(&d.Data))
