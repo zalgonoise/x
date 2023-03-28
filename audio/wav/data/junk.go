@@ -26,6 +26,10 @@ func (d *ChunkJunk) Parse(buf []byte) {
 	d.Data = append(d.Data, buf...)
 }
 
+// ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
+// from floating-point audio data
+func (d *ChunkJunk) ParseFloat(_ []float64) {}
+
 // Bytes will return a slice of bytes with the encoded PCM buffer
 func (d *ChunkJunk) Bytes() []byte {
 	return d.Data
