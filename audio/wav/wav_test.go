@@ -85,7 +85,7 @@ func BenchmarkWav(b *testing.B) {
 		return
 	}
 
-	for _, testdata := range td[:4] {
+	for _, testdata := range td[:4] { // mono 44.1kHz 8bit to 32bit
 		b.Run(
 			"Decode", func(b *testing.B) {
 				var (
