@@ -2,6 +2,7 @@ package wav_test
 
 import (
 	"bytes"
+	"embed"
 	_ "embed"
 	"reflect"
 	"testing"
@@ -9,60 +10,82 @@ import (
 	. "github.com/zalgonoise/x/audio/wav"
 )
 
-//go:embed testdata/amen_kick_mono_8bit_44100hz.wav
-var mono8bit44100 []byte
+//go:embed testdata/*
+var testdataFS embed.FS
 
-//go:embed testdata/amen_kick_mono_16bit_44100hz.wav
-var mono16bit44100 []byte
+func load() ([][]byte, error) {
+	var (
+		err              error
+		mono8bit44100    []byte
+		mono16bit44100   []byte
+		mono24bit44100   []byte
+		mono32bit44100   []byte
+		mono32bit96000   []byte
+		mono32bit192000  []byte
+		mono8bit176400   []byte
+		stereo8bit44100  []byte
+		stereo16bit44100 []byte
+		stereo24bit44100 []byte
+		stereo32bit44100 []byte
+	)
 
-//go:embed testdata/amen_kick_mono_24bit_44100hz.wav
-var mono24bit44100 []byte
+	if mono8bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_8bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
+	if mono16bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_16bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
+	if mono24bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_24bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
+	if mono32bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_32bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
+	if mono32bit96000, err = testdataFS.ReadFile("testdata/amen_kick_mono_32bit_96000hz.wav"); err != nil {
+		return nil, err
+	}
+	if mono32bit192000, err = testdataFS.ReadFile("testdata/amen_kick_mono_32bit_192000hz.wav"); err != nil {
+		return nil, err
+	}
+	if mono8bit176400, err = testdataFS.ReadFile("testdata/amen_kick_mono_8bit_176400hz.wav"); err != nil {
+		return nil, err
+	}
+	if stereo8bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_8bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
+	if stereo16bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_16bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
+	if stereo24bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_24bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
+	if stereo32bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_32bit_44100hz.wav"); err != nil {
+		return nil, err
+	}
 
-//go:embed testdata/amen_kick_mono_32bit_44100hz.wav
-var mono32bit44100 []byte
-
-//go:embed testdata/amen_kick_mono_32bit_96000hz.wav
-var mono32bit96000 []byte
-
-//go:embed testdata/amen_kick_mono_32bit_192000hz.wav
-var mono32bit192000 []byte
-
-//go:embed testdata/amen_kick_mono_8bit_176400hz.wav
-var mono8bit176400 []byte
-
-//go:embed testdata/amen_kick_stereo_8bit_44100hz.wav
-var stereo8bit44100 []byte
-
-//go:embed testdata/amen_kick_stereo_16bit_44100hz.wav
-var stereo16bit44100 []byte
-
-//go:embed testdata/amen_kick_stereo_24bit_44100hz.wav
-var stereo24bit44100 []byte
-
-//go:embed testdata/amen_kick_stereo_32bit_44100hz.wav
-var stereo32bit44100 []byte
-
-var testdata = [][]byte{
-	mono8bit44100,
-	mono16bit44100,
-	mono24bit44100,
-	mono32bit44100,
-	mono32bit96000,
-	mono32bit192000,
-	mono8bit176400,
-	stereo8bit44100,
-	stereo16bit44100,
-	stereo24bit44100,
-	stereo32bit44100,
-}
-
-func BenchmarkWav(b *testing.B) {
-	for _, testdata := range [][]byte{
+	return [][]byte{
 		mono8bit44100,
 		mono16bit44100,
 		mono24bit44100,
 		mono32bit44100,
-	} {
+		mono32bit96000,
+		mono32bit192000,
+		mono8bit176400,
+		stereo8bit44100,
+		stereo16bit44100,
+		stereo24bit44100,
+		stereo32bit44100,
+	}, nil
+}
+
+func BenchmarkWav(b *testing.B) {
+	td, err := load()
+	if err != nil {
+		b.Error(err)
+		return
+	}
+
+	for _, testdata := range td[:4] {
 		b.Run(
 			"Decode", func(b *testing.B) {
 				var (
@@ -180,6 +203,12 @@ func TestNewWav(t *testing.T) {
 }
 
 func TestWavDecodeEncode(t *testing.T) {
+	testdata, err := load()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	for idx, test := range testdata {
 		wav, err := Decode(test)
 		if err != nil {
@@ -220,6 +249,12 @@ func TestWavDecodeEncode(t *testing.T) {
 }
 
 func TestWavOutputCompare(t *testing.T) {
+	testdata, err := load()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	for idx, test := range testdata {
 		wav := new(Wav)
 		_, err := wav.Write(test)
@@ -238,6 +273,12 @@ func TestWavOutputCompare(t *testing.T) {
 }
 
 func TestWavWriteRead(t *testing.T) {
+	testdata, err := load()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	for idx, test := range testdata {
 		wav := new(Wav)
 		_, err := wav.Write(test)
@@ -292,6 +333,12 @@ func TestWavWriteRead(t *testing.T) {
 }
 
 func TestWavSegmentedWrite(t *testing.T) {
+	testdata, err := load()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
 	for idx, test := range testdata {
 		wav := new(Wav)
 
