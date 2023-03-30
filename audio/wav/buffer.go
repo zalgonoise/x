@@ -2,7 +2,6 @@ package wav
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
@@ -132,20 +131,25 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 		return err
 	}
 
-	var err error
+	ctx, cancel := context.WithCancelCause(ctx)
 	go func() {
-		if _, err = w.ring.ReadFrom(w.Reader); err != nil {
+		if _, err := w.ring.ReadFrom(w.Reader); err != nil {
+			cancel(err)
 			return
 		}
+
+		// end of stream, return EOF
+		cancel(io.EOF)
 	}()
 
 	for {
 		select {
 		case <-ctx.Done():
-			if err != nil && !errors.Is(err, io.EOF) {
+			err := context.Cause(ctx)
+			if err != nil {
 				return err
 			}
-			return nil
+			return ctx.Err()
 		default:
 		}
 	}
