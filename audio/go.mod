@@ -3,6 +3,7 @@ module github.com/zalgonoise/x/audio
 go 1.20
 
 require (
+	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/prometheus/client_golang v1.14.0
 	github.com/zalgonoise/gbuf v0.0.0-20230301225204-a38f80b049c6
 	github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2
