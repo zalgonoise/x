@@ -11,6 +11,7 @@ import (
 	"github.com/zalgonoise/gio"
 
 	"github.com/zalgonoise/x/audio/wav/data"
+	"github.com/zalgonoise/x/audio/wav/fft"
 )
 
 // StreamFilter is a pluggable function that will scan, analyze, process
@@ -301,6 +302,52 @@ func FlushChFor(ch chan<- *Wav, dur time.Duration) StreamFilter {
 		}
 		wav.Data.Parse(buf.Bytes())
 		ch <- wav
+		return nil
+	}
+}
+
+// FFT analyzes the frequency spectrum on each data chunk emitted by the buffer,
+// with precision according to the configured block size.
+//
+// Each pass will emit FrequencyPower items for each frequency that is over the
+// default magnitude value
+func FFT(blockSize fft.BlockSize, ch chan<- fft.FrequencyPower) StreamFilter {
+	return func(w *WavBuffer, raw []byte) error {
+		v := w.Data.Float()
+		for i := 0; i < len(v); i += int(blockSize) {
+			if len(v) < i+int(blockSize) {
+				break
+			}
+			mag := fft.Compute(int(w.Header.SampleRate), v[i:i+int(blockSize)])
+			for i := range mag {
+				if mag[i].Mag > fft.DefaultMagnitudeThreshold {
+					ch <- mag[i]
+				}
+			}
+		}
+		return nil
+	}
+}
+
+// FFTOnThreshold analyzes the frequency spectrum on each data chunk emitted by
+// the buffer, with precision according to the configured block size.
+//
+// Each pass will emit FrequencyPower items for each frequency that is over the
+// input magnitude threshold value
+func FFTOnThreshold(blockSize fft.BlockSize, thresh float64, ch chan<- fft.FrequencyPower) StreamFilter {
+	return func(w *WavBuffer, raw []byte) error {
+		v := w.Data.Float()
+		for i := 0; i < len(v); i += int(blockSize) {
+			if len(v) < i+int(blockSize) {
+				break
+			}
+			mag := fft.Compute(int(w.Header.SampleRate), v[i:i+int(blockSize)])
+			for i := range mag {
+				if mag[i].Mag > thresh {
+					ch <- mag[i]
+				}
+			}
+		}
 		return nil
 	}
 }
