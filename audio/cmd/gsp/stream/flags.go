@@ -62,7 +62,10 @@ func ParseFlags() (*Config, error) {
 		WithPort(*promPort),
 		WithExitCode(*exitCode),
 	)
-	c = c.Merge(ParseOSEnv())
+
+	// Apply OS env config on top of CLI flags config
+	ParseOSEnv().Apply(c)
+
 	if err := c.Validate(); err != nil {
 		return nil, err
 	}
