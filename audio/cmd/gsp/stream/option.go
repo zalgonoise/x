@@ -2,77 +2,65 @@ package stream
 
 import (
 	"time"
-
-	"github.com/zalgonoise/x/ptr"
 )
 
-type multiOption struct {
-	opts []Option
+// OptionFunc is a function type that implements the Option interface
+//
+// Similar to the http.Handler and http.HandleFunc in the standard library,
+// the Apply method implementation will simply be the type itself (a function)
+// calling the input Config as an argument
+type OptionFunc func(c *Config)
+
+// Apply implements the Option interface
+func (o OptionFunc) Apply(c *Config) {
+	o(c)
 }
 
-// Apply sets the configuration on the input Config `c`
-func (mo *multiOption) Apply(c *Config) {
-	for _, opt := range mo.opts {
-		opt.Apply(c)
-	}
-}
-
-// MultiOption merges a slice of Option into one
-func MultiOption(opts ...Option) Option {
+// MultiOption merges a slice of OptionFunc into one
+func MultiOption(opts ...OptionFunc) OptionFunc {
 	if len(opts) == 0 {
 		return nil
 	}
-	mo := new(multiOption)
+	mo := make([]OptionFunc, 0, len(opts))
 	for i := range opts {
 		if opts[i] == nil {
 			continue
 		}
-		if mopt, ok := opts[i].(*multiOption); ok {
-			mo.opts = append(mo.opts, mopt.opts...)
-			continue
-		}
-		mo.opts = append(mo.opts, opts[i])
+		mo = append(mo, opts[i])
 	}
-	return mo
+
+	return func(c *Config) {
+		for i := range mo {
+			mo[i](c)
+		}
+	}
 }
 
-type optURL string
-
-// Apply sets the configuration on the input Config `c`
-func (o optURL) Apply(c *Config) {
-	c.URL = (string)(o)
-}
-
-// WithURL returns an Option to set the Config URL as string `url`
-func WithURL(url string) Option {
+// WithURL returns an OptionFunc to set the Config URL as string `url`
+func WithURL(url string) OptionFunc {
 	if url == "" {
 		return nil
 	}
-	return optURL(url)
+	return func(c *Config) {
+		c.URL = url
+	}
 }
 
-type optMode Mode
-
-// Apply sets the configuration on the input Config `c`
-func (o optMode) Apply(c *Config) {
-	c.Mode = (Mode)(o)
-}
-
-// WithMonitorMode returns an Option to set the Config Mode as Monitor
-func WithMonitorMode(peaks ...int) Option {
+// WithMonitorMode returns an OptionFunc to set the Config Mode as Monitor
+func WithMonitorMode(peaks ...int) OptionFunc {
 	if len(peaks) == 0 {
-		return optMode(Monitor)
+		return setMode(Monitor)
 	}
 
 	return MultiOption(
-		optPeak(peaks),
-		optMode(Monitor),
+		setPeaks(peaks),
+		setMode(Monitor),
 	)
 }
 
-// WithRecordMode returns an Option to set the Config Mode as Record, configuring it with a string `path` and a
+// WithRecordMode returns an OptionFunc to set the Config Mode as Record, configuring it with a string `path` and a
 // time.Duration `recTime`
-func WithRecordMode(path string, recTime time.Duration) Option {
+func WithRecordMode(path string, recTime time.Duration) OptionFunc {
 	if path == "" {
 		return nil
 	}
@@ -80,15 +68,15 @@ func WithRecordMode(path string, recTime time.Duration) Option {
 		recTime = defaultRecTime
 	}
 	return MultiOption(
-		optMode(Record),
-		optDir(path),
-		optRecTime(recTime),
+		setMode(Record),
+		setDir(path),
+		setRecTime(recTime),
 	)
 }
 
-// WithFilterMode returns an Option to set the Config Mode as Filter, configuring it with an int `peak`,
+// WithFilterMode returns an OptionFunc to set the Config Mode as Filter, configuring it with an int `peak`,
 // a string `path` and a time.Duration `recTime`
-func WithFilterMode(peak []int, path string, recTime time.Duration) Option {
+func WithFilterMode(peak []int, path string, recTime time.Duration) OptionFunc {
 	if len(peak) == 0 || path == "" {
 		return nil
 	}
@@ -96,17 +84,17 @@ func WithFilterMode(peak []int, path string, recTime time.Duration) Option {
 		recTime = defaultRecTime
 	}
 	return MultiOption(
-		optPeak(peak),
-		optMode(Filter),
-		optDir(path),
-		optRecTime(recTime),
+		setPeaks(peak),
+		setMode(Filter),
+		setDir(path),
+		setRecTime(recTime),
 	)
 }
 
-// WithMode returns an Option to set the Config Mode based on string `mode`; accepting also a pointer to
+// WithMode returns an OptionFunc to set the Config Mode based on string `mode`; accepting also a pointer to
 // an int `peak` (if Filter is chosen); accepting a pointer to a string `path` (if Filter or Record is chosen);
 // and a pointer to a time.Duration `recTime` (if Filter or Record is chosen)
-func WithMode(mode string, peak []int, path *string, recTime *time.Duration) Option {
+func WithMode(mode string, peak []int, path *string, recTime *time.Duration) OptionFunc {
 	switch mode {
 	case "monitor":
 		return WithMonitorMode(peak...)
@@ -125,89 +113,67 @@ func WithMode(mode string, peak []int, path *string, recTime *time.Duration) Opt
 	}
 }
 
-type optDur time.Duration
-
-// Apply sets the configuration on the input Config `c`
-func (o optDur) Apply(c *Config) {
-	c.Dur = ptr.To((time.Duration)(o))
+// WithDuration returns an OptionFunc to set the Config Dur as time.Duration `dur`
+func WithDuration(dur time.Duration) OptionFunc {
+	return func(c *Config) {
+		c.Dur = &dur
+	}
 }
 
-// WithDuration returns an Option to set the Config Dur as time.Duration `dur`
-func WithDuration(dur time.Duration) Option {
-	return optDur(dur)
-}
-
-type optRecTime time.Duration
-
-// Apply sets the configuration on the input Config `c`
-func (o optRecTime) Apply(c *Config) {
-	c.RecTime = ptr.To((time.Duration)(o))
-}
-
-type optBufferSize float64
-
-// Apply sets the configuration on the input Config `c`
-func (o optBufferSize) Apply(c *Config) {
-	c.BufferSize = (float64)(o)
-}
-
-// WithRatio returns an Option to set the Config BufferSize as float64 `ratio`
-func WithRatio(ratio float64) Option {
+// WithRatio returns an OptionFunc to set the Config BufferSize as float64 `ratio`
+func WithRatio(ratio float64) OptionFunc {
 	if ratio <= 0 {
 		return nil
 	}
-	return optBufferSize(ratio)
-}
-
-type optPeak []int
-
-// Apply sets the configuration on the input Config `c`
-func (o optPeak) Apply(c *Config) {
-	c.Peak = o
-}
-
-type optDir string
-
-// Apply sets the configuration on the input Config `c`
-func (o optDir) Apply(c *Config) {
-	if string(o[len(o)-4:]) == ".wav" {
-		o = optDir(o[:len(o)-4])
+	return func(c *Config) {
+		c.BufferSize = ratio
 	}
-	c.Dir = ptr.To((string)(o))
 }
 
-type optProm bool
-
-// Apply sets the configuration on the input Config `c`
-func (o optProm) Apply(c *Config) {
-	c.Prom = (bool)(o)
+// WithPrometheus returns an OptionFunc to set the Config Prom as bool `v`
+func WithPrometheus(v bool) OptionFunc {
+	return func(c *Config) {
+		c.Prom = v
+	}
 }
 
-// WithPrometheus returns an Option to set the Config Prom as bool `v`
-func WithPrometheus(v bool) Option {
-	return optProm(v)
+// WithPort returns an OptionFunc to set the Config Port (for the Prometheus metrics server) as int `v`
+func WithPort(v int) OptionFunc {
+	return func(c *Config) {
+		c.Port = v
+	}
 }
 
-type optPromPort int
-
-// Apply sets the configuration on the input Config `c`
-func (o optPromPort) Apply(c *Config) {
-	c.Port = (int)(o)
+// WithExitCode returns an OptionFunc to set the Config ExitCode as int `v`
+func WithExitCode(v int) OptionFunc {
+	return func(c *Config) {
+		c.ExitCode = v
+	}
 }
 
-// WithPort returns an Option to set the Config Port (for the Prometheus metrics server) as int `v`
-func WithPort(v int) Option {
-	return optPromPort(v)
+func setMode(m Mode) OptionFunc {
+	return func(c *Config) {
+		c.Mode = m
+	}
 }
 
-type optExitCode int
-
-// Apply sets the configuration on the input Config `c`
-func (o optExitCode) Apply(c *Config) {
-	c.ExitCode = (int)(o)
+func setPeaks(p []int) OptionFunc {
+	return func(c *Config) {
+		c.Peak = p
+	}
 }
 
-// WithExitCode returns an Option to set the Config ExitCode as int `v`
-func WithExitCode(v int) Option {
-	return optExitCode(v)
+func setDir(d string) OptionFunc {
+	if string(d[len(d)-4:]) == ".wav" {
+		d = d[:len(d)-4]
+	}
+	return func(c *Config) {
+		c.Dir = &d
+	}
+}
+
+func setRecTime(t time.Duration) OptionFunc {
+	return func(c *Config) {
+		c.RecTime = &t
+	}
 }
