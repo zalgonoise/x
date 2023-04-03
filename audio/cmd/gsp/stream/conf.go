@@ -48,55 +48,40 @@ type Config struct {
 	ExitCode   int            // ExitCode defines an override to the exit code of the application
 }
 
-// Merge combines Config `c` with Config `input`, returning a merged version
-// of the two
-//
-// All set elements in Config `input` will be applied to Config `c`, and the unset elements
-// will be ignored (keeps Config `c`'s data)
-func (c *Config) Merge(input *Config) *Config {
-	if input.URL != "" {
-		c.URL = input.URL
-	}
-	if input.Mode != Unset {
-		c.Mode = input.Mode
-	}
-	if input.Dur != nil {
-		c.Dur = input.Dur
-	}
-	if input.RecTime != nil {
-		c.RecTime = input.RecTime
-	}
-	if input.BufferSize > 0 {
-		c.BufferSize = input.BufferSize
-	}
-	if len(input.Peak) > 0 {
-		c.Peak = input.Peak
-	}
-	if input.Dir != nil {
-		c.Dir = input.Dir
-	}
-	if input.Prom {
-		c.Prom = input.Prom
-	}
-	if input.Port > 0 {
-		c.Port = input.Port
-	}
-	if input.ExitCode > 0 {
-		c.ExitCode = input.ExitCode
-	}
-	return c
-}
-
 // Apply implements the Option interface
 //
 // It allows applying new options on top of an already existing config
-func (c *Config) Apply(opts ...Option) *Config {
-	for _, opt := range opts {
-		if opt != nil {
-			opt.Apply(c)
-		}
+func (c *Config) Apply(input *Config) {
+	if c.URL != "" {
+		input.URL = c.URL
 	}
-	return c
+	if c.Mode != Unset {
+		input.Mode = c.Mode
+	}
+	if c.Dur != nil {
+		input.Dur = c.Dur
+	}
+	if c.RecTime != nil {
+		input.RecTime = c.RecTime
+	}
+	if c.BufferSize > 0 {
+		input.BufferSize = c.BufferSize
+	}
+	if len(c.Peak) > 0 {
+		input.Peak = c.Peak
+	}
+	if c.Dir != nil {
+		input.Dir = c.Dir
+	}
+	if c.Prom {
+		input.Prom = c.Prom
+	}
+	if c.Port > 0 {
+		input.Port = c.Port
+	}
+	if c.ExitCode > 0 {
+		input.ExitCode = c.ExitCode
+	}
 }
 
 // Validate verifies the elements in the Config `c` to ensure they are valid
