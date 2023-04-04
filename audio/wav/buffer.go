@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	minBufferSize = 16
+	minBufferSize  = 16
+	baseBufferSize = 4
 )
 
 // WavBuffer is just like a Wav, but it's designed to support WAV audio streams
@@ -32,6 +33,14 @@ type WavBuffer struct {
 	ratio   float64
 }
 
+// NewStream uses the input io.Reader `r` to create a WavBuffer
+func NewStream(r io.Reader) *WavBuffer {
+	return &WavBuffer{
+		Reader: r,
+		ratio:  1.0,
+	}
+}
+
 // Stream will kick off a stream read using the input context.Context `ctx` (for deadlines)
 // and the error channel `errCh` (to send errors to)
 //
@@ -41,14 +50,6 @@ func (w *WavBuffer) Stream(ctx context.Context, errCh chan<- error) {
 	if err := w.stream(ctx); err != nil {
 		errCh <- err
 		return
-	}
-}
-
-// NewStream uses the input io.Reader `r` to create a WavBuffer
-func NewStream(r io.Reader) *WavBuffer {
-	return &WavBuffer{
-		Reader: r,
-		ratio:  1.0,
 	}
 }
 
@@ -71,6 +72,34 @@ func (w *WavBuffer) Ratio(ratio float64) *WavBuffer {
 	}
 	w.ratio = ratio
 	return w
+}
+
+// Bytes casts the WavBuffer data as a WAV-file-encoded slice of bytes
+func (w *WavBuffer) Bytes() []byte {
+	var n int
+	size, byteData := w.encode()
+
+	buf := make([]byte, size+32)
+	for i := range byteData {
+		n += copy(buf[n:], byteData[i])
+	}
+	return buf
+}
+
+// Read implements the io.Reader interface
+//
+// It allows pushing the stored data to the input slice of bytes `buf`, returning
+// the number of bytes written and an error if raised (if the input buffer is too short)
+func (w *WavBuffer) Read(buf []byte) (n int, err error) {
+	size, byteData := w.encode()
+	if len(buf) < size {
+		return n, fmt.Errorf("%w: input buffer with length %d cannot fit %d bytes", ErrShortDataBuffer, len(buf), size)
+	}
+
+	for i := range byteData {
+		n += copy(buf[n:], byteData[i])
+	}
+	return size, nil
 }
 
 func (w *WavBuffer) parseHeader(buf []byte) error {
@@ -107,95 +136,103 @@ func (w *WavBuffer) processChunk(buf []byte) error {
 	return nil
 }
 
+func (w *WavBuffer) streamingFunc(cancel context.CancelCauseFunc) {
+	if _, err := w.ring.ReadFrom(w.Reader); err != nil {
+		cancel(err)
+		return
+	}
+
+	// end of stream, return EOF
+	cancel(io.EOF)
+}
+
 func (w *WavBuffer) stream(ctx context.Context) error {
-	hbuf := make([]byte, 36)
-	if _, err := w.Reader.Read(hbuf); err != nil {
+	var (
+		headerBuf         = make([]byte, 36) // fixed-size header
+		subChunkBuf       = make([]byte, 8)  // fixed-size sub-chunk
+		streamCtx, cancel = context.WithCancelCause(ctx)
+	)
+
+	// read and parse header -- returns an error if raised AND header is unset
+	if _, err := w.Reader.Read(headerBuf); err != nil && w.Header == nil {
+		return err
+	}
+	if err := w.parseHeader(headerBuf); err != nil && w.Header == nil {
 		return err
 	}
 
-	if err := w.parseHeader(hbuf); err != nil && w.Header == nil {
-		return err
-	}
-
+	// define a buffer size based on the configured ratio, if it's over
+	// the minimum buffer size
 	bufferSize := int(w.Header.ByteRate)
 	if float64(bufferSize)*w.ratio >= minBufferSize {
 		bufferSize = int(float64(bufferSize) * w.ratio)
 	}
+
+	// read and parse sub chunk section
+	if _, err := w.Reader.Read(subChunkBuf); err != nil {
+		return err
+	}
+
+	if err := w.parseSubChunk(subChunkBuf); err != nil {
+		return err
+	}
+
+	// create a new Ring Buffer to continuously read from the stream in chunks,
+	// with zero memory allocations
+	//
+	// Ring Buffer allows applying a filter function that process each chunk
+	// emitted whenever the ring's head reaches the tail. Using the processChunk
+	// method for it
 	w.ring = gbuf.NewRingFilter(bufferSize, w.processChunk)
-	scbuf := make([]byte, 8)
-	if _, err := w.Reader.Read(scbuf); err != nil {
-		return err
-	}
 
-	if err := w.parseSubChunk(scbuf); err != nil {
-		return err
-	}
+	// kick off a goroutine with the streaming function, where the Ring Buffer
+	// reads from the WavBuffer's Reader. The context.CancelCauseFunc passed will
+	// serve as a signal for when the stream has timed out or when an error is
+	// raised
+	go w.streamingFunc(cancel)
 
-	ctx, cancel := context.WithCancelCause(ctx)
-	go func() {
-		if _, err := w.ring.ReadFrom(w.Reader); err != nil {
-			cancel(err)
-			return
-		}
-
-		// end of stream, return EOF
-		cancel(io.EOF)
-	}()
-
+	// wait for a termination signal. this is expected to be a context.Done()
+	// signal
+	//
+	// this signal will have an error (always); be it for deadline exceeded,
+	// a read error, or, if the stream was finite, an io.EOF error. The error
+	// is returned to the caller to be handled accordingly
 	for {
 		select {
-		case <-ctx.Done():
-			err := context.Cause(ctx)
+		case <-streamCtx.Done():
+			err := context.Cause(streamCtx)
 			if err != nil {
 				return err
 			}
-			return ctx.Err()
+			return streamCtx.Err()
 		default:
 		}
 	}
 }
 
-// Bytes casts the WavBuffer data as a WAV-file-encoded slice of bytes
-func (w *WavBuffer) Bytes() []byte {
-	var n int
-	size, byteData := w.encode()
+func (w *WavBuffer) encode() (int, [][]byte) {
+	var (
+		size      = baseBufferSize
+		numChunks = len(w.Chunks)
+		byteData  = make([][]byte, numChunks+1)
+	)
 
-	buf := make([]byte, size+32)
-	for i := range byteData {
-		n += copy(buf[n:], byteData[i])
-	}
-	return buf
-}
+	// set the first item in byteData to be the WavBuffer Header
+	byteData[0] = w.Header.Bytes()
 
-func (w *WavBuffer) encode() (size int, byteData [][]byte) {
-	size = 4
-	byteData = make([][]byte, 3)
-
-	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
+	// for each chunk, align a slice for the header, and another for the data
+	// index `i` is for the WavBuffer Chunks, while index `j` (starting on 1)
+	// is for the byteData slice index
+	for i, j := 0, 1; i < numChunks; i, j = i+1, j+2 {
 		byteData[j] = w.Chunks[i].Header().Bytes()
 		byteData[j+1] = w.Chunks[i].Bytes()
-		size += 8 + len(byteData[j+1])
+		size += 8 + len(byteData[j+1]) // increment size, header is a fixed len
 	}
 
-	if w.Header.ChunkSize == 0 {
+	// update size if needed
+	if w.Header.ChunkSize < uint32(size) {
 		w.Header.ChunkSize = uint32(size)
 	}
-	byteData[0] = w.Header.Bytes()
+
 	return size, byteData
-}
-
-// Read implements the io.Reader interface
-//
-// It allows pushing the stored data to the input slice of bytes `buf`, returning
-// the number of bytes written and an error if raised (if the input buffer is too short)
-func (w *WavBuffer) Read(buf []byte) (n int, err error) {
-	size, byteData := w.encode()
-	if len(buf) < size {
-		return n, fmt.Errorf("%w: input buffer with length %d cannot fit %d bytes", ErrShortDataBuffer, len(buf), size)
-	}
-
-	for i := range byteData {
-		n += copy(buf[n:], byteData[i])
-	}
-	return size, nil
 }
