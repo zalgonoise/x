@@ -6,11 +6,15 @@ import (
 	"github.com/mjibson/go-dsp/fft"
 )
 
+// FrequencyPower denotes a single frequency and its magnitude in a Fast
+// Fourier Transform of a signal
 type FrequencyPower struct {
 	Freq int
 	Mag  float64
 }
 
+// BlockSize is an enumeration for FFT BlockSize values, which are a power of 2,
+// from 8 to 8192
 type BlockSize int
 
 const (
@@ -31,7 +35,10 @@ const (
 )
 
 const (
-	tau                       = math.Pi * 2
+	tau = math.Pi * 2
+
+	// DefaultMagnitudeThreshold describes the default value where a certain
+	// frequency is strong enough to be considered relevant to the spectrum filter
 	DefaultMagnitudeThreshold = 10
 )
 
@@ -43,6 +50,8 @@ func hamming(n int) []float64 {
 	return w
 }
 
+// Compute applies a Fast Fourier Transform (FFT) on a slice of float64 `data`,
+// with sample rate `sampleRate`. It returns a slice of FrequencyPower
 func Compute(sampleRate int, data []float64) []FrequencyPower {
 	var (
 		n          = len(data)
@@ -57,10 +66,10 @@ func Compute(sampleRate int, data []float64) []FrequencyPower {
 	}
 
 	// apply a fast Fourier transform on the data; exclude index 0, no 0Hz-freq results
-	freqs := fft.FFTReal(data)
+	frequencies := fft.FFTReal(data)
 	for i := 1; i < n/2; i++ {
-		freqReal := real(freqs[i])
-		freqImag := imag(freqs[i])
+		freqReal := real(frequencies[i])
+		freqImag := imag(frequencies[i])
 		// map the magnitude for each frequency bin to the corresponding value in the map
 		magnitudes = append(
 			magnitudes,
