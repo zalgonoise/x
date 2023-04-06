@@ -35,24 +35,17 @@ const (
 )
 
 const (
-	tau = math.Pi * 2
+	tau    = math.Pi * 2
+	twoTau = math.Pi * 4
 
 	// DefaultMagnitudeThreshold describes the default value where a certain
 	// frequency is strong enough to be considered relevant to the spectrum filter
 	DefaultMagnitudeThreshold = 10
 )
 
-func hamming(n int) []float64 {
-	w := make([]float64, n)
-	for i := 0; i < n; i++ {
-		w[i] = 0.54 - 0.46*math.Cos(tau*float64(i)/(float64(n)-1))
-	}
-	return w
-}
-
-// Compute applies a Fast Fourier Transform (FFT) on a slice of float64 `data`,
+// Apply applies a Fast Fourier Transform (FFT) on a slice of float64 `data`,
 // with sample rate `sampleRate`. It returns a slice of FrequencyPower
-func Compute(sampleRate int, data []float64) []FrequencyPower {
+func Apply(sampleRate int, data []float64, w WindowBlock) []FrequencyPower {
 	var (
 		n          = len(data)
 		freqUnit   = sampleRate / n
@@ -60,9 +53,8 @@ func Compute(sampleRate int, data []float64) []FrequencyPower {
 	)
 
 	// apply a window function to the values
-	window := hamming(n)
-	for i := 0; i < n; i++ {
-		data[i] *= window[i]
+	if w != nil && w.Len() == n {
+		w.Apply(data)
 	}
 
 	// apply a fast Fourier transform on the data; exclude index 0, no 0Hz-freq results
