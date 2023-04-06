@@ -12,6 +12,7 @@ import (
 
 	"github.com/zalgonoise/x/audio/wav/data"
 	"github.com/zalgonoise/x/audio/wav/fft"
+	"github.com/zalgonoise/x/audio/wav/fft/window"
 )
 
 // StreamFilter is a pluggable function that will scan, analyze, process
@@ -318,7 +319,15 @@ func FFT(blockSize fft.BlockSize, ch chan<- fft.FrequencyPower) StreamFilter {
 			if len(v) < i+int(blockSize) {
 				break
 			}
-			mag := fft.Compute(int(w.Header.SampleRate), v[i:i+int(blockSize)])
+
+			var windowBlock fft.WindowBlock
+
+			windowBlock, err := window.Blackman(int(blockSize))
+			if err != nil {
+				windowBlock = fft.Blackman(int(blockSize))
+			}
+
+			mag := fft.Apply(int(w.Header.SampleRate), v[i:i+int(blockSize)], windowBlock)
 			for i := range mag {
 				if mag[i].Mag > fft.DefaultMagnitudeThreshold {
 					ch <- mag[i]
@@ -341,7 +350,15 @@ func FFTOnThreshold(blockSize fft.BlockSize, thresh float64, ch chan<- fft.Frequ
 			if len(v) < i+int(blockSize) {
 				break
 			}
-			mag := fft.Compute(int(w.Header.SampleRate), v[i:i+int(blockSize)])
+
+			var windowBlock fft.WindowBlock
+
+			windowBlock, err := window.Blackman(int(blockSize))
+			if err != nil {
+				windowBlock = fft.Blackman(int(blockSize))
+			}
+
+			mag := fft.Apply(int(w.Header.SampleRate), v[i:i+int(blockSize)], windowBlock)
 			for i := range mag {
 				if mag[i].Mag > thresh {
 					ch <- mag[i]
