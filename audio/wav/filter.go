@@ -353,6 +353,7 @@ func FFTOnThreshold(blockSize fft.BlockSize, thresh float64, ch chan<- fft.Frequ
 
 			var windowBlock fft.WindowBlock
 
+			// get precomputed window if it exists; with fallback to creating one
 			windowBlock, err := window.Blackman(int(blockSize))
 			if err != nil {
 				windowBlock = fft.Blackman(int(blockSize))
