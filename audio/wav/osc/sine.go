@@ -40,6 +40,10 @@ func fullCycle(sampleRate, freq float64) int {
 		halfPeriodDecimal = halfPeriod - halfPeriodFloored // decimals: 22.05 - 22 = 0.05000000000000071 (float64 drift)
 	)
 
+	if halfPeriodDecimal == 0 {
+		return int(halfPeriod) // freq is multiple of sampleRate
+	}
+
 	// fix floating point drift
 	halfPeriodDecimal = float64(int(halfPeriodDecimal*1000)) / 1000.0 // 0.05000000000000071 --> 0.05
 	var mul = 1.0 / halfPeriodDecimal                                 // 1.0 / 0.05 == 20
