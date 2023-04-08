@@ -369,3 +369,31 @@ func FFTOnThreshold(blockSize fft.BlockSize, thresh float64, ch chan<- fft.Frequ
 		return nil
 	}
 }
+
+// Spectrum analyzes the frequency spectrum on each data chunk emitted by
+// the buffer, with precision according to the configured block size.
+//
+// Each pass will emit unfiltered FrequencyPower items
+func Spectrum(blockSize fft.BlockSize, ch chan<- []fft.FrequencyPower) StreamFilter {
+	return func(w *WavBuffer, raw []byte) error {
+		v := w.Data.Float()
+		for i := 0; i < len(v); i += int(blockSize) {
+			if len(v) < i+int(blockSize) {
+				break
+			}
+
+			var windowBlock fft.WindowBlock
+
+			// get precomputed window if it exists; with fallback to creating one
+			windowBlock, err := window.Blackman(int(blockSize))
+			if err != nil {
+				windowBlock = fft.Blackman(int(blockSize))
+			}
+
+			mag := fft.Apply(int(w.Header.SampleRate), v[i:i+int(blockSize)], windowBlock)
+			ch <- mag
+
+		}
+		return nil
+	}
+}
