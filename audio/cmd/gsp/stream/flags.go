@@ -13,7 +13,7 @@ func ParseFlags() (*Config, error) {
 	url := flag.String("url", "", "the URL for the WAV audio stream")
 	dur := flag.String("dur", "", "duration until the operation times out")
 	recTime := flag.String("rec", "", "duration of each recording")
-	mode := flag.String("mode", "monitor", "operation mode (monitor, record, filter)")
+	mode := flag.String("mode", "monitor", "operation mode (monitor, record, filter, analyze)")
 	peak := flag.String("peak", "", "filter peak value to trigger recording the incoming signal")
 	dir := flag.String("d", "./sound_capture.wav", "the path to the destination file")
 	prom := flag.Bool("prom", false, "expose gauge / increment values as a prometheus metrics endpoint")
