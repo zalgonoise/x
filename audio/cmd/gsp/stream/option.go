@@ -91,6 +91,10 @@ func WithFilterMode(peak []int, path string, recTime time.Duration) OptionFunc {
 	)
 }
 
+func WithAnalyzerMode() OptionFunc {
+	return setMode(Analyze)
+}
+
 // WithMode returns an OptionFunc to set the Config Mode based on string `mode`; accepting also a pointer to
 // an int `peak` (if Filter is chosen); accepting a pointer to a string `path` (if Filter or Record is chosen);
 // and a pointer to a time.Duration `recTime` (if Filter or Record is chosen)
@@ -108,6 +112,8 @@ func WithMode(mode string, peak []int, path *string, recTime *time.Duration) Opt
 			return nil
 		}
 		return WithFilterMode(peak, *path, *recTime)
+	case "analyze":
+		return WithAnalyzerMode()
 	default:
 		return nil
 	}
