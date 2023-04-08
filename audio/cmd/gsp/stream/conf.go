@@ -111,6 +111,7 @@ func (c *Config) Validate() error {
 		if c.Dir == nil {
 			return ErrEmptyDirectory
 		}
+	case Analyze:
 	case Unset:
 		return ErrModeUnset
 	default:
