@@ -9,6 +9,7 @@ import (
 	"github.com/zalgonoise/gio"
 
 	"github.com/zalgonoise/x/audio/wav"
+	"github.com/zalgonoise/x/audio/wav/fft"
 )
 
 // New creates a WAV stream from the input Config `cfg` and io.Reader `r`
@@ -29,6 +30,10 @@ func New(cfg *Config, r io.Reader) (*wav.WavBuffer, error) {
 		}
 	case Record:
 		if err := recordMode(cfg, w); err != nil {
+			return nil, err
+		}
+	case Analyze:
+		if err := analyzerMode(cfg, w); err != nil {
 			return nil, err
 		}
 	}
@@ -101,5 +106,20 @@ func filterMode(cfg *Config, w *wav.WavBuffer) error {
 			wav.FlushToFileFor(*cfg.Dir, *cfg.RecTime),
 		),
 	)
+	return nil
+}
+
+func analyzerMode(_ *Config, w *wav.WavBuffer) error {
+	var spectrumCh = make(chan []fft.FrequencyPower)
+
+	w.WithFilter(
+		wav.Spectrum(fft.Block32, spectrumCh),
+	)
+	go func() {
+		err := NewEQ(spectrumCh)
+		if err != nil {
+			panic(err)
+		}
+	}()
 	return nil
 }
