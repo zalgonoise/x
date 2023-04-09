@@ -136,6 +136,16 @@ func WithRatio(ratio float64) OptionFunc {
 	}
 }
 
+// WithBlockSize returns an OptionFunc to set the Config BlockSize as int `size`
+func WithBlockSize(size int) OptionFunc {
+	if size < 0 {
+		size = 0
+	}
+	return func(c *Config) {
+		c.BlockSize = size
+	}
+}
+
 // WithPrometheus returns an OptionFunc to set the Config Prom as bool `v`
 func WithPrometheus(v bool) OptionFunc {
 	return func(c *Config) {
