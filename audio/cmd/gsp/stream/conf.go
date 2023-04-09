@@ -18,6 +18,7 @@ const (
 	ErrRecTimeUnset     err = "gsp/conf: recording time is undefined"
 	ErrDurationUnset    err = "gsp/conf: runtime duration is undefined"
 	ErrInvalidRatio     err = "gsp/conf: buffer size ratio cannot be zero or below"
+	ErrInvalidBlockSize err = "gsp/conf: block size cannot be less than zero"
 	ErrEmptyDirectory   err = "gsp/conf: recording operation without a target file path"
 	ErrEmptyThreshold   err = "gsp/conf: peak threshold is unset"
 	ErrShortDuration    err = "gsp/conf: runtime duration is shorter than recording time"
@@ -41,6 +42,7 @@ type Config struct {
 	Dur        *time.Duration // Dur delimits the app's runtime duration
 	RecTime    *time.Duration // RecTime delimits a recording's duration
 	BufferSize float64        // BufferSize is a ratio for the ring buffer's size (1.0 is 1 second; 0.5 is 500ms; etc)
+	BlockSize  int            // BlockSize is a specific size for the ring buffer, when a specific concrete value is needed
 	Peak       []int          // Peak is the peak PCM integer value that will trigger recording the stream
 	Dir        *string        // Dir is the output directory (and filename prefix) where the recording(s) should be stored
 	Prom       bool           // Prom is a boolean to set the output as a Prometheus /metrics HTTP endpoint; instead of os.Stdout
@@ -66,6 +68,9 @@ func (c *Config) Apply(input *Config) {
 	}
 	if c.BufferSize > 0 {
 		input.BufferSize = c.BufferSize
+	}
+	if c.BlockSize > 0 {
+		input.BlockSize = c.BlockSize
 	}
 	if len(c.Peak) > 0 {
 		input.Peak = c.Peak
@@ -128,6 +133,10 @@ func (c *Config) Validate() error {
 
 	if c.BufferSize <= 0 {
 		return ErrInvalidRatio
+	}
+
+	if c.BlockSize < 0 {
+		return ErrInvalidBlockSize
 	}
 
 	return nil
