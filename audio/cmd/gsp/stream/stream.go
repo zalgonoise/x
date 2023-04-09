@@ -16,8 +16,9 @@ import (
 //
 // It returns a pointer to a wav.Buffer and an error if raised
 func New(cfg *Config, r io.Reader) (*wav.WavBuffer, error) {
-	w := wav.NewStream(r)
-	w.Ratio(cfg.BufferSize)
+	w := wav.NewStream(r).
+		Ratio(cfg.BufferSize).
+		BlockSize(cfg.BlockSize)
 
 	switch cfg.Mode {
 	case Monitor:
@@ -109,17 +110,25 @@ func filterMode(cfg *Config, w *wav.WavBuffer) error {
 	return nil
 }
 
-func analyzerMode(_ *Config, w *wav.WavBuffer) error {
+func analyzerMode(cfg *Config, w *wav.WavBuffer) error {
 	var spectrumCh = make(chan []fft.FrequencyPower)
 
+	var bs = fft.Block128
+	// work with a BlockSize half the size of the ring filter's, if configured
+	if cfg.BlockSize >= int(fft.Block16) {
+		bs = fft.AsBlock(cfg.BlockSize / 2)
+	}
+
 	w.WithFilter(
-		wav.Spectrum(fft.Block32, spectrumCh),
+		wav.Spectrum(bs, spectrumCh),
 	)
+
 	go func() {
 		err := NewEQ(spectrumCh)
 		if err != nil {
 			panic(err)
 		}
 	}()
+
 	return nil
 }
