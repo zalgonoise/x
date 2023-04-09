@@ -24,13 +24,14 @@ const (
 // Its stored reader is also a public element of WavBuffer so that it can be reused
 // within a StreamFilter function.
 type WavBuffer struct {
-	Header  *WavHeader
-	Chunks  []data.Chunk
-	Data    data.Chunk
-	Filters []StreamFilter
-	Reader  io.Reader
-	ring    *gbuf.RingFilter[byte]
-	ratio   float64
+	Header    *WavHeader
+	Chunks    []data.Chunk
+	Data      data.Chunk
+	Filters   []StreamFilter
+	Reader    io.Reader
+	ring      *gbuf.RingFilter[byte]
+	ratio     float64
+	blockSize int
 }
 
 // NewStream uses the input io.Reader `r` to create a WavBuffer
@@ -71,6 +72,14 @@ func (w *WavBuffer) Ratio(ratio float64) *WavBuffer {
 		return w
 	}
 	w.ratio = ratio
+	return w
+}
+
+func (w *WavBuffer) BlockSize(size int) *WavBuffer {
+	if size < 0 {
+		size = 0
+	}
+	w.blockSize = size
 	return w
 }
 
@@ -161,11 +170,15 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 		return err
 	}
 
-	// define a buffer size based on the configured ratio, if it's over
-	// the minimum buffer size
-	bufferSize := int(w.Header.ByteRate)
-	if float64(bufferSize)*w.ratio >= minBufferSize {
-		bufferSize = int(float64(bufferSize) * w.ratio)
+	// define a buffer size based on the configured size, or calculate one from
+	// the ratio, if it's over the minimum buffer size
+	var bufferSize = w.blockSize
+
+	if bufferSize < minBufferSize {
+		bufferSize = int(w.Header.ByteRate)
+		if float64(bufferSize)*w.ratio >= minBufferSize {
+			bufferSize = int(float64(bufferSize) * w.ratio)
+		}
 	}
 
 	// read and parse sub chunk section
