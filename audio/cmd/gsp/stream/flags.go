@@ -22,6 +22,10 @@ func ParseFlags() (*Config, error) {
 		"s", 1.0,
 		"buffer size as a ratio in seconds. 1.0 cycles the buffer once every second. 0.5 cycles twice per second. 2.0 cycles every two seconds; etc.",
 	)
+	blockSize := flag.Int(
+		"bs", 0,
+		"specific block size to buffer the audio signal. Optional, as ratio usually takes precedence",
+	)
 	exitCode := flag.Int("exit", 0, "override exit code when exiting the application (for non-error executions)")
 
 	flag.Parse()
@@ -57,6 +61,7 @@ func ParseFlags() (*Config, error) {
 		WithURL(*url),
 		WithMode(*mode, peaks, dir, rt),
 		WithRatio(*bufferSize),
+		WithBlockSize(*blockSize),
 		WithDuration(rtd),
 		WithPrometheus(*prom),
 		WithPort(*promPort),
