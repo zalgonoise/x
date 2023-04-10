@@ -1,10 +1,6 @@
 package window
 
-import (
-	"fmt"
-)
-
-var bartlettMap = map[int]Block{
+var bartlettMap = map[int]Window{
 	8:    Bartlett8,
 	16:   Bartlett16,
 	32:   Bartlett32,
@@ -18,10 +14,37 @@ var bartlettMap = map[int]Block{
 	8192: Bartlett8192,
 }
 
-func Bartlett(i int) (Block, error) {
+// Bartlett returns an L-point Bartlett window.
+// Reference: http://www.mathworks.com/help/signal/ref/bartlett.html
+func Bartlett(i int) Window {
 	w, ok := bartlettMap[i]
 	if !ok {
-		return nil, fmt.Errorf("%w: size %d doesn't have a precomputed window", ErrInvalidBlockSize, i)
+		return newBartlett(i)
 	}
-	return w, nil
+	return w
+}
+
+func newBartlett(i int) Window {
+	switch i {
+	case 0:
+		return []float64{}
+	case 1:
+		return []float64{1}
+	default:
+		var (
+			r           = make([]float64, i, i)
+			indices     = float64(i - 1)
+			coefficient = 2 / indices
+			n           = 0.0
+		)
+
+		for ; n <= indices/2; n++ {
+			r[int(n)] = coefficient * n
+		}
+		for ; n <= indices; n++ {
+			r[int(n)] = 2 - coefficient*n
+		}
+
+		return r
+	}
 }
