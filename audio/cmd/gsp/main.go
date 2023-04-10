@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -45,16 +47,23 @@ func run() (error, int) {
 	}
 
 	// start processing the audio from the HTTP stream
+	// create a local context cancel func to exit gracefully (on sigint, for example)
 	errCh := make(chan error)
-	ctx := c.Context()
+	ctx, mainCancel := context.WithCancel(c.Context())
 	go wav.Stream(ctx, errCh)
 
-	select {
-	case err := <-errCh:
-		return fmt.Errorf("audio stream: %w", err), 1
-	case <-ctx.Done():
-		// context timed out, exit gracefully
-		defer cancel()
-		return res.Body.Close(), cfg.ExitCode
+	for {
+		select {
+		case err := <-errCh:
+			mainCancel()
+			if !errors.Is(err, context.Canceled) {
+				return fmt.Errorf("audio stream: %w", err), 1
+			}
+		case <-ctx.Done():
+			// context timed out, exit gracefully
+			mainCancel()
+			defer cancel()
+			return res.Body.Close(), cfg.ExitCode
+		}
 	}
 }
