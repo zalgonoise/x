@@ -32,6 +32,7 @@ type WavBuffer struct {
 	ring      *gbuf.RingFilter[byte]
 	ratio     float64
 	blockSize int
+	done      func(error)
 }
 
 // NewStream uses the input io.Reader `r` to create a WavBuffer
@@ -111,6 +112,16 @@ func (w *WavBuffer) Read(buf []byte) (n int, err error) {
 	return size, nil
 }
 
+// Close implements the io.Closer interface
+//
+// It allows a graceful shutdown by cancelling the context in the WavBuffer
+func (w *WavBuffer) Close() error {
+	if w.done != nil {
+		w.done(nil)
+	}
+	return nil
+}
+
 func (w *WavBuffer) parseHeader(buf []byte) error {
 	header, err := HeaderFrom(buf)
 	if err != nil {
@@ -161,6 +172,7 @@ func (w *WavBuffer) stream(ctx context.Context) error {
 		subChunkBuf       = make([]byte, 8)  // fixed-size sub-chunk
 		streamCtx, cancel = context.WithCancelCause(ctx)
 	)
+	w.done = cancel
 
 	// read and parse header -- returns an error if raised AND header is unset
 	if _, err := w.Reader.Read(headerBuf); err != nil && w.Header == nil {
