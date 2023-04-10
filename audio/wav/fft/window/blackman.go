@@ -1,11 +1,10 @@
 package window
 
 import (
-	"errors"
-	"fmt"
+	"math"
 )
 
-var blackmanMap = map[int]Block{
+var blackmanMap = map[int]Window{
 	8:    Blackman8,
 	16:   Blackman16,
 	32:   Blackman32,
@@ -19,12 +18,39 @@ var blackmanMap = map[int]Block{
 	8192: Blackman8192,
 }
 
-var ErrInvalidBlockSize = errors.New("fft/window: invalid block size")
-
-func Blackman(i int) (Block, error) {
+// Blackman returns an L-point Blackman window
+// Reference: http://www.mathworks.com/help/signal/ref/blackman.html
+func Blackman(i int) Window {
 	w, ok := blackmanMap[i]
 	if !ok {
-		return nil, fmt.Errorf("%w: size %d doesn't have a precomputed window", ErrInvalidBlockSize, i)
+		return newBlackman(i)
 	}
-	return w, nil
+	return w
+}
+
+func newBlackman(i int) Window {
+	const term0 = 0.42
+
+	switch i {
+	case 0:
+		return []float64{}
+	case 1:
+		return []float64{1}
+	default:
+		var (
+			r       = make([]float64, i, i)
+			indices = float64(i - 1)
+		)
+
+		for n := 0.0; n <= indices; n++ {
+			var (
+				term1 = -0.5 * math.Cos(tau*n/indices)
+				term2 = 0.08 * math.Cos(twoTau*n/indices)
+			)
+
+			r[int(n)] = term0 + term1 + term2
+		}
+
+		return r
+	}
 }
