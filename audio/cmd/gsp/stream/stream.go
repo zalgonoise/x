@@ -128,6 +128,7 @@ func analyzerMode(cfg *Config, w *wav.WavBuffer) error {
 		if err != nil {
 			panic(err)
 		}
+		_ = w.Close()
 	}()
 
 	return nil
