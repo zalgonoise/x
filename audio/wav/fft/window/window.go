@@ -23,10 +23,6 @@ func (b Window) Apply(v []float64) {
 	}
 }
 
-func (b Window) Len() int {
-	return len(b)
-}
-
 var blockSizes = []int{8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192}
 
 // New creates a new Window from the input WindowFunc and size
