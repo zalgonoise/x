@@ -1,10 +1,10 @@
 package window
 
 import (
-	"fmt"
+	"math"
 )
 
-var flattopMap = map[int]Block{
+var flattopMap = map[int]Window{
 	8:    FlatTop8,
 	16:   FlatTop16,
 	32:   FlatTop32,
@@ -18,10 +18,50 @@ var flattopMap = map[int]Block{
 	8192: FlatTop8192,
 }
 
-func FlatTop(i int) (Block, error) {
+// FlatTop returns an L-point flat top window.
+// Reference: http://www.mathworks.com/help/signal/ref/flattopwin.html
+func FlatTop(i int) Window {
 	w, ok := flattopMap[i]
 	if !ok {
-		return nil, fmt.Errorf("%w: size %d doesn't have a precomputed window", ErrInvalidBlockSize, i)
+		return newFlatTop(i)
 	}
-	return w, nil
+	return w
+}
+
+func newFlatTop(i int) Window {
+	const (
+		alpha0 = float64(0.21557895)
+		alpha1 = float64(0.41663158)
+		alpha2 = float64(0.277263158)
+		alpha3 = float64(0.083578947)
+		alpha4 = float64(0.006947368)
+	)
+
+	switch i {
+	case 0:
+		return []float64{}
+	case 1:
+		return []float64{1}
+	default:
+		var (
+			r           = make([]float64, i, i)
+			indices     = float64(i - 1)
+			coefficient = tau / float64(i)
+		)
+
+		for n := 0.0; n <= indices; n++ {
+			var (
+				factor = n * coefficient
+				term0  = alpha0
+				term1  = alpha1 * math.Cos(factor)
+				term2  = alpha2 * math.Cos(2*factor)
+				term3  = alpha3 * math.Cos(3*factor)
+				term4  = alpha4 * math.Cos(4*factor)
+			)
+
+			r[int(n)] = term0 - term1 + term2 - term3 + term4
+		}
+
+		return r
+	}
 }
