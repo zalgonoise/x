@@ -1,10 +1,10 @@
 package window
 
 import (
-	"fmt"
+	"math"
 )
 
-var hannMap = map[int]Block{
+var hannMap = map[int]Window{
 	8:    Hann8,
 	16:   Hann16,
 	32:   Hann32,
@@ -18,10 +18,32 @@ var hannMap = map[int]Block{
 	8192: Hann8192,
 }
 
-func Hann(i int) (Block, error) {
+// Hann returns an L-point Hann window.
+// Reference: http://www.mathworks.com/help/signal/ref/hann.html
+func Hann(i int) Window {
 	w, ok := hannMap[i]
 	if !ok {
-		return nil, fmt.Errorf("%w: size %d doesn't have a precomputed window", ErrInvalidBlockSize, i)
+		return newHann(i)
 	}
-	return w, nil
+	return w
+}
+
+func newHann(i int) Window {
+	switch i {
+	case 0:
+		return []float64{}
+	case 1:
+		return []float64{1}
+	default:
+		var (
+			r           = make([]float64, i, i)
+			indices     = float64(i - 1)
+			coefficient = tau / indices
+		)
+
+		for n := 0.0; n <= indices; n++ {
+			r[int(n)] = 0.5 * (1 - math.Cos(coefficient*n))
+		}
+		return r
+	}
 }
