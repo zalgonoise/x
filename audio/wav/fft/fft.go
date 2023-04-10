@@ -82,6 +82,8 @@ func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 		freqReal := real(frequencies[i])
 		freqImag := imag(frequencies[i])
 		// map the magnitude for each frequency bin to the corresponding value in the map
+		// using math.Sqrt(re*re + im*im) is faster than using math.Hypot(re, im)
+		// see fft_test.go for details
 		magnitudes = append(
 			magnitudes,
 			FrequencyPower{
