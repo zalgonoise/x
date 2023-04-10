@@ -3,7 +3,8 @@ package fft
 import (
 	"math"
 
-	"github.com/mjibson/go-dsp/fft"
+	dspfft "github.com/mjibson/go-dsp/fft"
+	"github.com/zalgonoise/x/audio/wav/fft/window"
 )
 
 // FrequencyPower denotes a single frequency and its magnitude in a Fast
@@ -57,18 +58,13 @@ func AsBlock(size int) BlockSize {
 	return Block1024
 }
 
-const (
-	tau    = math.Pi * 2
-	twoTau = math.Pi * 4
-
-	// DefaultMagnitudeThreshold describes the default value where a certain
-	// frequency is strong enough to be considered relevant to the spectrum filter
-	DefaultMagnitudeThreshold = 10
-)
+// DefaultMagnitudeThreshold describes the default value where a certain
+// frequency is strong enough to be considered relevant to the spectrum filter
+const DefaultMagnitudeThreshold = 10
 
 // Apply applies a Fast Fourier Transform (FFT) on a slice of float64 `data`,
 // with sample rate `sampleRate`. It returns a slice of FrequencyPower
-func Apply(sampleRate int, data []float64, w WindowBlock) []FrequencyPower {
+func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 	var (
 		n          = len(data)
 		freqUnit   = sampleRate / n
@@ -76,12 +72,12 @@ func Apply(sampleRate int, data []float64, w WindowBlock) []FrequencyPower {
 	)
 
 	// apply a window function to the values
-	if w != nil && w.Len() == n {
+	if w != nil && len(w) == n {
 		w.Apply(data)
 	}
 
 	// apply a fast Fourier transform on the data; exclude index 0, no 0Hz-freq results
-	frequencies := fft.FFTReal(data)
+	frequencies := dspfft.FFTReal(data)
 	for i := 1; i < n/2; i++ {
 		freqReal := real(frequencies[i])
 		freqImag := imag(frequencies[i])
