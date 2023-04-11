@@ -9,17 +9,23 @@ const (
 	twoTau = math.Pi * 4
 )
 
+// WindowFunc is a type of function that generates a Window based on an input size
 type WindowFunc func(int) Window
 
+// Generate calls the WindowFunc itself, with the input int `size`
 func (w WindowFunc) Generate(size int) Window {
 	return w(size)
 }
 
+// Window is a custom type for a slice of float64, that repesents a Window that shapes
+// input signal
 type Window []float64
 
-func (b Window) Apply(v []float64) {
-	for i := range v {
-		v[i] *= b[i]
+// Apply will go through the input slice of float64 values, and apply the window to it by
+// multiplying the value by the ratio in the respective element in the Window
+func (w Window) Apply(value []float64) {
+	for idx := range value {
+		value[idx] *= w[idx]
 	}
 }
 
