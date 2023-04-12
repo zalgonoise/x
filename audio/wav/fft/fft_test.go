@@ -1,8 +1,15 @@
-package fft
+package fft_test
 
 import (
 	"math"
 	"testing"
+	"time"
+
+	dspfft "github.com/mjibson/go-dsp/fft"
+
+	"github.com/zalgonoise/x/audio/wav"
+	"github.com/zalgonoise/x/audio/wav/fft"
+	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 // BenchmarkHypotenuse compares three approaches to calculating the hypotenuse using Go's standard library,
@@ -61,4 +68,91 @@ func BenchmarkHypotenuse(b *testing.B) {
 		_ = out
 	})
 
+}
+
+func newSine(freq int) (*wav.Wav, error) {
+	// create a sine wave 16 bit depth, 44.1kHz rate, mono,
+	// 5 second duration. Pass audio bytes into a new bytes.Buffer
+	sine, err := wav.New(44100, 16, 1)
+	if err != nil {
+		return nil, err
+	}
+	sine.Data.Generate(osc.SineWave, freq, 44100, 5*time.Second)
+	return sine, nil
+}
+
+func BenchmarkFFT(b *testing.B) {
+	sine, err := newSine(2000)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+
+	var (
+		data      = fft.ToComplex(sine.Data.Float())[:1024]
+		spectrumA []complex128
+		spectrumB []complex128
+	)
+
+	b.Run("Self/FFT", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			spectrumA = fft.FFT(data)
+		}
+		b.StopTimer()
+		_ = spectrumA
+	})
+
+	b.Run("GoDSP/FFT", func(b *testing.B) {
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			spectrumB = dspfft.FFT(data)
+		}
+		b.StopTimer()
+		_ = spectrumB
+	})
+
+	b.Run("Compare", func(b *testing.B) {
+		if len(spectrumA) != len(spectrumB) {
+			b.Errorf("output length mismatch error: slice A: %d ; slice B: %d", len(spectrumA), len(spectrumB))
+			return
+		}
+
+		for idx := range spectrumA {
+			if spectrumA[idx] != spectrumB[idx] {
+				b.Errorf("output mismatch error: index #%d: slice A: %v ; slice B: %v", idx, spectrumA[idx], spectrumB[idx])
+				return
+			}
+		}
+	})
+}
+
+func TestFFT(t *testing.T) {
+	sine, err := newSine(2000)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var data = fft.ToComplex(sine.Data.Float())[:1024]
+	t.Log(fft.FFT(data))
+}
+
+func BenchmarkGetRadix2Factors(b *testing.B) {
+	b.Run("Self/GetRadix2Factors", func(b *testing.B) {
+		var f []complex128
+		for i := 0; i < b.N; i++ {
+			f = fft.GetRadix2Factors(1024)
+		}
+		_ = f
+	})
+
+}
+
+func TestGetRadix2Factors(t *testing.T) {
+	var inputFactorLengths = []int{4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192}
+
+	for _, v := range inputFactorLengths {
+		t.Logf("\t%d: %#v,\n", v, fft.GetRadix2Factors(v))
+	}
 }
