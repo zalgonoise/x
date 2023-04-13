@@ -209,8 +209,9 @@ func GetRadix2Factors(inputLen int) []complex128 {
 			}
 
 			for n := 1; n < factor; n += 2 {
-				sin, cos := math.Sincos(-tau / float64(factor) * float64(n))
-				radix2Factors[factor][n] = complex(cos, sin)
+				radix2Factors[factor][n] = complex(
+					math.Sincos(-tau / float64(factor) * float64(n)),
+				)
 			}
 		}
 	}
