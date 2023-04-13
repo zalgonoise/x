@@ -138,11 +138,70 @@ func TestFFT(t *testing.T) {
 	t.Log(fft.FFT(data))
 }
 
+// BenchmarkGetRadix2Factors tests the current and former implementations of
+// this function, to measure its improvements over time
+//
+// ❯ go test -v  -bench '^(BenchmarkGetRadix2Factors)$' -run='^$'  -benchmem -benchtime=1s -cpuprofile /tmp/cpu.pprof ./wav/fft
+//
+// goos: linux
+// goarch: amd64
+// pkg: github.com/zalgonoise/x/audio/wav/fft
+// cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
+// BenchmarkGetRadix2Factors
+// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_13_04_2023
+// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_13_04_2023-4                100000000               10.38 ns/op            0 B/op          0 allocs/op
+// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Initial
+// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Initial-4                               84169315                11.97 ns/op            0 B/op          0 allocs/op
 func BenchmarkGetRadix2Factors(b *testing.B) {
-	b.Run("Self/GetRadix2Factors", func(b *testing.B) {
+	const (
+		tau   = 2 * math.Pi
+		input = 8192
+	)
+
+	b.Run("Self/GetRadix2Factors/Improvement_13_04_2023", func(b *testing.B) {
 		var f []complex128
+
+		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			f = fft.GetRadix2Factors(1024)
+			f = fft.GetRadix2Factors(input)
+		}
+		_ = f
+	})
+
+	b.Run("Self/GetRadix2Factors/Initial", func(b *testing.B) {
+		var (
+			f             []complex128
+			radix2Factors = map[int][]complex128{
+				4: {(1 + 0i), (0 - 1i), (-1 + 0i), (0 + 1i)},
+			}
+			fn = func(inputLen int) []complex128 {
+				if factors, ok := radix2Factors[inputLen]; ok {
+					return factors
+				}
+
+				for factor, prev := 8, 4; factor <= inputLen; factor, prev = factor<<1, factor {
+					if _, ok := radix2Factors[factor]; !ok {
+						radix2Factors[factor] = make([]complex128, factor)
+
+						for n, j := 0, 0; n < factor; n, j = n+2, j+1 {
+							radix2Factors[factor][n] = radix2Factors[prev][j]
+						}
+
+						for n := 1; n < factor; n += 2 {
+							v := -tau / float64(factor) * float64(n)
+							sin, cos := math.Sin(v), math.Cos(v)
+							radix2Factors[factor][n] = complex(cos, sin)
+						}
+					}
+				}
+
+				return radix2Factors[inputLen]
+			}
+		)
+
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			f = fn(input)
 		}
 		_ = f
 	})
