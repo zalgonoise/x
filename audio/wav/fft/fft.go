@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"github.com/zalgonoise/x/audio/wav/fft/window"
+
+	dspfft "github.com/mjibson/go-dsp/fft"
 )
 
 var (
@@ -39,33 +41,33 @@ type fft_work struct {
 // with sample rate `sampleRate`. It returns a slice of FrequencyPower
 func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 	var (
-		n          = len(data)
-		freqUnit   = sampleRate / n
-		magnitudes = make([]FrequencyPower, 0, (n/2)-1)
+		ln         = len(data)
+		magnitudes = make([]FrequencyPower, 0, (ln/2)-1)
 	)
 
 	// apply a window function to the values
-	if w != nil && len(w) == n {
+	if w != nil && len(w) == ln {
 		w.Apply(data)
 	}
 
 	// apply a fast Fourier transform on the data; exclude index 0, no 0Hz-freq results
-	frequencies := FFT(ToComplex(data))
+	spectrum := dspfft.FFTReal(data)
 
-	for i := 1; i < n/2; i++ {
-		freqReal := real(frequencies[i])
-		freqImag := imag(frequencies[i])
+	for i := 1; i < ln/2; i++ {
+		freqReal := real(spectrum[i])
+		freqImag := imag(spectrum[i])
 		// map the magnitude for each frequency bin to the corresponding value in the map
 		// using math.Sqrt(re*re + im*im) is faster than using math.Hypot(re, im)
 		// see fft_test.go for details
 		magnitudes = append(
 			magnitudes,
 			FrequencyPower{
-				Freq: i * freqUnit,
+				Freq: i * sampleRate / ln,
 				Mag:  math.Sqrt(freqReal*freqReal + freqImag*freqImag),
 			},
 		)
 	}
+
 	return magnitudes
 }
 
@@ -76,7 +78,6 @@ func FFT(x []complex128) []complex128 {
 
 	t := make([]complex128, lx) // temp
 	r := reorderData(x)
-
 	var blocks, stage, s_2 int
 
 	jobs := make(chan *fft_work, lx)
