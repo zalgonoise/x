@@ -5,7 +5,6 @@ import (
 	"runtime"
 	"sync"
 
-	dspfft "github.com/mjibson/go-dsp/fft"
 	"github.com/zalgonoise/x/audio/wav/fft/window"
 )
 
@@ -51,7 +50,7 @@ func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 	}
 
 	// apply a fast Fourier transform on the data; exclude index 0, no 0Hz-freq results
-	frequencies := dspfft.FFTReal(data)
+	frequencies := FFT(ToComplex(data))
 
 	for i := 1; i < n/2; i++ {
 		freqReal := real(frequencies[i])
