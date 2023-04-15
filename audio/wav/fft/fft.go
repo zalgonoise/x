@@ -6,8 +6,6 @@ import (
 	"sync"
 
 	"github.com/zalgonoise/x/audio/wav/fft/window"
-
-	dspfft "github.com/mjibson/go-dsp/fft"
 )
 
 var (
@@ -51,7 +49,7 @@ func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 	}
 
 	// apply a fast Fourier transform on the data; exclude index 0, no 0Hz-freq results
-	spectrum := dspfft.FFTReal(data)
+	spectrum := FFT(ToComplex(data))
 
 	for i := 1; i < ln/2; i++ {
 		freqReal := real(spectrum[i])
@@ -76,8 +74,8 @@ func FFT(x []complex128) []complex128 {
 	lx := len(x)
 	factors := GetRadix2Factors(lx)
 
-	t := make([]complex128, lx) // temp
-	r := reorderData(x)
+	temp := make([]complex128, lx) // temp
+	reorder := reorderData(x)
 	var blocks, stage, s_2 int
 
 	jobs := make(chan *fft_work, lx)
@@ -100,17 +98,17 @@ func FFT(x []complex128) []complex128 {
 					for j := 0; j < s_2; j++ {
 						idx := j + nb
 						idx2 := idx + s_2
-						ridx := r[idx]
-						w_n := r[idx2] * factors[blocks*j]
-						t[idx] = ridx + w_n
-						t[idx2] = ridx - w_n
+						ridx := reorder[idx]
+						w_n := reorder[idx2] * factors[blocks*j]
+						temp[idx] = ridx + w_n
+						temp[idx2] = ridx - w_n
 					}
 				} else {
 					n1 := nb + 1
-					rn := r[nb]
-					rn1 := r[n1]
-					t[nb] = rn + rn1
-					t[n1] = rn - rn1
+					rn := reorder[nb]
+					rn1 := reorder[n1]
+					temp[nb] = rn + rn1
+					temp[n1] = rn - rn1
 				}
 			}
 			wg.Done()
@@ -141,80 +139,22 @@ func FFT(x []complex128) []complex128 {
 			end += stage
 		}
 		wg.Wait()
-		r, t = t, r
+		reorder, temp = temp, reorder
 	}
 
-	return r
+	return reorder
 }
 
 // TODO: refactor
 func reorderData(x []complex128) []complex128 {
-	lx := uint(len(x))
-	r := make([]complex128, lx)
-	s := log2(lx)
+	ln := uint(len(x))
+	reorder := make([]complex128, ln)
+	s := Log2(ln)
 
 	var n uint
-	for ; n < lx; n++ {
-		r[reverseBits(n, s)] = x[n]
+	for ; n < ln; n++ {
+		reorder[ReverseFirstBits(n, s)] = x[n]
 	}
 
-	return r
-}
-
-// log2 returns the log base 2 of v
-// from: http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogObvious
-// TODO: review / refactor
-func log2(v uint) uint {
-	var r uint
-
-	for v >>= 1; v != 0; v >>= 1 {
-		r++
-	}
-
-	return r
-}
-
-// reverseBits returns the first s bits of v in reverse order
-// from: http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-// TODO: review / refactor
-func reverseBits(v, s uint) uint {
-	var r uint
-
-	// Since we aren't reversing all the bits in v (just the first s bits),
-	// we only need the first bit of v instead of a full copy.
-	r = v & 1
-	s--
-
-	for v >>= 1; v != 0; v >>= 1 {
-		r <<= 1
-		r |= v & 1
-		s--
-	}
-
-	return r << s
-}
-
-// GetRadix2Factors is temporarily public, could become private at a later point.
-func GetRadix2Factors(inputLen int) []complex128 {
-	if factors, ok := radix2Factors[inputLen]; ok {
-		return factors
-	}
-
-	for factor, prev := 8, 4; factor <= inputLen; factor, prev = factor<<1, factor {
-		if _, ok := radix2Factors[factor]; !ok {
-			radix2Factors[factor] = make([]complex128, factor)
-
-			for n, j := 0, 0; n < factor; n, j = n+2, j+1 {
-				radix2Factors[factor][n] = radix2Factors[prev][j]
-			}
-
-			for n := 1; n < factor; n += 2 {
-				radix2Factors[factor][n] = complex(
-					math.Sincos(-tau / float64(factor) * float64(n)),
-				)
-			}
-		}
-	}
-
-	return radix2Factors[inputLen]
+	return reorder
 }
