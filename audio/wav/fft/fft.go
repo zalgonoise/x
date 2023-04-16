@@ -2,8 +2,6 @@ package fft
 
 import (
 	"math"
-	"runtime"
-	"sync"
 
 	"github.com/zalgonoise/x/audio/wav/fft/window"
 )
@@ -12,7 +10,6 @@ var (
 	radix2Factors = map[int][]complex128{
 		4: {(1 + 0i), (0 - 1i), (-1 + 0i), (0 + 1i)},
 	}
-	worker_pool_size = 0 // TODO: remove after refactor
 )
 
 const (
@@ -28,11 +25,6 @@ const (
 type FrequencyPower struct {
 	Freq int
 	Mag  float64
-}
-
-// TODO: refactor / remove
-type fft_work struct {
-	start, end int
 }
 
 // Apply applies a Fast Fourier Transform (FFT) on a slice of float64 `data`,
@@ -69,91 +61,52 @@ func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 	return magnitudes
 }
 
-// TODO: continue to refactor
-func FFT(x []complex128) []complex128 {
-	lx := len(x)
-	factors := GetRadix2Factors(lx)
+// FFT applies a Fast Fourier Transform to the input slice of complex128 values, to
+// retrieve the frequency spectrum of a digital signal
+func FFT(value []complex128) []complex128 {
+	var (
+		valueLen = len(value)
+		factors  = GetRadix2Factors(valueLen)
+		temp     = make([]complex128, valueLen) // temp
+		reorder  = ReorderData(value)
+	)
 
-	temp := make([]complex128, lx) // temp
-	reorder := reorderData(x)
-	var blocks, stage, s_2 int
+	// stage increases by a power of two
+	for stage := 2; stage <= valueLen; stage <<= 1 {
+		var (
+			blocks      = valueLen / stage
+			stage2Value = stage / 2
+		)
 
-	jobs := make(chan *fft_work, lx)
-	wg := sync.WaitGroup{}
+		// iterate through each item in the batch, increasing by the stage value
+		for batchIdx := 0; batchIdx < valueLen; batchIdx += stage {
+			if stage == 2 { // "first stage" scenario
+				var (
+					next        = batchIdx + 1
+					reorderIdx  = reorder[batchIdx]
+					reorderNext = reorder[next]
+				)
 
-	num_workers := worker_pool_size
-	if (num_workers) == 0 {
-		num_workers = runtime.GOMAXPROCS(0)
-	}
-
-	idx_diff := lx / num_workers
-	if idx_diff < 2 {
-		idx_diff = 2
-	}
-
-	worker := func() {
-		for work := range jobs {
-			for nb := work.start; nb < work.end; nb += stage {
-				if stage != 2 {
-					for j := 0; j < s_2; j++ {
-						idx := j + nb
-						idx2 := idx + s_2
-						ridx := reorder[idx]
-						w_n := reorder[idx2] * factors[blocks*j]
-						temp[idx] = ridx + w_n
-						temp[idx2] = ridx - w_n
-					}
-				} else {
-					n1 := nb + 1
-					rn := reorder[nb]
-					rn1 := reorder[n1]
-					temp[nb] = rn + rn1
-					temp[n1] = rn - rn1
-				}
-			}
-			wg.Done()
-		}
-	}
-
-	for i := 0; i < num_workers; i++ {
-		go worker()
-	}
-	defer close(jobs)
-
-	for stage = 2; stage <= lx; stage <<= 1 {
-		blocks = lx / stage
-		s_2 = stage / 2
-
-		for start, end := 0, stage; ; {
-			if end-start >= idx_diff || end == lx {
-				wg.Add(1)
-				jobs <- &fft_work{start, end}
-
-				if end == lx {
-					break
-				}
-
-				start = end
+				temp[batchIdx] = reorderIdx + reorderNext
+				temp[next] = reorderIdx - reorderNext
+				continue
 			}
 
-			end += stage
+			for iter := 0; iter < stage2Value; iter++ {
+				var (
+					idx        = iter + batchIdx
+					idx2       = idx + stage2Value
+					reorderIdx = reorder[idx]
+					factorized = reorder[idx2] * factors[blocks*iter]
+				)
+
+				temp[idx] = reorderIdx + factorized
+				temp[idx2] = reorderIdx - factorized
+			}
+
 		}
-		wg.Wait()
+
 		reorder, temp = temp, reorder
-	}
-
-	return reorder
-}
-
-// TODO: refactor
-func reorderData(x []complex128) []complex128 {
-	ln := uint(len(x))
-	reorder := make([]complex128, ln)
-	s := Log2(ln)
-
-	var n uint
-	for ; n < ln; n++ {
-		reorder[ReverseFirstBits(n, s)] = x[n]
 	}
 
 	return reorder

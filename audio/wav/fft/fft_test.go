@@ -81,6 +81,18 @@ func newSine(freq int) (*wav.Wav, error) {
 	return sine, nil
 }
 
+// BenchmarkFFT ensures that this library's FFT implementation yields the same results
+// as go-dsp/fft, while running a comparison benchmark test to measure both implementations'
+// performance
+//
+// ❯ go test -bench '^(BenchmarkFFT)$' -run='^$'  -benchmem -benchtime=5s -cpuprofile /tmp/cpu.pprof ./wav/fft
+// goos: linux
+// goarch: amd64
+// pkg: github.com/zalgonoise/x/audio/wav/fft
+// cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
+// BenchmarkFFT/Self/FFT-4                  3994556              1501 ns/op            1024 B/op          2 allocs/op
+// BenchmarkFFT/GoDSP/FFT-4                  213699             25352 ns/op            1803 B/op         26 allocs/op
+// BenchmarkFFT/Compare-4                  1000000000               0.0000034 ns/op               0 B/op          0 allocs/op
 func BenchmarkFFT(b *testing.B) {
 	sine, err := newSine(2000)
 	if err != nil {
@@ -121,7 +133,6 @@ func BenchmarkFFT(b *testing.B) {
 		for idx := range spectrumA {
 			if spectrumA[idx] != spectrumB[idx] {
 				b.Errorf("output mismatch error: index #%d: slice A: %v ; slice B: %v", idx, spectrumA[idx], spectrumB[idx])
-				// return
 			}
 		}
 	})
@@ -134,6 +145,6 @@ func TestFFT(t *testing.T) {
 		return
 	}
 
-	var data = fft.ToComplex(sine.Data.Float())[:1024]
+	var data = fft.ToComplex(sine.Data.Float())[:16]
 	t.Log(fft.FFT(data))
 }
