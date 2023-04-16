@@ -90,7 +90,7 @@ func newSine(freq int) (*wav.Wav, error) {
 // goarch: amd64
 // pkg: github.com/zalgonoise/x/audio/wav/fft
 // cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
-// BenchmarkFFT/Self/FFT-4                  3994556              1501 ns/op            1024 B/op          2 allocs/op
+// BenchmarkFFT/Self/FFT-4                  4871833              1312 ns/op            1024 B/op          2 allocs/op
 // BenchmarkFFT/GoDSP/FFT-4                  213699             25352 ns/op            1803 B/op         26 allocs/op
 // BenchmarkFFT/Compare-4                  1000000000               0.0000034 ns/op               0 B/op          0 allocs/op
 func BenchmarkFFT(b *testing.B) {

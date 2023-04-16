@@ -68,8 +68,8 @@ func FFT(value []complex128) []complex128 {
 		valueLen = len(value)
 		factors  = GetRadix2Factors(valueLen)
 		temp     = make([]complex128, valueLen) // temp
-		reorder  = ReorderData(value)
 	)
+	value = ReorderData(value)
 
 	// stage increases by a power of two
 	for stage := 2; stage <= valueLen; stage <<= 1 {
@@ -81,23 +81,23 @@ func FFT(value []complex128) []complex128 {
 		// iterate through each item in the batch, increasing by the stage value
 		for batchIdx := 0; batchIdx < valueLen; batchIdx += stage {
 			if stage == 2 { // "first stage" scenario
+
 				var (
 					next        = batchIdx + 1
-					reorderIdx  = reorder[batchIdx]
-					reorderNext = reorder[next]
+					reorderIdx  = value[batchIdx]
+					reorderNext = value[next]
 				)
 
 				temp[batchIdx] = reorderIdx + reorderNext
 				temp[next] = reorderIdx - reorderNext
 				continue
 			}
-
 			for iter := 0; iter < stage2Value; iter++ {
 				var (
 					idx        = iter + batchIdx
 					idx2       = idx + stage2Value
-					reorderIdx = reorder[idx]
-					factorized = reorder[idx2] * factors[blocks*iter]
+					reorderIdx = value[idx]
+					factorized = value[idx2] * factors[blocks*iter]
 				)
 
 				temp[idx] = reorderIdx + factorized
@@ -106,8 +106,8 @@ func FFT(value []complex128) []complex128 {
 
 		}
 
-		reorder, temp = temp, reorder
+		value, temp = temp, value
 	}
 
-	return reorder
+	return value
 }
