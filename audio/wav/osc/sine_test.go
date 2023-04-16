@@ -7,6 +7,7 @@ import (
 
 	"github.com/zalgonoise/x/audio/wav"
 	"github.com/zalgonoise/x/audio/wav/data"
+	"github.com/zalgonoise/x/audio/wav/fft/trig"
 	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
@@ -50,7 +51,7 @@ func BenchmarkSineCompare(b *testing.B) {
 			// goarch: amd64
 			// cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
 			// BenchmarkSineCompare/sineImplementation/sine_20_3_23-4           1281918              1969 ns/op              48 B/op          1 allocs/op
-			// BenchmarkSineCompare/sineImplementation/sine_replacement-4       2662305               788.8 ns/op            48 B/op          1 allocs/op
+			// BenchmarkSineCompare/sineImplementation/sine_replacement-4       2662305               556.2 ns/op            48 B/op          1 allocs/op
 			b.Run(
 				"sine_20_3_23", func(b *testing.B) {
 					fn := func(buffer []int16, freq, depth, sampleRate float64) {
@@ -73,7 +74,7 @@ func BenchmarkSineCompare(b *testing.B) {
 					fn := func(buffer []int16, freq, depth, sampleRate float64) {
 						for i := 0; i < len(buffer); i++ {
 							// use tau here, no need to compute 2 * math.Pi
-							sample := math.Sin(tau * freq * float64(i) / sampleRate)
+							sample := trig.Sin(tau * freq * float64(i) / sampleRate)
 							// bit shift here, instead of math.Pow(2.0, depth); which is equivalent to 2 << (depth-1)
 							buffer[i] = int16(sample * float64(int(2)<<int(depth-1)/2-1))
 						}
