@@ -27,3 +27,20 @@ func ReverseBits[T RevBitsTypes](value T) (reverse T) {
 
 	return reverse
 }
+
+// ReorderData shuffles the input complex128 values to re-order it,
+// setting the first half of the slice in even indexes and the last half
+// of the slice in odd indexes
+func ReorderData(value []complex128) []complex128 {
+	var (
+		ln      = len(value)
+		reorder = make([]complex128, ln)
+		sizeLog = Log2(ln)
+	)
+
+	for i := range value {
+		reorder[ReverseFirstBits(i, sizeLog)] = value[i]
+	}
+
+	return reorder
+}

@@ -1,6 +1,10 @@
-package fft
+package fft_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zalgonoise/x/audio/wav/fft"
+)
 
 // BenchmarkReverseBits finds the most performant way of computing the reverse bits of
 // a number
@@ -26,13 +30,13 @@ func BenchmarkReverseBits(b *testing.B) {
 
 	b.Run("Self/NoSize", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			outputA = ReverseBits(input)
+			outputA = fft.ReverseBits(input)
 		}
 		_ = outputA
 	})
 	b.Run("Self/WithSize", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			outputB = ReverseFirstBits(input, amount)
+			outputB = fft.ReverseFirstBits(input, amount)
 		}
 		_ = outputB
 	})
@@ -62,6 +66,91 @@ func BenchmarkReverseBits(b *testing.B) {
 	b.Run("Compare", func(b *testing.B) {
 		if outputA != wants || outputB != wants {
 			b.Errorf("output mismatch error: A: %d ; B: %d", outputA, outputB)
+		}
+	})
+}
+
+func BenchmarkReorderData(b *testing.B) {
+	sine, err := newSine(2000)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+
+	var (
+		data      = fft.ToComplex(sine.Data.Float())[:1024]
+		spectrumA []complex128
+		spectrumB []complex128
+	)
+	b.Run("Self/ReorderData", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			spectrumA = fft.ReorderData(data)
+		}
+		_ = spectrumA
+	})
+
+	b.Run("GoDSP/ReorderData", func(b *testing.B) {
+		var fn = func(x []complex128) []complex128 {
+			ln := uint(len(x))
+			reorder := make([]complex128, ln)
+			s := fft.Log2(ln)
+
+			var n uint
+			for ; n < ln; n++ {
+				reorder[fft.ReverseFirstBits(n, s)] = x[n]
+			}
+
+			return reorder
+		}
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			spectrumB = fn(data)
+		}
+		_ = spectrumB
+	})
+}
+
+func TestReorderData(t *testing.T) {
+	sine, err := newSine(2000)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var (
+		data      = fft.ToComplex(sine.Data.Float())[:1024]
+		spectrumA []complex128
+		spectrumB []complex128
+	)
+	t.Run("Self/ReorderData", func(t *testing.T) {
+		spectrumA = fft.ReorderData(data)
+	})
+
+	t.Run("GoDSP/ReorderData", func(t *testing.T) {
+		spectrumB = func(x []complex128) []complex128 {
+			ln := uint(len(x))
+			reorder := make([]complex128, ln)
+			s := fft.Log2(ln)
+
+			var n uint
+			for ; n < ln; n++ {
+				reorder[fft.ReverseFirstBits(n, s)] = x[n]
+			}
+
+			return reorder
+		}(data)
+	})
+
+	t.Run("Compare", func(t *testing.T) {
+		if len(spectrumA) != len(spectrumB) {
+			t.Errorf("output length mismatch error: slice A: %d ; slice B: %d", len(spectrumA), len(spectrumB))
+			return
+		}
+
+		for idx := range spectrumA {
+			if spectrumA[idx] != spectrumB[idx] {
+				t.Errorf("output mismatch error: index #%d: slice A: %v ; slice B: %v", idx, spectrumA[idx], spectrumB[idx])
+			}
 		}
 	})
 }
