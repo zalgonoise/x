@@ -1,8 +1,6 @@
 package fft
 
 import (
-	"math"
-
 	"github.com/zalgonoise/x/audio/wav/fft/trig"
 )
 
@@ -23,7 +21,7 @@ func GetRadix2Factors(inputLen int) []complex128 {
 			for n := 1; n < factor; n += 2 {
 				v := -tau / float64(factor) * float64(n)
 				radix2Factors[factor][n] = complex(
-					math.Cos(v), trig.Sin(v),
+					trig.Cos(v), trig.Sin(v),
 				)
 			}
 		}
