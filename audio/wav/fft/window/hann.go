@@ -1,8 +1,6 @@
 package window
 
-import (
-	"math"
-)
+import "github.com/zalgonoise/x/audio/wav/fft/trig"
 
 var hannMap = map[int]Window{
 	8:    Hann8,
@@ -42,7 +40,7 @@ func newHann(i int) Window {
 		)
 
 		for n := 0.0; n <= indices; n++ {
-			r[int(n)] = 0.5 * (1 - math.Cos(coefficient*n))
+			r[int(n)] = 0.5 * (1 - trig.Cos(coefficient*n))
 		}
 		return r
 	}
