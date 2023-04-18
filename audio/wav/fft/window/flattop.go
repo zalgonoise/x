@@ -1,8 +1,6 @@
 package window
 
-import (
-	"math"
-)
+import "github.com/zalgonoise/x/audio/wav/fft/trig"
 
 var flattopMap = map[int]Window{
 	8:    FlatTop8,
@@ -53,10 +51,10 @@ func newFlatTop(i int) Window {
 			var (
 				factor = n * coefficient
 				term0  = alpha0
-				term1  = alpha1 * math.Cos(factor)
-				term2  = alpha2 * math.Cos(2*factor)
-				term3  = alpha3 * math.Cos(3*factor)
-				term4  = alpha4 * math.Cos(4*factor)
+				term1  = alpha1 * trig.Cos(factor)
+				term2  = alpha2 * trig.Cos(2*factor)
+				term3  = alpha3 * trig.Cos(3*factor)
+				term4  = alpha4 * trig.Cos(4*factor)
 			)
 
 			r[int(n)] = term0 - term1 + term2 - term3 + term4
