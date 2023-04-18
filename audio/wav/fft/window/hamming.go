@@ -1,8 +1,6 @@
 package window
 
-import (
-	"math"
-)
+import "github.com/zalgonoise/x/audio/wav/fft/trig"
 
 var hammingMap = map[int]Window{
 	8:    Hamming8,
@@ -42,7 +40,7 @@ func newHamming(i int) Window {
 		)
 
 		for n := 0.0; n <= idx; n++ {
-			r[int(n)] = 0.54 - 0.46*math.Cos(coefficient*n)
+			r[int(n)] = 0.54 - 0.46*trig.Cos(coefficient*n)
 		}
 
 		return r
