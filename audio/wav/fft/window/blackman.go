@@ -1,8 +1,6 @@
 package window
 
-import (
-	"math"
-)
+import "github.com/zalgonoise/x/audio/wav/fft/trig"
 
 var blackmanMap = map[int]Window{
 	8:    Blackman8,
@@ -44,8 +42,8 @@ func newBlackman(i int) Window {
 
 		for n := 0.0; n <= indices; n++ {
 			var (
-				term1 = -0.5 * math.Cos(tau*n/indices)
-				term2 = 0.08 * math.Cos(twoTau*n/indices)
+				term1 = -0.5 * trig.Cos(tau*n/indices)
+				term2 = 0.08 * trig.Cos(twoTau*n/indices)
 			)
 
 			r[int(n)] = term0 + term1 + term2
