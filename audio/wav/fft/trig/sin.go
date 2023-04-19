@@ -40,6 +40,7 @@ var _cos = [...]float64{
 	4.16666666666665929218e-2,   // 0x3fa555555555554b
 }
 
+// Sin is an attempt to improve the performance of the math.Sin implementation
 func Sin(x float64) float64 {
 	// make argument positive but save the sign
 	sign := false
