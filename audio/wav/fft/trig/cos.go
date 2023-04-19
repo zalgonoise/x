@@ -6,6 +6,7 @@ import (
 	"github.com/zalgonoise/x/ptr"
 )
 
+// Cos is an attempt to improve the performance of the math.Cos implementation
 func Cos(x float64) float64 {
 	// make argument positive
 	sign := false
