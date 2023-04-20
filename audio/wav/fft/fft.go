@@ -83,13 +83,12 @@ func FFT(value []complex128) []complex128 {
 			if stage == 2 { // "first stage" scenario
 
 				var (
-					next        = batchIdx + 1
 					reorderIdx  = value[batchIdx]
-					reorderNext = value[next]
+					reorderNext = value[batchIdx+1]
 				)
 
 				temp[batchIdx] = reorderIdx + reorderNext
-				temp[next] = reorderIdx - reorderNext
+				temp[batchIdx+1] = reorderIdx - reorderNext
 				continue
 			}
 			for iter := 0; iter < stage2Value; iter++ {
