@@ -13,7 +13,7 @@ const (
 	reduceThreshold = 1 << 29
 
 	PI4   = 1.2732395447351628 // 3ff45f306dc9c883
-	PiBy4 = math.Pi / 4
+	PiBy4 = math.Pi * 0.25
 	PI4A  = 7.85398125648498535156e-1  // 0x3fe921fb40000000, Pi/4 split into three parts
 	PI4B  = 3.77489470793079817668e-8  // 0x3e64442d00000000,
 	PI4C  = 2.69515142907905952645e-15 // 0x3ce8469898cc5170,
