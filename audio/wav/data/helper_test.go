@@ -5,7 +5,7 @@ import "testing"
 func TestCopy24to32(t *testing.T) {
 	t.Run("Simple", func(t *testing.T) {
 		input := []byte{12, 34, 56, 78, 90, 123}
-		wants := []byte{0, 12, 34, 56, 0, 78, 90, 123}
+		wants := []byte{12, 34, 56, 0, 78, 90, 123, 0}
 
 		out := copy24to32(input)
 
