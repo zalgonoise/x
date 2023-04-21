@@ -1,5 +1,7 @@
 package data
 
+import "fmt"
+
 // BitDepthTypes is a type constraint joining all the different
 // data types used by the supported bit depths
 type BitDepthTypes interface {
@@ -24,10 +26,11 @@ func to[F, T BitDepthTypes](from []F) []T {
 
 func copy24to32(b []byte) []byte {
 	out := make([]byte, len(b)+len(b)/3)
-	for i, j := 0, 0; i < len(b); i, j = i+3, j+1 {
+
+	for i, j := 0, 1; i < len(b); i, j = i+3, j+4 {
+
+		fmt.Printf("added -- %v\n", b[i:i+3])
 		copy(out[j:], b[i:i+3])
-		j += 3
-		out[j] = 0
 	}
 	return out
 }
@@ -41,10 +44,14 @@ func append2Bytes(idx int, dst []byte, src [2]byte) {
 
 // can't inline a pointer cast and convert an array to a slice
 func append3Bytes(idx int, dst []byte, src [3]byte) {
-	copy(dst[idx*3:], src[:])
+	if idx*3 < len(dst) {
+		copy(dst[idx*3:], src[:])
+	}
 }
 
 // can't inline a pointer cast and convert an array to a slice
 func append4Bytes(idx int, dst []byte, src [4]byte) {
-	copy(dst[idx*4:], src[:])
+	if idx*4 < len(dst) {
+		copy(dst[idx*4:], src[:])
+	}
 }
