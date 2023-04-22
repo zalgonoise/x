@@ -19,7 +19,7 @@ func newSine(freq int) (*Wav, error) {
 	if err != nil {
 		return nil, err
 	}
-	sine.Data.Generate(osc.SineWave, freq, 44100, 5*time.Second)
+	sine.Generate(osc.SineWave, freq, 5*time.Second)
 	return sine, nil
 }
 
