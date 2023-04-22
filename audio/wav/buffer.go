@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/zalgonoise/gbuf"
 
 	"github.com/zalgonoise/x/audio/wav/data"
+	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 const (
@@ -25,8 +27,8 @@ const (
 // within a StreamFilter function.
 type WavBuffer struct {
 	Header    *WavHeader
-	Chunks    []data.Chunk
-	Data      data.Chunk
+	Chunks    []Chunk
+	Data      Chunk
 	Filters   []StreamFilter
 	Reader    io.Reader
 	ring      *gbuf.RingFilter[byte]
@@ -120,6 +122,12 @@ func (w *WavBuffer) Close() error {
 		w.done(nil)
 	}
 	return nil
+}
+
+// Generate wraps a call to w.Data.Generate, by passing the same sample rate
+// value as configured in w.Header.SampleRate
+func (w *WavBuffer) Generate(waveType osc.Type, freq int, dur time.Duration) {
+	w.Data.Generate(waveType, freq, int(w.Header.SampleRate), dur)
 }
 
 func (w *WavBuffer) parseHeader(buf []byte) error {

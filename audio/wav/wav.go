@@ -2,8 +2,9 @@ package wav
 
 import (
 	"errors"
+	"time"
 
-	"github.com/zalgonoise/x/audio/wav/data"
+	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 // Wav describes the structure of WAV-encoded audio data, containing
@@ -13,8 +14,8 @@ import (
 // currently active (PCM data) chunk
 type Wav struct {
 	Header *WavHeader
-	Chunks []data.Chunk
-	Data   data.Chunk
+	Chunks []Chunk
+	Data   Chunk
 }
 
 // New creates a new Wav, configured with the input sample rate `sampleRate`
@@ -67,7 +68,13 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 			BlockAlign:    bitDepth * numChannels / 8,
 			BitsPerSample: bitDepth,
 		},
-		Chunks: []data.Chunk{blankData},
+		Chunks: []Chunk{blankData},
 		Data:   blankData,
 	}, err
+}
+
+// Generate wraps a call to w.Data.Generate, by passing the same sample rate
+// value as configured in w.Header.SampleRate
+func (w *Wav) Generate(waveType osc.Type, freq int, dur time.Duration) {
+	w.Data.Generate(waveType, freq, int(w.Header.SampleRate), dur)
 }
