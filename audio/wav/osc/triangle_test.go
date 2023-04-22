@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zalgonoise/x/audio/wav/data"
 	"github.com/zalgonoise/x/audio/wav/osc"
 
 	"github.com/zalgonoise/x/audio/wav"
@@ -136,7 +135,7 @@ func BenchmarkTriangle(b *testing.B) {
 		"500ms2kHz", func(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
-					var chunk data.Chunk
+					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(16, nil)
 						chunk.Generate(osc.TriangleWave, 2000, 44100, time.Second/2)
@@ -159,7 +158,7 @@ func BenchmarkTriangle(b *testing.B) {
 		"50ms500Hz", func(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
-					var chunk data.Chunk
+					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(16, nil)
 						chunk.Generate(osc.TriangleWave, 500, 44100, time.Millisecond*50)
