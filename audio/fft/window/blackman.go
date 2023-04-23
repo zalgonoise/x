@@ -1,6 +1,6 @@
 package window
 
-import "github.com/zalgonoise/x/audio/wav/fft/trig"
+import "github.com/zalgonoise/x/audio/trig"
 
 var blackmanMap = map[int]Window{
 	8:    Blackman8,

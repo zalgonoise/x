@@ -1,6 +1,6 @@
 package window
 
-import "github.com/zalgonoise/x/audio/wav/fft/trig"
+import "github.com/zalgonoise/x/audio/trig"
 
 var flattopMap = map[int]Window{
 	8:    FlatTop8,

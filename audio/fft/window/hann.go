@@ -1,6 +1,6 @@
 package window
 
-import "github.com/zalgonoise/x/audio/wav/fft/trig"
+import "github.com/zalgonoise/x/audio/trig"
 
 var hannMap = map[int]Window{
 	8:    Hann8,
