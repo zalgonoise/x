@@ -1,4 +1,4 @@
-package wav
+package stream
 
 import (
 	"bytes"
@@ -10,18 +10,19 @@ import (
 
 	"github.com/zalgonoise/gio"
 
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/fft/window"
+	"github.com/zalgonoise/x/audio/wav"
 	"github.com/zalgonoise/x/audio/wav/data"
-	"github.com/zalgonoise/x/audio/wav/fft"
-	"github.com/zalgonoise/x/audio/wav/fft/window"
 )
 
 // StreamFilter is a pluggable function that will scan, analyze, process
 // or discard the input signal emitted by a ring buffer in an audio stream
-type StreamFilter func(w *WavBuffer, raw []byte) error
+type StreamFilter func(w *Wav, raw []byte) error
 
 // MaxValues sends to int channel `ch` the highest value in the data buffer
 func MaxValues(ch chan<- int) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Value()
 		var max int
 		for idx := range v {
@@ -36,7 +37,7 @@ func MaxValues(ch chan<- int) StreamFilter {
 
 // MaxValuesTo writes the highest value in the data buffer to the input int writer
 func MaxValuesTo(writer gio.Writer[int]) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Value()
 		var max = make([]int, 1)
 		for idx := range v {
@@ -53,7 +54,7 @@ func MaxValuesTo(writer gio.Writer[int]) StreamFilter {
 
 // MinValues sends to int channel `ch` the lowest value in the data buffer
 func MinValues(ch chan<- int) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Value()
 		var min int
 		for idx := range v {
@@ -68,7 +69,7 @@ func MinValues(ch chan<- int) StreamFilter {
 
 // MinValuesTo writes the lowest value in the data buffer to the input int writer
 func MinValuesTo(writer gio.Writer[int]) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Value()
 		var min = make([]int, 1)
 		for idx := range v {
@@ -90,7 +91,7 @@ func MinValuesTo(writer gio.Writer[int]) StreamFilter {
 // it will look for equal and above (item >= peak) if the peak is a positive value
 func LevelThreshold(peak int, fn StreamFilter) StreamFilter {
 	if peak < 0 {
-		return func(w *WavBuffer, raw []byte) error {
+		return func(w *Wav, raw []byte) error {
 			v := w.Data.Value()
 			for idx := range v {
 				if v[idx] <= peak {
@@ -103,7 +104,7 @@ func LevelThreshold(peak int, fn StreamFilter) StreamFilter {
 			return nil
 		}
 	}
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Value()
 		for idx := range v {
 			if v[idx] >= peak {
@@ -127,7 +128,7 @@ func LevelThreshold(peak int, fn StreamFilter) StreamFilter {
 // it will look for equal and above (item >= peak) if the peak is a positive value
 func LevelThresholdFn(peak int, alertFn func(int), fn StreamFilter) StreamFilter {
 	if peak < 0 {
-		return func(w *WavBuffer, raw []byte) error {
+		return func(w *Wav, raw []byte) error {
 			v := w.Data.Value()
 			for idx := range v {
 				if v[idx] <= peak {
@@ -141,7 +142,7 @@ func LevelThresholdFn(peak int, alertFn func(int), fn StreamFilter) StreamFilter
 			return nil
 		}
 	}
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Value()
 		for idx := range v {
 			if v[idx] >= peak {
@@ -159,10 +160,10 @@ func LevelThresholdFn(peak int, alertFn func(int), fn StreamFilter) StreamFilter
 // Flush writes the raw signal to the input buffer `dst`, returning an
 // error if it is a short write
 func Flush(dst []byte) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		n := copy(dst, raw)
 		if n != len(raw) {
-			return ErrShortDataBuffer
+			return wav.ErrShortDataBuffer
 		}
 		return nil
 	}
@@ -170,13 +171,13 @@ func Flush(dst []byte) StreamFilter {
 
 // FlushTo writes the raw signal to the input `writer`
 func FlushTo(writer io.Writer) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		n, err := writer.Write(raw)
 		if err != nil {
 			return err
 		}
 		if n != len(raw) {
-			return ErrShortDataBuffer
+			return wav.ErrShortDataBuffer
 		}
 		return nil
 	}
@@ -185,7 +186,7 @@ func FlushTo(writer io.Writer) StreamFilter {
 // FlushFor writes the raw signal to the input `writer`, then keeps recording
 // from the WavBuffer reader for `dur` duration.
 func FlushFor(writer io.Writer, dur time.Duration) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		var err error
 
 		rate := (int64)(time.Second) / (int64)(w.Header.ByteRate)
@@ -230,7 +231,7 @@ func FlushFor(writer io.Writer, dur time.Duration) StreamFilter {
 // FlushToFileFor writes the raw signal to a file with the path and name pattern `name`,
 // then keeps recording from the WavBuffer reader for `dur` duration.
 func FlushToFileFor(name string, dur time.Duration) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		var err error
 		writer, err := os.Create(fmt.Sprintf("%s_%s.wav", name, time.Now().Format(time.RFC3339)))
 
@@ -267,10 +268,10 @@ func FlushToFileFor(name string, dur time.Duration) StreamFilter {
 }
 
 // FlushCh creates a new Wav object for the input data and sends it to
-// the input Wav channel `ch`
-func FlushCh(ch chan<- *Wav) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
-		wav, err := New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
+// the input wav.Wav channel `ch`
+func FlushCh(ch chan<- *wav.Wav) StreamFilter {
+	return func(w *Wav, raw []byte) error {
+		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
 		if err != nil {
 			return err
 		}
@@ -285,9 +286,9 @@ func FlushCh(ch chan<- *Wav) StreamFilter {
 // recording from the WavBuffer reader for `dur` duration.
 //
 // When done, it sends the created Wav to the input Wav channel `ch`
-func FlushChFor(ch chan<- *Wav, dur time.Duration) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
-		wav, err := New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
+func FlushChFor(ch chan<- *wav.Wav, dur time.Duration) StreamFilter {
+	return func(w *Wav, raw []byte) error {
+		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
 		if err != nil {
 			return err
 		}
@@ -313,7 +314,7 @@ func FlushChFor(ch chan<- *Wav, dur time.Duration) StreamFilter {
 // Each pass will emit FrequencyPower items for each frequency that is over the
 // default magnitude value
 func FFT(blockSize fft.BlockSize, ch chan<- fft.FrequencyPower) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Float()
 		for i := 0; i < len(v); i += int(blockSize) {
 			if len(v) < i+int(blockSize) {
@@ -340,7 +341,7 @@ func FFT(blockSize fft.BlockSize, ch chan<- fft.FrequencyPower) StreamFilter {
 // Each pass will emit FrequencyPower items for each frequency that is over the
 // input magnitude threshold value
 func FFTOnThreshold(blockSize fft.BlockSize, thresh float64, ch chan<- fft.FrequencyPower) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Float()
 		for i := 0; i < len(v); i += int(blockSize) {
 			if len(v) < i+int(blockSize) {
@@ -366,7 +367,7 @@ func FFTOnThreshold(blockSize fft.BlockSize, thresh float64, ch chan<- fft.Frequ
 //
 // Each pass will emit unfiltered FrequencyPower items
 func Spectrum(blockSize fft.BlockSize, ch chan<- []fft.FrequencyPower) StreamFilter {
-	return func(w *WavBuffer, raw []byte) error {
+	return func(w *Wav, raw []byte) error {
 		v := w.Data.Float()
 		for i := 0; i < len(v); i += int(blockSize) {
 			if len(v) < i+int(blockSize) {

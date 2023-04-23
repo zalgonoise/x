@@ -1,4 +1,4 @@
-package wav
+package stream
 
 import (
 	"bytes"
@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zalgonoise/x/audio/wav/fft"
-	"github.com/zalgonoise/x/audio/wav/osc"
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/osc"
+	"github.com/zalgonoise/x/audio/wav"
 )
 
-func newSine(freq int) (*Wav, error) {
+func newSine(freq int) (*wav.Wav, error) {
 	// create a sine wave 16 bit depth, 44.1kHz rate, mono,
 	// 5 second duration. Pass audio bytes into a new bytes.Buffer
-	sine, err := New(44100, 16, 1)
+	sine, err := wav.New(44100, 16, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +50,7 @@ func TestWavBuffer(t *testing.T) {
 
 			// create a new stream using the bytes.Buffer as an io.Reader
 			// half a second ratio (expect 11 entries), with a max values filter
-			w := NewStream(buf).
+			w := New(buf).
 				Ratio(0.5).
 				WithFilter(
 					MaxValues(maxCh),
@@ -107,7 +108,7 @@ func TestWavBuffer(t *testing.T) {
 
 			// create a new stream using the bytes.Buffer as an io.Reader
 			// half a second ratio (expect 11 entries), with a max values filter
-			w := NewStream(buf).
+			w := New(buf).
 				WithFilter(
 					FFTOnThreshold(fft.Block128, 10, maxCh),
 				)
@@ -165,7 +166,7 @@ func TestWavBuffer(t *testing.T) {
 		}()
 
 		// create a new stream using the bytes.Buffer as an io.Reader
-		w := NewStream(buf)
+		w := New(buf)
 
 		// stream the audio using the context and an errors channel
 		errCh := make(chan error)
@@ -179,10 +180,10 @@ func TestWavBuffer(t *testing.T) {
 		// it's surely a deadline reached error, as the test took too long
 		select {
 		case err := <-errCh:
-			if errors.Is(err, ErrInvalid) && errors.Is(err, ErrHeader) {
+			if errors.Is(err, wav.ErrInvalid) && errors.Is(err, wav.ErrHeader) {
 				return
 			}
-			t.Errorf("unexpected error: wanted %v ; got %v", ErrInvalidHeader, err)
+			t.Errorf("unexpected error: wanted %v ; got %v", wav.ErrInvalidHeader, err)
 			return
 		case <-ctx.Done():
 			err := ctx.Err()
