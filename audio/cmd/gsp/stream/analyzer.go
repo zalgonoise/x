@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/zalgonoise/x/audio/wav/fft"
+	"github.com/zalgonoise/x/audio/fft"
 )
 
 const labelUnit = 10

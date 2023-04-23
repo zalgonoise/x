@@ -8,15 +8,15 @@ import (
 
 	"github.com/zalgonoise/gio"
 
-	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/fft"
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/wav/stream"
 )
 
 // New creates a WAV stream from the input Config `cfg` and io.Reader `r`
 //
 // It returns a pointer to a wav.Buffer and an error if raised
-func New(cfg *Config, r io.Reader) (*wav.WavBuffer, error) {
-	w := wav.NewStream(r).
+func New(cfg *Config, r io.Reader) (*stream.Wav, error) {
+	w := stream.New(r).
 		Ratio(cfg.BufferSize).
 		BlockSize(cfg.BlockSize)
 
@@ -52,7 +52,7 @@ func monitorWriter(cfg *Config) (gio.ItemWriter[int], []gio.ItemWriter[int], err
 	return NewLoggerPeak(cfg.Peak...), nil, nil
 }
 
-func monitorMode(cfg *Config, w *wav.WavBuffer) error {
+func monitorMode(cfg *Config, s *stream.Wav) error {
 	writer, peaksWriters, err := monitorWriter(cfg)
 	if err != nil {
 		return err
@@ -71,19 +71,19 @@ func monitorMode(cfg *Config, w *wav.WavBuffer) error {
 		}
 	}()
 
-	w.WithFilter(
-		wav.MaxValues(maxCh),
+	s.WithFilter(
+		stream.MaxValues(maxCh),
 	)
 	return nil
 }
 
-func recordMode(cfg *Config, w *wav.WavBuffer) error {
+func recordMode(cfg *Config, s *stream.Wav) error {
 	output, err := os.Create(fmt.Sprintf("%s_%s.wav", *cfg.Dir, time.Now().Format(time.RFC3339)))
 	if err != nil {
 		return err
 	}
-	w.WithFilter(
-		wav.FlushFor(output, *cfg.RecTime),
+	s.WithFilter(
+		stream.FlushFor(output, *cfg.RecTime),
 	)
 	return nil
 }
@@ -95,22 +95,22 @@ func filterWriter(cfg *Config) gio.ItemWriter[int] {
 	return NewLoggerThreshold(cfg.Peak[0])
 }
 
-func filterMode(cfg *Config, w *wav.WavBuffer) error {
+func filterMode(cfg *Config, s *stream.Wav) error {
 	if len(cfg.Peak) == 0 {
 		return ErrEmptyThreshold
 	}
 	writer := filterWriter(cfg)
-	w.WithFilter(
-		wav.LevelThresholdFn(
+	s.WithFilter(
+		stream.LevelThresholdFn(
 			cfg.Peak[0],
 			func(v int) { _ = writer.WriteItem(v) },
-			wav.FlushToFileFor(*cfg.Dir, *cfg.RecTime),
+			stream.FlushToFileFor(*cfg.Dir, *cfg.RecTime),
 		),
 	)
 	return nil
 }
 
-func analyzerMode(cfg *Config, w *wav.WavBuffer) error {
+func analyzerMode(cfg *Config, s *stream.Wav) error {
 	var spectrumCh = make(chan []fft.FrequencyPower)
 
 	var bs = fft.Block128
@@ -119,8 +119,8 @@ func analyzerMode(cfg *Config, w *wav.WavBuffer) error {
 		bs = fft.AsBlock(cfg.BlockSize / 2)
 	}
 
-	w.WithFilter(
-		wav.Spectrum(bs, spectrumCh),
+	s.WithFilter(
+		stream.Spectrum(bs, spectrumCh),
 	)
 
 	go func() {
@@ -128,7 +128,7 @@ func analyzerMode(cfg *Config, w *wav.WavBuffer) error {
 		if err != nil {
 			panic(err)
 		}
-		_ = w.Close()
+		_ = s.Close()
 	}()
 
 	return nil
