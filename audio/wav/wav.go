@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/zalgonoise/x/audio/wav/osc"
+	"github.com/zalgonoise/x/audio/osc"
 )
 
 // Wav describes the structure of WAV-encoded audio data, containing

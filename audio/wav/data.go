@@ -3,8 +3,8 @@ package wav
 import (
 	"time"
 
+	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav/data"
-	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 // Chunk describes the behavior that a data chunk exposes, which involve
