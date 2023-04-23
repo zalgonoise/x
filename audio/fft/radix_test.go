@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zalgonoise/x/audio/wav/fft"
+	"github.com/zalgonoise/x/audio/fft"
 )
 
 // BenchmarkGetRadix2Factors tests the current and former implementations of

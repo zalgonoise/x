@@ -7,9 +7,9 @@ import (
 
 	dspfft "github.com/mjibson/go-dsp/fft"
 
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/fft"
-	"github.com/zalgonoise/x/audio/wav/osc"
 )
 
 // BenchmarkHypotenuse compares three approaches to calculating the hypotenuse using Go's standard library,

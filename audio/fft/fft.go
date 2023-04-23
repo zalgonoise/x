@@ -3,7 +3,7 @@ package fft
 import (
 	"math"
 
-	"github.com/zalgonoise/x/audio/wav/fft/window"
+	"github.com/zalgonoise/x/audio/fft/window"
 )
 
 var (

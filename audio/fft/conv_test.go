@@ -3,7 +3,7 @@ package fft_test
 import (
 	"testing"
 
-	"github.com/zalgonoise/x/audio/wav/fft"
+	"github.com/zalgonoise/x/audio/fft"
 )
 
 var (

@@ -3,7 +3,7 @@ package fft_test
 import (
 	"testing"
 
-	"github.com/zalgonoise/x/audio/wav/fft"
+	"github.com/zalgonoise/x/audio/fft"
 )
 
 // BenchmarkReverseBits finds the most performant way of computing the reverse bits of

@@ -1,7 +1,7 @@
 package fft
 
 import (
-	"github.com/zalgonoise/x/audio/wav/fft/trig"
+	"github.com/zalgonoise/x/audio/trig"
 )
 
 // GetRadix2Factors is temporarily public, could become private at a later point.
