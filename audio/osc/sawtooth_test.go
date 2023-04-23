@@ -5,16 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zalgonoise/x/audio/wav/osc"
-
+	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav"
 )
 
-func TestSquare(t *testing.T) {
+func TestSawtooth(t *testing.T) {
 	t.Run(
 		"Success", func(t *testing.T) {
 			chunk := wav.NewChunk(16, nil)
-			chunk.Generate(osc.SquareWave, 2000, 44100, time.Second/2)
+			chunk.Generate(osc.SawtoothWave, 2000, 44100, time.Second/2)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}
@@ -23,7 +22,7 @@ func TestSquare(t *testing.T) {
 	)
 }
 
-func BenchmarkSquareCompare(b *testing.B) {
+func BenchmarkSawtoothCompare(b *testing.B) {
 	var (
 		sampleRate float64 = 44100
 		depth      float64 = 16
@@ -34,64 +33,64 @@ func BenchmarkSquareCompare(b *testing.B) {
 	)
 
 	b.Run(
-		"squareImplementation", func(b *testing.B) {
-			// square function has been improved in performance by calculating the quarter period only once
-			// so that the multiplication isn't repeatedly computed; as well as bit-shifting a power of 2
-			// instead of calling math.Pow
+		"sawtoothImplementation", func(b *testing.B) {
+			// sawtooth function has been improved in performance by calculating the base value and increments
+			// only once, and by replacing these calculations with only one multiplication
 			//
 			// Before / After:
 			//
 			// goos: linux
 			// goarch: amd64
 			// cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
-			// BenchmarkSquareCompare/squareImplementation/square_21_3_23-4             7605760               199.8 ns/op            24 B/op          1 allocs/op
-			// BenchmarkSquareCompare/squareImplementation/square_replacement-4         9944721               126.9 ns/op            24 B/op          1 allocs/op
+			// BenchmarkSawtoothCompare/sawtoothImplementation/sawtooth_23_3_23-4               1000000              1051 ns/op              48 B/op          1 allocs/op
+			// BenchmarkSawtoothCompare/sawtoothImplementation/sawtooth_replacement-4           5365615               231.8 ns/op            48 B/op          1 allocs/op
 			b.Run(
-				"square_21_3_23", func(b *testing.B) {
-					fn := func(buffer []int16, halfPeriod int, sampleInt int16) {
+				"sawtooth_23_3_23", func(b *testing.B) {
+					fn := func(buffer []int16, halfPeriod int, sampleInt int16, increment, depth float64) {
 						for i := 0; i < len(buffer); i++ {
-							if i%halfPeriod < halfPeriod/2 {
-								buffer[i] = sampleInt
-								continue
+							if i%halfPeriod == 0 {
+								sampleInt = -int16(math.Pow(2.0, depth-1) - 1.0)
+							} else {
+								sampleInt += int16(increment * (math.Pow(2.0, depth-1) - 1.0))
 							}
-							buffer[i] = -sampleInt
+							buffer[i] = sampleInt
 						}
 					}
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
 						var (
-							halfPeriod = int(sampleRate / (2.0 * freq))
-							sampleInt  = int16(math.Pow(2.0, depth-1) - 1.0)
+							halfPeriod = int(sampleRate / freq)
+							increment  = 2.0 / float64(halfPeriod)
 						)
 						before = make([]int16, halfPeriod)
-						fn(before, halfPeriod, sampleInt)
+						fn(before, halfPeriod, 0, increment, depth)
 					}
 					_ = before
 				},
 			)
 			b.Run(
-				"square_replacement", func(b *testing.B) {
-					fn := func(buffer []int16, halfPeriod int, sampleInt int16) {
-						// avoid calculating the quarter period over and over again
-						var quarterPeriod = halfPeriod / 2
+				"sawtooth_replacement", func(b *testing.B) {
+					fn := func(buffer []int16, halfPeriod int, sampleInt int16, increment, depth float64) {
+						var base int16 = ^(2 << int(depth-2)) + 2
+						inc := int16(increment * float64(^base))
+
 						for i := 0; i < len(buffer); i++ {
-							if i%halfPeriod < quarterPeriod {
-								buffer[i] = sampleInt
-								continue
+							if i%halfPeriod == 0 {
+								sampleInt = base
+							} else {
+								sampleInt += inc
 							}
-							buffer[i] = -sampleInt
+							buffer[i] = sampleInt
 						}
 					}
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
 						var (
-							// avoid floats when calculating halfPeriod
-							halfPeriod = int(sampleRate) / (2 * int(freq))
-							// bit-shift instead of calculating a power of 2 with math.Pow()
-							sampleInt = int16(2<<int16(depth-2)) - 1
+							halfPeriod = int(sampleRate / freq)
+							increment  = 2.0 / float64(halfPeriod)
 						)
 						after = make([]int16, halfPeriod)
-						fn(after, halfPeriod, sampleInt)
+						fn(after, halfPeriod, 0, increment, depth)
 					}
 					_ = after
 				},
@@ -120,7 +119,7 @@ func BenchmarkSquareCompare(b *testing.B) {
 	)
 }
 
-func BenchmarkSquare(b *testing.B) {
+func BenchmarkSawtooth(b *testing.B) {
 	b.Run(
 		"500ms2kHz", func(b *testing.B) {
 			b.Run(
@@ -128,7 +127,7 @@ func BenchmarkSquare(b *testing.B) {
 					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(16, nil)
-						chunk.Generate(osc.SquareWave, 2000, 44100, time.Second/2)
+						chunk.Generate(osc.SawtoothWave, 2000, 44100, time.Second/2)
 					}
 					_ = chunk
 				},
@@ -137,7 +136,7 @@ func BenchmarkSquare(b *testing.B) {
 				"ContinuousWrite", func(b *testing.B) {
 					var chunk = wav.NewChunk(16, nil)
 					for i := 0; i < b.N; i++ {
-						chunk.Generate(osc.SquareWave, 2000, 44100, time.Second/2)
+						chunk.Generate(osc.SawtoothWave, 2000, 44100, time.Second/2)
 					}
 					_ = chunk
 				},
@@ -151,7 +150,7 @@ func BenchmarkSquare(b *testing.B) {
 					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(16, nil)
-						chunk.Generate(osc.SquareWave, 500, 44100, time.Millisecond*50)
+						chunk.Generate(osc.SawtoothWave, 500, 44100, time.Millisecond*50)
 					}
 					_ = chunk
 				},
@@ -160,7 +159,7 @@ func BenchmarkSquare(b *testing.B) {
 				"ContinuousWrite", func(b *testing.B) {
 					var chunk = wav.NewChunk(16, nil)
 					for i := 0; i < b.N; i++ {
-						chunk.Generate(osc.SquareWave, 500, 44100, time.Millisecond*50)
+						chunk.Generate(osc.SawtoothWave, 500, 44100, time.Millisecond*50)
 					}
 					_ = chunk
 				},

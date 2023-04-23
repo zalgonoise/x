@@ -1,6 +1,6 @@
 package osc
 
-import "github.com/zalgonoise/x/audio/wav/fft/trig"
+import "github.com/zalgonoise/x/audio/trig"
 
 // Sine is an oscillator that writes a sine wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
