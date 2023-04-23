@@ -3,7 +3,7 @@ package data
 import (
 	"time"
 
-	"github.com/zalgonoise/x/audio/wav/osc"
+	"github.com/zalgonoise/x/audio/osc"
 )
 
 // ChunkJunk is a Chunk used for storing "junk"-ID subchunk data

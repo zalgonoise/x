@@ -4,7 +4,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/zalgonoise/x/audio/wav/osc"
+	"github.com/zalgonoise/x/audio/osc"
 )
 
 const (
@@ -53,7 +53,7 @@ func (d *Chunk24bit) Parse(buf []byte) {
 // ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
 // from floating-point audio data
 func (d *Chunk24bit) ParseFloat(buf []float64) {
-	d.Data = conv[float64, int32](
+	d.Data = conv(
 		buf, func(f float64) int32 {
 			return int32(f * maxInt24)
 		},
@@ -83,7 +83,7 @@ func (d *Chunk24bit) Value() []int { return to[int32, int](d.Data) }
 
 // Float returns the PCM audio buffer from the Chunk, as a slice of float64
 func (d *Chunk24bit) Float() []float64 {
-	return conv[int32, float64](
+	return conv(
 		d.Data, func(v int32) float64 {
 			return float64(v) / maxInt24
 		},
