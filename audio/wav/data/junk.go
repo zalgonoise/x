@@ -42,7 +42,9 @@ func (d *ChunkJunk) Header() *ChunkHeader { return d.ChunkHeader }
 func (d *ChunkJunk) BitDepth() uint16 { return d.Depth }
 
 // Reset clears the data stored in the Chunk
-func (d *ChunkJunk) Reset() { d.Data = nil }
+func (d *ChunkJunk) Reset() {
+	d.Data = make([]byte, 0, dataChunkBaseLen)
+}
 
 // Value returns the PCM audio buffer from the Chunk, as a slice of int
 func (d *ChunkJunk) Value() []int { return to[byte, int](d.Data) }
