@@ -147,6 +147,9 @@ func Test24bitParse(t *testing.T) {
 		}
 	}
 
+	// second run through the PCM data to test dirty state
+	chunk.Parse(test24bitPCM)
+
 	if chunk.Reset(); chunk.Data != nil {
 		t.Errorf("expected Reset() method to clear the data in the chunk")
 	}
