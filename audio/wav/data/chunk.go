@@ -14,6 +14,7 @@ const (
 
 	dataSubchunkIDString = "data"
 	junkSubchunkIDString = "junk"
+	dataChunkBaseLen     = 512
 )
 
 var (
