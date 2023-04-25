@@ -19,6 +19,8 @@ func TestJunk(t *testing.T) {
 	}
 
 	t.Run("ParseAndBytes", func(t *testing.T) {
+		// clear Subchunk2Size
+		junk.Subchunk2Size = 0
 		junk.Parse(input)
 		junk.ParseFloat(nil)
 
