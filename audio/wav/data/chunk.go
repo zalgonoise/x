@@ -3,6 +3,7 @@ package data
 import (
 	"bytes"
 	"encoding/binary"
+	"unsafe"
 )
 
 type err string
@@ -18,26 +19,26 @@ const (
 )
 
 var (
-	defaultSubchunk2ID = [4]byte{100, 97, 116, 97}
-	junkSubchunk2ID    = [4]byte{106, 117, 110, 107}
+	defaultSubchunk2ID = [4]byte([]byte(dataSubchunkIDString))
+	junkSubchunk2ID    = [4]byte([]byte(junkSubchunkIDString))
 )
 
 // ChunkHeader describes the (raw) structure of a WAV file subchunk, which usually
 // contains a "data" or "junk" ID, and the length of the data as its size
 type ChunkHeader struct {
-	Subchunk2ID   [4]byte // 37-40
-	Subchunk2Size uint32  // 41-44
+	Subchunk2ID   [4]byte // 37-40 || 1-4
+	Subchunk2Size uint32  // 41-44 || 5-8
 }
 
 // HeaderFrom reads the ChunkHeader from the input byte slice `buf`, returning it and
 // an error in case the data is invalid
 func HeaderFrom(buf []byte) (*ChunkHeader, error) {
-	r := bytes.NewReader(buf)
-	var chunk = new(ChunkHeader)
-	err := binary.Read(r, binary.LittleEndian, chunk)
-	if err != nil {
-		return nil, err
+	size := buf[4:8]
+	chunk := &ChunkHeader{
+		Subchunk2ID:   [4]byte(buf[:4]),
+		Subchunk2Size: *(*uint32)(unsafe.Pointer(&size)),
 	}
+
 	switch string(chunk.Subchunk2ID[:]) {
 	case junkSubchunkIDString, dataSubchunkIDString:
 		return chunk, nil
