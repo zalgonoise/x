@@ -119,17 +119,25 @@ func Test8Bit(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	chunk := &Chunk8bit{
-		ChunkHeader: header,
-		Depth:       8,
-	}
+
+	var (
+		bitDepth uint16 = 8
+		input           = test8bitPCM
+		chunk           = &Chunk8bit{
+			ChunkHeader: header,
+			Depth:       bitDepth,
+		}
+		f []float64
+	)
 
 	t.Run("ParseAndBytes", func(t *testing.T) {
-		chunk.Parse(test8bitPCM)
+		// clear Subchunk2Size
+		chunk.Subchunk2Size = 0
+		chunk.Parse(input)
 
 		output := chunk.Bytes()
-		if !bytes.Equal(test8bitPCM, output) {
-			t.Errorf("output mismatch error: wanted %v ; got %v", test8bitPCM, output)
+		if !bytes.Equal(input, output) {
+			t.Errorf("output mismatch error: wanted %v ; got %v", input, output)
 		}
 	})
 
@@ -140,32 +148,32 @@ func Test8Bit(t *testing.T) {
 	})
 
 	t.Run("Float", func(t *testing.T) {
-		f := chunk.Float()
+		f = chunk.Float()
 		if len(f) == 0 {
 			t.Errorf("expected float PCM buffer to be longer than zero")
 			return
 		}
+	})
 
-		t.Run("ParseFloat", func(t *testing.T) {
-			newChunk := &Chunk8bit{
-				ChunkHeader: header,
-			}
-			newChunk.ParseFloat(f)
+	t.Run("ParseFloat", func(t *testing.T) {
+		newChunk := &Chunk8bit{
+			ChunkHeader: header,
+		}
+		newChunk.ParseFloat(f)
 
-			if len(chunk.Data) != len(newChunk.Data) {
-				t.Errorf("float data length mismatch error: wanted %d ; got %d", len(chunk.Data), len(newChunk.Data))
+		if len(chunk.Data) != len(newChunk.Data) {
+			t.Errorf("float data length mismatch error: wanted %d ; got %d", len(chunk.Data), len(newChunk.Data))
+		}
+		for i := range chunk.Data {
+			if chunk.Data[i] != newChunk.Data[i] {
+				t.Errorf("float data output mismatch error on index #%d: wanted %d ; got %d", i, chunk.Data[i], newChunk.Data[i])
 			}
-			for i := range chunk.Data {
-				if chunk.Data[i] != newChunk.Data[i] {
-					t.Errorf("float data output mismatch error on index #%d: wanted %d ; got %d", i, chunk.Data[i], newChunk.Data[i])
-				}
-			}
-		})
+		}
 	})
 
 	t.Run("ParseSecondRun", func(t *testing.T) {
 		// second run to test Parse on a dirty state
-		chunk.Parse(test8bitPCM)
+		chunk.Parse(input)
 	})
 
 	t.Run("ChunkHeader", func(t *testing.T) {
@@ -177,8 +185,8 @@ func Test8Bit(t *testing.T) {
 
 	t.Run("BitDepth", func(t *testing.T) {
 		depth := chunk.BitDepth()
-		if depth != 8 {
-			t.Errorf("output mismatch error: wanted %v ; got %v", 8, depth)
+		if depth != bitDepth {
+			t.Errorf("output mismatch error: wanted %v ; got %v", bitDepth, depth)
 		}
 	})
 
