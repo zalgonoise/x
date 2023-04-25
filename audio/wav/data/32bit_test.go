@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
+	"time"
+
+	"github.com/zalgonoise/x/audio/osc"
 )
 
 var (
@@ -110,49 +113,98 @@ func Test32bitHeader(t *testing.T) {
 	}
 }
 
-func Test32bitParse(t *testing.T) {
+func Test32Bit(t *testing.T) {
 	header, err := HeaderFrom(test32bitHeader)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	chunk := &Chunk32bit{
-		ChunkHeader: header,
-	}
 
-	chunk.Parse(test32bitPCM)
-	buf := chunk.Bytes()
-	if !bytes.Equal(test32bitPCM, buf) {
-		t.Errorf("output mismatch error: input is not the same as output")
-	}
-
-	if i := chunk.Value(); len(i) == 0 {
-		t.Errorf("expected integer PCM buffer to be longer than zero")
-	}
-
-	f := chunk.Float()
-	if len(f) == 0 {
-		t.Errorf("expected float PCM buffer to be longer than zero")
-		return
-	}
-	newChunk := &Chunk32bit{
-		ChunkHeader: header,
-	}
-	newChunk.ParseFloat(f)
-
-	if len(chunk.Data) != len(newChunk.Data) {
-		t.Errorf("float data length mismatch error: wanted %d ; got %d", len(chunk.Data), len(newChunk.Data))
-	}
-	for i := range chunk.Data {
-		if chunk.Data[i] != newChunk.Data[i] {
-			t.Errorf("float data output mismatch error on index #%d: wanted %d ; got %d", i, chunk.Data[i], newChunk.Data[i])
+	var (
+		bitDepth uint16 = 32
+		input           = test32bitPCM
+		chunk           = &Chunk32bit{
+			ChunkHeader: header,
+			Depth:       bitDepth,
 		}
-	}
 
-	// second run through the PCM data to test dirty state
-	chunk.Parse(test32bitPCM)
+		f []float64
+	)
 
-	if chunk.Reset(); chunk.Data != nil {
-		t.Errorf("expected Reset() method to clear the data in the chunk")
-	}
+	t.Run("ParseAndBytes", func(t *testing.T) {
+		// clear Subchunk2Size
+		chunk.Subchunk2Size = 0
+		chunk.Parse(input)
+
+		output := chunk.Bytes()
+		if !bytes.Equal(input, output) {
+			t.Errorf("output mismatch error: wanted %v ; got %v", input, output)
+		}
+	})
+
+	t.Run("Value", func(t *testing.T) {
+		if i := chunk.Value(); len(i) == 0 {
+			t.Errorf("expected integer PCM buffer to be longer than zero")
+		}
+	})
+
+	t.Run("Float", func(t *testing.T) {
+		f = chunk.Float()
+		if len(f) == 0 {
+			t.Errorf("expected float PCM buffer to be longer than zero")
+			return
+		}
+	})
+
+	t.Run("ParseFloat", func(t *testing.T) {
+		newChunk := &Chunk32bit{
+			ChunkHeader: header,
+		}
+		newChunk.ParseFloat(f)
+
+		if len(chunk.Data) != len(newChunk.Data) {
+			t.Errorf("float data length mismatch error: wanted %d ; got %d", len(chunk.Data), len(newChunk.Data))
+		}
+		for i := range chunk.Data {
+			if chunk.Data[i] != newChunk.Data[i] {
+				t.Errorf("float data output mismatch error on index #%d: wanted %d ; got %d", i, chunk.Data[i], newChunk.Data[i])
+			}
+		}
+	})
+
+	t.Run("ParseSecondRun", func(t *testing.T) {
+		// second run to test Parse on a dirty state
+		chunk.Parse(input)
+	})
+
+	t.Run("ChunkHeader", func(t *testing.T) {
+		chunkHeader := chunk.Header()
+		if !reflect.DeepEqual(header, chunkHeader) {
+			t.Errorf("output mismatch error: wanted %v ; got %v", header, chunkHeader)
+		}
+	})
+
+	t.Run("BitDepth", func(t *testing.T) {
+		depth := chunk.BitDepth()
+		if depth != bitDepth {
+			t.Errorf("output mismatch error: wanted %v ; got %v", bitDepth, depth)
+		}
+	})
+
+	t.Run("Reset", func(t *testing.T) {
+		chunk.Reset()
+
+		if len(chunk.Data) != 0 {
+			t.Errorf("output mismatch error: wanted %v ; got %v", 0, len(chunk.Data))
+		}
+	})
+
+	t.Run("Generate", func(t *testing.T) {
+		chunk.Generate(osc.SineWave, 2000, 16, 500*time.Millisecond)
+
+		if len(chunk.Data) == 0 {
+			t.Error("expected Data object length to be greater than zero")
+		}
+	})
+
 }
