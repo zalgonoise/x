@@ -203,11 +203,9 @@ func Test24Bit(t *testing.T) {
 				chunk.Data = nil
 				chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
 
-				t.Log(chunk.Data)
 				if len(chunk.Data) == 0 {
 					t.Error("expected Data object length to be greater than zero")
 				}
-				t.Log(chunk.Data)
 
 				chunk.Reset()
 			})
