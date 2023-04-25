@@ -199,11 +199,54 @@ func Test8Bit(t *testing.T) {
 	})
 
 	t.Run("Generate", func(t *testing.T) {
-		chunk.Generate(osc.SineWave, 2000, 16, 500*time.Millisecond)
+		t.Run("Success", func(t *testing.T) {
+			t.Run("SineWithNilData", func(t *testing.T) {
+				chunk.Data = nil
+				chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
 
-		if len(chunk.Data) == 0 {
-			t.Error("expected Data object length to be greater than zero")
-		}
+				t.Log(chunk.Data)
+				if len(chunk.Data) == 0 {
+					t.Error("expected Data object length to be greater than zero")
+				}
+				t.Log(chunk.Data)
+
+				chunk.Reset()
+			})
+			t.Run("Square", func(t *testing.T) {
+				chunk.Generate(osc.SquareWave, 2000, 44100, 100*time.Millisecond)
+
+				if len(chunk.Data) == 0 {
+					t.Error("expected Data object length to be greater than zero")
+				}
+
+				chunk.Reset()
+			})
+			t.Run("Triangle", func(t *testing.T) {
+				chunk.Generate(osc.TriangleWave, 2000, 44100, 100*time.Millisecond)
+
+				if len(chunk.Data) == 0 {
+					t.Error("expected Data object length to be greater than zero")
+				}
+
+				chunk.Reset()
+			})
+			t.Run("Sawtooth", func(t *testing.T) {
+				chunk.Generate(osc.SawtoothWave, 2000, 44100, 100*time.Millisecond)
+
+				if len(chunk.Data) == 0 {
+					t.Error("expected Data object length to be greater than zero")
+				}
+
+				chunk.Reset()
+			})
+		})
+		t.Run("InvalidOscillatorType", func(t *testing.T) {
+			chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
+
+			if len(chunk.Data) != 0 {
+				t.Error("expected Data object length to be zero")
+			}
+		})
 	})
 
 }
