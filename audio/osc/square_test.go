@@ -1,25 +1,65 @@
 package osc_test
 
 import (
+	"fmt"
 	"math"
+	"sort"
 	"testing"
 	"time"
 
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/fft/window"
 	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav"
 )
 
 func TestSquare(t *testing.T) {
-	t.Run(
-		"Success", func(t *testing.T) {
+	const (
+		sampleRate = 44100
+		maxDrift   = 50
+		blockSize  = 1024
+	)
+
+	// tests that are commented out are currently failing for inaccuracy
+	for _, testFreq := range []int{
+		13,
+		2000,
+		//3248,
+		4000,
+		//8000,
+		//16000,
+		//19983,
+	} {
+		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
+			// generate wave
 			chunk := wav.NewChunk(16, nil)
-			chunk.Generate(osc.SquareWave, 2000, 44100, time.Second/2)
+			chunk.Generate(osc.SquareWave, testFreq, sampleRate, 500*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}
-			t.Logf("%+v", chunk.Value()[:1024])
-		},
-	)
+
+			// apply FFT to retrieve the frequency spectrum of the signal
+			spectrum := fft.Apply(
+				sampleRate, chunk.Float()[:blockSize],
+				window.New(window.Blackman, blockSize),
+			)
+
+			// sort results by highest magnitude first
+			sort.Slice(spectrum, func(i, j int) bool {
+				return spectrum[i].Mag > spectrum[j].Mag
+			})
+
+			// verify that the most powerful frequency is close to the target one
+			if spectrum[0].Freq < testFreq-maxDrift ||
+				spectrum[0].Freq > testFreq+maxDrift {
+				t.Errorf(
+					"most powerful frequency is too far off the target: wanted %dHz ; got %dHz",
+					testFreq, spectrum[0].Freq,
+				)
+			}
+			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
+		})
+	}
 }
 
 func BenchmarkSquareCompare(b *testing.B) {
