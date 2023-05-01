@@ -4,7 +4,7 @@ package osc
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
 func Square[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
 	var (
-		halfPeriod, mul = fullCycle(sampleRate, 2*freq)
+		halfPeriod, mul = fullCycle(sampleRate, freq)
 		gap             = halfPeriod * mul
 		sampleInt       = T(2<<int16(depth-2)) - 1
 	)
