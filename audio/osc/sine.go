@@ -5,18 +5,6 @@ import "github.com/zalgonoise/x/audio/trig"
 // Sine is an oscillator that writes a sine wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
 func Sine[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
-	cycleLen, mul := fullCycle(sampleRate, freq)
-	cycle := cycleLen * mul
-
-	if len(buffer) > cycle {
-		var wave = make([]T, cycle)
-		sine(wave, freq, depth, sampleRate)
-		for i := 0; i < len(buffer); i += len(wave) {
-			copy(buffer[i:], wave)
-		}
-		return
-	}
-
 	sine(buffer, freq, depth, sampleRate)
 }
 
