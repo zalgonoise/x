@@ -24,9 +24,11 @@ func TestTriangle(t *testing.T) {
 	for _, testFreq := range []int{
 		13,
 		2000,
-		//3248,
+		3248,
 		4000,
-		//8000,
+		8000,
+		10000,
+		10891,
 		//16000,
 		//19983,
 	} {
@@ -57,6 +59,7 @@ func TestTriangle(t *testing.T) {
 					testFreq, spectrum[0].Freq,
 				)
 			}
+			t.Log(chunk.Float()[:128])
 			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
 		})
 	}
