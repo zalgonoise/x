@@ -22,17 +22,19 @@ func TestSine(t *testing.T) {
 	)
 
 	for _, testFreq := range []int{
+		1,
 		13,
 		2000,
 		4000,
 		8000,
 		16000,
 		19983,
+		22000,
 	} {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
 			chunk := wav.NewChunk(16, nil)
-			chunk.Generate(osc.SineWave, testFreq, sampleRate, 500*time.Millisecond)
+			chunk.Generate(osc.SineWave, testFreq, sampleRate, 750*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}
@@ -56,6 +58,7 @@ func TestSine(t *testing.T) {
 					testFreq, spectrum[0].Freq,
 				)
 			}
+			t.Log(chunk.Float()[:128])
 			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
 		})
 	}
