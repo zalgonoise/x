@@ -15,6 +15,38 @@ This is the place for trying something new, to study it and amplify an initial i
 
 _________
 
+### Index 
+
+
+|             Directory              |                                                                                                   Description                                                                                                    |                                                                                                    
+|:----------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|        [`x/audio`](./audio)        |                                                                 digital signal processing tools for audio, including WAV encoding and decoding.                                                                  |
+|    [`x/benchmark`](./benchmark)    |                                                             several benchmark tests to compare `x` implementations with third-party implementations                                                              |
+|       [`x/bezier`](./bezier)       |                                                                               PNG to SVG converter, as a quick ChatGPT experiment                                                                                |
+|           [`x/cb`](./cb)           |                                                                                 experiments on a Circuit Breaker implementation                                                                                  |
+|    [`x/codegraph`](./codegraph)    |                                                                    first and second iterations of a call-graph generator from static Go code                                                                     |
+| [`x/codegraph_v3`](./codegraph_v3) |                                                                          third iteration of a call-graph generator from static Go code                                                                           |
+|         [`x/conv`](./conv)         |                                                                                   standard binary converters for several types                                                                                   |
+|         [`x/crop`](./crop)         |                                                      an image cropping utility, to divide an input image into X and Y number of tiles (as multiple images)                                                       |
+|          [`x/dns`](./dns)          |                                            a small but modular DNS server to freely create new routes in your network. [_Ported_](https://github.com/zalgonoise/dns)                                             |
+|     [`x/encoding`](./encoding)     |                                                                                     binary encoder libraries (like protobuf)                                                                                     |
+|       [`x/errors`](./errors)       |                                                                          early port of `errors.Join` before it was generally available                                                                           |
+|      [`x/fractal`](./fractal)      |                                                                                    Mandelbrot and Julia fractals experiments                                                                                     |
+|         [`x/gbuf`](./gbuf)         |                                                 generic buffers like `bytes.Buffer`, but for any specified type. [_Ported_](https://github.com/zalgonoise/gbuf)                                                  |
+|        [`x/ghttp`](./ghttp)        |                                                         generic HTTP handlers and mux compatible with the standard library, with a simplified structure                                                          |
+|        [`x/graph`](./graph)        |                                                                                          generic graph data structures                                                                                           |
+|      [`x/gwriter`](./gwriter)      |                                                          generic I/O library, but for any specified type. [_Ported_](https://github.com/zalgonoise/gio)                                                          |
+|          [`x/lex`](./lex)          |                        generic lexer, following the design in Go's `text/template` and `go/token` implementations, for any specified type. [_Ported_](https://github.com/zalgonoise/lex)                         |
+|          [`x/log`](./log)          |                           second iteration on a structured logger in Go, with a hint from the new `x/log/slog` proposal, with generics. [_Ported_](https://github.com/zalgonoise/logx)                           |
+|     [`x/log/attr`](./log/attr)     |                                            a key-value attribute generic data structure, for any type of requirement. [_Ported_](https://github.com/zalgonoise/attr)                                             |
+|        [`x/parse`](./parse)        | generic parser, as a continuation of [`x/lex`](./lex), that builds a generic AST based on defined tokens and processing rules, and optionally output generation. [_Ported_](https://github.com/zalgonoise/parse) |
+|         [`x/pcap`](./pcap)         |                                                                                packet capture app, as a quick ChatGPT experiment                                                                                 |
+|          [`x/ptr`](./ptr)          |                                                                  generic pointer utilities library, for conversion, copying, casting and more.                                                                   |
+|         [`x/secr`](./secr)         |                                a compact yet module secrets / passwords storage solution, with a Domain Driven Design approach. [_Ported_](https://github.com/zalgonoise/cloaki)                                 |
+|      [`x/spanner`](./spanner)      |         a simple (but flavored) tracer / spanner solution inspired by OpenTelemetry's, used interchangeably alongside `logx` in `ghttp`, for example. [_Ported_](https://github.com/zalgonoise/spanner)          |
+
+_________
+
 
 ### Special thanks
 
