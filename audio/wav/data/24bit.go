@@ -99,7 +99,7 @@ func (d *Chunk24bit) Generate(waveType osc.Type, freq, sampleRate int, dur time.
 	if fn == nil {
 		return
 	}
-	fn(buffer, float64(freq), float64(d.Depth), float64(sampleRate))
+	fn(buffer, freq, int(d.Depth), sampleRate)
 
 	if d.Data == nil {
 		d.Data = buffer
