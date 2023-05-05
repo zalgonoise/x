@@ -2,48 +2,25 @@ package osc
 
 // Sawtooth is an oscillator that writes a sawtooth wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
-func Sawtooth[T BitDepths](buffer []T, freq, depth, sampleRate float64) {
-	var (
-		halfPeriod, mul = fullCycle(sampleRate, freq)
-		gap             = halfPeriod * mul
-		increment       = 2.0 / float64(halfPeriod)
-		sampleInt       T
-	)
+func Sawtooth[T BitDepths](buffer []T, freq, depth, sampleRate int) {
+	var wave = buildFrom1Hz(len(buffer), sampleRate, freq, sawtooth1Hz)
 
-	if len(buffer) > halfPeriod {
-		var wave = make([]T, halfPeriod)
-		sawtooth(wave, halfPeriod, gap, sampleInt, increment, depth)
-
-		for i, j := 0, 0; i < len(buffer); i, j = i+len(wave), j+1 {
-			copy(buffer[i:], wave)
-
-			next := i + len(wave)
-			if j+1%mul == 0 && next < len(buffer) {
-				buffer[next+1] = buffer[next]
-				i++
-			}
-		}
-		return
+	for i := range buffer {
+		buffer[i] = T(wave[i] * float64(int(2)<<(depth-2)-1))
 	}
-
-	sawtooth(buffer, halfPeriod, gap, sampleInt, increment, depth)
 }
 
-func sawtooth[T BitDepths](buffer []T, halfPeriod, gap int, sampleInt T, increment, depth float64) {
-	var base T = ^(2 << int(depth-2)) + 2
-	inc := T(increment * float64(^base))
+func sawtooth1Hz(sampleRate int) []float64 {
+	var (
+		buffer    = make([]float64, sampleRate)
+		stepValue = 2.0 / float64(sampleRate) // from -1.0 to +1.0
+		sample    = -1.0
+	)
 
-	for i := 0; i < len(buffer); i++ {
-		if i+1%gap == 0 {
-			buffer[i] = sampleInt
-			continue
-		}
-
-		if i%halfPeriod == 0 {
-			sampleInt = base
-		} else {
-			sampleInt += inc
-		}
-		buffer[i] = sampleInt
+	for i := 0; i < sampleRate; i++ {
+		buffer[i] = sample
+		sample += stepValue
 	}
+
+	return buffer
 }
