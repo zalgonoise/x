@@ -29,8 +29,8 @@ func TestTriangle(t *testing.T) {
 		8000,
 		10000,
 		10891,
-		//16000,
-		//19983,
+		16000,
+		19983,
 	} {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave

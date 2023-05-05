@@ -24,11 +24,11 @@ func TestSquare(t *testing.T) {
 	for _, testFreq := range []int{
 		13,
 		2000,
-		//3248,
+		3248,
 		4000,
-		//8000,
-		//16000,
-		//19983,
+		8000,
+		16000,
+		19983,
 	} {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
