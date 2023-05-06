@@ -14,8 +14,10 @@ const (
 	SquareWave
 	// TriangleWave is the oscillator Type for a Triangle Oscillator
 	TriangleWave
-	// SawtoothWave is the oscillator Type for a Sawtooth Oscillator
-	SawtoothWave
+	// SawtoothUpWave is the oscillator Type for a rising Sawtooth Oscillator
+	SawtoothUpWave
+	// SawtoothDownWave is the oscillator Type for a falling Sawtooth Oscillator
+	SawtoothDownWave
 )
 
 const (
@@ -38,8 +40,8 @@ func buildFrom1Hz(size, sampleRate, freq int, oneHzFunc func(int) []float64) []f
 		base   = oneHzFunc(sampleRate)
 	)
 
-	for i := 0; i < size; i++ {
-		buffer[i] = base[i*freq%sampleRate]
+	for i, j := 0, 0; i < size; i, j = i+1, i*freq%sampleRate {
+		buffer[i] = base[j]
 	}
 
 	return buffer
