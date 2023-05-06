@@ -230,7 +230,7 @@ func Test32Bit(t *testing.T) {
 				chunk.Reset()
 			})
 			t.Run("Sawtooth", func(t *testing.T) {
-				chunk.Generate(osc.SawtoothWave, 2000, 44100, 100*time.Millisecond)
+				chunk.Generate(osc.SawtoothUpWave, 2000, 44100, 100*time.Millisecond)
 
 				if len(chunk.Data) == 0 {
 					t.Error("expected Data object length to be greater than zero")
