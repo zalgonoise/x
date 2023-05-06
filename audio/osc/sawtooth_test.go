@@ -13,7 +13,7 @@ import (
 	"github.com/zalgonoise/x/audio/wav"
 )
 
-func TestSawtooth(t *testing.T) {
+func TestSawtoothUp(t *testing.T) {
 	const (
 		sampleRate = 44100
 		maxDrift   = 50
@@ -33,7 +33,56 @@ func TestSawtooth(t *testing.T) {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
 			chunk := wav.NewChunk(16, nil)
-			chunk.Generate(osc.SawtoothWave, testFreq, sampleRate, 500*time.Millisecond)
+			chunk.Generate(osc.SawtoothUpWave, testFreq, sampleRate, 500*time.Millisecond)
+			if len(chunk.Value()) == 0 {
+				t.Errorf("expected chunk data to be generated")
+			}
+
+			// apply FFT to retrieve the frequency spectrum of the signal
+			spectrum := fft.Apply(
+				sampleRate, chunk.Float()[:blockSize],
+				window.New(window.Blackman, blockSize),
+			)
+
+			// sort results by highest magnitude first
+			sort.Slice(spectrum, func(i, j int) bool {
+				return spectrum[i].Mag > spectrum[j].Mag
+			})
+
+			// verify that the most powerful frequency is close to the target one
+			if spectrum[0].Freq < testFreq-maxDrift ||
+				spectrum[0].Freq > testFreq+maxDrift {
+				t.Errorf(
+					"most powerful frequency is too far off the target: wanted %dHz ; got %dHz",
+					testFreq, spectrum[0].Freq,
+				)
+			}
+			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
+		})
+	}
+}
+
+func TestSawtoothDown(t *testing.T) {
+	const (
+		sampleRate = 44100
+		maxDrift   = 50
+		blockSize  = 1024
+	)
+
+	// tests that are commented out are currently failing for inaccuracy
+	for _, testFreq := range []int{
+		13,
+		2000,
+		3248,
+		4000,
+		8000,
+		16000,
+		19983,
+	} {
+		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
+			// generate wave
+			chunk := wav.NewChunk(16, nil)
+			chunk.Generate(osc.SawtoothDownWave, testFreq, sampleRate, 500*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}
@@ -167,7 +216,7 @@ func BenchmarkSawtooth(b *testing.B) {
 					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(16, nil)
-						chunk.Generate(osc.SawtoothWave, 2000, 44100, time.Second/2)
+						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, time.Second/2)
 					}
 					_ = chunk
 				},
@@ -176,7 +225,7 @@ func BenchmarkSawtooth(b *testing.B) {
 				"ContinuousWrite", func(b *testing.B) {
 					var chunk = wav.NewChunk(16, nil)
 					for i := 0; i < b.N; i++ {
-						chunk.Generate(osc.SawtoothWave, 2000, 44100, time.Second/2)
+						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, time.Second/2)
 					}
 					_ = chunk
 				},
@@ -190,7 +239,7 @@ func BenchmarkSawtooth(b *testing.B) {
 					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(16, nil)
-						chunk.Generate(osc.SawtoothWave, 500, 44100, time.Millisecond*50)
+						chunk.Generate(osc.SawtoothUpWave, 500, 44100, time.Millisecond*50)
 					}
 					_ = chunk
 				},
@@ -199,7 +248,7 @@ func BenchmarkSawtooth(b *testing.B) {
 				"ContinuousWrite", func(b *testing.B) {
 					var chunk = wav.NewChunk(16, nil)
 					for i := 0; i < b.N; i++ {
-						chunk.Generate(osc.SawtoothWave, 500, 44100, time.Millisecond*50)
+						chunk.Generate(osc.SawtoothUpWave, 500, 44100, time.Millisecond*50)
 					}
 					_ = chunk
 				},
