@@ -3,7 +3,6 @@ package data
 import (
 	"bytes"
 	"encoding/binary"
-	"unsafe"
 )
 
 type err string
@@ -33,10 +32,10 @@ type ChunkHeader struct {
 // HeaderFrom reads the ChunkHeader from the input byte slice `buf`, returning it and
 // an error in case the data is invalid
 func HeaderFrom(buf []byte) (*ChunkHeader, error) {
-	size := buf[4:8]
+	var size = buf[4:8:8]
 	chunk := &ChunkHeader{
 		Subchunk2ID:   [4]byte(buf[:4]),
-		Subchunk2Size: *(*uint32)(unsafe.Pointer(&size)),
+		Subchunk2Size: binary.LittleEndian.Uint32(size[:]),
 	}
 
 	switch string(chunk.Subchunk2ID[:]) {
