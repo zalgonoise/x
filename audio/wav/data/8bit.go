@@ -95,8 +95,10 @@ func formFunc8bit(typ osc.Type) osc.Oscillator[int8] {
 		return osc.Square[int8]
 	case osc.TriangleWave:
 		return osc.Triangle[int8]
-	case osc.SawtoothWave:
-		return osc.Sawtooth[int8]
+	case osc.SawtoothUpWave:
+		return osc.SawtoothUp[int8]
+	case osc.SawtoothDownWave:
+		return osc.SawtoothDown[int8]
 	default:
 		return nil
 	}

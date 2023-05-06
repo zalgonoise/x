@@ -116,8 +116,10 @@ func formFunc24and32bit(typ osc.Type) osc.Oscillator[int32] {
 		return osc.Square[int32]
 	case osc.TriangleWave:
 		return osc.Triangle[int32]
-	case osc.SawtoothWave:
-		return osc.Sawtooth[int32]
+	case osc.SawtoothUpWave:
+		return osc.SawtoothUp[int32]
+	case osc.SawtoothDownWave:
+		return osc.SawtoothDown[int32]
 	default:
 		return nil
 	}
