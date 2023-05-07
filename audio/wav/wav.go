@@ -1,6 +1,7 @@
 package wav
 
 import (
+	"bytes"
 	"errors"
 	"time"
 
@@ -16,6 +17,9 @@ type Wav struct {
 	Header *WavHeader
 	Chunks []Chunk
 	Data   Chunk
+
+	readOnly bool
+	buf      *bytes.Buffer
 }
 
 // New creates a new Wav, configured with the input sample rate `sampleRate`
@@ -74,7 +78,7 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 }
 
 // Generate wraps a call to w.Data.Generate, by passing the same sample rate
-// value as configured in w.Header.SampleRate
+// value as configured in w.header.SampleRate
 func (w *Wav) Generate(waveType osc.Type, freq int, dur time.Duration) {
 	w.Data.Generate(waveType, freq, int(w.Header.SampleRate), dur)
 }
