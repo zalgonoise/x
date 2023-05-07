@@ -2,11 +2,11 @@ package osc
 
 // Square is an oscillator that writes a square wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
-func Square[T BitDepths](buffer []T, freq, depth, sampleRate int) {
+func Square(buffer []float64, freq, depth, sampleRate int) {
 	var wave = buildFrom1Hz(len(buffer), sampleRate, freq, square1Hz)
 
 	for i := range buffer {
-		buffer[i] = T(wave[i] * float64(int(2)<<(depth-2)-1))
+		buffer[i] = wave[i] * float64(int(2)<<(depth-2)-1)
 	}
 }
 
