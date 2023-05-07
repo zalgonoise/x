@@ -1,10 +1,7 @@
 package data
 
 import (
-	"time"
 	"unsafe"
-
-	"github.com/zalgonoise/x/audio/osc"
 )
 
 const (
@@ -12,115 +9,46 @@ const (
 	// minInt24 float64 = ^1<<22 + 1
 )
 
-// Chunk24bit is a Chunk used for 24 bit-depth PCM buffers
-type Chunk24bit struct {
-	*ChunkHeader
-	Data  []int32
-	Depth uint16
-}
+var _ = Converter(Conv24Bit{})
 
-// Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
-// from raw bytes
-func (d *Chunk24bit) Parse(buf []byte) {
-	if d.Data == nil {
-		buf32bit := copy24to32(buf)
-		d.Data = *(*[]int32)(unsafe.Pointer(&buf32bit))
-		d.Data = d.Data[:len(buf32bit)/4]
-		for i := range d.Data {
-			if d.Data[i]&0x00800000 != 0 {
-				d.Data[i] |= ^0xffffff // handle signed integers
-			}
-		}
+type Conv24Bit struct{}
 
-		if d.Subchunk2Size == 0 {
-			d.Subchunk2Size = uint32(len(buf))
-		}
-		return
-	}
-
+func (c Conv24Bit) Parse(buf []byte) []float64 {
 	buf32bit := copy24to32(buf)
-	newData := *(*[]int32)(unsafe.Pointer(&buf32bit))
-	newData = newData[:len(buf32bit)/4]
-	for i := range newData {
-		if newData[i]&0x00800000 != 0 {
-			newData[i] |= ^0xffffff // handle signed integers
+	data := *(*[]int32)(unsafe.Pointer(&buf32bit))
+	data = data[:len(buf32bit)/4]
+	for i := range data {
+		if data[i]&0x00800000 != 0 {
+			data[i] |= ^0xffffff // handle signed integers
 		}
 	}
 
-	d.Data = append(d.Data, newData...)
-}
-
-// ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
-// from floating-point audio data
-func (d *Chunk24bit) ParseFloat(buf []float64) {
-	d.Data = conv(
-		buf, func(f float64) int32 {
-			return int32(f * maxInt24)
-		},
-	)
-}
-
-// Bytes will return a slice of bytes with the encoded PCM buffer
-func (d *Chunk24bit) Bytes() []byte {
-	data := make([]byte, len(d.Data)*3)
-	for i := range d.Data {
-		append3Bytes(i, data, *(*[3]byte)(unsafe.Pointer(&d.Data[i])))
-	}
-	return data
-}
-
-// Header returns the ChunkHeader of the Chunk
-func (d *Chunk24bit) Header() *ChunkHeader { return d.ChunkHeader }
-
-// BitDepth returns the bit depth of the Chunk
-func (d *Chunk24bit) BitDepth() uint16 { return d.Depth }
-
-// Reset clears the data stored in the Chunk
-func (d *Chunk24bit) Reset() {
-	d.Data = make([]int32, 0, dataChunkBaseLen)
-}
-
-// Value returns the PCM audio buffer from the Chunk, as a slice of int
-func (d *Chunk24bit) Value() []int { return to[int32, int](d.Data) }
-
-// Float returns the PCM audio buffer from the Chunk, as a slice of float64
-func (d *Chunk24bit) Float() []float64 {
 	return conv(
-		d.Data, func(v int32) float64 {
+		data, func(v int32) float64 {
 			return float64(v) / maxInt24
 		},
 	)
 }
 
-// Generate creates a wave of the given form, frequency and duration within this Chunk
-func (d *Chunk24bit) Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration) {
-	buffer := make([]int32, int(float64(sampleRate)*float64(dur)/float64(time.Second)))
-	fn := formFunc24and32bit(waveType)
-	if fn == nil {
-		return
-	}
-	fn(buffer, freq, int(d.Depth), sampleRate)
+func (c Conv24Bit) Bytes(buf []float64) []byte {
+	value := conv(
+		buf, func(f float64) int32 {
+			return int32(f * maxInt24)
+		},
+	)
 
-	if d.Data == nil {
-		d.Data = buffer
-		return
+	data := make([]byte, len(value)*3)
+	for i := range value {
+		append3Bytes(i, data, *(*[3]byte)(unsafe.Pointer(&value[i])))
 	}
-	d.Data = append(d.Data, buffer...)
+
+	return data
 }
 
-func formFunc24and32bit(typ osc.Type) osc.Oscillator[int32] {
-	switch typ {
-	case osc.SineWave:
-		return osc.Sine[int32]
-	case osc.SquareWave:
-		return osc.Square[int32]
-	case osc.TriangleWave:
-		return osc.Triangle[int32]
-	case osc.SawtoothUpWave:
-		return osc.SawtoothUp[int32]
-	case osc.SawtoothDownWave:
-		return osc.SawtoothDown[int32]
-	default:
-		return nil
-	}
+func (c Conv24Bit) Value(buf []float64) []int {
+	return conv(
+		buf, func(f float64) int {
+			return int(f * maxInt24)
+		},
+	)
 }
