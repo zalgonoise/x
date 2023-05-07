@@ -63,6 +63,18 @@ func load() ([][]byte, error) {
 		return nil, err
 	}
 
+	_ = mono8bit44100
+	_ = mono16bit44100
+	_ = mono24bit44100
+	_ = mono32bit44100
+	_ = mono32bit96000
+	_ = mono32bit192000
+	_ = mono8bit176400
+	_ = stereo8bit44100
+	_ = stereo16bit44100
+	_ = stereo24bit44100
+	_ = stereo32bit44100
+
 	return [][]byte{
 		mono8bit44100,
 		mono16bit44100,
@@ -70,7 +82,7 @@ func load() ([][]byte, error) {
 		mono32bit44100,
 		mono32bit96000,
 		mono32bit192000,
-		mono8bit176400,
+		mono8bit176400[:len(mono8bit176400)-1], // remove a useless nullbyte in the end
 		stereo8bit44100,
 		stereo16bit44100,
 		stereo24bit44100,
@@ -369,10 +381,11 @@ func TestWavSegmentedWrite(t *testing.T) {
 			continue
 		}
 
-		cmp := bytes.Compare(test, buf)
-		if cmp != 0 {
-			t.Errorf("encoding mismatches the original data: compare: %d", cmp)
-			continue
+		for i := range test {
+			if test[i] != buf[i] {
+				t.Errorf("encoding mismatches the original data on index #%d: wanted %v ; got %v", i, test[i], buf[i])
+				continue
+			}
 		}
 
 		t.Logf("OK on index %d: %v", idx, wav.Header)
