@@ -31,13 +31,10 @@ func BenchmarkChunk24bit(b *testing.B) {
 						return
 					}
 
-					var chunk *Chunk24bit
+					var chunk *DataChunk
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						chunk = &Chunk24bit{
-							ChunkHeader: header,
-							Depth:       24, // set by NewChunk()
-						}
+						chunk = NewDataChunk(bitDepth24, header)
 						chunk.Parse(test24bitPCM)
 					}
 					_ = chunk
@@ -51,10 +48,7 @@ func BenchmarkChunk24bit(b *testing.B) {
 						return
 					}
 
-					var chunk = &Chunk24bit{
-						ChunkHeader: header,
-						Depth:       24, // set by NewChunk()
-					}
+					var chunk = NewDataChunk(bitDepth24, header)
 					chunk.Parse(test24bitPCM)
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
@@ -74,11 +68,8 @@ func BenchmarkChunk24bit(b *testing.B) {
 			}
 
 			var (
-				chunk = &Chunk24bit{
-					ChunkHeader: header,
-					Depth:       24, // set by NewChunk()
-				}
-				buf []byte
+				chunk = NewDataChunk(bitDepth24, header)
+				buf   []byte
 			)
 			chunk.Parse(test24bitPCM)
 			b.ResetTimer()
@@ -97,10 +88,7 @@ func Test24bitHeader(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	chunk := &Chunk24bit{
-		ChunkHeader: header,
-		Depth:       24, // set by NewChunk()
-	}
+	chunk := NewDataChunk(bitDepth24, header)
 
 	if output := chunk.Header(); !reflect.DeepEqual(*header, *output) {
 		t.Errorf("output mismatch error: wanted %+v ; got %+v", *header, *output)
@@ -121,17 +109,14 @@ func Test24Bit(t *testing.T) {
 	var (
 		bitDepth uint16 = 24
 		input           = test24bitPCM
-		chunk           = &Chunk24bit{
-			ChunkHeader: header,
-			Depth:       bitDepth,
-		}
+		chunk           = NewDataChunk(bitDepth24, header)
 
 		f []float64
 	)
 
 	t.Run("ParseAndBytes", func(t *testing.T) {
 		// clear Subchunk2Size
-		chunk.Subchunk2Size = 0
+		chunk.ChunkHeader.Subchunk2Size = 0
 		chunk.Parse(input)
 
 		output := chunk.Bytes()
@@ -155,9 +140,7 @@ func Test24Bit(t *testing.T) {
 	})
 
 	t.Run("ParseFloat", func(t *testing.T) {
-		newChunk := &Chunk24bit{
-			ChunkHeader: header,
-		}
+		newChunk := NewDataChunk(bitDepth24, header)
 		newChunk.ParseFloat(f)
 
 		if len(chunk.Data) != len(newChunk.Data) {
@@ -165,7 +148,8 @@ func Test24Bit(t *testing.T) {
 		}
 		for i := range chunk.Data {
 			if chunk.Data[i] != newChunk.Data[i] {
-				t.Errorf("float data output mismatch error on index #%d: wanted %d ; got %d", i, chunk.Data[i], newChunk.Data[i])
+				t.Errorf("float data output mismatch error on index #%d: wanted %v ; got %v", i, chunk.Data[i],
+					newChunk.Data[i])
 			}
 		}
 	})
