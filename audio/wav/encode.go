@@ -1,6 +1,8 @@
 package wav
 
-import "fmt"
+import (
+	"bytes"
+)
 
 // Read implements the io.Reader interface
 //
@@ -10,32 +12,31 @@ import "fmt"
 // It returns the number of bytes written to the buffer, and an error if the buffer
 // is not big enough
 func (w *Wav) Read(buf []byte) (n int, err error) {
-	size, data := w.encode()
-	if len(buf) < size {
-		return n, fmt.Errorf("%w: input buffer with length %d cannot fit %d bytes", ErrShortDataBuffer, len(buf), size)
+	if !w.readOnly {
+		if err = w.encode(); err != nil {
+			return 0, err
+		}
+		w.readOnly = true
 	}
 
-	for i := range data {
-		n += copy(buf[n:], data[i])
-	}
-	return size, nil
+	return w.buf.Read(buf)
 }
 
 // Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding
 func (w *Wav) Bytes() []byte {
-	var n int
-	size, data := w.encode()
-
-	buf := make([]byte, size+32)
-	for i := range data {
-		n += copy(buf[n:], data[i])
+	if !w.readOnly {
+		if err := w.encode(); err != nil {
+			return nil
+		}
+		w.readOnly = true
 	}
-	return buf
+
+	return w.buf.Bytes()
 }
 
-func (w *Wav) encode() (size int, data [][]byte) {
-	size = 4
-	data = make([][]byte, (len(w.Chunks)*2)+1)
+func (w *Wav) encode() error {
+	size := 4
+	data := make([][]byte, (len(w.Chunks)*2)+1)
 
 	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
 		data[j] = w.Chunks[i].Header().Bytes()
@@ -46,5 +47,14 @@ func (w *Wav) encode() (size int, data [][]byte) {
 		w.Header.ChunkSize = uint32(size)
 	}
 	data[0] = w.Header.Bytes()
-	return size, data
+
+	w.buf = bytes.NewBuffer(make([]byte, 0, size))
+
+	for i := range data {
+		if _, err := w.buf.Write(data[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
