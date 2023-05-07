@@ -6,7 +6,7 @@ import (
 	"github.com/zalgonoise/x/audio/osc"
 )
 
-// ChunkJunk is a Chunk used for storing "junk"-ID subchunk data
+// ChunkJunk is a DataChunk used for storing "junk"-ID subchunk data
 type ChunkJunk struct {
 	*ChunkHeader
 	Data  []byte
@@ -35,24 +35,24 @@ func (d *ChunkJunk) Bytes() []byte {
 	return d.Data
 }
 
-// Header returns the ChunkHeader of the Chunk
+// Header returns the ChunkHeader of the DataChunk
 func (d *ChunkJunk) Header() *ChunkHeader { return d.ChunkHeader }
 
-// BitDepth returns the bit depth of the Chunk
+// BitDepth returns the bit depth of the DataChunk
 func (d *ChunkJunk) BitDepth() uint16 { return d.Depth }
 
-// Reset clears the data stored in the Chunk
+// Reset clears the data stored in the DataChunk
 func (d *ChunkJunk) Reset() {
 	d.Data = make([]byte, 0, dataChunkBaseLen)
 }
 
-// Value returns the PCM audio buffer from the Chunk, as a slice of int
+// Value returns the PCM audio buffer from the DataChunk, as a slice of int
 func (d *ChunkJunk) Value() []int { return to[byte, int](d.Data) }
 
-// Float returns the PCM audio buffer from the Chunk, as a slice of float64
+// Float returns the PCM audio buffer from the DataChunk, as a slice of float64
 func (d *ChunkJunk) Float() []float64 {
 	return nil
 }
 
-// Generate creates a wave of the given form, frequency and duration within this Chunk
+// Generate creates a wave of the given form, frequency and duration within this DataChunk
 func (d *ChunkJunk) Generate(_ osc.Type, _, _ int, _ time.Duration) {}
