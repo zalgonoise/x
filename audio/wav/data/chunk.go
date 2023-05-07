@@ -10,11 +10,17 @@ type err string
 func (e err) Error() string { return (string)(e) }
 
 const (
-	ErrInvalidSubChunkHeader err = "audio/wav: invalid subchunk header metadata"
+	ErrInvalidSubChunkHeader err = "audio/wav: invalid subchunk ChunkHeader metadata"
+	ErrInvalidBitDepth       err = "audio/wav: invalid bit depth"
 
 	dataSubchunkIDString = "data"
 	junkSubchunkIDString = "junk"
 	dataChunkBaseLen     = 512
+
+	bitDepth8  uint16 = 8
+	bitDepth16 uint16 = 16
+	bitDepth24 uint16 = 24
+	bitDepth32 uint16 = 32
 )
 
 var (
