@@ -2,21 +2,21 @@ package osc
 
 // SawtoothUp is an oscillator that writes a rising sawtooth wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
-func SawtoothUp[T BitDepths](buffer []T, freq, depth, sampleRate int) {
+func SawtoothUp(buffer []float64, freq, depth, sampleRate int) {
 	var wave = buildFrom1Hz(len(buffer), sampleRate, freq, sawtoothUp1Hz)
 
 	for i := range buffer {
-		buffer[i] = T(wave[i] * float64(int(2)<<(depth-2)-1))
+		buffer[i] = wave[i] * float64(int(2)<<(depth-2)-1)
 	}
 }
 
 // SawtoothDown is an oscillator that writes a falling sawtooth wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
-func SawtoothDown[T BitDepths](buffer []T, freq, depth, sampleRate int) {
+func SawtoothDown(buffer []float64, freq, depth, sampleRate int) {
 	var wave = buildFrom1Hz(len(buffer), sampleRate, freq, sawtoothDown1Hz)
 
 	for i := range buffer {
-		buffer[i] = T(wave[i] * float64(int(2)<<(depth-2)-1))
+		buffer[i] = wave[i] * float64(int(2)<<(depth-2)-1)
 	}
 }
 
