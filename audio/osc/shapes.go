@@ -20,19 +20,30 @@ const (
 	SawtoothDownWave
 )
 
+func NewOscillator(waveType Type) Oscillator {
+	switch waveType {
+	case SineWave:
+		return Sine
+	case SquareWave:
+		return Square
+	case TriangleWave:
+		return Triangle
+	case SawtoothUpWave:
+		return SawtoothUp
+	case SawtoothDownWave:
+		return SawtoothDown
+	default:
+		return nil
+	}
+}
+
 const (
 	tau float64 = math.Pi * 2
 )
 
-// BitDepths describes the type constraint for Oscillator functions, for specific
-// bit depths
-type BitDepths interface {
-	int8 | int16 | int32
-}
-
 // Oscillator is a generic function that writes a wave of a certain shape into a buffer
-// of BitDepths type
-type Oscillator[T BitDepths] func(buffer []T, freq, depth, sampleRate int)
+// of float64 type
+type Oscillator func(buffer []float64, freq, depth, sampleRate int)
 
 func buildFrom1Hz(size, sampleRate, freq int, oneHzFunc func(int) []float64) []float64 {
 	var (
