@@ -11,7 +11,7 @@ import (
 const baseBufferSize = 4
 
 // Generate wraps a call to w.Data.Generate, by passing the same sample rate
-// value as configured in w.Header.SampleRate
+// value as configured in w.header.SampleRate
 func (w *Wav) Generate(waveType osc.Type, freq int, dur time.Duration) {
 	w.Data.Generate(waveType, freq, int(w.Header.SampleRate), dur)
 }
@@ -51,7 +51,7 @@ func (w *Wav) encode() (int, [][]byte) {
 		byteData  = make([][]byte, numChunks+1)
 	)
 
-	// set the first item in byteData to be the WavBuffer Header
+	// set the first item in byteData to be the WavBuffer header
 	byteData[0] = w.Header.Bytes()
 
 	// for each chunk, align a slice for the header, and another for the data
