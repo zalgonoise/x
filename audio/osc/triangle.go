@@ -2,11 +2,11 @@ package osc
 
 // Triangle is an oscillator that writes a triangle wave of frequency `freq`, bit depth `depth`,
 // and sample rate `sampleRate`, into the buffer of type T `buffer`
-func Triangle[T BitDepths](buffer []T, freq, depth, sampleRate int) {
+func Triangle(buffer []float64, freq, depth, sampleRate int) {
 	var wave = buildFrom1Hz(len(buffer), sampleRate, freq, triangle1Hz)
 
 	for i := range buffer {
-		buffer[i] = T(wave[i] * float64(int(2)<<(depth-2)-1))
+		buffer[i] = wave[i] * float64(int(2)<<(depth-2)-1)
 	}
 }
 
