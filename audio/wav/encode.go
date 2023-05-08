@@ -19,6 +19,11 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 		w.readOnly = true
 	}
 
+	if w.buf == nil || w.buf.Len() == 0 {
+		w.readOnly = false
+		return w.Read(buf)
+	}
+
 	return w.buf.Read(buf)
 }
 
@@ -48,7 +53,7 @@ func (w *Wav) encode() error {
 	}
 	data[0] = w.Header.Bytes()
 
-	w.buf = bytes.NewBuffer(make([]byte, 0, size))
+	w.buf = bytes.NewBuffer(make([]byte, size))
 
 	for i := range data {
 		if _, err := w.buf.Write(data[i]); err != nil {
