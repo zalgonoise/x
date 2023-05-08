@@ -98,6 +98,14 @@ func BenchmarkWav(b *testing.B) {
 	}
 
 	for _, testdata := range td[:4] { // mono 44.1kHz 8bit to 32bit
+		var loadedWav *Wav
+
+		loadedWav, err = Decode(testdata)
+		if err != nil {
+			b.Error(err)
+			return
+		}
+
 		b.Run(
 			"Decode", func(b *testing.B) {
 				var (
@@ -116,21 +124,11 @@ func BenchmarkWav(b *testing.B) {
 		)
 		b.Run(
 			"Encode", func(b *testing.B) {
-				var (
-					w   *Wav
-					err error
-					buf []byte
-				)
-
-				w, err = Decode(testdata)
-				if err != nil {
-					b.Error(err)
-					return
-				}
+				var buf []byte
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					buf = w.Bytes()
+					buf = loadedWav.Bytes()
 				}
 				_ = buf
 			},
@@ -157,21 +155,12 @@ func BenchmarkWav(b *testing.B) {
 
 		b.Run(
 			"Read", func(b *testing.B) {
-				var (
-					w   *Wav
-					err error
-					buf []byte
-				)
-				w, err = Decode(testdata)
-				if err != nil {
-					b.Error(err)
-					return
-				}
+				var buf []byte
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
 					buf := make([]byte, len(testdata))
-					_, err = w.Read(buf)
+					_, err = loadedWav.Read(buf)
 					if err != nil {
 						b.Error(err)
 						return
