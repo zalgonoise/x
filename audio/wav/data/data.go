@@ -8,12 +8,18 @@ import (
 
 const chunkHeaderSize = 8
 
+// Converter describes the behavior that a bit-depth converter should expose -- that is to encode / decode a bytes
+// buffer, as well as converting PCM audio data as int values
 type Converter interface {
+	// Parse consumes the input audio buffer, returning its floating point audio representation
 	Parse(buf []byte) []float64
+	// Bytes consumes the input floating point audio buffer, returning its byte representation
 	Bytes(buf []float64) []byte
+	// Value consumes the input floating point audio buffer, returning its PCM audio values as a slice of int
 	Value(buf []float64) []int
 }
 
+// DataChunk is a general-purpose chunk for audio data
 type DataChunk struct {
 	ChunkHeader *ChunkHeader
 	Data        []float64
@@ -36,6 +42,8 @@ func (d *DataChunk) setChunkSize(v uint32) {
 	}
 }
 
+// Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
+// from raw bytes
 func (d *DataChunk) Parse(buf []byte) {
 	ln := uint32(len(buf))
 
@@ -49,6 +57,8 @@ func (d *DataChunk) Parse(buf []byte) {
 	d.growChunkSize(ln)
 }
 
+// ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
+// from floating-point audio data
 func (d *DataChunk) ParseFloat(buf []float64) {
 	ln := uint32(len(d.Converter.Bytes(buf)))
 
@@ -62,6 +72,7 @@ func (d *DataChunk) ParseFloat(buf []float64) {
 	d.growChunkSize(ln)
 }
 
+// Bytes will return a slice of bytes with the encoded PCM buffer
 func (d *DataChunk) Bytes() []byte {
 	return d.Converter.Bytes(d.Data)
 }
@@ -106,6 +117,8 @@ func (d *DataChunk) Generate(waveType osc.Type, freq, sampleRate int, dur time.D
 	d.growChunkSize(ln)
 }
 
+// SetBitDepth returns a new DataChunk with the input `bitDepth`'s converter, or
+// an error if invalid. The new DataChunk retains any PCM data it contains, as a copy.
 func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	newChunk := NewDataChunk(bitDepth, d.ChunkHeader)
 	if newChunk == nil {
@@ -119,6 +132,8 @@ func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	return newChunk, nil
 }
 
+// NewDataChunk creates a DataChunk with the appropriate Converter, from the input
+// `bitDepth` and `subchunk`
 func NewDataChunk(bitDepth uint16, subchunk *ChunkHeader) *DataChunk {
 	switch bitDepth {
 	case bitDepth8:
