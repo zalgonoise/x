@@ -11,8 +11,10 @@ const (
 
 var _ = Converter(Conv32Bit{})
 
+// Conv32Bit is a 32bit audio Converter
 type Conv32Bit struct{}
 
+// Parse consumes the input audio buffer, returning its floating point audio representation
 func (c Conv32Bit) Parse(buf []byte) []float64 {
 	data := *(*[]int32)(unsafe.Pointer(&buf))
 
@@ -23,6 +25,7 @@ func (c Conv32Bit) Parse(buf []byte) []float64 {
 	)
 }
 
+// Bytes consumes the input floating point audio buffer, returning its byte representation
 func (c Conv32Bit) Bytes(buf []float64) []byte {
 	value := conv(
 		buf, func(f float64) int32 {
@@ -38,6 +41,7 @@ func (c Conv32Bit) Bytes(buf []float64) []byte {
 	return data
 }
 
+// Value consumes the input floating point audio buffer, returning its PCM audio values as a slice of int
 func (c Conv32Bit) Value(buf []float64) []int {
 	return conv(
 		buf, func(f float64) int {
