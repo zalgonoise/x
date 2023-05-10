@@ -135,6 +135,10 @@ func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 // NewDataChunk creates a DataChunk with the appropriate Converter, from the input
 // `bitDepth` and `subchunk`
 func NewDataChunk(bitDepth uint16, subchunk *ChunkHeader) *DataChunk {
+	if subchunk == nil {
+		subchunk = NewDataHeader()
+	}
+
 	switch bitDepth {
 	case bitDepth8:
 		return &DataChunk{
