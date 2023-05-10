@@ -13,7 +13,7 @@ func TestJunk(t *testing.T) {
 	input := []byte("some junk data")
 
 	junkHeader := &ChunkHeader{}
-	junk := &ChunkJunk{
+	junk := &JunkChunk{
 		ChunkHeader: junkHeader,
 		Depth:       16,
 	}
