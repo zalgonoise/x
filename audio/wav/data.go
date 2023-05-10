@@ -55,17 +55,8 @@ func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader) Chunk {
 
 	switch bitDepth {
 	case 0:
-		if subchunk == nil {
-			subchunk = data.NewJunkHeader()
-		}
-		return &data.ChunkJunk{
-			ChunkHeader: subchunk,
-			Depth:       0,
-		}
+		return data.NewJunkChunk(subchunk)
 	case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-		if subchunk == nil {
-			subchunk = data.NewDataHeader()
-		}
 		return data.NewDataChunk(bitDepth, subchunk)
 	default:
 		return nil
