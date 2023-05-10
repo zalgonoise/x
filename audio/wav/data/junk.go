@@ -56,3 +56,20 @@ func (d *ChunkJunk) Float() []float64 {
 
 // Generate creates a wave of the given form, frequency and duration within this DataChunk
 func (d *ChunkJunk) Generate(_ osc.Type, _, _ int, _ time.Duration) {}
+
+// SetBitDepth returns a new DataChunk with the input `bitDepth`'s converter, or
+// an error if invalid. The new DataChunk retains any PCM data it contains, as a copy.
+func (d *ChunkJunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
+	header := NewDataHeader()
+	header.Subchunk2Size = d.Subchunk2Size
+
+	newChunk := NewDataChunk(bitDepth, header)
+	if newChunk == nil {
+		return nil, ErrInvalidBitDepth
+	}
+
+	// conv byte data to 8bit data
+	newChunk.Parse(d.Data)
+
+	return newChunk, nil
+}
