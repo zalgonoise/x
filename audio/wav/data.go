@@ -35,11 +35,13 @@ type Chunk interface {
 	// SetBitDepth returns a new DataChunk with the input `bitDepth`'s converter, or
 	// an error if invalid. The new DataChunk retains any PCM data it contains, as a copy.
 	SetBitDepth(bitDepth uint16) (*data.DataChunk, error)
+	// Apply transforms the floating-point audio data with each FilterFunc in `filters`
+	Apply(filters ...data.FilterFunc)
 }
 
 // NewChunk is a factory for Chunk interfaces.
 //
-// The Chunk are interfaces wrapping different types, based on the
+// Chunk are interfaces wrapping different types, based on the
 // bit depth `bitDepth` value. These objects will store slices of integers of
 // different sizes (int8, int16, int32, and bytes for "junk"), and the
 // Chunk interface exposes the needed methods to work seamlessly with those
