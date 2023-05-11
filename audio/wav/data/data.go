@@ -27,6 +27,8 @@ type DataChunk struct {
 	Converter   Converter
 }
 
+type FilterFunc func([]float64)
+
 func (d *DataChunk) growChunkSize(v uint32) {
 	switch d.ChunkHeader.Subchunk2Size {
 	case 0:
@@ -130,6 +132,13 @@ func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	newChunk.ChunkHeader.Subchunk2Size = uint32(len(newChunk.Converter.Bytes(d.Data)))
 
 	return newChunk, nil
+}
+
+// Apply transforms the floating-point audio data with each FilterFunc in `filters`
+func (d *DataChunk) Apply(filters ...FilterFunc) {
+	for i := range filters {
+		filters[i](d.Data)
+	}
 }
 
 // NewDataChunk creates a DataChunk with the appropriate Converter, from the input

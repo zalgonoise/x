@@ -74,6 +74,9 @@ func (d *JunkChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	return newChunk, nil
 }
 
+// Apply transforms the floating-point audio data with each FilterFunc in `filters`
+func (d *JunkChunk) Apply(_ ...FilterFunc) {}
+
 // NewJunkChunk creates a JunkChunk with the input `subchunk` ChunkHeader, or with a default one if nil
 func NewJunkChunk(subchunk *ChunkHeader) *JunkChunk {
 	if subchunk == nil {
