@@ -27,6 +27,7 @@ type DataChunk struct {
 	Converter   Converter
 }
 
+// FilterFunc is a function that applies a transformation to a floating-point audio buffer
 type FilterFunc func([]float64)
 
 func (d *DataChunk) growChunkSize(v uint32) {
