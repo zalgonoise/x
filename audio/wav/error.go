@@ -14,6 +14,7 @@ var (
 	ErrShortDataBuffer    = NewError(ErrShort, ErrDataBuffer)
 	ErrMissingHeader      = NewError(ErrEmpty, ErrHeader)
 	ErrMissingDataBuffer  = NewError(ErrInvalid, ErrDataBuffer)
+	ErrInvalidAudioFormat = NewError(ErrInvalid, ErrAudioFormat)
 
 	ErrEmpty   ErrorKind = EmptyError("missing")
 	ErrInvalid ErrorKind = InvalidError("invalid")
@@ -24,6 +25,7 @@ var (
 	ErrBitDepth    ErrorEntity = BitDepthError("bit depth")
 	ErrHeader      ErrorEntity = HeaderError("WAV header")
 	ErrDataBuffer  ErrorEntity = DataBufferError("data buffer")
+	ErrAudioFormat ErrorEntity = AudioFormatError("audio format")
 )
 
 type Error struct {
@@ -109,3 +111,7 @@ func (e HeaderError) Error() string { return (string)(e) }
 type DataBufferError string
 
 func (e DataBufferError) Error() string { return (string)(e) }
+
+type AudioFormatError string
+
+func (e AudioFormatError) Error() string { return (string)(e) }
