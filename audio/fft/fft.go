@@ -133,3 +133,19 @@ func IFFT(value []complex128) []complex128 {
 
 	return output
 }
+
+// Convolve returns the convolution of x ∗ y, applied to the complex128 slice x.
+func Convolve(x, y []complex128) []complex128 {
+	if len(x) != len(y) {
+		return nil
+	}
+
+	x = FFT(x)
+	y = FFT(y)
+
+	for i := 0; i < len(x); i++ {
+		x[i] = x[i] * y[i]
+	}
+
+	return IFFT(x)
+}
