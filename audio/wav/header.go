@@ -3,6 +3,7 @@ package wav
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 )
 
 // WavHeader describes the header of a WAV file (or buffer).
@@ -35,11 +36,35 @@ func HeaderFrom(buf []byte) (*WavHeader, error) {
 		return nil, err
 	}
 
-	if string(header.ChunkID[:]) != string(defaultChunkID[:]) ||
-		string(header.Format[:]) != string(defaultFormat[:]) {
-		return nil, ErrInvalidHeader
+	return header, ValidateHeader(header)
+}
+
+func ValidateHeader(header *WavHeader) error {
+	if string(header.ChunkID[:]) != string(defaultChunkID[:]) {
+		return fmt.Errorf("%w: ChunkID %s", ErrInvalidHeader, string(header.ChunkID[:]))
 	}
-	return header, nil
+
+	if string(header.Format[:]) != string(defaultFormat[:]) {
+		return fmt.Errorf("%w: Format %s", ErrInvalidHeader, string(header.Format[:]))
+	}
+
+	if _, ok := validSampleRates[header.SampleRate]; !ok {
+		return fmt.Errorf("%w: SampleRate %d", ErrInvalidSampleRate, header.SampleRate)
+	}
+
+	if _, ok := validBitDepths[header.BitsPerSample]; !ok {
+		return fmt.Errorf("%w: BitsPerSample %d", ErrInvalidBitDepth, header.BitsPerSample)
+	}
+
+	if _, ok := validNumChannels[header.NumChannels]; !ok {
+		return fmt.Errorf("%w: NumChannels %d", ErrInvalidNumChannels, header.NumChannels)
+	}
+
+	if _, ok := validAudioFormats[header.AudioFormat]; !ok {
+		return fmt.Errorf("%w: AudioFormat %d", ErrInvalidAudioFormat, header.AudioFormat)
+	}
+
+	return nil
 }
 
 // Bytes casts a WavHeader as a slice of bytes, by binary-encoding the
