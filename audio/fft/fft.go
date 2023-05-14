@@ -110,3 +110,26 @@ func FFT(value []complex128) []complex128 {
 
 	return value
 }
+
+// IFFT returns the Inverse Fast Fourier Transform of a given complex128 slice
+func IFFT(value []complex128) []complex128 {
+	var (
+		ln     = len(value)
+		output = make([]complex128, ln)
+		factor = complex(float64(ln), 0)
+	)
+
+	// Reverse inputs, which is calculated with modulo factor, hence value[0] as an outlier
+	output[0] = value[0]
+	for i, j := 1, ln-1; i < ln; i, j = i+1, j-1 {
+		output[i] = value[j]
+	}
+
+	output = FFT(output)
+
+	for i := range output {
+		output[i] /= factor
+	}
+
+	return output
+}
