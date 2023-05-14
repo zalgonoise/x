@@ -38,14 +38,21 @@ var (
 		sampleRate176400: {},
 		sampleRate192000: {},
 	}
+
 	validBitDepths = map[uint16]struct{}{
 		bitDepth8:  {},
 		bitDepth16: {},
 		bitDepth24: {},
 		bitDepth32: {},
 	}
+
 	validNumChannels = map[uint16]struct{}{
 		channelsMono:   {},
 		channelsStereo: {},
+	}
+
+	validAudioFormats = map[uint16]struct{}{
+		1: {}, // PCM audio
+		//3: {}, // IEEE floating-point 32-bit audio
 	}
 )
