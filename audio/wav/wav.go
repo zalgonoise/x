@@ -2,7 +2,6 @@ package wav
 
 import (
 	"bytes"
-	"errors"
 	"time"
 
 	"github.com/zalgonoise/x/audio/osc"
@@ -32,33 +31,12 @@ type Wav struct {
 // The returned Wav object will have its header set in every field except for
 // `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
 func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
-	var err error
-	var errs []error
-
-	if _, ok := validNumChannels[numChannels]; !ok {
-		errs = append(errs, ErrInvalidNumChannels)
-		numChannels = 1
-	}
-	if _, ok := validSampleRates[sampleRate]; !ok {
-		errs = append(errs, ErrInvalidSampleRate)
-		sampleRate = sampleRate44100
-	}
-
-	if _, ok := validBitDepths[bitDepth]; !ok {
-		errs = append(errs, ErrInvalidBitDepth)
-		bitDepth = bitDepth16
-	}
-	switch len(errs) {
-	case 0:
-		err = nil
-	case 1:
-		err = errs[0]
-	default:
-		err = errors.Join(errs...)
-	}
-
 	blankData := NewChunk(bitDepth, nil)
-	return &Wav{
+	if blankData == nil {
+		return nil, ErrInvalidBitDepth
+	}
+
+	w := &Wav{
 		Header: &WavHeader{
 			ChunkID:       defaultChunkID,
 			ChunkSize:     0,
@@ -74,7 +52,13 @@ func New(sampleRate uint32, bitDepth, numChannels uint16) (*Wav, error) {
 		},
 		Chunks: []Chunk{blankData},
 		Data:   blankData,
-	}, err
+	}
+
+	if err := ValidateHeader(w.Header); err != nil {
+		return nil, err
+	}
+
+	return w, nil
 }
 
 // Generate wraps a call to w.Data.Generate, by passing the same sample rate
