@@ -116,7 +116,7 @@ func (w *Wav) decode() (n int, err error) {
 
 			if subchunk, err = data.HeaderFrom(subchunkBuffer); err == nil {
 				n += end
-				chunk := NewChunk(w.Header.BitsPerSample, subchunk)
+				chunk := NewChunk(w.Header.BitsPerSample, subchunk, w.Header.AudioFormat)
 				if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
 					w.Data = chunk
 				}
