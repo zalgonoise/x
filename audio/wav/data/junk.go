@@ -63,7 +63,7 @@ func (d *JunkChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	header := NewDataHeader()
 	header.Subchunk2Size = d.Subchunk2Size
 
-	newChunk := NewDataChunk(bitDepth, header)
+	newChunk := NewPCMDataChunk(bitDepth, header)
 	if newChunk == nil {
 		return nil, ErrInvalidBitDepth
 	}
