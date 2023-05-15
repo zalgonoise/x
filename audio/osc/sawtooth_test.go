@@ -32,7 +32,7 @@ func TestSawtoothUp(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
-			chunk := wav.NewChunk(16, nil)
+			chunk := wav.NewChunk(16, nil, 1)
 			chunk.Generate(osc.SawtoothUpWave, testFreq, sampleRate, 500*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
@@ -81,7 +81,7 @@ func TestSawtoothDown(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
-			chunk := wav.NewChunk(16, nil)
+			chunk := wav.NewChunk(16, nil, 1)
 			chunk.Generate(osc.SawtoothDownWave, testFreq, sampleRate, 500*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
@@ -215,7 +215,7 @@ func BenchmarkSawtooth(b *testing.B) {
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
-						chunk = wav.NewChunk(16, nil)
+						chunk = wav.NewChunk(16, nil, 1)
 						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, time.Second/2)
 					}
 					_ = chunk
@@ -223,7 +223,7 @@ func BenchmarkSawtooth(b *testing.B) {
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(16, nil)
+					var chunk = wav.NewChunk(16, nil, 1)
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, time.Second/2)
 					}
@@ -238,7 +238,7 @@ func BenchmarkSawtooth(b *testing.B) {
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
 					for i := 0; i < b.N; i++ {
-						chunk = wav.NewChunk(16, nil)
+						chunk = wav.NewChunk(16, nil, 1)
 						chunk.Generate(osc.SawtoothUpWave, 500, 44100, time.Millisecond*50)
 					}
 					_ = chunk
@@ -246,7 +246,7 @@ func BenchmarkSawtooth(b *testing.B) {
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(16, nil)
+					var chunk = wav.NewChunk(16, nil, 1)
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.SawtoothUpWave, 500, 44100, time.Millisecond*50)
 					}
