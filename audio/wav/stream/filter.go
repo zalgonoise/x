@@ -271,7 +271,7 @@ func FlushToFileFor(name string, dur time.Duration) StreamFilter {
 // the input wav.Wav channel `ch`
 func FlushCh(ch chan<- *wav.Wav) StreamFilter {
 	return func(w *Wav, raw []byte) error {
-		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
+		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels, w.Header.AudioFormat)
 		if err != nil {
 			return err
 		}
@@ -288,7 +288,7 @@ func FlushCh(ch chan<- *wav.Wav) StreamFilter {
 // When done, it sends the created Wav to the input Wav channel `ch`
 func FlushChFor(ch chan<- *wav.Wav, dur time.Duration) StreamFilter {
 	return func(w *Wav, raw []byte) error {
-		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels)
+		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels, w.Header.AudioFormat)
 		if err != nil {
 			return err
 		}
