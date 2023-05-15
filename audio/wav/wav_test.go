@@ -82,7 +82,7 @@ func load() ([][]byte, error) {
 		mono32bit44100,
 		mono32bit96000,
 		mono32bit192000,
-		mono8bit176400[:len(mono8bit176400)-1], // remove a useless nullbyte in the end
+		mono8bit176400, // remove a useless nullbyte in the end
 		stereo8bit44100,
 		stereo16bit44100,
 		stereo24bit44100,
@@ -186,7 +186,7 @@ func TestNewWav(t *testing.T) {
 		4, 0, // BlockAlign
 		16, 0, // BitsPerSample
 	}
-	wav, err := New(44100, 16, 2)
+	wav, err := New(44100, 16, 2, 1)
 	if err != nil {
 		t.Error(err)
 	}
