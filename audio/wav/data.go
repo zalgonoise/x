@@ -50,16 +50,25 @@ type Chunk interface {
 // Note: I wanted a cleaner approach to this using generics and type constraints,
 // but I was getting nowhere meaningful; and ended up breaking at a certain point
 // due to the way that Go handles a slice of a type and its conversions to a different type
-func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader) Chunk {
+func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader, format uint16) Chunk {
 	if subchunk != nil && string(subchunk.Subchunk2ID[:]) == junkSubchunkIDString {
 		bitDepth = 0
 	}
 
-	switch bitDepth {
-	case 0:
-		return data.NewJunkChunk(subchunk)
-	case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-		return data.NewDataChunk(bitDepth, subchunk)
+	switch AudioFormat(format) {
+	case UnsetFormat:
+		fallthrough
+	case PCMFormat:
+		switch bitDepth {
+		case 0:
+			return data.NewJunkChunk(subchunk)
+		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
+			return data.NewPCMDataChunk(bitDepth, subchunk)
+		default:
+			return nil
+		}
+	case FloatFormat:
+		return data.NewFloatDataChunk(bitDepth, subchunk)
 	default:
 		return nil
 	}
