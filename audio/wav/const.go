@@ -29,6 +29,15 @@ const (
 	channelsStereo uint16 = 2
 )
 
+type AudioFormat uint16
+
+const (
+	UnsetFormat AudioFormat = iota
+	PCMFormat
+	_
+	FloatFormat
+)
+
 var (
 	validSampleRates = map[uint32]struct{}{
 		sampleRate44100:  {},
@@ -52,7 +61,7 @@ var (
 	}
 
 	validAudioFormats = map[uint16]struct{}{
-		1: {}, // PCM audio
-		//3: {}, // IEEE floating-point 32-bit audio
+		uint16(PCMFormat):   {}, // PCM audio
+		uint16(FloatFormat): {}, // IEEE floating-point 32-bit audio
 	}
 )
