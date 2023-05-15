@@ -19,7 +19,7 @@ func (w *Wav) parseSubChunk(buf []byte) error {
 	if err != nil {
 		return err
 	}
-	chunk := wav.NewChunk(w.Header.BitsPerSample, subchunk)
+	chunk := wav.NewChunk(w.Header.BitsPerSample, subchunk, w.Header.AudioFormat)
 	w.Chunks = append(w.Chunks, chunk)
 	w.Data = chunk
 	return nil
