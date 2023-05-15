@@ -36,7 +36,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 					var chunk *DataChunk
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						chunk = NewDataChunk(bitDepth8, header)
+						chunk = NewPCMDataChunk(bitDepth8, header)
 						chunk.Parse(test8bitPCM)
 					}
 					_ = chunk
@@ -50,7 +50,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 						return
 					}
 
-					var chunk = NewDataChunk(bitDepth8, header)
+					var chunk = NewPCMDataChunk(bitDepth8, header)
 					chunk.Parse(test8bitPCM)
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
@@ -70,7 +70,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 			}
 
 			var (
-				chunk = NewDataChunk(bitDepth8, header)
+				chunk = NewPCMDataChunk(bitDepth8, header)
 				buf   []byte
 			)
 			chunk.Parse(test8bitPCM)
@@ -114,7 +114,7 @@ func Test8Bit(t *testing.T) {
 	var (
 		bitDepth uint16 = 8
 		input           = test8bitPCM
-		chunk           = NewDataChunk(bitDepth, header)
+		chunk           = NewPCMDataChunk(bitDepth, header)
 		f        []float64
 	)
 
@@ -144,7 +144,7 @@ func Test8Bit(t *testing.T) {
 	})
 
 	t.Run("ParseFloat", func(t *testing.T) {
-		newChunk := NewDataChunk(bitDepth, header)
+		newChunk := NewPCMDataChunk(bitDepth, header)
 		newChunk.ParseFloat(f)
 
 		if len(chunk.Data) != len(newChunk.Data) {
