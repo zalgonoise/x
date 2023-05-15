@@ -123,7 +123,7 @@ func (d *DataChunk) Generate(waveType osc.Type, freq, sampleRate int, dur time.D
 // SetBitDepth returns a new DataChunk with the input `bitDepth`'s converter, or
 // an error if invalid. The new DataChunk retains any PCM data it contains, as a copy.
 func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
-	newChunk := NewDataChunk(bitDepth, d.ChunkHeader)
+	newChunk := NewPCMDataChunk(bitDepth, d.ChunkHeader)
 	if newChunk == nil {
 		return nil, ErrInvalidBitDepth
 	}
@@ -142,9 +142,9 @@ func (d *DataChunk) Apply(filters ...FilterFunc) {
 	}
 }
 
-// NewDataChunk creates a DataChunk with the appropriate Converter, from the input
+// NewPCMDataChunk creates a PCM DataChunk with the appropriate Converter, from the input
 // `bitDepth` and `subchunk`
-func NewDataChunk(bitDepth uint16, subchunk *ChunkHeader) *DataChunk {
+func NewPCMDataChunk(bitDepth uint16, subchunk *ChunkHeader) *DataChunk {
 	if subchunk == nil {
 		subchunk = NewDataHeader()
 	}
@@ -176,5 +176,28 @@ func NewDataChunk(bitDepth uint16, subchunk *ChunkHeader) *DataChunk {
 		}
 	default:
 		return nil
+	}
+}
+
+// NewFloatDataChunk creates a 32-bit Float DataChunk with the appropriate Converter, from the input
+// `bitDepth` and `subchunk`
+func NewFloatDataChunk(bitDepth uint16, subchunk *ChunkHeader) *DataChunk {
+	if subchunk == nil {
+		subchunk = NewDataHeader()
+	}
+
+	switch bitDepth {
+	case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
+		return &DataChunk{
+			ChunkHeader: subchunk,
+			Depth:       bitDepth,
+			Converter:   ConvFloat{},
+		}
+	default:
+		return &DataChunk{
+			ChunkHeader: subchunk,
+			Depth:       bitDepth32,
+			Converter:   ConvFloat{},
+		}
 	}
 }
