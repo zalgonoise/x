@@ -9,13 +9,13 @@ const (
 	// minInt32 float64 = ^1<<30 + 1
 )
 
-var _ = Converter(Conv32Bit{})
+var _ Converter = Conv32Bit{}
 
 // Conv32Bit is a 32bit audio Converter
 type Conv32Bit struct{}
 
 // Parse consumes the input audio buffer, returning its floating point audio representation
-func (c Conv32Bit) Parse(buf []byte) []float64 {
+func (Conv32Bit) Parse(buf []byte) []float64 {
 	data := *(*[]int32)(unsafe.Pointer(&buf))
 
 	return conv(
@@ -26,7 +26,7 @@ func (c Conv32Bit) Parse(buf []byte) []float64 {
 }
 
 // Bytes consumes the input floating point audio buffer, returning its byte representation
-func (c Conv32Bit) Bytes(buf []float64) []byte {
+func (Conv32Bit) Bytes(buf []float64) []byte {
 	value := conv(
 		buf, func(f float64) int32 {
 			return int32(f * maxInt32)
@@ -42,7 +42,7 @@ func (c Conv32Bit) Bytes(buf []float64) []byte {
 }
 
 // Value consumes the input floating point audio buffer, returning its PCM audio values as a slice of int
-func (c Conv32Bit) Value(buf []float64) []int {
+func (Conv32Bit) Value(buf []float64) []int {
 	return conv(
 		buf, func(f float64) int {
 			return int(f * maxInt32)
