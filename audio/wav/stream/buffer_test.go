@@ -78,7 +78,7 @@ var sine8kHz = []byte{
 func newSine(freq int) (*wav.Wav, error) {
 	// create a sine wave 16 bit depth, 44.1kHz rate, mono,
 	// 5 second duration. Pass audio bytes into a new bytes.Buffer
-	sine, err := wav.New(44100, 16, 1)
+	sine, err := wav.New(44100, 16, 1, 1)
 	if err != nil {
 		return nil, err
 	}
