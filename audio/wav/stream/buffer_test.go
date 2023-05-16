@@ -118,7 +118,7 @@ func TestWavBuffer(t *testing.T) {
 					stream.MaxValues(maxCh),
 				)
 
-			// stream the audio using the context and an errors channel
+			// stream the audio using the context and an err channel
 			errCh := make(chan error)
 			defer close(errCh)
 			go w.Stream(ctx, errCh)
@@ -175,7 +175,7 @@ func TestWavBuffer(t *testing.T) {
 					stream.FFTOnThreshold(fft.Block1024, 10, maxCh),
 				)
 
-			// stream the audio using the context and an errors channel
+			// stream the audio using the context and an err channel
 			errCh := make(chan error)
 			defer close(errCh)
 			go w.Stream(ctx, errCh)
@@ -230,7 +230,7 @@ func TestWavBuffer(t *testing.T) {
 		// create a new stream using the bytes.Buffer as an io.Reader
 		w := stream.New(buf)
 
-		// stream the audio using the context and an errors channel
+		// stream the audio using the context and an err channel
 		errCh := make(chan error)
 		defer close(errCh)
 		go w.Stream(ctx, errCh)
