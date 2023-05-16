@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	_ "embed"
+	"github.com/zalgonoise/x/audio/wav/header"
 	"reflect"
 	"testing"
 
@@ -194,7 +195,7 @@ func TestNewWav(t *testing.T) {
 		t.Errorf("output mismatch error: \n\nwanted %v ;\n\ngot %v\n", wants, wav.Header.Bytes())
 	}
 
-	parsedHeader, err := HeaderFrom(wav.Header.Bytes())
+	parsedHeader, err := header.From(wav.Header.Bytes())
 	if err != nil {
 		t.Error(err)
 	}
