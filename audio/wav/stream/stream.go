@@ -10,7 +10,7 @@ import (
 const minBufferSize = 16
 
 // Stream will kick off a stream read using the input context.Context `ctx` (for deadlines)
-// and the error channel `errCh` (to send errors to)
+// and the error channel `errCh` (to send err to)
 //
 // While the Stream method is a blocking function, it is designed so it can be launched as a
 // goroutine
