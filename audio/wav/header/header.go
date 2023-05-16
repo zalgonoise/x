@@ -1,0 +1,47 @@
+package header
+
+import (
+	"bytes"
+	"encoding/binary"
+)
+
+// Header describes the header of a WAV file (or buffer).
+//
+// The structure is defined as seen in the WAV file format, and can
+// be quickly encoded / decoded into binary format as-is
+//
+// Reference: http://soundfile.sapp.org/doc/WaveFormat/
+type Header struct {
+	ChunkID       [4]byte // 1-4
+	ChunkSize     uint32  // 5-8
+	Format        [4]byte // 9-12
+	Subchunk1ID   [4]byte // 13-16
+	Subchunk1Size uint32  // 17-20
+	AudioFormat   uint16  // 21-22
+	NumChannels   uint16  // 23-24
+	SampleRate    uint32  // 25-28
+	ByteRate      uint32  // 29-32
+	BlockAlign    uint16  // 33-34
+	BitsPerSample uint16  // 35-36
+}
+
+// From extracts a WAV header from an input chunk of bytes; returning a
+// pointer to a Header, and an error if the data is invalid
+func From(buf []byte) (*Header, error) {
+	r := bytes.NewReader(buf)
+	var header = new(Header)
+
+	if err := binary.Read(r, binary.LittleEndian, header); err != nil {
+		return nil, err
+	}
+
+	return header, Validate(header)
+}
+
+// Bytes casts a Header as a slice of bytes, by binary-encoding the
+// object with a little-endian (LE) byte order
+func (h *Header) Bytes() []byte {
+	buf := bytes.NewBuffer(make([]byte, 0, headerLen))
+	_ = binary.Write(buf, binary.LittleEndian, h)
+	return buf.Bytes()
+}
