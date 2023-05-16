@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"github.com/zalgonoise/x/audio/wav/header"
 	"io"
 
 	"github.com/zalgonoise/gbuf"
@@ -17,7 +18,7 @@ import (
 // Its stored reader is also a public element of WavBuffer so that it can be reused
 // within a StreamFilter function.
 type Wav struct {
-	Header    *wav.WavHeader
+	Header    *header.Header
 	Chunks    []wav.Chunk
 	Data      wav.Chunk
 	Filters   []StreamFilter
