@@ -5,6 +5,7 @@ import (
 
 	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav/data"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 // Chunk describes the behavior that a data chunk exposes, which involve
@@ -55,10 +56,10 @@ func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader, format uint16) Chunk 
 		bitDepth = 0
 	}
 
-	switch AudioFormat(format) {
-	case UnsetFormat:
+	switch header.AudioFormat(format) {
+	case header.UnsetFormat:
 		fallthrough
-	case PCMFormat:
+	case header.PCMFormat:
 		switch bitDepth {
 		case 0:
 			return data.NewJunkChunk(subchunk)
@@ -67,7 +68,7 @@ func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader, format uint16) Chunk 
 		default:
 			return nil
 		}
-	case FloatFormat:
+	case header.FloatFormat:
 		return data.NewFloatDataChunk(bitDepth, subchunk)
 	default:
 		return nil
