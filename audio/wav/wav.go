@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/x/audio/osc"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 // Wav describes the structure of WAV-encoded audio data, containing
@@ -13,7 +14,7 @@ import (
 // also "junk"), and also a Data reference that is used as a pointer to the
 // currently active (PCM data) chunk
 type Wav struct {
-	Header *WavHeader
+	Header *header.Header
 	Chunks []Chunk
 	Data   Chunk
 
@@ -37,7 +38,7 @@ func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Wav, error) 
 	}
 
 	w := &Wav{
-		Header: &WavHeader{
+		Header: &header.Header{
 			ChunkID:       defaultChunkID,
 			ChunkSize:     0,
 			Format:        defaultFormat,
@@ -54,7 +55,7 @@ func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Wav, error) 
 		Data:   blankData,
 	}
 
-	if err := ValidateHeader(w.Header); err != nil {
+	if err := header.Validate(w.Header); err != nil {
 		return nil, err
 	}
 
