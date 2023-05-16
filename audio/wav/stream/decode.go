@@ -3,14 +3,15 @@ package stream
 import (
 	"github.com/zalgonoise/x/audio/wav"
 	"github.com/zalgonoise/x/audio/wav/data"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 func (w *Wav) parseHeader(buf []byte) error {
-	header, err := wav.HeaderFrom(buf)
+	head, err := header.From(buf)
 	if err != nil {
 		return err
 	}
-	w.Header = header
+	w.Header = head
 	return nil
 }
 
