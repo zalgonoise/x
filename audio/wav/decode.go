@@ -3,6 +3,7 @@ package wav
 import (
 	"bytes"
 	"errors"
+	"github.com/zalgonoise/x/audio/wav/header"
 
 	"github.com/zalgonoise/x/audio/wav/data"
 )
@@ -61,8 +62,8 @@ func (w *Wav) decode() (n int, err error) {
 		}
 
 		var (
-			header *WavHeader
-			end    = headerLen
+			head *header.Header
+			end  = headerLen
 		)
 
 		headerBuffer := make([]byte, headerLen)
@@ -70,16 +71,16 @@ func (w *Wav) decode() (n int, err error) {
 			return 0, err
 		}
 
-		if header, err = HeaderFrom(headerBuffer); err == nil {
+		if head, err = header.From(headerBuffer); err == nil {
 			n += end
-			w.Header = header
+			w.Header = head
 		}
 
 		if err != nil && !errors.Is(err, ErrInvalidHeader) {
 			return n, err
 		}
 
-		// header is required beyond this point, as w.header.BitsPerSample is necessary
+		// head is required beyond this point, as w.head.BitsPerSample is necessary
 		if w.Header == nil {
 			return n, ErrMissingHeader
 		}
