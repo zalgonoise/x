@@ -32,34 +32,44 @@ type Wav struct {
 // The returned Wav object will have its header set in every field except for
 // `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
 func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Wav, error) {
-	blankData := NewChunk(bitDepth, nil, format)
-	if blankData == nil {
-		return nil, ErrInvalidBitDepth
+	return From(&header.Header{
+		ChunkID:       defaultChunkID,
+		ChunkSize:     0,
+		Format:        defaultFormat,
+		Subchunk1ID:   defaultSubchunk1ID,
+		Subchunk1Size: 16,
+		AudioFormat:   format,
+		NumChannels:   numChannels,
+		SampleRate:    sampleRate,
+		ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
+		BlockAlign:    bitDepth * numChannels / 8,
+		BitsPerSample: bitDepth,
+	})
+}
+
+// From creates a new Wav, configured with the input header.Header
+//
+// This call returns a pointer to a Wav, and an error which is raised if the input
+// header.Header is invalid.
+//
+// The returned Wav object will have its header set in every field except for
+// `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
+func From(head *header.Header) (*Wav, error) {
+	if head == nil {
+		return nil, ErrMissingHeader
 	}
 
-	w := &Wav{
-		Header: &header.Header{
-			ChunkID:       defaultChunkID,
-			ChunkSize:     0,
-			Format:        defaultFormat,
-			Subchunk1ID:   defaultSubchunk1ID,
-			Subchunk1Size: 16,
-			AudioFormat:   format,
-			NumChannels:   numChannels,
-			SampleRate:    sampleRate,
-			ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
-			BlockAlign:    bitDepth * numChannels / 8,
-			BitsPerSample: bitDepth,
-		},
-		Chunks: []Chunk{blankData},
-		Data:   blankData,
-	}
-
-	if err := header.Validate(w.Header); err != nil {
+	if err := header.Validate(head); err != nil {
 		return nil, err
 	}
 
-	return w, nil
+	blankData := NewChunk(head.BitsPerSample, nil, head.AudioFormat)
+
+	return &Wav{
+		Header: head,
+		Chunks: []Chunk{blankData},
+		Data:   blankData,
+	}, nil
 }
 
 // Generate wraps a call to w.Data.Generate, by passing the same sample rate
