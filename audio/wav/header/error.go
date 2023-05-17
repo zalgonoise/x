@@ -1,31 +1,31 @@
 package header
 
 import (
-	"github.com/zalgonoise/x/audio/err"
+	"github.com/zalgonoise/x/audio/errs"
 )
 
 const (
-	ErrDomain = err.Domain("audio/wav/header")
+	ErrDomain = errs.Domain("audio/wav/header")
 
-	ErrEmpty   = err.Kind("missing")
-	ErrInvalid = err.Kind("invalid")
-	ErrShort   = err.Kind("short")
+	ErrEmpty   = errs.Kind("missing")
+	ErrInvalid = errs.Kind("invalid")
+	ErrShort   = errs.Kind("short")
 
-	ErrNumChannels = err.Entity("number of channels")
-	ErrSampleRate  = err.Entity("sample rate")
-	ErrBitDepth    = err.Entity("bit depth")
-	ErrHeader      = err.Entity("WAV header")
-	ErrDataBuffer  = err.Entity("data buffer")
-	ErrAudioFormat = err.Entity("audio format")
+	ErrNumChannels = errs.Entity("number of channels")
+	ErrSampleRate  = errs.Entity("sample rate")
+	ErrBitDepth    = errs.Entity("bit depth")
+	ErrHeader      = errs.Entity("WAV header")
+	ErrDataBuffer  = errs.Entity("data buffer")
+	ErrAudioFormat = errs.Entity("audio format")
 )
 
 var (
-	ErrInvalidNumChannels = err.New(ErrDomain, ErrInvalid, ErrNumChannels)
-	ErrInvalidSampleRate  = err.New(ErrDomain, ErrInvalid, ErrSampleRate)
-	ErrInvalidBitDepth    = err.New(ErrDomain, ErrInvalid, ErrBitDepth)
-	ErrInvalidHeader      = err.New(ErrDomain, ErrInvalid, ErrHeader)
-	ErrShortDataBuffer    = err.New(ErrDomain, ErrShort, ErrDataBuffer)
-	ErrMissingHeader      = err.New(ErrDomain, ErrEmpty, ErrHeader)
-	ErrMissingDataBuffer  = err.New(ErrDomain, ErrInvalid, ErrDataBuffer)
-	ErrInvalidAudioFormat = err.New(ErrDomain, ErrInvalid, ErrAudioFormat)
+	ErrInvalidNumChannels = errs.New(ErrDomain, ErrInvalid, ErrNumChannels)
+	ErrInvalidSampleRate  = errs.New(ErrDomain, ErrInvalid, ErrSampleRate)
+	ErrInvalidBitDepth    = errs.New(ErrDomain, ErrInvalid, ErrBitDepth)
+	ErrInvalidHeader      = errs.New(ErrDomain, ErrInvalid, ErrHeader)
+	ErrShortDataBuffer    = errs.New(ErrDomain, ErrShort, ErrDataBuffer)
+	ErrMissingHeader      = errs.New(ErrDomain, ErrEmpty, ErrHeader)
+	ErrMissingDataBuffer  = errs.New(ErrDomain, ErrInvalid, ErrDataBuffer)
+	ErrInvalidAudioFormat = errs.New(ErrDomain, ErrInvalid, ErrAudioFormat)
 )
