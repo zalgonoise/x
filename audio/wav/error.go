@@ -1,25 +1,25 @@
 package wav
 
 import (
-	"github.com/zalgonoise/x/audio/err"
+	"github.com/zalgonoise/x/audio/errs"
 )
 
 const (
-	ErrDomain = err.Domain("audio/wav")
+	ErrDomain = errs.Domain("audio/wav")
 
-	ErrEmpty   = err.Kind("missing")
-	ErrInvalid = err.Kind("invalid")
-	ErrShort   = err.Kind("short")
+	ErrEmpty   = errs.Kind("missing")
+	ErrInvalid = errs.Kind("invalid")
+	ErrShort   = errs.Kind("short")
 
-	ErrBitDepth   = err.Entity("bit depth")
-	ErrHeader     = err.Entity("WAV header")
-	ErrDataBuffer = err.Entity("data buffer")
+	ErrBitDepth   = errs.Entity("bit depth")
+	ErrHeader     = errs.Entity("WAV header")
+	ErrDataBuffer = errs.Entity("data buffer")
 )
 
 var (
-	ErrInvalidBitDepth   = err.New(ErrDomain, ErrInvalid, ErrBitDepth)
-	ErrInvalidHeader     = err.New(ErrDomain, ErrInvalid, ErrHeader)
-	ErrShortDataBuffer   = err.New(ErrDomain, ErrShort, ErrDataBuffer)
-	ErrMissingHeader     = err.New(ErrDomain, ErrEmpty, ErrHeader)
-	ErrMissingDataBuffer = err.New(ErrDomain, ErrInvalid, ErrDataBuffer)
+	ErrInvalidBitDepth   = errs.New(ErrDomain, ErrInvalid, ErrBitDepth)
+	ErrInvalidHeader     = errs.New(ErrDomain, ErrInvalid, ErrHeader)
+	ErrShortDataBuffer   = errs.New(ErrDomain, ErrShort, ErrDataBuffer)
+	ErrMissingHeader     = errs.New(ErrDomain, ErrEmpty, ErrHeader)
+	ErrMissingDataBuffer = errs.New(ErrDomain, ErrInvalid, ErrDataBuffer)
 )
