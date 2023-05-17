@@ -1,8 +1,7 @@
-package err
+package errs
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -48,34 +47,9 @@ func New(domain Domain, kind Kind, entity Entity) error {
 	sb.WriteString((string)(entity))
 
 	return Error{
+		domain: domain,
 		kind:   kind,
 		entity: entity,
 		error:  sb.String(),
-	}
-}
-
-func Errorf(domain Domain, kind Kind, entity Entity, args ...any) error {
-	var err string
-
-	if domain == "" {
-		domain = defaultDomain
-	}
-
-	sb := new(strings.Builder)
-	sb.WriteString((string)(domain))
-	sb.WriteString(": ")
-	sb.WriteString((string)(kind))
-	sb.WriteByte(' ')
-	sb.WriteString((string)(entity))
-	err = sb.String()
-
-	if len(args) > 0 {
-		err = fmt.Sprint(err, args)
-	}
-
-	return Error{
-		kind:   kind,
-		entity: entity,
-		error:  err,
 	}
 }
