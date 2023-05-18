@@ -64,6 +64,10 @@ var (
 )
 
 func Validate(header *Header) error {
+	if header == nil {
+		return ErrEmptyHeader
+	}
+
 	if string(header.ChunkID[:]) != string(defaultChunkID[:]) {
 		return fmt.Errorf("%w: ChunkID %s", ErrInvalidHeader, string(header.ChunkID[:]))
 	}
