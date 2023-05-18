@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 )
 
+const headerSize = 36
+
 // Header describes the header of a WAV file (or buffer).
 //
 // The structure is defined as seen in the WAV file format, and can
@@ -27,15 +29,46 @@ type Header struct {
 
 // From extracts a WAV header from an input chunk of bytes; returning a
 // pointer to a Header, and an error if the data is invalid
-func From(buf []byte) (*Header, error) {
-	r := bytes.NewReader(buf)
-	var header = new(Header)
+func From(buf []byte) (h *Header, err error) {
+	h = new(Header)
 
-	if err := binary.Read(r, binary.LittleEndian, header); err != nil {
+	if _, err = h.Write(buf); err != nil {
 		return nil, err
 	}
 
-	return header, Validate(header)
+	return h, nil
+}
+
+// Write implements the io.Writer interface
+//
+// It consumes the byte slice `buf` as a Wav Header, returning an error
+// if the input data cannot be parsed, or if the resulting header is invalid
+func (h *Header) Write(buf []byte) (n int, err error) {
+	if err = binary.Read(bytes.NewReader(buf), binary.LittleEndian, h); err != nil {
+		return 0, err
+	}
+
+	return len(buf), Validate(h)
+}
+
+// Read implements the io.Reader interface
+//
+// It reads the Header into the byte slice `buf` in Little Endian byte order,
+// returning the number of bytes written and an error if raised
+func (h *Header) Read(buf []byte) (n int, err error) {
+	b := bytes.NewBuffer(buf)
+	err = binary.Write(b, binary.LittleEndian, h)
+
+	if err != nil {
+		return 0, err
+	}
+
+	n = len(buf)
+	if n < headerSize {
+		return n, nil
+	}
+
+	return headerSize, nil
 }
 
 // Bytes casts a Header as a slice of bytes, by binary-encoding the
