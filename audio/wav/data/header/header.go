@@ -1,7 +1,6 @@
 package header
 
 import (
-	"bytes"
 	"encoding/binary"
 )
 
@@ -10,6 +9,13 @@ const (
 
 	DataIDString = "data"
 	JunkIDString = "junk"
+)
+
+type ID [4]byte
+
+var (
+	Data ID = [4]byte([]byte(DataIDString))
+	Junk ID = [4]byte([]byte(JunkIDString))
 )
 
 // Header describes the (raw) structure of a WAV file subchunk, which usually
@@ -30,9 +36,12 @@ func From(buf []byte) (h *Header, err error) {
 }
 
 func (h *Header) Write(buf []byte) (n int, err error) {
-	var size = buf[4:8:8]
+	if len(buf) < Size {
+		return 0, ErrShortBuffer
+	}
+
 	h.Subchunk2ID = [4]byte(buf[:4])
-	h.Subchunk2Size = binary.LittleEndian.Uint32(size[:])
+	h.Subchunk2Size = binary.LittleEndian.Uint32(buf[4:8:8])
 
 	return Size, Validate(h)
 }
@@ -42,16 +51,14 @@ func (h *Header) Read(buf []byte) (n int, err error) {
 		return 0, ErrShortBuffer
 	}
 
-	b := bytes.NewBuffer(buf)
-	if err = binary.Write(b, binary.LittleEndian, h); err != nil {
-		return 0, err
-	}
+	copy(buf[:4], h.Subchunk2ID[:])
+	binary.LittleEndian.PutUint32(buf[4:8], h.Subchunk2Size)
 
 	return Size, nil
 }
 
 func (h *Header) Bytes() []byte {
-	buf := make([]byte, 0, 8)
+	buf := make([]byte, Size)
 
 	if _, err := h.Read(buf); err != nil {
 		return nil
@@ -60,12 +67,22 @@ func (h *Header) Bytes() []byte {
 	return buf
 }
 
+// New creates a Header based on the input subchunk ID
+func New(id ID) *Header {
+	switch id {
+	case Data, Junk:
+		return &Header{Subchunk2ID: id}
+	default:
+		return nil
+	}
+}
+
 // NewData creates a new ChunkHeader tagged with a "data" ID
 func NewData() *Header {
-	return &Header{Subchunk2ID: [4]byte([]byte(DataIDString))}
+	return &Header{Subchunk2ID: Data}
 }
 
 // NewJunk creates a new ChunkHeader tagged with a "junk" ID
 func NewJunk() *Header {
-	return &Header{Subchunk2ID: [4]byte([]byte(JunkIDString))}
+	return &Header{Subchunk2ID: Junk}
 }
