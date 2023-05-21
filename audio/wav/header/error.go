@@ -7,6 +7,7 @@ import (
 const (
 	ErrDomain = errs.Domain("audio/wav/header")
 
+	ErrShort   = errs.Kind("short")
 	ErrEmpty   = errs.Kind("missing")
 	ErrInvalid = errs.Kind("invalid")
 
@@ -15,6 +16,7 @@ const (
 	ErrBitDepth    = errs.Entity("bit depth")
 	ErrHeader      = errs.Entity("WAV header")
 	ErrAudioFormat = errs.Entity("audio format")
+	ErrDataBuffer  = errs.Entity("data buffer")
 )
 
 var (
@@ -24,4 +26,5 @@ var (
 	ErrInvalidBitDepth    = errs.New(ErrDomain, ErrInvalid, ErrBitDepth)
 	ErrInvalidHeader      = errs.New(ErrDomain, ErrInvalid, ErrHeader)
 	ErrInvalidAudioFormat = errs.New(ErrDomain, ErrInvalid, ErrAudioFormat)
+	ErrShortDataBuffer    = errs.New(ErrDomain, ErrShort, ErrDataBuffer)
 )
