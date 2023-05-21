@@ -33,9 +33,6 @@ const (
 )
 
 var (
-	defaultChunkID = [4]byte{82, 73, 70, 70}
-	defaultFormat  = [4]byte{87, 65, 86, 69}
-
 	validSampleRates = map[uint32]struct{}{
 		sampleRate44100:  {},
 		sampleRate48000:  {},
