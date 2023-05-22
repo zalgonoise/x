@@ -2,25 +2,35 @@ package header
 
 import (
 	"fmt"
+
+	"github.com/zalgonoise/x/audio/validation"
 )
 
+type SampleRate uint32
+
 const (
-	headerLen = 36
+	SampleRate44100  SampleRate = 44100
+	SampleRate48000  SampleRate = 48000
+	SampleRate88200  SampleRate = 88200
+	SampleRate96000  SampleRate = 96000
+	SampleRate176400 SampleRate = 176400
+	SampleRate192000 SampleRate = 192000
+)
 
-	sampleRate44100  uint32 = 44100
-	sampleRate48000  uint32 = 48000
-	sampleRate88200  uint32 = 88200
-	sampleRate96000  uint32 = 96000
-	sampleRate176400 uint32 = 176400
-	sampleRate192000 uint32 = 192000
+type Channels uint16
 
-	bitDepth8  uint16 = 8
-	bitDepth16 uint16 = 16
-	bitDepth24 uint16 = 24
-	bitDepth32 uint16 = 32
+const (
+	ChannelsMono Channels = iota + 1
+	ChannelsStereo
+)
 
-	channelsMono   uint16 = 1
-	channelsStereo uint16 = 2
+type BitDepth uint16
+
+const (
+	BitDepth8 BitDepth = 8 * (iota + 1)
+	BitDepth16
+	BitDepth24
+	BitDepth32
 )
 
 type AudioFormat uint16
@@ -33,31 +43,35 @@ const (
 )
 
 var (
-	validSampleRates = map[uint32]struct{}{
-		sampleRate44100:  {},
-		sampleRate48000:  {},
-		sampleRate88200:  {},
-		sampleRate96000:  {},
-		sampleRate176400: {},
-		sampleRate192000: {},
-	}
+	sampleRateValidator = validation.New[SampleRate](
+		ErrInvalidSampleRate,
+		SampleRate44100,
+		SampleRate48000,
+		SampleRate88200,
+		SampleRate96000,
+		SampleRate176400,
+		SampleRate192000,
+	)
 
-	validBitDepths = map[uint16]struct{}{
-		bitDepth8:  {},
-		bitDepth16: {},
-		bitDepth24: {},
-		bitDepth32: {},
-	}
+	bitDepthValidator = validation.New[BitDepth](
+		ErrInvalidBitDepth,
+		BitDepth8,
+		BitDepth16,
+		BitDepth24,
+		BitDepth32,
+	)
 
-	validNumChannels = map[uint16]struct{}{
-		channelsMono:   {},
-		channelsStereo: {},
-	}
+	channelsValidator = validation.New[Channels](
+		ErrInvalidNumChannels,
+		ChannelsMono,
+		ChannelsStereo,
+	)
 
-	validAudioFormats = map[uint16]struct{}{
-		uint16(PCMFormat):   {}, // PCM audio
-		uint16(FloatFormat): {}, // IEEE floating-point 32-bit audio
-	}
+	audioFormatValidator = validation.New[AudioFormat](
+		ErrInvalidAudioFormat,
+		PCMFormat,   // PCM audio
+		FloatFormat, // IEEE floating-point 32-bit audio
+	)
 )
 
 func Validate(header *Header) error {
@@ -73,20 +87,20 @@ func Validate(header *Header) error {
 		return fmt.Errorf("%w: Format %s", ErrInvalidHeader, string(header.Format[:]))
 	}
 
-	if _, ok := validSampleRates[header.SampleRate]; !ok {
-		return fmt.Errorf("%w: SampleRate %d", ErrInvalidSampleRate, header.SampleRate)
+	if err := sampleRateValidator.Validate(SampleRate(header.SampleRate)); err != nil {
+		return fmt.Errorf("%w: SampleRate %d", err, header.SampleRate)
 	}
 
-	if _, ok := validBitDepths[header.BitsPerSample]; !ok {
-		return fmt.Errorf("%w: BitsPerSample %d", ErrInvalidBitDepth, header.BitsPerSample)
+	if err := bitDepthValidator.Validate(BitDepth(header.BitsPerSample)); err != nil {
+		return fmt.Errorf("%w: BitsPerSample %d", err, header.BitsPerSample)
 	}
 
-	if _, ok := validNumChannels[header.NumChannels]; !ok {
-		return fmt.Errorf("%w: NumChannels %d", ErrInvalidNumChannels, header.NumChannels)
+	if err := channelsValidator.Validate(Channels(header.NumChannels)); err != nil {
+		return fmt.Errorf("%w: NumChannels %d", err, header.NumChannels)
 	}
 
-	if _, ok := validAudioFormats[header.AudioFormat]; !ok {
-		return fmt.Errorf("%w: AudioFormat %d", ErrInvalidAudioFormat, header.AudioFormat)
+	if err := audioFormatValidator.Validate(AudioFormat(header.AudioFormat)); err != nil {
+		return fmt.Errorf("%w: AudioFormat %d", err, header.AudioFormat)
 	}
 
 	return nil
