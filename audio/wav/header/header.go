@@ -19,20 +19,20 @@ var (
 //
 // Reference: http://soundfile.sapp.org/doc/WaveFormat/
 type Header struct {
-	ChunkID       [4]byte // 1-4
-	ChunkSize     uint32  // 5-8
-	Format        [4]byte // 9-12
-	Subchunk1ID   [4]byte // 13-16
-	Subchunk1Size uint32  // 17-20
-	AudioFormat   uint16  // 21-22
-	NumChannels   uint16  // 23-24
-	SampleRate    uint32  // 25-28
-	ByteRate      uint32  // 29-32
-	BlockAlign    uint16  // 33-34
-	BitsPerSample uint16  // 35-36
+	ChunkID       [4]byte // 1-4 big endian (4 bytes)
+	ChunkSize     uint32  // 5-8 little endian (4 bytes)
+	Format        [4]byte // 9-12 big endian (4 bytes)
+	Subchunk1ID   [4]byte // 13-16 big endian (4 bytes)
+	Subchunk1Size uint32  // 17-20 little endian (4 bytes)
+	AudioFormat   uint16  // 21-22 little endian (2 bytes)
+	NumChannels   uint16  // 23-24 little endian (2 bytes)
+	SampleRate    uint32  // 25-28 little endian (4 bytes)
+	ByteRate      uint32  // 29-32 little endian (4 bytes)
+	BlockAlign    uint16  // 33-34 little endian (2 bytes)
+	BitsPerSample uint16  // 35-36 little endian (2 bytes)
 }
 
-// From extracts a WAV header from an input chunk of bytes; returning a
+// From extracts a WAV Header from an input slice of bytes; returning a
 // pointer to a Header, and an error if the data is invalid
 func From(buf []byte) (h *Header, err error) {
 	h = new(Header)
@@ -91,7 +91,7 @@ func (h *Header) Write(buf []byte) (n int, err error) {
 
 // Read implements the io.Reader interface
 //
-// It reads the Header into the byte slice `buf` in Little Endian byte order,
+// It reads the Header into the byte slice `buf`,
 // returning the number of bytes written and an error if raised
 func (h *Header) Read(buf []byte) (n int, err error) {
 	if len(buf) < Size {
@@ -114,7 +114,7 @@ func (h *Header) Read(buf []byte) (n int, err error) {
 }
 
 // Bytes casts a Header as a slice of bytes, by binary-encoding the
-// object with a little-endian (LE) byte order
+// object
 func (h *Header) Bytes() []byte {
 	buf := make([]byte, Size)
 
