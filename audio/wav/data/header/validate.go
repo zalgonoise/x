@@ -1,10 +1,13 @@
 package header
 
+import "github.com/zalgonoise/x/audio/validation"
+
+var subChunkIDValidator = validation.New[string](
+	ErrInvalidSubChunkHeader,
+	JunkIDString,
+	DataIDString,
+)
+
 func Validate(header *Header) error {
-	switch string(header.Subchunk2ID[:]) {
-	case JunkIDString, DataIDString:
-		return nil
-	default:
-		return ErrInvalidSubChunkHeader
-	}
+	return subChunkIDValidator.Validate(string(header.Subchunk2ID[:]))
 }
