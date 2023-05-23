@@ -5,6 +5,7 @@ import "github.com/zalgonoise/x/audio/errs"
 const (
 	ErrDomain = errs.Domain("audio/wav/data/header")
 
+	ErrEmpty   = errs.Kind("empty")
 	ErrInvalid = errs.Kind("invalid")
 	ErrShort   = errs.Kind("short")
 
@@ -15,4 +16,5 @@ const (
 var (
 	ErrInvalidSubChunkHeader = errs.New(ErrDomain, ErrInvalid, ErrSubChunkHeader)
 	ErrShortBuffer           = errs.New(ErrDomain, ErrShort, ErrBuffer)
+	ErrEmptySubChunkHeader   = errs.New(ErrDomain, ErrEmpty, ErrSubChunkHeader)
 )
