@@ -5,6 +5,7 @@ import (
 
 	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav/data"
+	datah "github.com/zalgonoise/x/audio/wav/data/header"
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
@@ -22,7 +23,7 @@ type Chunk interface {
 	// Bytes will return a slice of bytes with the encoded PCM buffer
 	Bytes() []byte
 	// Header returns the ChunkHeader of the Chunk
-	Header() *data.ChunkHeader
+	Header() *datah.Header
 	// BitDepth returns the bit depth of the Chunk
 	BitDepth() uint16
 	// Reset clears the data stored in the Chunk
@@ -51,12 +52,12 @@ type Chunk interface {
 // Note: I wanted a cleaner approach to this using generics and type constraints,
 // but I was getting nowhere meaningful; and ended up breaking at a certain point
 // due to the way that Go handles a slice of a type and its conversions to a different type
-func NewChunk(bitDepth uint16, subchunk *data.ChunkHeader, format uint16) Chunk {
+func NewChunk(bitDepth uint16, subchunk *datah.Header, format uint16) Chunk {
 	if subchunk != nil && string(subchunk.Subchunk2ID[:]) == junkSubchunkIDString {
 		bitDepth = 0
 	}
 
-	switch header.AudioFormat(format) {
+	switch format {
 	case header.UnsetFormat:
 		fallthrough
 	case header.PCMFormat:
