@@ -3,9 +3,9 @@ package wav
 import (
 	"bytes"
 	"errors"
-	"github.com/zalgonoise/x/audio/wav/header"
 
-	"github.com/zalgonoise/x/audio/wav/data"
+	datah "github.com/zalgonoise/x/audio/wav/data/header"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 const dataSubchunkID = "data"
@@ -107,15 +107,15 @@ func (w *Wav) decode() (n int, err error) {
 		end := 8
 		if end < w.buf.Len() {
 			var (
-				subchunk       *data.ChunkHeader
-				subchunkBuffer = make([]byte, 8)
+				subchunk       *datah.Header
+				subchunkBuffer = make([]byte, datah.Size)
 			)
 
 			if _, err = w.buf.Read(subchunkBuffer); err != nil {
 				return 0, err
 			}
 
-			if subchunk, err = data.HeaderFrom(subchunkBuffer); err == nil {
+			if subchunk, err = datah.From(subchunkBuffer); err == nil {
 				n += end
 				chunk := NewChunk(w.Header.BitsPerSample, subchunk, w.Header.AudioFormat)
 				if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
