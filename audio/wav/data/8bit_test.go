@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/x/audio/osc"
+	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 var (
@@ -27,7 +28,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 		"Parse", func(b *testing.B) {
 			b.Run(
 				"NewBuffer", func(b *testing.B) {
-					header, err := HeaderFrom(test8bitHeader)
+					h, err := header.From(test8bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
@@ -36,7 +37,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 					var chunk *DataChunk
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						chunk = NewPCMDataChunk(bitDepth8, header)
+						chunk = NewPCMDataChunk(bitDepth8, h)
 						chunk.Parse(test8bitPCM)
 					}
 					_ = chunk
@@ -44,13 +45,13 @@ func BenchmarkChunk8bit(b *testing.B) {
 			)
 			b.Run(
 				"Append", func(b *testing.B) {
-					header, err := HeaderFrom(test8bitHeader)
+					h, err := header.From(test8bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
 					}
 
-					var chunk = NewPCMDataChunk(bitDepth8, header)
+					var chunk = NewPCMDataChunk(bitDepth8, h)
 					chunk.Parse(test8bitPCM)
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
@@ -63,14 +64,14 @@ func BenchmarkChunk8bit(b *testing.B) {
 	)
 	b.Run(
 		"Bytes", func(b *testing.B) {
-			header, err := HeaderFrom(test8bitHeader)
+			h, err := header.From(test8bitHeader)
 			if err != nil {
 				b.Error(err)
 				return
 			}
 
 			var (
-				chunk = NewPCMDataChunk(bitDepth8, header)
+				chunk = NewPCMDataChunk(bitDepth8, h)
 				buf   []byte
 			)
 			chunk.Parse(test8bitPCM)
@@ -85,18 +86,18 @@ func BenchmarkChunk8bit(b *testing.B) {
 }
 
 func Test8bitHeader(t *testing.T) {
-	header, err := HeaderFrom(test8bitHeader)
+	h, err := header.From(test8bitHeader)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	chunk := &DataChunk{
-		ChunkHeader: header,
+		ChunkHeader: h,
 		Depth:       8, // set by NewChunk()
 	}
 
-	if output := chunk.Header(); !reflect.DeepEqual(*header, *output) {
-		t.Errorf("output mismatch error: wanted %+v ; got %+v", *header, *output)
+	if output := chunk.Header(); !reflect.DeepEqual(*h, *output) {
+		t.Errorf("output mismatch error: wanted %+v ; got %+v", *h, *output)
 	}
 
 	if bitDepth := chunk.BitDepth(); bitDepth != chunk.Depth {
@@ -105,7 +106,7 @@ func Test8bitHeader(t *testing.T) {
 }
 
 func Test8Bit(t *testing.T) {
-	header, err := HeaderFrom(test8bitHeader)
+	h, err := header.From(test8bitHeader)
 	if err != nil {
 		t.Error(err)
 		return
@@ -114,7 +115,7 @@ func Test8Bit(t *testing.T) {
 	var (
 		bitDepth uint16 = 8
 		input           = test8bitPCM
-		chunk           = NewPCMDataChunk(bitDepth, header)
+		chunk           = NewPCMDataChunk(bitDepth, h)
 		f        []float64
 	)
 
@@ -144,7 +145,7 @@ func Test8Bit(t *testing.T) {
 	})
 
 	t.Run("ParseFloat", func(t *testing.T) {
-		newChunk := NewPCMDataChunk(bitDepth, header)
+		newChunk := NewPCMDataChunk(bitDepth, h)
 		newChunk.ParseFloat(f)
 
 		if len(chunk.Data) != len(newChunk.Data) {
@@ -165,8 +166,8 @@ func Test8Bit(t *testing.T) {
 
 	t.Run("ChunkHeader", func(t *testing.T) {
 		chunkHeader := chunk.Header()
-		if !reflect.DeepEqual(header, chunkHeader) {
-			t.Errorf("output mismatch error: wanted %v ; got %v", header, chunkHeader)
+		if !reflect.DeepEqual(h, chunkHeader) {
+			t.Errorf("output mismatch error: wanted %v ; got %v", h, chunkHeader)
 		}
 	})
 
