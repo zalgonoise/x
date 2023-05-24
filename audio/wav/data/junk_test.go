@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/zalgonoise/x/audio/osc"
+	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 func TestJunk(t *testing.T) {
 	input := []byte("some junk data")
 
-	junkHeader := &ChunkHeader{}
+	junkHeader := &header.Header{}
 	junk := &JunkChunk{
 		ChunkHeader: junkHeader,
 		Depth:       16,
@@ -20,7 +21,7 @@ func TestJunk(t *testing.T) {
 
 	t.Run("ParseAndBytes", func(t *testing.T) {
 		// clear Subchunk2Size
-		junk.Subchunk2Size = 0
+		junk.ChunkHeader.Subchunk2Size = 0
 		junk.Parse(input)
 		junk.ParseFloat(nil)
 
@@ -52,9 +53,9 @@ func TestJunk(t *testing.T) {
 	})
 
 	t.Run("ChunkHeader", func(t *testing.T) {
-		header := junk.Header()
-		if !reflect.DeepEqual(junkHeader, header) {
-			t.Errorf("output mismatch error: wanted %v ; got %v", junkHeader, header)
+		h := junk.Header()
+		if !reflect.DeepEqual(junkHeader, h) {
+			t.Errorf("output mismatch error: wanted %v ; got %v", junkHeader, h)
 		}
 	})
 
