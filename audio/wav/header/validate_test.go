@@ -94,8 +94,7 @@ func TestValidate(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			// implied Validate call on return
-			err := header.Validate(testcase.input())
+			err = header.Validate(testcase.input())
 
 			require.ErrorIs(t, err, testcase.err)
 		})
