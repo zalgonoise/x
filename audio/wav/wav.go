@@ -32,19 +32,12 @@ type Wav struct {
 // The returned Wav object will have its header set in every field except for
 // `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
 func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Wav, error) {
-	return From(&header.Header{
-		ChunkID:       defaultChunkID,
-		ChunkSize:     0,
-		Format:        defaultFormat,
-		Subchunk1ID:   defaultSubchunk1ID,
-		Subchunk1Size: 16,
-		AudioFormat:   format,
-		NumChannels:   numChannels,
-		SampleRate:    sampleRate,
-		ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
-		BlockAlign:    bitDepth * numChannels / 8,
-		BitsPerSample: bitDepth,
-	})
+	h, err := header.New(sampleRate, bitDepth, numChannels, format)
+	if err != nil {
+		return nil, err
+	}
+
+	return From(h)
 }
 
 // From creates a new Wav, configured with the input header.Header
@@ -63,7 +56,7 @@ func From(head *header.Header) (*Wav, error) {
 		return nil, err
 	}
 
-	blankData := NewChunk(head.BitsPerSample, nil, head.AudioFormat)
+	blankData := NewChunk(nil, head.BitsPerSample, head.AudioFormat)
 
 	return &Wav{
 		Header: head,
