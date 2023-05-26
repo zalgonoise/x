@@ -41,7 +41,7 @@ func (w *Wav) Write(buf []byte) (n int, err error) {
 // with that data returning a pointer to one, and an error if the buffer is too
 // short, or if the data is invalid.
 func Decode(buf []byte) (w *Wav, err error) {
-	if len(buf) < headerLen {
+	if len(buf) < header.Size {
 		return nil, ErrShortDataBuffer
 	}
 
@@ -57,16 +57,16 @@ func Decode(buf []byte) (w *Wav, err error) {
 
 func (w *Wav) decode() (n int, err error) {
 	if w.Header == nil {
-		if w.buf.Len() < headerLen {
+		if w.buf.Len() < header.Size {
 			return 0, ErrShortDataBuffer
 		}
 
 		var (
 			head *header.Header
-			end  = headerLen
+			end  = header.Size
 		)
 
-		headerBuffer := make([]byte, headerLen)
+		headerBuffer := make([]byte, header.Size)
 		if _, err = w.buf.Read(headerBuffer); err != nil {
 			return 0, err
 		}
@@ -117,7 +117,7 @@ func (w *Wav) decode() (n int, err error) {
 
 			if subchunk, err = datah.From(subchunkBuffer); err == nil {
 				n += end
-				chunk := NewChunk(w.Header.BitsPerSample, subchunk, w.Header.AudioFormat)
+				chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
 				if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
 					w.Data = chunk
 				}
