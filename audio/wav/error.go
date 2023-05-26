@@ -17,7 +17,6 @@ const (
 )
 
 var (
-	ErrInvalidBitDepth   = errs.New(ErrDomain, ErrInvalid, ErrBitDepth)
 	ErrInvalidHeader     = errs.New(ErrDomain, ErrInvalid, ErrHeader)
 	ErrShortDataBuffer   = errs.New(ErrDomain, ErrShort, ErrDataBuffer)
 	ErrMissingHeader     = errs.New(ErrDomain, ErrEmpty, ErrHeader)
