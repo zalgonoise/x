@@ -13,7 +13,7 @@ import (
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/fft/window"
 	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/data"
+	datah "github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 // StreamFilter is a pluggable function that will scan, analyze, process
@@ -197,7 +197,7 @@ func FlushFor(writer io.Writer, dur time.Duration) StreamFilter {
 			return err
 		}
 
-		dataHeader := data.NewDataHeader()
+		dataHeader := datah.NewData()
 		dataHeader.Subchunk2Size = uint32(blockSize) + uint32(len(raw))
 		if _, err = writer.Write(dataHeader.Bytes()); err != nil {
 			return err
@@ -243,7 +243,7 @@ func FlushToFileFor(name string, dur time.Duration) StreamFilter {
 			return err
 		}
 
-		dataHeader := data.NewDataHeader()
+		dataHeader := datah.NewData()
 		dataHeader.Subchunk2Size = uint32(blockSize) + uint32(len(raw))
 		if _, err = writer.Write(dataHeader.Bytes()); err != nil {
 			return err
