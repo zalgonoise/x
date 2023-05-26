@@ -2,7 +2,7 @@ package stream
 
 import (
 	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/data"
+	datah "github.com/zalgonoise/x/audio/wav/data/header"
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
@@ -16,11 +16,11 @@ func (w *Wav) parseHeader(buf []byte) error {
 }
 
 func (w *Wav) parseSubChunk(buf []byte) error {
-	subchunk, err := data.HeaderFrom(buf)
+	h, err := datah.From(buf)
 	if err != nil {
 		return err
 	}
-	chunk := wav.NewChunk(w.Header.BitsPerSample, subchunk, w.Header.AudioFormat)
+	chunk := wav.NewChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat)
 	w.Chunks = append(w.Chunks, chunk)
 	w.Data = chunk
 	return nil
