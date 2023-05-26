@@ -11,7 +11,6 @@ const (
 	ErrInvalid = errs.Kind("invalid")
 	ErrShort   = errs.Kind("short")
 
-	ErrBitDepth   = errs.Entity("bit depth")
 	ErrHeader     = errs.Entity("WAV header")
 	ErrDataBuffer = errs.Entity("data buffer")
 )
