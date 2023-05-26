@@ -9,6 +9,13 @@ import (
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
+const (
+	bitDepth8  uint16 = 8
+	bitDepth16 uint16 = 16
+	bitDepth24 uint16 = 24
+	bitDepth32 uint16 = 32
+)
+
 // Chunk describes the behavior that a data chunk exposes, which involve
 // reading and writing PCM audio buffers from / to bytes. Additionally, it
 // provides helper methods to fetch the chunk header, the bit depth, to reset it
@@ -52,25 +59,21 @@ type Chunk interface {
 // Note: I wanted a cleaner approach to this using generics and type constraints,
 // but I was getting nowhere meaningful; and ended up breaking at a certain point
 // due to the way that Go handles a slice of a type and its conversions to a different type
-func NewChunk(bitDepth uint16, subchunk *datah.Header, format uint16) Chunk {
-	if subchunk != nil && string(subchunk.Subchunk2ID[:]) == junkSubchunkIDString {
-		bitDepth = 0
-	}
-
+func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
 	switch format {
 	case header.UnsetFormat:
 		fallthrough
 	case header.PCMFormat:
 		switch bitDepth {
 		case 0:
-			return data.NewJunkChunk(subchunk)
+			return data.NewJunkChunk(h)
 		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-			return data.NewPCMDataChunk(bitDepth, subchunk)
+			return data.NewPCMDataChunk(bitDepth, h)
 		default:
 			return nil
 		}
 	case header.FloatFormat:
-		return data.NewFloatDataChunk(bitDepth, subchunk)
+		return data.NewFloatDataChunk(bitDepth, h)
 	default:
 		return nil
 	}
