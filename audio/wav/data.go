@@ -60,6 +60,10 @@ type Chunk interface {
 // but I was getting nowhere meaningful; and ended up breaking at a certain point
 // due to the way that Go handles a slice of a type and its conversions to a different type
 func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
+	if h != nil && string(h.Subchunk2ID[:]) == datah.JunkIDString {
+		return data.NewJunkChunk(h)
+	}
+
 	switch format {
 	case header.UnsetFormat:
 		fallthrough
