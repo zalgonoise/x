@@ -53,7 +53,7 @@ func (w *Wav) encode() error {
 	}
 	data[0] = w.Header.Bytes()
 
-	w.buf = bytes.NewBuffer(make([]byte, size))
+	w.buf = bytes.NewBuffer(make([]byte, 0, size))
 
 	for i := range data {
 		if _, err := w.buf.Write(data[i]); err != nil {
