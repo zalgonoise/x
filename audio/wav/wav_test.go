@@ -187,20 +187,20 @@ func TestNewWav(t *testing.T) {
 		4, 0, // BlockAlign
 		16, 0, // BitsPerSample
 	}
-	wav, err := wav.New(44100, 16, 2, 1)
+	w, err := wav.New(44100, 16, 2, 1)
 	if err != nil {
 		t.Error(err)
 	}
-	if string(wants) != string(wav.Header.Bytes()) {
-		t.Errorf("output mismatch error: \n\nwanted %v ;\n\ngot %v\n", wants, wav.Header.Bytes())
+	if string(wants) != string(w.Header.Bytes()) {
+		t.Errorf("output mismatch error: \n\nwanted %v ;\n\ngot %v\n", wants, w.Header.Bytes())
 	}
 
-	parsedHeader, err := header.From(wav.Header.Bytes())
+	parsedHeader, err := header.From(w.Header.Bytes())
 	if err != nil {
 		t.Error(err)
 	}
-	if !reflect.DeepEqual(parsedHeader, wav.Header) {
-		t.Errorf("output mismatch error: \n\nwanted %v ;\n\ngot %v\n", wav.Header, parsedHeader)
+	if !reflect.DeepEqual(parsedHeader, w.Header) {
+		t.Errorf("output mismatch error: \n\nwanted %v ;\n\ngot %v\n", w.Header, parsedHeader)
 	}
 }
 
