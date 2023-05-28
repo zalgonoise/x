@@ -83,7 +83,7 @@ func load() ([][]byte, error) {
 		mono32bit44100,
 		mono32bit96000,
 		mono32bit192000,
-		mono8bit176400, // remove a useless nullbyte in the end
+		mono8bit176400[:len(mono8bit176400)-1], // remove a useless nullbyte in the end
 		stereo8bit44100,
 		stereo16bit44100,
 		stereo24bit44100,
@@ -160,7 +160,7 @@ func BenchmarkWav(b *testing.B) {
 
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					buf := make([]byte, len(testdata))
+					buf = make([]byte, len(testdata))
 					_, err = loadedWav.Read(buf)
 					if err != nil {
 						b.Error(err)
