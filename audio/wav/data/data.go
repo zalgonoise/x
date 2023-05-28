@@ -33,6 +33,7 @@ type DataChunk struct {
 	Data        []float64
 	Depth       uint16
 	Converter   Converter
+	raw         []byte
 }
 
 // FilterFunc is a function that applies a transformation to a floating-point audio buffer
@@ -57,35 +58,38 @@ func (d *DataChunk) setChunkSize(v uint32) {
 // from raw bytes
 func (d *DataChunk) Parse(buf []byte) {
 	ln := uint32(len(buf))
+	d.Data = nil
 
-	if d.Data == nil {
-		d.Data = d.Converter.Parse(buf)
+	if d.raw == nil {
+		d.raw = buf
 		d.setChunkSize(ln)
 		return
 	}
 
-	d.Data = append(d.Data, d.Converter.Parse(buf)...)
+	d.raw = append(d.raw, buf...)
 	d.growChunkSize(ln)
 }
 
 // ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
 // from floating-point audio data
 func (d *DataChunk) ParseFloat(buf []float64) {
-	ln := uint32(len(d.Converter.Bytes(buf)))
-
 	if d.Data == nil {
 		d.Data = buf
-		d.setChunkSize(ln)
 		return
 	}
 
 	d.Data = append(d.Data, buf...)
-	d.growChunkSize(ln)
 }
 
 // Bytes will return a slice of bytes with the encoded PCM buffer
 func (d *DataChunk) Bytes() []byte {
-	return d.Converter.Bytes(d.Data)
+	if len(d.raw) > 0 {
+		return d.raw
+	}
+
+	d.raw = d.Converter.Bytes(d.Data)
+	d.setChunkSize(uint32(len(d.raw)))
+	return d.raw
 }
 
 // Header returns the ChunkHeader of the DataChunk
@@ -97,13 +101,29 @@ func (d *DataChunk) BitDepth() uint16 { return d.Depth }
 // Reset clears the data stored in the DataChunk
 func (d *DataChunk) Reset() {
 	d.Data = make([]float64, 0, dataChunkBaseLen)
+	d.raw = make([]byte, 0, dataChunkBaseLen)
+	d.setChunkSize(0)
 }
 
 // Value returns the PCM audio buffer from the DataChunk, as a slice of int
-func (d *DataChunk) Value() []int { return d.Converter.Value(d.Data) }
+func (d *DataChunk) Value() []int {
+	if len(d.Data) > 0 {
+		return d.Converter.Value(d.Data)
+	}
+
+	d.Data = d.Converter.Parse(d.raw)
+	return d.Converter.Value(d.Data)
+}
 
 // Float returns the PCM audio buffer from the DataChunk, as a slice of float64
-func (d *DataChunk) Float() []float64 { return d.Data }
+func (d *DataChunk) Float() []float64 {
+	if len(d.Data) > 0 {
+		return d.Data
+	}
+
+	d.Data = d.Converter.Parse(d.raw)
+	return d.Data
+}
 
 // Generate creates a wave of the given form, frequency and duration within this DataChunk
 func (d *DataChunk) Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration) {
@@ -116,16 +136,23 @@ func (d *DataChunk) Generate(waveType osc.Type, freq, sampleRate int, dur time.D
 
 	oscillator(buf, freq, int(d.Depth), sampleRate)
 
-	ln := uint32(len(d.Converter.Bytes(buf)))
+	bufBytes := d.Converter.Bytes(buf)
+	ln := uint32(len(bufBytes))
+
+	if d.raw == nil {
+		d.raw = bufBytes
+		d.setChunkSize(ln)
+	} else {
+		d.raw = append(d.raw, bufBytes...)
+		d.growChunkSize(ln)
+	}
 
 	if d.Data == nil {
 		d.Data = buf
-		d.setChunkSize(ln)
 		return
 	}
 
 	d.Data = append(d.Data, buf...)
-	d.growChunkSize(ln)
 }
 
 // SetBitDepth returns a new DataChunk with the input `bitDepth`'s converter, or
@@ -136,7 +163,15 @@ func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 		return nil, ErrInvalidBitDepth
 	}
 
-	copy(newChunk.Data, d.Data)
+	if len(d.Data) > 0 {
+		copy(newChunk.Data, d.Data)
+
+		newChunk.ChunkHeader.Subchunk2Size = uint32(len(newChunk.Converter.Bytes(d.Data)))
+
+		return newChunk, nil
+	}
+
+	copy(newChunk.Data, newChunk.Converter.Parse(d.raw))
 
 	newChunk.ChunkHeader.Subchunk2Size = uint32(len(newChunk.Converter.Bytes(d.Data)))
 
@@ -145,6 +180,11 @@ func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 
 // Apply transforms the floating-point audio data with each FilterFunc in `filters`
 func (d *DataChunk) Apply(filters ...FilterFunc) {
+	if len(d.Data) == 0 && len(d.raw) > 0 {
+		d.Data = d.Converter.Parse(d.raw)
+		d.raw = make([]byte, 0, dataChunkBaseLen)
+	}
+
 	for i := range filters {
 		filters[i](d.Data)
 	}
