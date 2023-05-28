@@ -2,7 +2,6 @@ package wav
 
 import (
 	"bytes"
-	"errors"
 
 	datah "github.com/zalgonoise/x/audio/wav/data/header"
 	"github.com/zalgonoise/x/audio/wav/header"
@@ -57,30 +56,9 @@ func Decode(buf []byte) (w *Wav, err error) {
 
 func (w *Wav) decode() (n int, err error) {
 	if w.Header == nil {
-		if w.buf.Len() < header.Size {
-			return 0, ErrShortDataBuffer
-		}
+		n, err = w.decodeHeader()
 
-		var (
-			head *header.Header
-			end  = header.Size
-		)
-
-		headerBuffer := make([]byte, header.Size)
-		if _, err = w.buf.Read(headerBuffer); err != nil {
-			return 0, err
-		}
-
-		if head, err = header.From(headerBuffer); err == nil {
-			n += end
-			w.Header = head
-		}
-
-		if err != nil && !errors.Is(err, ErrInvalidHeader) {
-			return n, err
-		}
-
-		// head is required beyond this point, as w.head.BitsPerSample is necessary
+		// header is required beyond this point, as w.head.BitsPerSample is necessary
 		if w.Header == nil {
 			return n, ErrMissingHeader
 		}
@@ -88,62 +66,97 @@ func (w *Wav) decode() (n int, err error) {
 
 	for w.buf.Len() > 0 {
 		if w.Data != nil {
-			end := int(w.Data.Header().Subchunk2Size)
-			ln := w.buf.Len()
-			if end > 0 && end != ln {
-				return n, nil
-			}
-
-			chunkBuffer := make([]byte, ln)
-			if _, err = w.buf.Read(chunkBuffer); err != nil {
-				return 0, err
-			}
-
-			w.Data.Parse(chunkBuffer)
-			return ln, nil
+			return w.decodeIntoData(n)
 		}
 
-		// try to read subchunk headers
-		end := 8
-		if end < w.buf.Len() {
-			var (
-				subchunk       *datah.Header
-				subchunkBuffer = make([]byte, datah.Size)
-			)
-
-			if _, err = w.buf.Read(subchunkBuffer); err != nil {
-				return 0, err
-			}
-
-			if subchunk, err = datah.From(subchunkBuffer); err == nil {
-				n += end
-				chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
-				if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
-					w.Data = chunk
-				}
-
-				end = int(subchunk.Subchunk2Size)
-				// grab remaining bytes if the byte slice isn't long enough
-				// for a subchunk read
-				if end > 0 && end > w.buf.Len() {
-					w.Chunks = append(w.Chunks, chunk)
-					return n, nil
-				}
-
-				chunkBuffer := make([]byte, end)
-				if _, err = w.buf.Read(chunkBuffer); err != nil {
-					return 0, err
-				}
-
-				chunk.Parse(chunkBuffer)
-				w.Chunks = append(w.Chunks, chunk)
-				n += end
-				continue
-			}
+		n, err = w.decodeNewSubChunk(n)
+		if err != nil {
+			return n, err
 		}
-
-		return n, ErrMissingDataBuffer
 	}
 
 	return n, nil
+}
+
+func (w *Wav) decodeHeader() (n int, err error) {
+	if w.buf.Len() < header.Size {
+		return 0, ErrShortDataBuffer
+	}
+
+	var head *header.Header
+
+	headerBuffer := make([]byte, header.Size)
+	if _, err = w.buf.Read(headerBuffer); err != nil {
+		return 0, err
+	}
+
+	head, err = header.From(headerBuffer)
+	if err != nil {
+		return header.Size, err
+	}
+
+	w.Header = head
+	return header.Size, nil
+}
+
+func (w *Wav) decodeNewSubChunk(n int) (int, error) {
+	// try to read subchunk headers
+	if w.buf.Len() > datah.Size {
+		var (
+			err            error
+			subchunk       *datah.Header
+			subchunkBuffer = make([]byte, datah.Size)
+		)
+
+		if _, err = w.buf.Read(subchunkBuffer); err != nil {
+			return n, err
+		}
+
+		if subchunk, err = datah.From(subchunkBuffer); err == nil {
+			n += datah.Size
+			chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
+			if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
+				w.Data = chunk
+			}
+
+			end := int(subchunk.Subchunk2Size)
+			ln := w.buf.Len()
+			// grab remaining bytes if the byte slice isn't long enough
+			// for a subchunk read
+			if end > 0 && end > ln {
+				w.Chunks = append(w.Chunks, chunk)
+				return n, nil
+			}
+
+			chunkBuffer := make([]byte, end)
+			if _, err = w.buf.Read(chunkBuffer); err != nil {
+				return n, err
+			}
+
+			chunk.Parse(chunkBuffer)
+			w.Chunks = append(w.Chunks, chunk)
+			n += end
+		}
+	}
+	return n, nil
+}
+
+func (w *Wav) decodeIntoData(n int) (int, error) {
+	var (
+		err error
+		end = int(w.Data.Header().Subchunk2Size)
+		ln  = w.buf.Len()
+	)
+
+	if end > 0 && end != ln {
+		return n, nil
+	}
+
+	chunkBuffer := make([]byte, ln)
+	if _, err = w.buf.Read(chunkBuffer); err != nil {
+		return n, err
+	}
+
+	w.Data.Parse(chunkBuffer)
+	return n + ln, nil
 }
