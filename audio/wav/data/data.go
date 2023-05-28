@@ -40,18 +40,11 @@ type DataChunk struct {
 type FilterFunc func([]float64)
 
 func (d *DataChunk) growChunkSize(v uint32) {
-	switch d.ChunkHeader.Subchunk2Size {
-	case 0:
-		d.ChunkHeader.Subchunk2Size = v + header.Size
-	default:
-		d.ChunkHeader.Subchunk2Size += v
-	}
+	d.ChunkHeader.Subchunk2Size += v
 }
 
 func (d *DataChunk) setChunkSize(v uint32) {
-	if d.ChunkHeader.Subchunk2Size == 0 {
-		d.ChunkHeader.Subchunk2Size = v + header.Size
-	}
+	d.ChunkHeader.Subchunk2Size = v
 }
 
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
