@@ -341,6 +341,8 @@ func TestWavSegmentedWrite(t *testing.T) {
 	}
 
 	for idx, test := range testdata {
+		fullWav := &wav.Wav{}
+		fullWav.Write(test)
 		w := new(wav.Wav)
 
 		_, err := w.Write(test[:36])
