@@ -68,5 +68,9 @@ func From(head *header.Header) (*Wav, error) {
 // Generate wraps a call to w.Data.Generate, by passing the same sample rate
 // value as configured in w.header.SampleRate
 func (w *Wav) Generate(waveType osc.Type, freq int, dur time.Duration) {
+	if w.Header == nil {
+		return
+	}
+
 	w.Data.Generate(waveType, freq, int(w.Header.SampleRate), dur)
 }
