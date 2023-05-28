@@ -44,8 +44,9 @@ func (w *Wav) encode() error {
 	data := make([][]byte, (len(w.Chunks)*2)+1)
 
 	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
-		data[j] = w.Chunks[i].Header().Bytes()
+		// processing chunks before headers so sizes can be updated if required
 		data[j+1] = w.Chunks[i].Bytes()
+		data[j] = w.Chunks[i].Header().Bytes()
 		size += 8 + len(data[j+1])
 	}
 	if w.Header.ChunkSize == 0 {
