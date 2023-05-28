@@ -57,6 +57,9 @@ func Decode(buf []byte) (w *Wav, err error) {
 func (w *Wav) decode() (n int, err error) {
 	if w.Header == nil {
 		n, err = w.decodeHeader()
+		if err != nil {
+			return n, err
+		}
 
 		// header is required beyond this point, as w.head.BitsPerSample is necessary
 		if w.Header == nil {
@@ -124,8 +127,7 @@ func (w *Wav) decodeNewSubChunk(n int) (int, error) {
 			// grab remaining bytes if the byte slice isn't long enough
 			// for a subchunk read
 			if end > 0 && end > ln {
-				w.Chunks = append(w.Chunks, chunk)
-				return n, nil
+				end = ln - (ln % int(w.Header.BlockAlign))
 			}
 
 			chunkBuffer := make([]byte, end)
@@ -148,8 +150,8 @@ func (w *Wav) decodeIntoData(n int) (int, error) {
 		ln  = w.buf.Len()
 	)
 
-	if end > 0 && end != ln {
-		return n, nil
+	if end > 0 && end > ln {
+		end = ln - (ln % int(w.Header.BlockAlign))
 	}
 
 	chunkBuffer := make([]byte, ln)
