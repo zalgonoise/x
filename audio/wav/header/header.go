@@ -4,12 +4,19 @@ import (
 	"encoding/binary"
 )
 
-const Size = 36
+const (
+	Size          = 36
+	chunkIDEnd    = 4
+	formatOffset  = 8
+	subChunkIDEnd = 16
+)
 
 var (
 	defaultChunkID     = [4]byte{82, 73, 70, 70}
 	defaultFormat      = [4]byte{87, 65, 86, 69}
 	defaultSubchunk1ID = [4]byte{102, 109, 116, 32}
+
+	formatAndSubchunkID = []byte{87, 65, 86, 69, 102, 109, 116, 32}
 )
 
 // Header describes the header of a WAV file (or buffer).
