@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"embed"
 	_ "embed"
+	"fmt"
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/zalgonoise/x/audio/wav"
+	"github.com/zalgonoise/x/audio/wav/data/filters"
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
@@ -379,5 +383,97 @@ func TestWavSegmentedWrite(t *testing.T) {
 
 		t.Logf("OK on index %d: %v", idx, w.Header)
 	}
+}
 
+func TestWav_WriteProcessRead(t *testing.T) {
+	testdata, err := load()
+	require.NoError(t, err)
+
+	for idx, test := range testdata {
+		// Write
+		w := new(wav.Wav)
+		_, err = w.Write(test)
+		require.NoError(t, err)
+
+		// Process
+		w.Data.Apply(
+			filters.PhaseFlip(),
+			filters.PhaseFlip(),
+		)
+
+		// Read
+		buf := make([]byte, len(test))
+		_, err = w.Read(buf)
+		require.NoError(t, err)
+		require.Equal(t, buf, test)
+
+		// Write read bytes
+		newWav := new(wav.Wav)
+		_, err = newWav.Write(buf)
+		require.NoError(t, err)
+
+		// Read and compare
+		newBuf := make([]byte, len(test))
+		_, err = newWav.Read(newBuf)
+		require.NoError(t, err)
+		require.Equal(t, buf, newBuf)
+		require.Equal(t, w, newWav)
+
+		t.Logf("OK on index %d: %v", idx, w.Header)
+	}
+}
+
+func BenchmarkWav_WriteProcessRead(b *testing.B) {
+	testdata, err := load()
+	require.NoError(b, err)
+
+	for _, test := range testdata[:4] {
+		fmt.Println(len(test))
+		w := new(wav.Wav)
+		buf := make([]byte, len(test))
+
+		b.Run("All", func(b *testing.B) {
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				// Write
+				_, err = w.Write(test)
+				if err != nil {
+					b.Error(err)
+					return
+				}
+
+				// Process
+				w.Data.Apply(
+					filters.PhaseFlip(),
+					filters.PhaseFlip(),
+				)
+
+				// Read
+				_, err = w.Read(buf)
+				if err != nil {
+					b.Error(err)
+					return
+				}
+			}
+		})
+
+		b.Run("WriteRead", func(b *testing.B) {
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				// Write
+				_, err = w.Write(test)
+				if err != nil {
+					b.Error(err)
+					return
+				}
+
+				// Read
+				_, err = w.Read(buf)
+				if err != nil {
+					b.Error(err)
+					return
+				}
+			}
+		})
+	}
 }
