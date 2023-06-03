@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	_ "embed"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -428,7 +427,6 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 	require.NoError(b, err)
 
 	for _, test := range testdata[:4] {
-		fmt.Println(len(test))
 		w := new(wav.Wav)
 		buf := make([]byte, len(test))
 
@@ -467,6 +465,37 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 					return
 				}
 
+				// Read
+				_, err = w.Read(buf)
+				if err != nil {
+					b.Error(err)
+					return
+				}
+			}
+		})
+
+		b.Run("Write", func(b *testing.B) {
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				// Write
+				_, err = w.Write(test)
+				if err != nil {
+					b.Error(err)
+					return
+				}
+			}
+		})
+
+		b.Run("Read", func(b *testing.B) {
+			// Write once
+			_, err = w.Write(test)
+			if err != nil {
+				b.Error(err)
+				return
+			}
+
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
 				// Read
 				_, err = w.Read(buf)
 				if err != nil {
