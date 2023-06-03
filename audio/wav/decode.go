@@ -18,9 +18,9 @@ const dataSubchunkID = "data"
 // The method returns the number of bytes read by the buffer, and an error if the
 // data is invalid (or too short)
 func (w *Wav) Write(buf []byte) (n int, err error) {
-	if w.readOnly {
+	if w.readOnly.Load() {
 		w.buf.Reset()
-		w.readOnly = false
+		w.readOnly.Store(false)
 	}
 
 	if w.buf == nil {

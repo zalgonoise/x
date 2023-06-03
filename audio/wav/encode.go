@@ -12,15 +12,15 @@ import (
 // It returns the number of bytes written to the buffer, and an error if the buffer
 // is not big enough
 func (w *Wav) Read(buf []byte) (n int, err error) {
-	if !w.readOnly {
+	if !w.readOnly.Load() {
 		if err = w.encode(); err != nil {
 			return 0, err
 		}
-		w.readOnly = true
+		w.readOnly.Store(true)
 	}
 
 	if w.buf == nil || w.buf.Len() == 0 {
-		w.readOnly = false
+		w.readOnly.Store(false)
 		return w.Read(buf)
 	}
 
@@ -29,11 +29,11 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 
 // Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding
 func (w *Wav) Bytes() []byte {
-	if !w.readOnly {
+	if !w.readOnly.Load() {
 		if err := w.encode(); err != nil {
 			return nil
 		}
-		w.readOnly = true
+		w.readOnly.Store(true)
 	}
 
 	return w.buf.Bytes()

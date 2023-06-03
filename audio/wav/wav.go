@@ -2,6 +2,7 @@ package wav
 
 import (
 	"bytes"
+	"sync/atomic"
 	"time"
 
 	"github.com/zalgonoise/x/audio/osc"
@@ -18,7 +19,7 @@ type Wav struct {
 	Chunks []Chunk
 	Data   Chunk
 
-	readOnly bool
+	readOnly atomic.Bool
 	buf      *bytes.Buffer
 }
 
