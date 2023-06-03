@@ -352,9 +352,9 @@ func FFTOnThreshold(blockSize fft.BlockSize, thresh float64, ch chan<- fft.Frequ
 			var windowBlock = window.New(window.Blackman, int(blockSize))
 
 			mag := fft.Apply(int(w.Header.SampleRate), v[i:i+int(blockSize)], windowBlock)
-			for i := range mag {
-				if mag[i].Mag > thresh {
-					ch <- mag[i]
+			for idx := range mag {
+				if mag[idx].Mag > thresh {
+					ch <- mag[idx]
 				}
 			}
 		}
