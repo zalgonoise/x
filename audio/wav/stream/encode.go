@@ -27,7 +27,7 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 	}
 
 	for i := range byteData {
-		n += copy(buf[n:], byteData[i])
+		n += copy(buf[n:n+len(byteData[i])], byteData[i])
 	}
 	return size, nil
 }
@@ -39,7 +39,7 @@ func (w *Wav) Bytes() []byte {
 
 	buf := make([]byte, size+32)
 	for i := range byteData {
-		n += copy(buf[n:], byteData[i])
+		n += copy(buf[n:n+len(byteData[i])], byteData[i])
 	}
 	return buf
 }
