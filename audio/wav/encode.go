@@ -2,6 +2,9 @@ package wav
 
 import (
 	"bytes"
+
+	datah "github.com/zalgonoise/x/audio/wav/data/header"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 // Read implements the io.Reader interface
@@ -13,15 +16,7 @@ import (
 // is not big enough
 func (w *Wav) Read(buf []byte) (n int, err error) {
 	if !w.readOnly.Load() {
-		if err = w.encode(); err != nil {
-			return 0, err
-		}
-		w.readOnly.Store(true)
-	}
-
-	if w.buf == nil || w.buf.Len() == 0 {
-		w.readOnly.Store(false)
-		return w.Read(buf)
+		w.encode()
 	}
 
 	return w.buf.Read(buf)
@@ -30,37 +25,37 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 // Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding
 func (w *Wav) Bytes() []byte {
 	if !w.readOnly.Load() {
-		if err := w.encode(); err != nil {
-			return nil
-		}
-		w.readOnly.Store(true)
+		w.encode()
 	}
 
 	return w.buf.Bytes()
 }
 
-func (w *Wav) encode() error {
-	size := 4
-	data := make([][]byte, (len(w.Chunks)*2)+1)
+func (w *Wav) encode() {
+	var (
+		n    int
+		size = header.Size
+	)
 
-	for i, j := 0, 1; i < len(w.Chunks); i, j = i+1, j+2 {
-		// processing chunks before headers so sizes can be updated if required
-		data[j+1] = w.Chunks[i].Bytes()
-		data[j] = w.Chunks[i].Header().Bytes()
-		size += 8 + len(data[j+1])
+	for i := range w.Chunks {
+		size += datah.Size + int(w.Chunks[i].Header().Subchunk2Size)
 	}
+
 	if w.Header.ChunkSize == 0 {
 		w.Header.ChunkSize = uint32(size)
 	}
-	data[0] = w.Header.Bytes()
 
-	w.buf = bytes.NewBuffer(make([]byte, 0, size))
+	b := make([]byte, size)
+	n += copy(b[n:n+header.Size], w.Header.Bytes())
 
-	for i := range data {
-		if _, err := w.buf.Write(data[i]); err != nil {
-			return err
-		}
+	for i := range w.Chunks {
+		h := w.Chunks[i].Header()
+		n += copy(b[n:n+datah.Size], h.Bytes())
+		n += copy(b[n:n+int(h.Subchunk2Size)], w.Chunks[i].Bytes())
 	}
 
-	return nil
+	w.readOnly.Store(true)
+	w.buf = bytes.NewBuffer(b)
+
+	return
 }
