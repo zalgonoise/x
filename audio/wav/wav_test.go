@@ -487,15 +487,17 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 		})
 
 		b.Run("Read", func(b *testing.B) {
-			// Write once
-			_, err = w.Write(test)
-			if err != nil {
-				b.Error(err)
-				return
-			}
-
-			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
+				b.StopTimer()
+				w = new(wav.Wav)
+				// Write once
+				_, err = w.Write(test)
+				if err != nil {
+					b.Error(err)
+					return
+				}
+				b.StartTimer()
+
 				// Read
 				_, err = w.Read(buf)
 				if err != nil {
