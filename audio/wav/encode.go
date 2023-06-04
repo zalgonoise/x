@@ -45,17 +45,23 @@ func (w *Wav) encode() {
 		w.Header.ChunkSize = uint32(size)
 	}
 
-	b := make([]byte, size)
-	n += copy(b[n:n+header.Size], w.Header.Bytes())
+	buf := make([]byte, size)
+	_, _ = w.Header.Read(buf[n : n+header.Size])
+	n += header.Size
 
 	for i := range w.Chunks {
-		h := w.Chunks[i].Header()
-		n += copy(b[n:n+datah.Size], h.Bytes())
-		n += copy(b[n:n+int(h.Subchunk2Size)], w.Chunks[i].Bytes())
+		var (
+			chunkHeader = w.Chunks[i].Header()
+			chunkSize   = int(chunkHeader.Subchunk2Size)
+		)
+
+		_, _ = chunkHeader.Read(buf[n : n+datah.Size])
+		n += datah.Size
+		n += copy(buf[n:n+chunkSize], w.Chunks[i].Bytes())
 	}
 
 	w.readOnly.Store(true)
-	w.buf = bytes.NewBuffer(b)
+	w.buf = bytes.NewBuffer(buf)
 
 	return
 }
