@@ -14,6 +14,8 @@ const (
 	bitDepth16 uint16 = 16
 	bitDepth24 uint16 = 24
 	bitDepth32 uint16 = 32
+
+	byteSize = 8
 )
 
 // Converter describes the behavior that a bit-depth converter should expose -- that is to encode / decode a bytes
@@ -33,6 +35,8 @@ type DataChunk struct {
 	Data        []float64
 	Depth       uint16
 	Converter   Converter
+
+	byteSize int
 }
 
 // FilterFunc is a function that applies a transformation to a floating-point audio buffer
@@ -44,6 +48,26 @@ func (d *DataChunk) growChunkSize(v uint32) {
 
 func (d *DataChunk) setChunkSize(v uint32) {
 	d.ChunkHeader.Subchunk2Size = v
+}
+
+// Write implements the io.Writer interface
+//
+// It allows to grow the DataChunk's audio data with the input `buf` bytes, returning the number of
+// bytes consumed and an error
+func (d *DataChunk) Write(buf []byte) (n int, err error) {
+	ln := len(buf)
+	n = ln - ln%d.byteSize
+	d.Parse(buf[:n])
+
+	return n, nil
+}
+
+// Read implements the io.Reader interface
+//
+// It writes the audio data of the DataChunk into the input `buf`, returning the number of bytes read
+// and an error
+func (d *DataChunk) Read(buf []byte) (n int, err error) {
+	return copy(buf, d.Bytes()), nil
 }
 
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
@@ -167,24 +191,28 @@ func NewPCMDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 			ChunkHeader: h,
 			Depth:       bitDepth,
 			Converter:   Conv8Bit{},
+			byteSize:    size8,
 		}
 	case bitDepth16:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
 			Converter:   Conv16Bit{},
+			byteSize:    size16,
 		}
 	case bitDepth24:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
 			Converter:   Conv24Bit{},
+			byteSize:    size24,
 		}
 	case bitDepth32:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
 			Converter:   Conv32Bit{},
+			byteSize:    size32,
 		}
 	default:
 		return nil
@@ -204,12 +232,14 @@ func NewFloatDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 			ChunkHeader: h,
 			Depth:       bitDepth,
 			Converter:   ConvFloat{},
+			byteSize:    int(bitDepth) / byteSize,
 		}
 	default:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth32,
 			Converter:   ConvFloat{},
+			byteSize:    size32,
 		}
 	}
 }
