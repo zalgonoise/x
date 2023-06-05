@@ -14,6 +14,24 @@ type JunkChunk struct {
 	Depth       uint16
 }
 
+// Write implements the io.Writer interface
+//
+// It allows to grow the JunkChunk's data with the input `buf` bytes, returning the number of
+// bytes consumed and an error
+func (d *JunkChunk) Write(buf []byte) (n int, err error) {
+	d.Parse(buf)
+
+	return len(buf), nil
+}
+
+// Read implements the io.Reader interface
+//
+// It writes the data of the JunkChunk into the input `buf`, returning the number of bytes read
+// and an error
+func (d *JunkChunk) Read(buf []byte) (n int, err error) {
+	return copy(buf, d.Data), nil
+}
+
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
 // from raw bytes
 func (d *JunkChunk) Parse(buf []byte) {
