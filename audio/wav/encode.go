@@ -57,7 +57,8 @@ func (w *Wav) encode() {
 
 		_, _ = chunkHeader.Read(buf[n : n+datah.Size])
 		n += datah.Size
-		n += copy(buf[n:n+chunkSize], w.Chunks[i].Bytes())
+		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
+		n += chunkSize
 	}
 
 	w.readOnly.Store(true)
