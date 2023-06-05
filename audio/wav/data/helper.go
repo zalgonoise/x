@@ -7,9 +7,10 @@ type BitDepthTypes interface {
 }
 
 const (
-	size16 = 2
-	size24 = 3
-	size32 = 4
+	size8 = iota + 1
+	size16
+	size24
+	size32
 )
 
 func conv[F, T BitDepthTypes](from []F, fn func(F) T) []T {
