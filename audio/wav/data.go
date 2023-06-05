@@ -1,6 +1,7 @@
 package wav
 
 import (
+	"io"
 	"time"
 
 	"github.com/zalgonoise/x/audio/osc"
@@ -21,6 +22,9 @@ const (
 // provides helper methods to fetch the chunk header, the bit depth, to reset it
 // and also to retrieve the PCM buffer as a slice of int
 type Chunk interface {
+	// ReadWriter joins both io.Read and io.Write interfaces, as a Chunk is able to both
+	// be written to or read from.
+	io.ReadWriter
 	// Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
 	// from raw bytes
 	Parse(buf []byte)
