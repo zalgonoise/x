@@ -35,7 +35,7 @@ func (r *Reader[T]) Size() int64 { return int64(len(r.s)) }
 // Read implements the io.Reader interface.
 func (r *Reader[T]) Read(b []T) (n int, err error) {
 	if r.i >= int64(len(r.s)) {
-		return 0, gio.EOF
+		return 0, io.EOF
 	}
 	r.prevRune = -1
 	n = copy(b, r.s[r.i:])
@@ -50,11 +50,11 @@ func (r *Reader[T]) ReadAt(b []T, off int64) (n int, err error) {
 		return 0, errors.New("gbuf.Reader.ReadAt: negative offset")
 	}
 	if off >= int64(len(r.s)) {
-		return 0, gio.EOF
+		return 0, io.EOF
 	}
 	n = copy(b, r.s[off:])
 	if n < len(b) {
-		err = gio.EOF
+		err = io.EOF
 	}
 	return
 }
@@ -64,7 +64,7 @@ func (r *Reader[T]) ReadItem() (T, error) {
 	r.prevRune = -1
 	if r.i >= int64(len(r.s)) {
 		var zero T
-		return zero, gio.EOF
+		return zero, io.EOF
 	}
 	b := r.s[r.i]
 	r.i++
