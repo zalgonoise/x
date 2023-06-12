@@ -5,6 +5,7 @@ package gbuf
 import (
 	"errors"
 	"io"
+	"sync/atomic"
 
 	"github.com/zalgonoise/gio"
 )
@@ -15,27 +16,10 @@ const smallBufferSize = 64
 // A Buffer is a variable-sized buffer of T items with Read and Write methods.
 // The zero value for Buffer is an empty buffer ready to use.
 type Buffer[T any] struct {
-	buf      []T    // contents are the T items buf[off : len(buf)]
-	off      int    // read at &buf[off], write at &buf[len(buf)]
-	lastRead readOp // last read operation, so that Unread* can work correctly.
+	buf       []T         // contents are the T items buf[off : len(buf)]
+	off       int         // read at &buf[off], write at &buf[len(buf)]
+	isReading atomic.Bool // last operation type, so that Unread* can work correctly.
 }
-
-// The readOp constants describe the last action performed on
-// the buffer, so that UnreadRune and UnreadT item can check for
-// invalid usage. opReadRuneX constants are chosen such that
-// converted to int they correspond to the rune size that was read.
-type readOp int8
-
-// Don't use iota for these, as the values need to correspond with the
-// names and comments, which is easier to see when being explicit.
-const (
-	opRead      readOp = -1 // Any other read operation.
-	opInvalid   readOp = 0  // Non-read operation.
-	opReadRune1 readOp = 1  // Read rune of size 1.
-	opReadRune2 readOp = 2  // Read rune of size 2.
-	opReadRune3 readOp = 3  // Read rune of size 3.
-	opReadRune4 readOp = 4  // Read rune of size 4.
-)
 
 // ErrTooLarge is passed to panic if memory cannot be allocated to store data in a buffer.
 var ErrTooLarge = errors.New("gbuf.Buffer: too large")
@@ -43,7 +27,7 @@ var errNegativeRead = errors.New("gbuf.Buffer: reader returned negative count fr
 
 const maxInt = int(^uint(0) >> 1)
 
-// T items returns a slice of length b.Len() holding the unread portion of the buffer.
+// Value returns a slice of length b.Len() holding the unread portion of the buffer.
 // The slice is valid for use only until the next buffer modification (that is,
 // only until the next call to a method like Read, Write, Reset, or Truncate).
 // The slice aliases the buffer content at least until the next buffer modification,
@@ -54,7 +38,7 @@ func (b *Buffer[T]) Value() []T { return b.buf[b.off:] }
 func (b *Buffer[T]) empty() bool { return len(b.buf) <= b.off }
 
 // Len returns the number of T items of the unread portion of the buffer;
-// b.Len() == len(b.T items()).
+// b.Len() == len(b.Value()).
 func (b *Buffer[T]) Len() int { return len(b.buf) - b.off }
 
 // Cap returns the capacity of the buffer's underlying T item slice, that is, the
@@ -69,10 +53,13 @@ func (b *Buffer[T]) Truncate(n int) {
 		b.Reset()
 		return
 	}
-	b.lastRead = opInvalid
+
+	b.isReading.Store(false)
+
 	if n < 0 || n > b.Len() {
 		panic("gbuf.Buffer: truncation out of range")
 	}
+
 	b.buf = b.buf[:b.off+n]
 }
 
@@ -82,7 +69,7 @@ func (b *Buffer[T]) Truncate(n int) {
 func (b *Buffer[T]) Reset() {
 	b.buf = b.buf[:0]
 	b.off = 0
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 }
 
 // tryGrowByReslice is a inlineable version of grow for the fast-case where the
@@ -109,10 +96,12 @@ func (b *Buffer[T]) grow(n int) int {
 	if i, ok := b.tryGrowByReslice(n); ok {
 		return i
 	}
+
 	if b.buf == nil && n <= smallBufferSize {
 		b.buf = make([]T, n, smallBufferSize)
 		return 0
 	}
+
 	c := cap(b.buf)
 	if n <= c/2-m {
 		// We can slide things down instead of allocating a new
@@ -149,7 +138,7 @@ func (b *Buffer[T]) Grow(n int) {
 // needed. The return value n is the length of p; err is always nil. If the
 // buffer becomes too large, Write will panic with ErrTooLarge.
 func (b *Buffer[T]) Write(p []T) (n int, err error) {
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 	m, ok := b.tryGrowByReslice(len(p))
 	if !ok {
 		m = b.grow(len(p))
@@ -168,7 +157,7 @@ const MinRead = 512
 // error except io.EOF encountered during the read is also returned. If the
 // buffer becomes too large, ReadFrom will panic with ErrTooLarge.
 func (b *Buffer[T]) ReadFrom(r gio.Reader[T]) (n int64, err error) {
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 	for {
 		i := b.grow(MinRead)
 		b.buf = b.buf[:i]
@@ -218,9 +207,9 @@ func growSlice[T any](b []T, n int) []T {
 // WriteTo writes data to w until the buffer is drained or an error occurs.
 // The return value n is the number of T items written; it always fits into an
 // int, but it is int64 to match the gio.WriterTo interface. Any error
-// encountered during the write is also returned.
+// encountered during the write operation is also returned.
 func (b *Buffer[T]) WriteTo(w gio.Writer[T]) (n int64, err error) {
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 	if nItems := b.Len(); nItems > 0 {
 		m, e := w.Write(b.buf[b.off:])
 		if m > nItems {
@@ -242,12 +231,12 @@ func (b *Buffer[T]) WriteTo(w gio.Writer[T]) (n int64, err error) {
 	return n, nil
 }
 
-// WriteT item appends the T item c to the buffer, growing the buffer as needed.
+// WriteItem appends the T `item` to the buffer, growing the buffer as needed.
 // The returned error is always nil, but is included to match gio.Writer's
 // WriteItem. If the buffer becomes too large, WriteItem will panic with
 // ErrTooLarge.
 func (b *Buffer[T]) WriteItem(item T) error {
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 	m, ok := b.tryGrowByReslice(1)
 	if !ok {
 		m = b.grow(1)
@@ -261,7 +250,7 @@ func (b *Buffer[T]) WriteItem(item T) error {
 // buffer has no data to return, err is io.EOF (unless len(p) is zero);
 // otherwise it is nil.
 func (b *Buffer[T]) Read(p []T) (n int, err error) {
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 	if b.empty() {
 		// Buffer is empty, reset to recover space.
 		b.Reset()
@@ -273,7 +262,7 @@ func (b *Buffer[T]) Read(p []T) (n int, err error) {
 	n = copy(p, b.buf[b.off:])
 	b.off += n
 	if n > 0 {
-		b.lastRead = opRead
+		b.isReading.Store(true)
 	}
 	return n, nil
 }
@@ -283,7 +272,7 @@ func (b *Buffer[T]) Read(p []T) (n int, err error) {
 // If there are fewer than n T items in the buffer, Next returns the entire buffer.
 // The slice is only valid until the next call to a read or write method.
 func (b *Buffer[T]) Next(n int) []T {
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 	m := b.Len()
 	if n > m {
 		n = m
@@ -291,12 +280,12 @@ func (b *Buffer[T]) Next(n int) []T {
 	data := b.buf[b.off : b.off+n]
 	b.off += n
 	if n > 0 {
-		b.lastRead = opRead
+		b.isReading.Store(true)
 	}
 	return data
 }
 
-// ReadT item reads and returns the next T item from the buffer.
+// ReadItem reads and returns the next T item from the buffer.
 // If no T item is available, it returns error io.EOF.
 func (b *Buffer[T]) ReadItem() (T, error) {
 	if b.empty() {
@@ -307,28 +296,28 @@ func (b *Buffer[T]) ReadItem() (T, error) {
 	}
 	c := b.buf[b.off]
 	b.off++
-	b.lastRead = opRead
+	b.isReading.Store(true)
 	return c, nil
 }
 
 var ErrUnreadItem = errors.New("gbuf.Buffer: UnreadItem: previous operation was not a successful read")
 
-// UnreadT item unreads the last T item returned by the most recent successful
-// read operation that read at least one T item. If a write has happened since
-// the last read, if the last read returned an error, or if the read read zero
-// T items, UnreadT item returns an error.
+// UnreadItem unreads the last T item returned by the most recent successful
+// read operation that read at least one T item. If a write operation has happened since
+// the last read, if the last read returned an error, or if the read operation reads zero
+// T items, UnreadItem returns an error.
 func (b *Buffer[T]) UnreadItem() error {
-	if b.lastRead == opInvalid {
+	if !b.isReading.Load() {
 		return ErrUnreadItem
 	}
-	b.lastRead = opInvalid
+	b.isReading.Store(false)
 	if b.off > 0 {
 		b.off--
 	}
 	return nil
 }
 
-// ReadT items reads until the first occurrence of delim in the input,
+// ReadItems reads until the first occurrence of delim in the input,
 // returning a slice containing the data up to and including the delimiter.
 // If ReadT items encounters an error before finding a delimiter,
 // it returns the data read before the error and the error itself (often io.EOF).
@@ -342,25 +331,30 @@ func (b *Buffer[T]) ReadItems(delim func(T) bool) (line []T, err error) {
 	return line, err
 }
 
-// readSlice is like ReadT items but returns a reference to internal buffer data.
+// readSlice is like ReadItems but returns a reference to internal buffer data.
 func (b *Buffer[T]) readSlice(delim func(T) bool) (line []T, err error) {
-	var (
-		idx int
-		i   T
-	)
-	for idx, i = range b.buf[b.off:] {
-		if delim(i) {
+	// init end as not found
+	var end = -1
+
+	// iterate through remaining buffer trying to find a matching delimiter
+	for i := b.off; i < len(b.buf); i++ {
+		if delim(b.buf[i]) {
+			// set end to index + 1, as slice ranges require it
+			end = i + 1
 			break
 		}
 	}
-	end := b.off + idx + 1
-	if idx < 0 {
+
+	// if there are no matches, get up to the remainder of the existing buffer
+	if end < 0 {
 		end = len(b.buf)
 		err = io.EOF
 	}
+
 	line = b.buf[b.off:end]
 	b.off = end
-	b.lastRead = opRead
+	b.isReading.Store(true)
+
 	return line, err
 }
 
@@ -371,6 +365,10 @@ func (b *Buffer[T]) readSlice(delim func(T) bool) (line []T, err error) {
 // the initial size of the internal buffer for writing. To do that,
 // buf should have the desired capacity but a length of zero.
 //
-// In most cases, new(Buffer) (or just declaring a Buffer variable) is
-// sufficient to initialize a Buffer.
-func NewBuffer[T any](buf []T) *Buffer[T] { return &Buffer[T]{buf: buf} }
+// In most cases, new(Buffer[T]) (or just declaring a *Buffer[T] variable) is
+// sufficient to initialize a Buffer of type T.
+func NewBuffer[T any](buf []T) *Buffer[T] {
+	return &Buffer[T]{
+		buf: buf,
+	}
+}
