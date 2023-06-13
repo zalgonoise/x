@@ -7,8 +7,8 @@ require (
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/prometheus/client_golang v1.14.0
-	github.com/stretchr/testify v1.8.3
-	github.com/zalgonoise/gbuf v0.0.0-20230301225204-a38f80b049c6
+	github.com/stretchr/testify v1.8.4
+	github.com/zalgonoise/gbuf v0.0.0-20230611171017-097f63735b73
 	github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2
 	github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37
 )
@@ -34,10 +34,10 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sync v0.2.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
