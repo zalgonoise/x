@@ -2,6 +2,8 @@ package header
 
 import (
 	"encoding/binary"
+	"errors"
+	"io"
 )
 
 const (
@@ -52,6 +54,32 @@ func (h *Header) Write(buf []byte) (n int, err error) {
 	h.Subchunk2Size = binary.LittleEndian.Uint32(buf[4:8:8])
 
 	return Size, Validate(h)
+}
+
+// ReadFrom implements the io.ReaderFrom interface
+//
+// It consumes the byte slice `buf` as a Wav Header from an io.Reader, returning an error
+// if the input data cannot be parsed, or if the resulting header is invalid
+func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
+	if r == nil {
+		return 0, nil
+	}
+
+	// required as it cannot be just cast into the data type
+	buf := make([]byte, Size)
+
+	m, err := r.Read(buf)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return n, err
+	}
+
+	if m != Size {
+		return n, ErrShortBuffer
+	}
+
+	m, err = h.Write(buf)
+
+	return int64(m), err
 }
 
 // Read implements the io.Reader interface
