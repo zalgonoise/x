@@ -2,9 +2,13 @@ package stream
 
 import (
 	"context"
+	"github.com/zalgonoise/x/audio/wav"
 	"io"
 
 	"github.com/zalgonoise/gbuf"
+
+	dataheader "github.com/zalgonoise/x/audio/wav/data/header"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 const minBufferSize = 16
@@ -32,42 +36,45 @@ func (w *Wav) Close() error {
 }
 
 func (w *Wav) processChunk(buf []byte) error {
-	w.Data.Parse(buf)
+	_, err := w.Data.Read(buf)
+	if err != nil {
+		return err
+	}
+
 	if len(w.Filters) == 0 {
 		return nil
 	}
-	defer w.Data.Reset()
+
+	//defer w.Data.Reset()
+
 	for _, fn := range w.Filters {
 		if err := fn(w, buf); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (w *Wav) streamingFunc(cancel context.CancelCauseFunc) {
-	if _, err := w.ring.ReadFrom(w.Reader); err != nil {
+	if n, err := w.ring.ReadFrom(w.Reader); err != nil {
+		_ = n
 		cancel(err)
 		return
 	}
-
 	// end of stream, return EOF
 	cancel(io.EOF)
 }
 
-func (w *Wav) stream(ctx context.Context) error {
-	var (
-		headerBuf         = make([]byte, 36) // fixed-size header
-		subChunkBuf       = make([]byte, 8)  // fixed-size sub-chunk
-		streamCtx, cancel = context.WithCancelCause(ctx)
-	)
+func (w *Wav) stream(ctx context.Context) (err error) {
+	streamCtx, cancel := context.WithCancelCause(ctx)
 	w.done = cancel
 
-	// read and parse header -- returns an error if raised AND header is unset
-	if _, err := w.Reader.Read(headerBuf); err != nil && w.Header == nil {
-		return err
+	if w.Header == nil {
+		w.Header = new(header.Header)
 	}
-	if err := w.parseHeader(headerBuf); err != nil && w.Header == nil {
+
+	if _, err = w.Header.ReadFrom(w.Reader); err != nil {
 		return err
 	}
 
@@ -82,13 +89,19 @@ func (w *Wav) stream(ctx context.Context) error {
 		}
 	}
 
-	// read and parse sub chunk section
-	if _, err := w.Reader.Read(subChunkBuf); err != nil {
-		return err
-	}
+	for w.Data == nil {
+		h := new(dataheader.Header)
 
-	if err := w.parseSubChunk(subChunkBuf); err != nil {
-		return err
+		if _, err = h.ReadFrom(w.Reader); err != nil {
+			return err
+		}
+
+		chunk := wav.NewChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat)
+		w.Chunks = append(w.Chunks, chunk)
+
+		if chunk.BitDepth() > 0 {
+			w.Data = chunk
+		}
 	}
 
 	// create a new Ring Buffer to continuously read from the stream in chunks,
@@ -114,7 +127,7 @@ func (w *Wav) stream(ctx context.Context) error {
 	for {
 		select {
 		case <-streamCtx.Done():
-			err := context.Cause(streamCtx)
+			err = context.Cause(streamCtx)
 			if err != nil {
 				return err
 			}
