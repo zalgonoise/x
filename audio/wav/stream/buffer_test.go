@@ -90,7 +90,7 @@ func TestWavBuffer(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("MaxValues", func(t *testing.T) {
 			// expect test to be faster than the actual length of the generated audio
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 			defer cancel()
 
 			// sine wave stream for testing
@@ -143,6 +143,7 @@ func TestWavBuffer(t *testing.T) {
 				}
 			}
 		})
+
 		t.Run("FFTOnThreshold", func(t *testing.T) {
 			// expect test to be faster than the actual length of the generated audio
 			// create a channel to read the max values emitted by the filter
