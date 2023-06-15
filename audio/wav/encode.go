@@ -17,6 +17,7 @@ import (
 func (w *Wav) Read(buf []byte) (n int, err error) {
 	if !w.readOnly.Load() {
 		w.encode()
+		w.readOnly.Store(true)
 	}
 
 	return w.buf.Read(buf)
@@ -26,6 +27,7 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 func (w *Wav) Bytes() []byte {
 	if !w.readOnly.Load() {
 		w.encode()
+		w.readOnly.Store(true)
 	}
 
 	return w.buf.Bytes()
