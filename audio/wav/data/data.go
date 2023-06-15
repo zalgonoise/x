@@ -110,7 +110,12 @@ func (d *DataChunk) Bytes() []byte {
 }
 
 // Header returns the ChunkHeader of the DataChunk
-func (d *DataChunk) Header() *header.Header { return d.ChunkHeader }
+func (d *DataChunk) Header() *header.Header {
+	if d.ChunkHeader.Subchunk2Size == 0 {
+		d.ChunkHeader.Subchunk2Size = uint32(len(d.Data) * (int(d.Depth) / 8))
+	}
+	return d.ChunkHeader
+}
 
 // BitDepth returns the bit depth of the DataChunk
 func (d *DataChunk) BitDepth() uint16 { return d.Depth }
