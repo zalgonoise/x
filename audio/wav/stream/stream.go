@@ -2,8 +2,9 @@ package stream
 
 import (
 	"context"
-	"github.com/zalgonoise/x/audio/wav"
 	"io"
+
+	"github.com/zalgonoise/x/audio/wav"
 
 	"github.com/zalgonoise/gbuf"
 
@@ -36,7 +37,7 @@ func (w *Wav) Close() error {
 }
 
 func (w *Wav) processChunk(buf []byte) error {
-	_, err := w.Data.Read(buf)
+	_, err := w.Data.Write(buf)
 	if err != nil {
 		return err
 	}
