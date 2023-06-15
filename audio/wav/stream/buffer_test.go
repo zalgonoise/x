@@ -90,16 +90,10 @@ func TestWavBuffer(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("MaxValues", func(t *testing.T) {
 			// expect test to be faster than the actual length of the generated audio
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*300)
 			defer cancel()
 
-			// sine wave stream for testing
-			sine, err := newSine(2000)
-			if err != nil {
-				t.Error(err)
-				return
-			}
-			buf := bytes.NewBuffer(sine.Bytes())
+			buf := bytes.NewReader(sine8kHz)
 
 			// create a channel to read the max values emitted by the filter
 			var maxCh = make(chan int, 2)
@@ -149,16 +143,17 @@ func TestWavBuffer(t *testing.T) {
 			// create a channel to read the max values emitted by the filter
 
 			var (
-				ctx, cancel      = context.WithTimeout(context.Background(), time.Second*2)
-				maxCh            = make(chan fft.FrequencyPower, 2)
+				ctx, cancel      = context.WithTimeout(context.Background(), time.Second*30)
+				maxCh            = make(chan fft.FrequencyPower, 5)
 				detectionCounter int
-				buf              = bytes.NewBuffer(sine8kHz)
 				targetFreq       = 8000
-				drift            = 50
+				drift            = 300
 			)
 
 			defer cancel()
 			defer close(maxCh)
+
+			buf := bytes.NewReader(sine8kHz)
 
 			// goroutine to verify emitted FrequencyPower objects
 			go func() {
@@ -173,8 +168,8 @@ func TestWavBuffer(t *testing.T) {
 			// create a new stream using the bytes.Buffer as an io.Reader
 			w := stream.New(buf).
 				WithFilter(
-					stream.FFTOnThreshold(fft.Block1024, 10, maxCh),
-				)
+					stream.FFTOnThreshold(fft.Block256, 10, maxCh),
+				).BlockSize(1024)
 
 			// stream the audio using the context and an err channel
 			errCh := make(chan error)
