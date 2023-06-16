@@ -1,10 +1,11 @@
 package data
 
 import (
-	"bytes"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav/data/header"
@@ -102,134 +103,129 @@ func Test16bitHeader(t *testing.T) {
 	}
 }
 
-func Test16Bit(t *testing.T) {
-	h, err := header.From(test16bitHeader)
-	if err != nil {
-		t.Error(err)
-		return
+func TestData(t *testing.T) {
+	for _, class := range []struct {
+		name     string
+		bitDepth uint16
+		header   []byte
+		data     []byte
+	}{
+		{
+			name:     "16Bit",
+			bitDepth: 16,
+			header:   test16bitHeader,
+			data:     test16bitPCM,
+		},
+	} {
+		t.Run(class.name, func(t *testing.T) {
+			h, err := header.From(class.header)
+			require.NoError(t, err)
+
+			for _, testcase := range []struct {
+				name string
+				op   func(*DataChunk)
+			}{
+				{
+					name: "ParseAndBytes",
+					op: func(chunk *DataChunk) {
+						require.Equal(t, class.data, chunk.Bytes())
+					},
+				}, {
+					name: "Value",
+					op: func(chunk *DataChunk) {
+						require.Greater(t, len(chunk.Value()), 0)
+					},
+				}, {
+					name: "Float",
+					op: func(chunk *DataChunk) {
+						require.Greater(t, len(chunk.Float()), 0)
+					},
+				}, {
+					name: "ParseFloat",
+					op: func(chunk *DataChunk) {
+						f := chunk.Float()
+
+						newChunk := NewPCMDataChunk(bitDepth16, h)
+						newChunk.ParseFloat(f)
+						require.Equal(t, chunk.Data, newChunk.Data)
+					},
+				}, {
+					name: "ParseSecondRun",
+					op: func(chunk *DataChunk) {
+						chunk.Parse(class.data)
+					},
+				}, {
+					name: "Header",
+					op: func(chunk *DataChunk) {
+						require.Equal(t, h, chunk.Header())
+					},
+				}, {
+					name: "BitDepth",
+					op: func(chunk *DataChunk) {
+						require.Equal(t, class.bitDepth, chunk.BitDepth())
+					},
+				}, {
+					name: "Reset",
+					op: func(chunk *DataChunk) {
+						chunk.Reset()
+						require.Len(t, chunk.Data, 0)
+					},
+				}, {
+					name: "Generate/Success/SineWithNilData",
+					op: func(chunk *DataChunk) {
+						chunk.Data = nil
+						chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
+
+						require.Greater(t, len(chunk.Data), 0)
+					},
+				}, {
+					name: "Generate/Success/Square",
+					op: func(chunk *DataChunk) {
+						chunk.Data = nil
+						chunk.Generate(osc.SquareWave, 2000, 44100, 100*time.Millisecond)
+
+						require.Greater(t, len(chunk.Data), 0)
+					},
+				}, {
+					name: "Generate/Success/Triangle",
+					op: func(chunk *DataChunk) {
+						chunk.Data = nil
+						chunk.Generate(osc.TriangleWave, 2000, 44100, 100*time.Millisecond)
+
+						require.Greater(t, len(chunk.Data), 0)
+					},
+				}, {
+					name: "Generate/Success/SawtoothUp",
+					op: func(chunk *DataChunk) {
+						chunk.Data = nil
+						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, 100*time.Millisecond)
+
+						require.Greater(t, len(chunk.Data), 0)
+					},
+				}, {
+					name: "Generate/Success/SawtoothDown",
+					op: func(chunk *DataChunk) {
+						chunk.Data = nil
+						chunk.Generate(osc.SawtoothDownWave, 2000, 44100, 100*time.Millisecond)
+
+						require.Greater(t, len(chunk.Data), 0)
+					},
+				}, {
+					name: "Generate/Fail",
+					op: func(chunk *DataChunk) {
+						chunk.Data = nil
+						chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
+
+						require.Len(t, chunk.Data, 0)
+					},
+				},
+			} {
+				t.Run(testcase.name, func(t *testing.T) {
+					chunk := NewPCMDataChunk(class.bitDepth, h)
+					chunk.Parse(class.data)
+					testcase.op(chunk)
+				})
+			}
+		})
 	}
-
-	var (
-		bitDepth uint16 = 16
-		input           = test16bitPCM
-		chunk           = NewPCMDataChunk(bitDepth16, h)
-
-		f []float64
-	)
-
-	t.Run("ParseAndBytes", func(t *testing.T) {
-		// clear Subchunk2Size
-		chunk.ChunkHeader.Subchunk2Size = 0
-		chunk.Parse(input)
-
-		output := chunk.Bytes()
-		if !bytes.Equal(input, output) {
-			t.Errorf("output mismatch error: wanted %v ; got %v", input, output)
-		}
-	})
-
-	t.Run("Value", func(t *testing.T) {
-		if i := chunk.Value(); len(i) == 0 {
-			t.Errorf("expected integer PCM buffer to be longer than zero")
-		}
-	})
-
-	t.Run("Float", func(t *testing.T) {
-		f = chunk.Float()
-		if len(f) == 0 {
-			t.Errorf("expected float PCM buffer to be longer than zero")
-			return
-		}
-	})
-
-	t.Run("ParseFloat", func(t *testing.T) {
-		newChunk := NewPCMDataChunk(bitDepth16, h)
-		newChunk.ParseFloat(f)
-
-		if len(chunk.Data) != len(newChunk.Data) {
-			t.Errorf("float data length mismatch error: wanted %d ; got %d", len(chunk.Data), len(newChunk.Data))
-		}
-		for i := range chunk.Data {
-			if chunk.Data[i] != newChunk.Data[i] {
-				t.Errorf("float data output mismatch error on index #%d: wanted %v ; got %v", i, chunk.Data[i],
-					newChunk.Data[i])
-			}
-		}
-	})
-
-	t.Run("ParseSecondRun", func(t *testing.T) {
-		// second run to test Parse on a dirty state
-		chunk.Parse(input)
-	})
-
-	t.Run("ChunkHeader", func(t *testing.T) {
-		chunkHeader := chunk.Header()
-		if !reflect.DeepEqual(h, chunkHeader) {
-			t.Errorf("output mismatch error: wanted %v ; got %v", h, chunkHeader)
-		}
-	})
-
-	t.Run("BitDepth", func(t *testing.T) {
-		depth := chunk.BitDepth()
-		if depth != bitDepth {
-			t.Errorf("output mismatch error: wanted %v ; got %v", bitDepth, depth)
-		}
-	})
-
-	t.Run("Reset", func(t *testing.T) {
-		chunk.Reset()
-
-		if len(chunk.Data) != 0 {
-			t.Errorf("output mismatch error: wanted %v ; got %v", 0, len(chunk.Data))
-		}
-	})
-
-	t.Run("Generate", func(t *testing.T) {
-		t.Run("Success", func(t *testing.T) {
-			t.Run("SineWithNilData", func(t *testing.T) {
-				chunk.Data = nil
-				chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
-
-				if len(chunk.Data) == 0 {
-					t.Error("expected Data object length to be greater than zero")
-				}
-
-				chunk.Reset()
-			})
-			t.Run("Square", func(t *testing.T) {
-				chunk.Generate(osc.SquareWave, 2000, 44100, 100*time.Millisecond)
-
-				if len(chunk.Data) == 0 {
-					t.Error("expected Data object length to be greater than zero")
-				}
-
-				chunk.Reset()
-			})
-			t.Run("Triangle", func(t *testing.T) {
-				chunk.Generate(osc.TriangleWave, 2000, 44100, 100*time.Millisecond)
-
-				if len(chunk.Data) == 0 {
-					t.Error("expected Data object length to be greater than zero")
-				}
-
-				chunk.Reset()
-			})
-			t.Run("Sawtooth", func(t *testing.T) {
-				chunk.Generate(osc.SawtoothUpWave, 2000, 44100, 100*time.Millisecond)
-
-				if len(chunk.Data) == 0 {
-					t.Error("expected Data object length to be greater than zero")
-				}
-
-				chunk.Reset()
-			})
-		})
-		t.Run("InvalidOscillatorType", func(t *testing.T) {
-			chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
-
-			if len(chunk.Data) != 0 {
-				t.Error("expected Data object length to be zero")
-			}
-		})
-	})
 }
