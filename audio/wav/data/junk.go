@@ -93,6 +93,10 @@ func (d *JunkChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	return newChunk, nil
 }
 
+// SetBufferSize delimits the size of the buffer, so that an audio stream keeps reusing the
+// same pre-allocated buffer
+func (d *JunkChunk) SetBufferSize(int) {}
+
 // Apply transforms the floating-point audio data with each FilterFunc in `filters`
 func (d *JunkChunk) Apply(_ ...FilterFunc) {}
 
