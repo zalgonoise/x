@@ -1,14 +1,17 @@
 package data
 
 import (
+	"io"
 	"time"
+
+	"github.com/zalgonoise/gbuf"
 
 	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 const (
-	dataChunkBaseLen = 512
+	dataChunkBaseLen = 1024
 
 	bitDepth8  uint16 = 8
 	bitDepth16 uint16 = 16
@@ -36,7 +39,8 @@ type DataChunk struct {
 	Depth       uint16
 	Converter   Converter
 
-	byteSize int
+	byteSize  int
+	blockSize int
 }
 
 // FilterFunc is a function that applies a transformation to a floating-point audio buffer
@@ -68,6 +72,31 @@ func (d *DataChunk) Write(buf []byte) (n int, err error) {
 // and an error
 func (d *DataChunk) Read(buf []byte) (n int, err error) {
 	return copy(buf, d.Bytes()), nil
+}
+
+// ReadFrom implements the io.ReaderFrom interface
+//
+// It consumes the audio data from the input io.Reader
+func (d *DataChunk) ReadFrom(b io.Reader) (n int64, err error) {
+	if d.blockSize == 0 {
+		d.blockSize = dataChunkBaseLen / (d.byteSize / 8)
+	}
+
+	size := d.blockSize * (d.byteSize / 8)
+
+	dataBuf := gbuf.NewRingFilter[float64](d.blockSize, func(data []float64) error {
+		d.Data = data
+
+		return nil
+	})
+
+	buf := gbuf.NewRingFilter[byte](size, func(data []byte) error {
+		_, err = dataBuf.Read(d.Converter.Parse(data))
+
+		return err
+	})
+
+	return buf.ReadFrom(b)
 }
 
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
@@ -174,6 +203,16 @@ func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	}
 
 	return newChunk, nil
+}
+
+// SetBufferSize delimits the size of the buffer, so that an audio stream keeps reusing the
+// same pre-allocated buffer
+func (d *DataChunk) SetBufferSize(size int) {
+	if size < dataChunkBaseLen {
+		return
+	}
+
+	d.blockSize = size
 }
 
 // Apply transforms the floating-point audio data with each FilterFunc in `filters`
