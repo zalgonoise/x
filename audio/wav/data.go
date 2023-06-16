@@ -48,6 +48,9 @@ type Chunk interface {
 	// SetBitDepth returns a new DataChunk with the input `bitDepth`'s converter, or
 	// an error if invalid. The new DataChunk retains any PCM data it contains, as a copy.
 	SetBitDepth(bitDepth uint16) (*data.DataChunk, error)
+	// SetBufferSize delimits the size of the buffer, so that an audio stream keeps reusing the
+	// same pre-allocated buffer
+	SetBufferSize(size int)
 	// Apply transforms the floating-point audio data with each FilterFunc in `filters`
 	Apply(filters ...data.FilterFunc)
 }
