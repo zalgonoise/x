@@ -2,10 +2,9 @@ package ptr_test
 
 import (
 	"fmt"
+	"github.com/zalgonoise/x/ptr"
 	"reflect"
 	"testing"
-
-	"github.com/zalgonoise/x/ptr"
 )
 
 func FuzzToAndFrom(f *testing.F) {
