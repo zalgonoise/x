@@ -8,7 +8,7 @@ require (
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/prometheus/client_golang v1.14.0
 	github.com/stretchr/testify v1.8.4
-	github.com/zalgonoise/gbuf v0.0.0-20230615205834-be67ef57ae95
+	github.com/zalgonoise/gbuf v0.0.0-20230618111702-c178749edeea
 	github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2
 	github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37
 )
