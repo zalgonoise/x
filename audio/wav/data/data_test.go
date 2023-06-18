@@ -1,6 +1,7 @@
 package data
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
@@ -61,6 +62,24 @@ func TestDataChunk(t *testing.T) {
 						chunk.Data = nil
 
 						_, err = chunk.Write(class.data)
+						require.NoError(t, err)
+
+						buf := make([]byte, len(class.data))
+
+						_, err = chunk.Read(buf)
+						require.NoError(t, err)
+
+						require.Equal(t, class.data, buf)
+					},
+				},
+				{
+					name: "ReadFrom",
+					op: func(chunk *DataChunk) {
+						chunk.Data = nil
+
+						reader := bytes.NewReader(class.data)
+
+						_, err = chunk.ReadFrom(reader)
 						require.NoError(t, err)
 
 						buf := make([]byte, len(class.data))
