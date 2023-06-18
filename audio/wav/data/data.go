@@ -79,19 +79,27 @@ func (d *DataChunk) Read(buf []byte) (n int, err error) {
 // It consumes the audio data from the input io.Reader
 func (d *DataChunk) ReadFrom(b io.Reader) (n int64, err error) {
 	if d.blockSize == 0 {
-		d.blockSize = dataChunkBaseLen / (d.byteSize / 8)
+		d.blockSize = dataChunkBaseLen / d.byteSize
 	}
 
-	size := d.blockSize * (d.byteSize / 8)
+	size := d.blockSize * d.byteSize
 
-	dataBuf := gbuf.NewRingFilter[float64](d.blockSize, func(data []float64) error {
-		d.Data = data
+	dataBuf := gbuf.NewRingFilter[float64](d.blockSize,
+		func(data []float64) error {
+			if d.Data == nil {
+				d.Data = data
 
-		return nil
-	})
+				return nil
+			}
+
+			d.Data = append(d.Data, data...)
+
+			return nil
+		},
+	)
 
 	buf := gbuf.NewRingFilter[byte](size, func(data []byte) error {
-		_, err = dataBuf.Read(d.Converter.Parse(data))
+		_, err = dataBuf.Write(d.Converter.Parse(data))
 
 		return err
 	})
