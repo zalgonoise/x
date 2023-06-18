@@ -25,6 +25,9 @@ type Chunk interface {
 	// ReadWriter joins both io.Read and io.Write interfaces, as a Chunk is able to both
 	// be written to or read from.
 	io.ReadWriter
+	// ReaderFrom extends the io.Writer implementation to be able to consume the audio data from
+	// an io.Reader, as well
+	io.ReaderFrom
 	// Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
 	// from raw bytes
 	Parse(buf []byte)
