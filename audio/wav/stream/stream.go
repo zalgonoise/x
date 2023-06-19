@@ -49,7 +49,7 @@ func (w *Wav) processChunk(buf []byte) error {
 	//defer w.Data.Reset()
 
 	for _, fn := range w.Filters {
-		if err := fn(w, buf); err != nil {
+		if err = fn(w, buf); err != nil {
 			return err
 		}
 	}
