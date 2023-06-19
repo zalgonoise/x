@@ -2,6 +2,7 @@ package wav
 
 import (
 	"bytes"
+	"io"
 	"sync/atomic"
 	"time"
 
@@ -38,17 +39,17 @@ func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Wav, error) 
 		return nil, err
 	}
 
-	return From(h)
+	return FromHeader(h)
 }
 
-// From creates a new Wav, configured with the input header.Header
+// FromHeader creates a new Wav, configured with the input header.Header
 //
 // This call returns a pointer to a Wav, and an error which is raised if the input
 // header.Header is invalid.
 //
 // The returned Wav object will have its header set in every field except for
 // `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
-func From(head *header.Header) (*Wav, error) {
+func FromHeader(head *header.Header) (*Wav, error) {
 	if head == nil {
 		return nil, ErrMissingHeader
 	}
@@ -64,6 +65,17 @@ func From(head *header.Header) (*Wav, error) {
 		Chunks: []Chunk{blankData},
 		Data:   blankData,
 	}, nil
+}
+
+// From creates a new Wav, as read from the input io.Reader
+func From(r io.Reader) (w *Wav, err error) {
+	w = new(Wav)
+
+	if _, err = w.ReadFrom(r); err != nil {
+		return nil, err
+	}
+
+	return w, nil
 }
 
 // Generate wraps a call to w.Data.Generate, by passing the same sample rate
