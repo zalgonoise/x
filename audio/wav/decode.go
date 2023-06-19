@@ -2,8 +2,9 @@ package wav
 
 import (
 	"bytes"
+	"io"
 
-	datah "github.com/zalgonoise/x/audio/wav/data/header"
+	dataheader "github.com/zalgonoise/x/audio/wav/data/header"
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
@@ -34,6 +35,52 @@ func (w *Wav) Write(buf []byte) (n int, err error) {
 	}
 
 	return w.decode()
+}
+
+// ReadFrom implements the io.ReaderFrom interface
+//
+// # It allows for a Wav file (or stream) to be read and decoded into a data structure
+//
+// This implementation differs from a stream implementation of the Wav data structure, which
+// would scope the stored PCM data in a ring buffer, both to save on storage / memory, and
+// to only keep the last X bits of an audio stream (usually for analysis).
+func (w *Wav) ReadFrom(r io.Reader) (n int64, err error) {
+	var num int64
+
+	if w.Header == nil {
+		w.Header = new(header.Header)
+	}
+
+	if num, err = w.Header.ReadFrom(r); err != nil {
+		return n, err
+	}
+
+	n += num
+
+	for w.Data == nil {
+		h := new(dataheader.Header)
+
+		if num, err = h.ReadFrom(r); err != nil {
+			return n, err
+		}
+
+		n += num
+
+		chunk := NewChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat)
+		w.Chunks = append(w.Chunks, chunk)
+
+		if chunk.BitDepth() > 0 {
+			w.Data = chunk
+		}
+
+		if num, err = chunk.ReadFrom(r); err != nil {
+			return n, err
+		}
+
+		n += num
+	}
+
+	return n, nil
 }
 
 // Decode will parse the input slice of bytes `buf` and build a Wav object
@@ -104,19 +151,19 @@ func (w *Wav) decodeHeader() (n int, err error) {
 
 func (w *Wav) decodeNewSubChunk(n int) (int, error) {
 	// try to read subchunk headers
-	if w.buf.Len() > datah.Size {
+	if w.buf.Len() > dataheader.Size {
 		var (
 			err            error
-			subchunk       *datah.Header
-			subchunkBuffer = make([]byte, datah.Size)
+			subchunk       *dataheader.Header
+			subchunkBuffer = make([]byte, dataheader.Size)
 		)
 
 		if _, err = w.buf.Read(subchunkBuffer); err != nil {
 			return n, err
 		}
 
-		if subchunk, err = datah.From(subchunkBuffer); err == nil {
-			n += datah.Size
+		if subchunk, err = dataheader.From(subchunkBuffer); err == nil {
+			n += dataheader.Size
 			chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
 			if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
 				w.Data = chunk
