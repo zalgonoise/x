@@ -24,6 +24,19 @@ const (
 	Cap8192
 )
 
+// Slice is a representation of the data structure behind Go slices, as per runtime/slice.go:
+//
+// https://github.com/golang/go/blob/master/src/runtime/slice.go#L15
+type Slice struct {
+	Data unsafe.Pointer
+	Len  int
+	Cap  int
+}
+
+func ExpandSlice[T any](data []T) Slice {
+	return *(*Slice)(unsafe.Pointer(&data))
+}
+
 // ToArray converts a slice into an array of the corresponding size,
 // with a pointer manipulation method (no copying, no reflection)
 //
@@ -67,7 +80,7 @@ func ToArray[T any](slice []T) (any, error) {
 	// [0]: pointer to the underlying array
 	// [1]: slice length
 	// [2]: slice capacity
-	sliceData := *(*[3]uint)(unsafe.Pointer(&slice))
+	sliceData := *(*Slice)(unsafe.Pointer(&slice))
 
 	// the pointer in sliceData[0] can be casted to an array only if the
 	// identifier for the array capacity is a constant.
@@ -80,35 +93,35 @@ func ToArray[T any](slice []T) (any, error) {
 	//
 	// the switch statement is looking into the slice's capacity and casting the
 	// data pointer with the corresponding constant if it exists
-	switch sliceData[2] {
+	switch sliceData.Cap {
 	case 1:
-		return *(*[Cap1]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap1]T)(sliceData.Data), nil
 	case 2:
-		return *(*[Cap2]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap2]T)(sliceData.Data), nil
 	case 4:
-		return *(*[Cap4]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap4]T)(sliceData.Data), nil
 	case 8:
-		return *(*[Cap8]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap8]T)(sliceData.Data), nil
 	case 16:
-		return *(*[Cap16]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap16]T)(sliceData.Data), nil
 	case 32:
-		return *(*[Cap32]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap32]T)(sliceData.Data), nil
 	case 64:
-		return *(*[Cap64]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap64]T)(sliceData.Data), nil
 	case 128:
-		return *(*[Cap128]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap128]T)(sliceData.Data), nil
 	case 256:
-		return *(*[Cap256]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap256]T)(sliceData.Data), nil
 	case 512:
-		return *(*[Cap512]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap512]T)(sliceData.Data), nil
 	case 1024:
-		return *(*[Cap1024]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap1024]T)(sliceData.Data), nil
 	case 2048:
-		return *(*[Cap2048]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap2048]T)(sliceData.Data), nil
 	case 4096:
-		return *(*[Cap4096]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap4096]T)(sliceData.Data), nil
 	case 8192:
-		return *(*[Cap8192]T)(unsafe.Pointer(uintptr(sliceData[0]))), nil
+		return *(*[Cap8192]T)(sliceData.Data), nil
 	default:
 		return nil, ErrInvalidCap
 	}
