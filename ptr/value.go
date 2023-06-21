@@ -1,6 +1,8 @@
 package ptr
 
-import "unsafe"
+import (
+	"unsafe"
+)
 
 // ABIType is a representation of Go ABI's (general / generic) type definition, as per internal/abi/type.go
 //
@@ -22,23 +24,6 @@ type ABIType struct {
 	GCData    *byte
 	Str       int32 // string form
 	PtrToThis int32 // type for pointer to this type, may be zero
-}
-
-// ABIUncommonType is a representation of Go ABI's uncommon types, which are those that
-// also contain methods, as per internal/abi/type.go
-//
-// ABIUncommonType is present only for defined types or types with methods
-// (if T is a defined type, the uncommonTypes for T and *T have methods).
-// Using a pointer to this struct reduces the overall size required
-// to describe a non-defined type with no methods.
-//
-// https://github.com/golang/go/blob/master/src/internal/abi/type.go#L197
-type ABIUncommonType struct {
-	PkgPath int32  // import path; empty for built-in types like int, string
-	Mcount  uint16 // number of methods
-	Xcount  uint16 // number of exported methods
-	Moff    uint32 // offset from this uncommontype to [mcount]Method
-	_       uint32 // unused
 }
 
 // ABIName is a representation of Go ABI's name type, as per internal/abi/type.go
@@ -65,13 +50,14 @@ type ABIInterface struct {
 	Methods []ABIImethod // sorted by hash
 }
 
-func (t *ABIType) Uncommon() *ABIUncommonType {
-	type u struct {
-		ABIInterface
-		u ABIUncommonType
-	}
-
-	return &(*u)(unsafe.Pointer(t)).u
+// ABIMethod on non-interface type
+//
+// https://github.com/golang/go/blob/master/src/internal/abi/type.go#L186
+type ABIMethod struct {
+	Name int32 // name of method
+	Mtyp int32 // method type (without receiver)
+	Ifn  int32 // fn used in interface call (one-word receiver)
+	Tfn  int32 // fn used for normal method call
 }
 
 // Itable is a representation behind Go interface tables, as per runtime/runtime2.go
@@ -133,7 +119,7 @@ func IsEqual(ifaceA, ifaceB any) bool {
 		return false
 	}
 
-	return GetInterface(ifaceA).Itab.Type.Equal(
+	return GetInterface(ifaceA).Itab.Inter.Type.Equal(
 		(*[2]unsafe.Pointer)(unsafe.Pointer(&ifaceA))[1],
 		(*[2]unsafe.Pointer)(unsafe.Pointer(&ifaceB))[1],
 	)
@@ -150,4 +136,61 @@ func Match(ifaceA, ifaceB any) bool {
 	i2 := GetInterface(ifaceB)
 
 	return i1.Itab.Inter.Type.Hash == i2.Itab.Inter.Type.Hash
+}
+
+type uncommonWrapper struct {
+	ABIUncommonInterface
+	u ABIUncommonType
+}
+
+// GetUncommon retrieves the ABIUncommonType from the input interface type.
+//
+// This is not yet working correctly, and should not be yet used.
+func GetUncommon[T any](value T) *ABIUncommonType {
+	return &(*uncommonWrapper)(unsafe.Pointer((*InterfaceUncommon)(unsafe.Pointer(&value)).Itab.Inter.Type)).u
+}
+
+// InterfaceUncommon is a representation behind Go interfaces, as per runtime/runtime2.go
+//
+// https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L204
+type InterfaceUncommon struct {
+	Itab  *ItableUncommon
+	Value unsafe.Pointer
+}
+
+// ItableUncommon is a representation behind Go interface tables, as per runtime/runtime2.go
+//
+// https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L951
+type ItableUncommon struct {
+	Inter ABIUncommonInterface
+	Type  ABIType
+	// Hash is a copy of Type.hash. Used for type switches.
+	Hash uint32
+	_    [4]byte
+	// Fun is variable sized. fun[0]==0 means _type does not implement inter.
+	Fun [1]uintptr
+}
+
+// ABIUncommonInterface is like an ABIInterface, but with a pointer to an ABIType to allow extracting an ABIUncommonType
+type ABIUncommonInterface struct {
+	Type    *ABIType
+	PkgPath ABIName      // import path
+	Methods []ABIImethod // sorted by hash
+}
+
+// ABIUncommonType is a representation of Go ABI's uncommon types, which are those that
+// also contain methods, as per internal/abi/type.go
+//
+// ABIUncommonType is present only for defined types or types with methods
+// (if T is a defined type, the uncommonTypes for T and *T have methods).
+// Using a pointer to this struct reduces the overall size required
+// to describe a non-defined type with no methods.
+//
+// https://github.com/golang/go/blob/master/src/internal/abi/type.go#L197
+type ABIUncommonType struct {
+	PkgPath int32  // import path; empty for built-in types like int, string
+	Mcount  uint16 // number of methods
+	Xcount  uint16 // number of exported methods
+	Moff    uint32 // offset from this uncommontype to [mcount]Method
+	_       uint32 // unused
 }

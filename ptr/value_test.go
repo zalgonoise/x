@@ -160,6 +160,21 @@ func TestIsEqual(t *testing.T) {
 	s1 := fmt.Stringer(impl)
 	s2 := Stringer(impl)
 
+	require.True(t, IsEqual(s1, s2))
+}
+
+func TestMatch(t *testing.T) {
+	impl := &_stringerImpl{value: "OK"}
+
+	s1 := fmt.Stringer(impl)
+	s2 := Stringer(impl)
+
 	require.True(t, Match(s1, s2))
-	//require.True(t, IsEqual(s1, s2))
+}
+
+func TestGetUncommon(t *testing.T) {
+	impl := &_stringerImpl{value: "OK"}
+
+	s1 := Stringer(impl)
+	require.NotNil(t, GetUncommon(s1))
 }
