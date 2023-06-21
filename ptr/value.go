@@ -24,6 +24,23 @@ type ABIType struct {
 	PtrToThis int32 // type for pointer to this type, may be zero
 }
 
+// ABIUncommonType is a representation of Go ABI's uncommon types, which are those that
+// also contain methods, as per internal/abi/type.go
+//
+// ABIUncommonType is present only for defined types or types with methods
+// (if T is a defined type, the uncommonTypes for T and *T have methods).
+// Using a pointer to this struct reduces the overall size required
+// to describe a non-defined type with no methods.
+//
+// https://github.com/golang/go/blob/master/src/internal/abi/type.go#L197
+type ABIUncommonType struct {
+	PkgPath int32  // import path; empty for built-in types like int, string
+	Mcount  uint16 // number of methods
+	Xcount  uint16 // number of exported methods
+	Moff    uint32 // offset from this uncommontype to [mcount]Method
+	_       uint32 // unused
+}
+
 // ABIName is a representation of Go ABI's name type, as per internal/abi/type.go
 //
 // https://github.com/golang/go/blob/master/src/internal/abi/type.go#L589
@@ -41,19 +58,28 @@ type ABIImethod struct {
 
 // ABIInterface is a representation of Go ABI's interface type, as per internal/abi/type.go
 //
-// https://github.com/golang/go/blob/e122ebabb657021964f2bdd31e683ddfa023fd0c/src/internal/abi/type.go#L415
+// https://github.com/golang/go/blob/master/src/internal/abi/type.go#L415
 type ABIInterface struct {
-	ABIType
+	Type    *ABIType
 	PkgPath ABIName      // import path
 	Methods []ABIImethod // sorted by hash
+}
+
+func (t *ABIType) Uncommon() *ABIUncommonType {
+	type u struct {
+		ABIInterface
+		u ABIUncommonType
+	}
+
+	return &(*u)(unsafe.Pointer(t)).u
 }
 
 // Itable is a representation behind Go interface tables, as per runtime/runtime2.go
 //
 // https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L951
 type Itable struct {
-	Inter ABIInterface
-	Type  ABIType
+	Inter *ABIInterface
+	Type  *ABIType
 	// Hash is a copy of Type.hash. Used for type switches.
 	Hash uint32
 	_    [4]byte
@@ -65,7 +91,7 @@ type Itable struct {
 //
 // https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L204
 type Interface struct {
-	Itab  Itable
+	Itab  *Itable
 	Value unsafe.Pointer
 }
 
@@ -99,4 +125,26 @@ func IsNil(value any) bool {
 	ptr := *(*[2]uintptr)(unsafe.Pointer(&value))
 
 	return ptr[1] == 0
+}
+
+// IsEqual compares two interfaces via their built-in ABIType.Equal function
+func IsEqual(ifaceA, ifaceB any) bool {
+	if ifaceA == nil || ifaceB == nil {
+		return false
+	}
+
+	return GetInterface(ifaceA).Itab.Type.Equal(
+		(*[2]unsafe.Pointer)(unsafe.Pointer(&ifaceA))[1],
+		(*[2]unsafe.Pointer)(unsafe.Pointer(&ifaceB))[1],
+	)
+}
+
+// Match compares two interfaces for matching hashes, meaning that they should be
+// compatible with one another (same list of methods)
+func Match(ifaceA, ifaceB any) bool {
+	if ifaceA == nil || ifaceB == nil {
+		return false
+	}
+
+	return GetInterface(ifaceA).Itab.Hash == GetInterface(ifaceB).Itab.Hash
 }

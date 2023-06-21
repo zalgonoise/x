@@ -2,8 +2,9 @@ package ptr
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type _stringerImpl struct{ value string }
@@ -147,4 +148,21 @@ func TestGetInterface(t *testing.T) {
 
 		require.NotEmpty(t, iface.Itab.Hash)
 	})
+}
+
+func TestMatch(t *testing.T) {
+	type Stringer interface {
+		String() string
+	}
+
+	impl := &_stringerImpl{value: "OK"}
+
+	s1 := fmt.Stringer(impl)
+	s2 := Stringer(impl)
+
+	i1 := GetInterface(s1)
+	i2 := GetInterface(s2)
+
+	require.Equal(t, int(i1.Itab.Hash), int(i2.Itab.Hash))
+	require.True(t, i1.Itab.Type.Equal(i1.Value, i2.Value))
 }
