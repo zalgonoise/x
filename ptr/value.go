@@ -60,7 +60,7 @@ type ABIImethod struct {
 //
 // https://github.com/golang/go/blob/master/src/internal/abi/type.go#L415
 type ABIInterface struct {
-	Type    *ABIType
+	Type    ABIType
 	PkgPath ABIName      // import path
 	Methods []ABIImethod // sorted by hash
 }
@@ -78,8 +78,8 @@ func (t *ABIType) Uncommon() *ABIUncommonType {
 //
 // https://github.com/golang/go/blob/master/src/runtime/runtime2.go#L951
 type Itable struct {
-	Inter *ABIInterface
-	Type  *ABIType
+	Inter ABIInterface
+	Type  ABIType
 	// Hash is a copy of Type.hash. Used for type switches.
 	Hash uint32
 	_    [4]byte
@@ -146,5 +146,8 @@ func Match(ifaceA, ifaceB any) bool {
 		return false
 	}
 
-	return GetInterface(ifaceA).Itab.Hash == GetInterface(ifaceB).Itab.Hash
+	i1 := GetInterface(ifaceA)
+	i2 := GetInterface(ifaceB)
+
+	return i1.Itab.Inter.Type.Hash == i2.Itab.Inter.Type.Hash
 }

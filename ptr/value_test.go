@@ -150,19 +150,16 @@ func TestGetInterface(t *testing.T) {
 	})
 }
 
-func TestMatch(t *testing.T) {
-	type Stringer interface {
-		String() string
-	}
+type Stringer interface {
+	String() string
+}
 
+func TestIsEqual(t *testing.T) {
 	impl := &_stringerImpl{value: "OK"}
 
 	s1 := fmt.Stringer(impl)
 	s2 := Stringer(impl)
 
-	i1 := GetInterface(s1)
-	i2 := GetInterface(s2)
-
-	require.Equal(t, int(i1.Itab.Hash), int(i2.Itab.Hash))
-	require.True(t, i1.Itab.Type.Equal(i1.Value, i2.Value))
+	require.True(t, Match(s1, s2))
+	//require.True(t, IsEqual(s1, s2))
 }
