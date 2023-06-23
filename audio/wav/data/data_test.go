@@ -2,6 +2,7 @@ package data
 
 import (
 	"bytes"
+	"github.com/zalgonoise/x/audio/wav/data/filters"
 	"testing"
 	"time"
 
@@ -176,6 +177,32 @@ func TestDataChunk(t *testing.T) {
 						chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
 
 						require.Len(t, chunk.Data, 0)
+					},
+				}, {
+					name: "SetBitDepth/RoundTrip",
+					op: func(chunk *DataChunk) {
+						origDepth := chunk.Depth
+
+						newChunk, err := chunk.SetBitDepth(16)
+						require.NoError(t, err)
+
+						rtChunk, err := newChunk.SetBitDepth(origDepth)
+						require.NoError(t, err)
+
+						require.Equal(t, chunk.Data, rtChunk.Data)
+					},
+				}, {
+					name: "Apply",
+					op: func(chunk *DataChunk) {
+						orig := make([]float64, len(chunk.Data))
+						copy(orig, chunk.Data)
+
+						chunk.Apply(
+							filters.PhaseFlip(),
+							filters.PhaseFlip(),
+						)
+
+						require.Equal(t, orig, chunk.Data)
 					},
 				},
 			} {
