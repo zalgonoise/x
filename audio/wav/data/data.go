@@ -217,9 +217,10 @@ func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
 	}
 
 	if len(d.Data) > 0 {
+		newChunk.Data = make([]float64, len(d.Data))
 		copy(newChunk.Data, d.Data)
 
-		newChunk.ChunkHeader.Subchunk2Size = uint32(len(newChunk.Converter.Bytes(d.Data)))
+		newChunk.ChunkHeader.Subchunk2Size = uint32(len(newChunk.Converter.Bytes(newChunk.Data)))
 	}
 
 	return newChunk, nil
