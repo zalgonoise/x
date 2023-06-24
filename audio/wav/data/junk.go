@@ -13,6 +13,8 @@ type JunkChunk struct {
 	ChunkHeader *header.Header
 	Data        []byte
 	Depth       uint16
+
+	written int
 }
 
 // Write implements the io.Writer interface
@@ -34,40 +36,29 @@ func (d *JunkChunk) Read(buf []byte) (n int, err error) {
 }
 
 func (d *JunkChunk) ReadFrom(p io.Reader) (n int64, err error) {
-	var num int
+	var size int
 
-	// continue writing to d.Data
-	if d.Data != nil && cap(d.Data) > 0 {
-		num, err = p.Read(d.Data[len(d.Data):])
-		if err != nil {
-			return 0, err
-		}
-
-		return int64(num), err
+	switch {
+	case d.ChunkHeader == nil:
+		return 0, ErrMissingHeader
+	case d.ChunkHeader.Subchunk2Size == 0:
+		return n, nil
+	default:
+		size = int(d.ChunkHeader.Subchunk2Size)
 	}
 
-	// d.Data is nil but header has a size set. Create a slice of this size and
-	// write to it
-	if d.ChunkHeader != nil && d.ChunkHeader.Subchunk2Size > 0 {
-		d.Data = make([]byte, d.ChunkHeader.Subchunk2Size)
-
-		num, err = p.Read(d.Data[len(d.Data):])
-		if err != nil {
-			return 0, err
-		}
-
-		return int64(num), err
+	if d.written == size {
+		return 0, nil
 	}
 
-	// default to reading all the bytes in the reader, and processing them
-	buf, err := io.ReadAll(p)
-	if err != nil {
-		return 0, err
+	if d.Data == nil {
+		d.Data = make([]byte, size)
 	}
 
-	d.Parse(buf)
+	num, err := p.Read(d.Data[d.written:size])
+	d.written = num
 
-	return int64(len(buf)), nil
+	return int64(num), err
 }
 
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
