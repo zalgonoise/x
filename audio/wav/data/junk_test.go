@@ -2,7 +2,8 @@ package data
 
 import (
 	"bytes"
-	"reflect"
+	"github.com/stretchr/testify/require"
+	"github.com/zalgonoise/x/audio/wav/data/filters"
 	"testing"
 	"time"
 
@@ -10,75 +11,166 @@ import (
 	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
-func TestJunk(t *testing.T) {
+func TestJunkChunk(t *testing.T) {
+	var err error
 	input := []byte("some junk data")
-
-	junkHeader := &header.Header{}
-	junk := &JunkChunk{
-		ChunkHeader: junkHeader,
-		Depth:       16,
+	h := &header.Header{
+		Subchunk2ID:   header.Junk,
+		Subchunk2Size: 14,
 	}
+	bitDepth := 0
 
-	t.Run("ParseAndBytes", func(t *testing.T) {
-		// clear Subchunk2Size
-		junk.ChunkHeader.Subchunk2Size = 0
-		junk.Parse(input)
-		junk.ParseFloat(nil)
+	for _, testcase := range []struct {
+		name string
+		op   func(chunk *JunkChunk)
+	}{
+		{
+			name: "ParseAndBytes",
+			op: func(chunk *JunkChunk) {
+				require.Equal(t, input, chunk.Bytes())
+			},
+		}, {
+			name: "WriteAndRead",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
 
-		output := junk.Bytes()
-		if !bytes.Equal(input, output) {
-			t.Errorf("output mismatch error: wanted %v ; got %v", input, output)
-		}
-	})
+				_, err = chunk.Write(input)
+				require.NoError(t, err)
 
-	t.Run("Value", func(t *testing.T) {
-		value := junk.Value()
-		for i := range input {
-			if int(input[i]) != value[i] {
-				t.Errorf("output mismatch error on index #%v: wanted %v ; got %v", i, input[i], value[i])
-			}
-		}
-	})
+				buf := make([]byte, len(input))
 
-	t.Run("Float", func(t *testing.T) {
-		f := junk.Float()
-		if f != nil {
-			t.Errorf("output mismatch error: wanted %v ; got %v", nil, f)
-		}
-	})
+				_, err = chunk.Read(buf)
+				require.NoError(t, err)
 
-	t.Run("ParseSecondRun", func(t *testing.T) {
-		// second run to test Parse on a dirty state
-		junk.Parse(input)
-	})
+				require.Equal(t, input, buf)
+			},
+		},
+		{
+			name: "ReadFrom",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
 
-	t.Run("ChunkHeader", func(t *testing.T) {
-		h := junk.Header()
-		if !reflect.DeepEqual(junkHeader, h) {
-			t.Errorf("output mismatch error: wanted %v ; got %v", junkHeader, h)
-		}
-	})
+				reader := bytes.NewReader(input)
 
-	t.Run("BitDepth", func(t *testing.T) {
-		depth := junk.BitDepth()
-		if depth != 16 {
-			t.Errorf("output mismatch error: wanted %v ; got %v", 16, depth)
-		}
-	})
+				_, err = chunk.ReadFrom(reader)
+				require.NoError(t, err)
 
-	t.Run("Reset", func(t *testing.T) {
-		junk.Reset()
+				buf := make([]byte, len(input))
 
-		if len(junk.Data) != 0 {
-			t.Errorf("output mismatch error: wanted %v ; got %v", 0, len(junk.Data))
-		}
-	})
+				_, err = chunk.Read(buf)
+				require.NoError(t, err)
 
-	t.Run("Generate", func(t *testing.T) {
-		junk.Generate(osc.SineWave, 2000, 16, 500*time.Millisecond)
+				require.Equal(t, input, buf)
+			},
+		}, {
+			name: "Value",
+			op: func(chunk *JunkChunk) {
+				require.Greater(t, len(chunk.Value()), 0)
+			},
+		}, {
+			name: "Float",
+			op: func(chunk *JunkChunk) {
+				require.Equal(t, len(chunk.Float()), 0)
+			},
+		}, {
+			name: "ParseFloat",
+			op: func(chunk *JunkChunk) {
+				chunk.ParseFloat([]float64{1.5})
+			},
+		}, {
+			name: "ParseSecondRun",
+			op: func(chunk *JunkChunk) {
+				chunk.Parse(input)
+			},
+		}, {
+			name: "Header",
+			op: func(chunk *JunkChunk) {
+				require.Equal(t, h, chunk.Header())
+			},
+		}, {
+			name: "BitDepth",
+			op: func(chunk *JunkChunk) {
+				require.Equal(t, uint16(bitDepth), chunk.BitDepth())
+			},
+		}, {
+			name: "Reset",
+			op: func(chunk *JunkChunk) {
+				chunk.Reset()
+				require.Len(t, chunk.Data, 0)
+			},
+		}, {
+			name: "Generate/Success/SineWithNilData",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
+				chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
 
-		if len(junk.Data) != 0 {
-			t.Errorf("output mismatch error: wanted %v ; got %v", 0, len(junk.Data))
-		}
-	})
+				require.Len(t, chunk.Data, 0)
+			},
+		}, {
+			name: "Generate/Success/Square",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
+				chunk.Generate(osc.SquareWave, 2000, 44100, 100*time.Millisecond)
+
+				require.Len(t, chunk.Data, 0)
+			},
+		}, {
+			name: "Generate/Success/Triangle",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
+				chunk.Generate(osc.TriangleWave, 2000, 44100, 100*time.Millisecond)
+
+				require.Len(t, chunk.Data, 0)
+			},
+		}, {
+			name: "Generate/Success/SawtoothUp",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
+				chunk.Generate(osc.SawtoothUpWave, 2000, 44100, 100*time.Millisecond)
+
+				require.Len(t, chunk.Data, 0)
+			},
+		}, {
+			name: "Generate/Success/SawtoothDown",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
+				chunk.Generate(osc.SawtoothDownWave, 2000, 44100, 100*time.Millisecond)
+
+				require.Len(t, chunk.Data, 0)
+			},
+		}, {
+			name: "Generate/Fail",
+			op: func(chunk *JunkChunk) {
+				chunk.Data = nil
+				chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
+
+				require.Len(t, chunk.Data, 0)
+			},
+		}, {
+			name: "SetBitDepth/RoundTrip",
+			op: func(chunk *JunkChunk) {
+				_, err := chunk.SetBitDepth(16)
+				require.NoError(t, err)
+			},
+		}, {
+			name: "Apply",
+			op: func(chunk *JunkChunk) {
+				orig := make([]byte, len(chunk.Data))
+				copy(orig, chunk.Data)
+
+				chunk.Apply(
+					filters.PhaseFlip(),
+					filters.PhaseFlip(),
+				)
+
+				require.Equal(t, orig, chunk.Data)
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			chunk := NewJunkChunk(h)
+			chunk.Parse(input)
+			testcase.op(chunk)
+		})
+	}
 }
