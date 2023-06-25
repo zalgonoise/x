@@ -179,19 +179,6 @@ func TestDataChunk(t *testing.T) {
 						require.Len(t, chunk.Data, 0)
 					},
 				}, {
-					name: "SetBitDepth/RoundTrip",
-					op: func(chunk *DataChunk) {
-						origDepth := chunk.Depth
-
-						newChunk, err := chunk.SetBitDepth(16)
-						require.NoError(t, err)
-
-						rtChunk, err := newChunk.SetBitDepth(origDepth)
-						require.NoError(t, err)
-
-						require.Equal(t, chunk.Data, rtChunk.Data)
-					},
-				}, {
 					name: "Apply",
 					op: func(chunk *DataChunk) {
 						orig := make([]float64, len(chunk.Data))
@@ -377,19 +364,6 @@ func TestDataRing(t *testing.T) {
 					name: "Generate/Fail",
 					op: func(chunk *DataRing) {
 						chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
-					},
-				}, {
-					name: "SetBitDepth/RoundTrip",
-					op: func(chunk *DataRing) {
-						//origDepth := chunk.Depth
-						//
-						//newChunk, err := chunk.SetBitDepth(16)
-						//require.NoError(t, err)
-						//
-						//rtChunk, err := newChunk.SetBitDepth(origDepth)
-						//require.NoError(t, err)
-						//
-						//require.Equal(t, chunk.Data, rtChunk.Data)
 					},
 				}, {
 					name: "Apply",

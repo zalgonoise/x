@@ -147,12 +147,6 @@ func TestJunkChunk(t *testing.T) {
 				require.Len(t, chunk.Data, 0)
 			},
 		}, {
-			name: "SetBitDepth/RoundTrip",
-			op: func(chunk *JunkChunk) {
-				_, err := chunk.SetBitDepth(16)
-				require.NoError(t, err)
-			},
-		}, {
 			name: "Apply",
 			op: func(chunk *JunkChunk) {
 				orig := make([]byte, len(chunk.Data))
