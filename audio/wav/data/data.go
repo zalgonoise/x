@@ -18,6 +18,7 @@ const (
 	bitDepth16 uint16 = 16
 	bitDepth24 uint16 = 24
 	bitDepth32 uint16 = 32
+	bitDepth64 uint16 = 64
 
 	byteSize = 8
 )
@@ -228,28 +229,28 @@ func NewPCMDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.Conv8Bit{},
+			Converter:   conv.PCM8Bit{},
 			byteSize:    size8,
 		}
 	case bitDepth16:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.Conv16Bit{},
+			Converter:   conv.PCM16Bit{},
 			byteSize:    size16,
 		}
 	case bitDepth24:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.Conv24Bit{},
+			Converter:   conv.PCM24Bit{},
 			byteSize:    size24,
 		}
 	case bitDepth32:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.Conv32Bit{},
+			Converter:   conv.PCM32Bit{},
 			byteSize:    size32,
 		}
 	default:
@@ -265,18 +266,18 @@ func NewFloatDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 	}
 
 	switch bitDepth {
-	case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
+	case bitDepth64:
 		return &DataChunk{
 			ChunkHeader: h,
-			Depth:       bitDepth,
-			Converter:   conv.ConvFloat{},
+			Depth:       bitDepth64,
+			Converter:   conv.Float64{},
 			byteSize:    int(bitDepth) / byteSize,
 		}
 	default:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth32,
-			Converter:   conv.ConvFloat{},
+			Converter:   conv.Float32{},
 			byteSize:    size32,
 		}
 	}
