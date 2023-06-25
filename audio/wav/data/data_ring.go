@@ -3,6 +3,7 @@ package data
 import (
 	"github.com/zalgonoise/gbuf"
 	"github.com/zalgonoise/x/audio/osc"
+	"github.com/zalgonoise/x/audio/wav/data/conv"
 	"github.com/zalgonoise/x/audio/wav/data/header"
 	"io"
 	"time"
@@ -117,7 +118,7 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size),
 			Depth:       bitDepth,
-			Converter:   Conv8Bit{},
+			Converter:   conv.Conv8Bit{},
 			byteSize:    size8,
 		}
 	case bitDepth16:
@@ -125,7 +126,7 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
 			Depth:       bitDepth,
-			Converter:   Conv16Bit{},
+			Converter:   conv.Conv16Bit{},
 			byteSize:    size16,
 		}
 	case bitDepth24:
@@ -133,7 +134,7 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
 			Depth:       bitDepth,
-			Converter:   Conv24Bit{},
+			Converter:   conv.Conv24Bit{},
 			byteSize:    size24,
 		}
 	case bitDepth32:
@@ -141,7 +142,7 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
 			Depth:       bitDepth,
-			Converter:   Conv32Bit{},
+			Converter:   conv.Conv32Bit{},
 			byteSize:    size32,
 		}
 	default:
