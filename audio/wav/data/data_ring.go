@@ -92,23 +92,6 @@ func (d *DataRing) Generate(waveType osc.Type, freq, sampleRate int, dur time.Du
 	_, _ = d.Data.Write(buf)
 }
 
-func (d *DataRing) SetBitDepth(bitDepth uint16) (*DataRing, error) {
-	newChunk := NewPCMDataRing(d.Data.Cap()*int(d.Depth/byteSize), bitDepth, d.ChunkHeader)
-	if newChunk == nil {
-		return nil, ErrInvalidBitDepth
-	}
-
-	if _, err := newChunk.Data.ReadFrom(d.Data); err != nil {
-		return nil, err
-	}
-
-	return newChunk, nil
-}
-
-func (d *DataRing) SetBufferSize(size int) {
-
-}
-
 func (d *DataRing) Apply(filters ...FilterFunc) {
 	data := d.Data.Value()
 
