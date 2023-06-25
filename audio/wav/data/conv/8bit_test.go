@@ -1,12 +1,12 @@
 package conv_test
 
 import (
-	"github.com/zalgonoise/x/audio/wav/data"
-	"github.com/zalgonoise/x/audio/wav/data/internal/testdata"
 	"reflect"
 	"testing"
 
+	"github.com/zalgonoise/x/audio/wav/data"
 	"github.com/zalgonoise/x/audio/wav/data/header"
+	"github.com/zalgonoise/x/audio/wav/data/internal/testdata/pcm"
 )
 
 const (
@@ -21,7 +21,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 		"Parse", func(b *testing.B) {
 			b.Run(
 				"NewBuffer", func(b *testing.B) {
-					h, err := header.From(testdata.Test8bitHeader)
+					h, err := header.From(pcm.Test8bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
@@ -31,24 +31,24 @@ func BenchmarkChunk8bit(b *testing.B) {
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
 						chunk = data.NewPCMDataChunk(bitDepth8, h)
-						chunk.Parse(testdata.Test8bitPCM)
+						chunk.Parse(pcm.Test8bitPCM)
 					}
 					_ = chunk
 				},
 			)
 			b.Run(
 				"Append", func(b *testing.B) {
-					h, err := header.From(testdata.Test8bitHeader)
+					h, err := header.From(pcm.Test8bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
 					}
 
 					var chunk = data.NewPCMDataChunk(bitDepth8, h)
-					chunk.Parse(testdata.Test8bitPCM)
+					chunk.Parse(pcm.Test8bitPCM)
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						chunk.Parse(testdata.Test8bitPCM)
+						chunk.Parse(pcm.Test8bitPCM)
 					}
 					_ = chunk
 				},
@@ -57,7 +57,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 	)
 	b.Run(
 		"Bytes", func(b *testing.B) {
-			h, err := header.From(testdata.Test8bitHeader)
+			h, err := header.From(pcm.Test8bitHeader)
 			if err != nil {
 				b.Error(err)
 				return
@@ -67,7 +67,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 				chunk = data.NewPCMDataChunk(bitDepth8, h)
 				buf   []byte
 			)
-			chunk.Parse(testdata.Test8bitPCM)
+			chunk.Parse(pcm.Test8bitPCM)
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
@@ -79,7 +79,7 @@ func BenchmarkChunk8bit(b *testing.B) {
 }
 
 func Test8bitHeader(t *testing.T) {
-	h, err := header.From(testdata.Test8bitHeader)
+	h, err := header.From(pcm.Test8bitHeader)
 	if err != nil {
 		t.Error(err)
 		return

@@ -1,12 +1,12 @@
 package conv_test
 
 import (
-	"github.com/zalgonoise/x/audio/wav/data"
-	"github.com/zalgonoise/x/audio/wav/data/internal/testdata"
 	"reflect"
 	"testing"
 
+	"github.com/zalgonoise/x/audio/wav/data"
 	"github.com/zalgonoise/x/audio/wav/data/header"
+	"github.com/zalgonoise/x/audio/wav/data/internal/testdata/pcm"
 )
 
 func BenchmarkChunk16bit(b *testing.B) {
@@ -14,7 +14,7 @@ func BenchmarkChunk16bit(b *testing.B) {
 		"Parse", func(b *testing.B) {
 			b.Run(
 				"NewBuffer", func(b *testing.B) {
-					h, err := header.From(testdata.Test16bitHeader)
+					h, err := header.From(pcm.Test16bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
@@ -24,24 +24,24 @@ func BenchmarkChunk16bit(b *testing.B) {
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
 						chunk = data.NewPCMDataChunk(bitDepth16, h)
-						chunk.Parse(testdata.Test16bitPCM)
+						chunk.Parse(pcm.Test16bitPCM)
 					}
 					_ = chunk
 				},
 			)
 			b.Run(
 				"Append", func(b *testing.B) {
-					h, err := header.From(testdata.Test16bitHeader)
+					h, err := header.From(pcm.Test16bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
 					}
 
 					var chunk = data.NewPCMDataChunk(bitDepth16, h)
-					chunk.Parse(testdata.Test16bitPCM)
+					chunk.Parse(pcm.Test16bitPCM)
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						chunk.Parse(testdata.Test16bitPCM)
+						chunk.Parse(pcm.Test16bitPCM)
 					}
 					_ = chunk
 				},
@@ -50,7 +50,7 @@ func BenchmarkChunk16bit(b *testing.B) {
 	)
 	b.Run(
 		"Generate", func(b *testing.B) {
-			h, err := header.From(testdata.Test16bitHeader)
+			h, err := header.From(pcm.Test16bitHeader)
 			if err != nil {
 				b.Error(err)
 				return
@@ -60,7 +60,7 @@ func BenchmarkChunk16bit(b *testing.B) {
 				chunk = data.NewPCMDataChunk(bitDepth16, h)
 				buf   []byte
 			)
-			chunk.Parse(testdata.Test16bitPCM)
+			chunk.Parse(pcm.Test16bitPCM)
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
@@ -72,7 +72,7 @@ func BenchmarkChunk16bit(b *testing.B) {
 }
 
 func Test16bitHeader(t *testing.T) {
-	h, err := header.From(testdata.Test16bitHeader)
+	h, err := header.From(pcm.Test16bitHeader)
 	if err != nil {
 		t.Error(err)
 		return
