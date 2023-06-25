@@ -14,7 +14,7 @@ import (
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
-//go:embed testdata/*
+//go:embed data/internal/testdata/amen_kick/*
 var testdataFS embed.FS
 
 func load() ([][]byte, error) {
@@ -33,37 +33,37 @@ func load() ([][]byte, error) {
 		stereo32bit44100 []byte
 	)
 
-	if mono8bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_8bit_44100hz.wav"); err != nil {
+	if mono8bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_8bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
-	if mono16bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_16bit_44100hz.wav"); err != nil {
+	if mono16bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_16bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
-	if mono24bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_24bit_44100hz.wav"); err != nil {
+	if mono24bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_24bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
-	if mono32bit44100, err = testdataFS.ReadFile("testdata/amen_kick_mono_32bit_44100hz.wav"); err != nil {
+	if mono32bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_32bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
-	if mono32bit96000, err = testdataFS.ReadFile("testdata/amen_kick_mono_32bit_96000hz.wav"); err != nil {
+	if mono32bit96000, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_32bit_96000hz.wav"); err != nil {
 		return nil, err
 	}
-	if mono32bit192000, err = testdataFS.ReadFile("testdata/amen_kick_mono_32bit_192000hz.wav"); err != nil {
+	if mono32bit192000, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_32bit_192000hz.wav"); err != nil {
 		return nil, err
 	}
-	if mono8bit176400, err = testdataFS.ReadFile("testdata/amen_kick_mono_8bit_176400hz.wav"); err != nil {
+	if mono8bit176400, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_8bit_176400hz.wav"); err != nil {
 		return nil, err
 	}
-	if stereo8bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_8bit_44100hz.wav"); err != nil {
+	if stereo8bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_8bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
-	if stereo16bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_16bit_44100hz.wav"); err != nil {
+	if stereo16bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_16bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
-	if stereo24bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_24bit_44100hz.wav"); err != nil {
+	if stereo24bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_24bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
-	if stereo32bit44100, err = testdataFS.ReadFile("testdata/amen_kick_stereo_32bit_44100hz.wav"); err != nil {
+	if stereo32bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_32bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
