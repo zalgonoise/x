@@ -88,7 +88,7 @@ func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
 	}
 }
 
-func NewRingChunk(size int, h *datah.Header, bitDepth, format uint16) Chunk {
+func NewRingChunk(h *datah.Header, bitDepth, format uint16, size int, proc func([]float64) error) Chunk {
 	if h != nil && string(h.Subchunk2ID[:]) == datah.JunkIDString {
 		return data.NewJunkChunk(h)
 	}
@@ -101,12 +101,12 @@ func NewRingChunk(size int, h *datah.Header, bitDepth, format uint16) Chunk {
 		case 0:
 			return data.NewJunkChunk(h)
 		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-			return data.NewPCMDataRing(size, bitDepth, h)
+			return data.NewPCMDataRing(bitDepth, h, size, proc)
 		default:
 			return nil
 		}
 	case header.FloatFormat:
-		return data.NewFloatDataRing(size, bitDepth, h)
+		return data.NewFloatDataRing(bitDepth, h, size, proc)
 	default:
 		return nil
 	}
