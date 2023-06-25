@@ -3,6 +3,7 @@ package data
 import (
 	"bytes"
 	"github.com/zalgonoise/x/audio/wav/data/filters"
+	"github.com/zalgonoise/x/audio/wav/data/internal/testdata"
 	"testing"
 	"time"
 
@@ -22,26 +23,26 @@ func TestDataChunk(t *testing.T) {
 		{
 			name:     "8Bit",
 			bitDepth: 8,
-			header:   test8bitHeader,
-			data:     test8bitPCM,
+			header:   testdata.Test8bitHeader,
+			data:     testdata.Test8bitPCM,
 		},
 		{
 			name:     "16Bit",
 			bitDepth: 16,
-			header:   test16bitHeader,
-			data:     test16bitPCM,
+			header:   testdata.Test16bitHeader,
+			data:     testdata.Test16bitPCM,
 		},
 		{
 			name:     "24Bit",
 			bitDepth: 24,
-			header:   test24bitHeader,
-			data:     test24bitPCM,
+			header:   testdata.Test24bitHeader,
+			data:     testdata.Test24bitPCM,
 		},
 		{
 			name:     "32Bit",
 			bitDepth: 32,
-			header:   test32bitHeader,
-			data:     test32bitPCM,
+			header:   testdata.Test32bitHeader,
+			data:     testdata.Test32bitPCM,
 		},
 	} {
 		t.Run(class.name, func(t *testing.T) {
@@ -214,29 +215,29 @@ func TestDataRing(t *testing.T) {
 		{
 			name:     "8Bit",
 			bitDepth: 8,
-			header:   test8bitHeader,
-			data:     test8bitPCM,
+			header:   testdata.Test8bitHeader,
+			data:     testdata.Test8bitPCM,
 			size:     64,
 		},
 		{
 			name:     "16Bit",
 			bitDepth: 16,
-			header:   test16bitHeader,
-			data:     test16bitPCM,
+			header:   testdata.Test16bitHeader,
+			data:     testdata.Test16bitPCM,
 			size:     64,
 		},
 		{
 			name:     "24Bit",
 			bitDepth: 24,
-			header:   test24bitHeader,
-			data:     test24bitPCM,
+			header:   testdata.Test24bitHeader,
+			data:     testdata.Test24bitPCM,
 			size:     96,
 		},
 		{
 			name:     "32Bit",
 			bitDepth: 32,
-			header:   test32bitHeader,
-			data:     test32bitPCM,
+			header:   testdata.Test32bitHeader,
+			data:     testdata.Test32bitPCM,
 			size:     128,
 		},
 	} {
