@@ -1,8 +1,8 @@
-package data
+package conv
 
-import "unsafe"
-
-var _ Converter = ConvFloat{}
+import (
+	"unsafe"
+)
 
 // ConvFloat is a 32bit IEEE Floating Point audio Converter
 type ConvFloat struct{}
@@ -11,7 +11,7 @@ type ConvFloat struct{}
 func (ConvFloat) Parse(buf []byte) []float64 {
 	data := *(*[]uint32)(unsafe.Pointer(&buf))
 
-	return conv(
+	return convert(
 		data[:len(buf)/4], func(v uint32) float64 {
 			return float64(*(*float32)(unsafe.Pointer(&v)))
 		},
@@ -20,7 +20,7 @@ func (ConvFloat) Parse(buf []byte) []float64 {
 
 // Bytes consumes the input floating point audio buffer, returning its byte representation
 func (ConvFloat) Bytes(buf []float64) []byte {
-	value := conv(
+	value := convert(
 		buf, func(f float64) float32 {
 			return float32(f)
 		},
@@ -40,7 +40,7 @@ func (ConvFloat) Bytes(buf []float64) []byte {
 
 // Value consumes the input floating point audio buffer, returning its PCM audio values as a slice of int
 func (ConvFloat) Value(buf []float64) []int {
-	return conv(
+	return convert(
 		buf, func(f float64) int {
 			return int(f * maxInt32)
 		},
