@@ -15,6 +15,7 @@ const (
 	bitDepth16 uint16 = 16
 	bitDepth24 uint16 = 24
 	bitDepth32 uint16 = 32
+	bitDepth64 uint16 = 64
 )
 
 // Chunk describes the behavior that a data chunk exposes, which involve
@@ -82,6 +83,30 @@ func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
 		}
 	case header.FloatFormat:
 		return data.NewFloatDataChunk(bitDepth, h)
+	default:
+		return nil
+	}
+}
+
+func NewRingChunk(size int, h *datah.Header, bitDepth, format uint16) Chunk {
+	if h != nil && string(h.Subchunk2ID[:]) == datah.JunkIDString {
+		return data.NewJunkChunk(h)
+	}
+
+	switch format {
+	case header.UnsetFormat:
+		fallthrough
+	case header.PCMFormat:
+		switch bitDepth {
+		case 0:
+			return data.NewJunkChunk(h)
+		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
+			return data.NewPCMDataRing(size, bitDepth, h)
+		default:
+			return nil
+		}
+	case header.FloatFormat:
+		return data.NewFloatDataRing(size, bitDepth, h)
 	default:
 		return nil
 	}
