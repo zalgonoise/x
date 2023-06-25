@@ -208,34 +208,6 @@ func (d *DataChunk) Generate(waveType osc.Type, freq, sampleRate int, dur time.D
 	d.Data = append(d.Data, buf...)
 }
 
-// SetBitDepth returns a new DataChunk with the input `bitDepth`'s converter, or
-// an error if invalid. The new DataChunk retains any PCM data it contains, as a copy.
-func (d *DataChunk) SetBitDepth(bitDepth uint16) (*DataChunk, error) {
-	newChunk := NewPCMDataChunk(bitDepth, d.ChunkHeader)
-	if newChunk == nil {
-		return nil, ErrInvalidBitDepth
-	}
-
-	if len(d.Data) > 0 {
-		newChunk.Data = make([]float64, len(d.Data))
-		copy(newChunk.Data, d.Data)
-
-		newChunk.ChunkHeader.Subchunk2Size = uint32(len(newChunk.Converter.Bytes(newChunk.Data)))
-	}
-
-	return newChunk, nil
-}
-
-// SetBufferSize delimits the size of the buffer, so that an audio stream keeps reusing the
-// same pre-allocated buffer
-func (d *DataChunk) SetBufferSize(size int) {
-	if size < dataChunkBaseLen {
-		return
-	}
-
-	d.blockSize = size
-}
-
 // Apply transforms the floating-point audio data with each FilterFunc in `filters`
 func (d *DataChunk) Apply(filters ...FilterFunc) {
 	for i := range filters {
