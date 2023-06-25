@@ -3,7 +3,7 @@ package conv
 // BitDepthTypes is a type constraint joining all the different
 // data types used by the supported bit depths
 type BitDepthTypes interface {
-	int8 | int16 | int32 | uint32 | byte | int | float64 | float32
+	int8 | int16 | int32 | uint32 | uint64 | byte | int | float64 | float32
 }
 
 const (
@@ -11,6 +11,7 @@ const (
 	size16
 	size24
 	size32
+	size64 = 8
 )
 
 func convert[F, T BitDepthTypes](from []F, fn func(F) T) []T {
@@ -66,5 +67,12 @@ func append3Bytes(idx int, dst []byte, src [size24]byte) {
 func append4Bytes(idx int, dst []byte, src [size32]byte) {
 	if idx*size32 < len(dst) {
 		copy(dst[idx*size32:], src[:])
+	}
+}
+
+// can't inline a pointer cast and convert an array to a slice
+func append8Bytes(idx int, dst []byte, src [size64]byte) {
+	if idx*size64 < len(dst) {
+		copy(dst[idx*size64:], src[:])
 	}
 }
