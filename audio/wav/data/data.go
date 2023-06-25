@@ -48,14 +48,6 @@ type DataChunk struct {
 // FilterFunc is a function that applies a transformation to a floating-point audio buffer
 type FilterFunc func([]float64)
 
-func (d *DataChunk) growChunkSize(v uint32) {
-	d.ChunkHeader.Subchunk2Size += v
-}
-
-func (d *DataChunk) setChunkSize(v uint32) {
-	d.ChunkHeader.Subchunk2Size = v
-}
-
 // Write implements the io.Writer interface
 //
 // It allows to grow the DataChunk's audio data with the input `buf` bytes, returning the number of
@@ -132,12 +124,11 @@ func (d *DataChunk) Parse(buf []byte) {
 
 	if d.Data == nil {
 		d.Data = d.Converter.Parse(buf)
-		d.setChunkSize(ln)
+
 		return
 	}
 
 	d.Data = append(d.Data, d.Converter.Parse(buf)...)
-	d.growChunkSize(ln)
 }
 
 // ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
@@ -174,7 +165,6 @@ func (d *DataChunk) BitDepth() uint16 { return d.Depth }
 // Reset clears the data stored in the DataChunk
 func (d *DataChunk) Reset() {
 	d.Data = make([]float64, 0, dataChunkBaseLen)
-	d.setChunkSize(0)
 }
 
 // Value returns the PCM audio buffer from the DataChunk, as a slice of int
