@@ -3,7 +3,7 @@ package data
 import (
 	"bytes"
 	"github.com/zalgonoise/x/audio/wav/data/filters"
-	"github.com/zalgonoise/x/audio/wav/data/internal/testdata"
+	"github.com/zalgonoise/x/audio/wav/data/internal/testdata/pcm"
 	"testing"
 	"time"
 
@@ -23,26 +23,26 @@ func TestDataChunk(t *testing.T) {
 		{
 			name:     "8Bit",
 			bitDepth: 8,
-			header:   testdata.Test8bitHeader,
-			data:     testdata.Test8bitPCM,
+			header:   pcm.Test8bitHeader,
+			data:     pcm.Test8bitPCM,
 		},
 		{
 			name:     "16Bit",
 			bitDepth: 16,
-			header:   testdata.Test16bitHeader,
-			data:     testdata.Test16bitPCM,
+			header:   pcm.Test16bitHeader,
+			data:     pcm.Test16bitPCM,
 		},
 		{
 			name:     "24Bit",
 			bitDepth: 24,
-			header:   testdata.Test24bitHeader,
-			data:     testdata.Test24bitPCM,
+			header:   pcm.Test24bitHeader,
+			data:     pcm.Test24bitPCM,
 		},
 		{
 			name:     "32Bit",
 			bitDepth: 32,
-			header:   testdata.Test32bitHeader,
-			data:     testdata.Test32bitPCM,
+			header:   pcm.Test32bitHeader,
+			data:     pcm.Test32bitPCM,
 		},
 	} {
 		t.Run(class.name, func(t *testing.T) {
@@ -215,29 +215,29 @@ func TestDataRing(t *testing.T) {
 		{
 			name:     "8Bit",
 			bitDepth: 8,
-			header:   testdata.Test8bitHeader,
-			data:     testdata.Test8bitPCM,
+			header:   pcm.Test8bitHeader,
+			data:     pcm.Test8bitPCM,
 			size:     64,
 		},
 		{
 			name:     "16Bit",
 			bitDepth: 16,
-			header:   testdata.Test16bitHeader,
-			data:     testdata.Test16bitPCM,
+			header:   pcm.Test16bitHeader,
+			data:     pcm.Test16bitPCM,
 			size:     64,
 		},
 		{
 			name:     "24Bit",
 			bitDepth: 24,
-			header:   testdata.Test24bitHeader,
-			data:     testdata.Test24bitPCM,
+			header:   pcm.Test24bitHeader,
+			data:     pcm.Test24bitPCM,
 			size:     96,
 		},
 		{
 			name:     "32Bit",
 			bitDepth: 32,
-			header:   testdata.Test32bitHeader,
-			data:     testdata.Test32bitPCM,
+			header:   pcm.Test32bitHeader,
+			data:     pcm.Test32bitPCM,
 			size:     128,
 		},
 	} {
@@ -302,7 +302,7 @@ func TestDataRing(t *testing.T) {
 					op: func(chunk *DataRing) {
 						f := chunk.Float()
 
-						newChunk := NewPCMDataRing(class.size*2, bitDepth16, h)
+						newChunk := NewPCMDataRing(bitDepth16, h, class.size*2, nil)
 						newChunk.ParseFloat(f)
 						require.Equal(t, chunk.Data.Value(), newChunk.Data.Value())
 					},
@@ -382,7 +382,7 @@ func TestDataRing(t *testing.T) {
 				},
 			} {
 				t.Run(testcase.name, func(t *testing.T) {
-					chunk := NewPCMDataRing(class.size, class.bitDepth, h)
+					chunk := NewPCMDataRing(class.bitDepth, h, class.size, nil)
 					chunk.Parse(class.data)
 					testcase.op(chunk)
 				})
