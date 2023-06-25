@@ -1,4 +1,4 @@
-package data
+package conv
 
 import (
 	"unsafe"
@@ -8,8 +8,6 @@ const (
 	maxInt24 float64 = 1<<23 - 1
 	// minInt24 float64 = ^1<<22 + 1
 )
-
-var _ Converter = Conv24Bit{}
 
 // Conv24Bit is a 24bit audio Converter
 type Conv24Bit struct{}
@@ -25,7 +23,7 @@ func (Conv24Bit) Parse(buf []byte) []float64 {
 		}
 	}
 
-	return conv(
+	return convert(
 		data, func(v int32) float64 {
 			return float64(v) / maxInt24
 		},
@@ -34,7 +32,7 @@ func (Conv24Bit) Parse(buf []byte) []float64 {
 
 // Bytes consumes the input floating point audio buffer, returning its byte representation
 func (Conv24Bit) Bytes(buf []float64) []byte {
-	value := conv(
+	value := convert(
 		buf, func(f float64) int32 {
 			return int32(f * maxInt24)
 		},
@@ -50,7 +48,7 @@ func (Conv24Bit) Bytes(buf []float64) []byte {
 
 // Value consumes the input floating point audio buffer, returning its PCM audio values as a slice of int
 func (Conv24Bit) Value(buf []float64) []int {
-	return conv(
+	return convert(
 		buf, func(f float64) int {
 			return int(f * maxInt24)
 		},
