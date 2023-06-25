@@ -103,6 +103,8 @@ func (d *DataRing) Apply(filters ...FilterFunc) {
 	_, _ = d.Data.Write(data)
 }
 
+// NewPCMDataRing creates a PCM DataRing with the appropriate Converter, from the input
+// `bitDepth` and `subchunk`, with the fixed buffer-size `size`
 func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 	if h == nil {
 		h = header.NewData()
@@ -118,7 +120,7 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size),
 			Depth:       bitDepth,
-			Converter:   conv.Conv8Bit{},
+			Converter:   conv.PCM8Bit{},
 			byteSize:    size8,
 		}
 	case bitDepth16:
@@ -126,7 +128,7 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
 			Depth:       bitDepth,
-			Converter:   conv.Conv16Bit{},
+			Converter:   conv.PCM16Bit{},
 			byteSize:    size16,
 		}
 	case bitDepth24:
@@ -134,7 +136,7 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
 			Depth:       bitDepth,
-			Converter:   conv.Conv24Bit{},
+			Converter:   conv.PCM24Bit{},
 			byteSize:    size24,
 		}
 	case bitDepth32:
@@ -142,10 +144,41 @@ func NewPCMDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
 			ChunkHeader: h,
 			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
 			Depth:       bitDepth,
-			Converter:   conv.Conv32Bit{},
+			Converter:   conv.PCM32Bit{},
 			byteSize:    size32,
 		}
 	default:
 		return nil
+	}
+}
+
+// NewFloatDataRing creates a 32-bit Float DataRing with the appropriate Converter, from the input
+// `bitDepth` and `subchunk`, with the fixed buffer-size `size`
+func NewFloatDataRing(size int, bitDepth uint16, h *header.Header) *DataRing {
+	if h == nil {
+		h = header.NewData()
+	}
+
+	if size < minRingSize {
+		size = minRingSize
+	}
+
+	switch bitDepth {
+	case bitDepth64:
+		return &DataRing{
+			ChunkHeader: h,
+			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
+			Depth:       bitDepth64,
+			Converter:   conv.Float64{},
+			byteSize:    int(bitDepth) / byteSize,
+		}
+	default:
+		return &DataRing{
+			ChunkHeader: h,
+			Data:        gbuf.NewRingBuffer[float64](size / (int(bitDepth) / byteSize)),
+			Depth:       bitDepth32,
+			Converter:   conv.Float32{},
+			byteSize:    size32,
+		}
 	}
 }
