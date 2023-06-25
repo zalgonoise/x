@@ -15,16 +15,16 @@ import (
 	"github.com/zalgonoise/x/audio/wav/stream"
 )
 
-//go:embed testdata/2khz.wav
+//go:embed internal/testdata/2khz.wav
 var sine2 []byte
 
-//go:embed testdata/4khz.wav
+//go:embed internal/testdata/4khz.wav
 var sine4 []byte
 
-//go:embed testdata/8khz.wav
+//go:embed internal/testdata/8khz.wav
 var sine8 []byte
 
-//go:embed testdata/16khz.wav
+//go:embed internal/testdata/16khz.wav
 var sine16 []byte
 
 func newSine(freq int) (*wav.Wav, error) {
