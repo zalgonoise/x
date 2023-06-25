@@ -1,4 +1,4 @@
-package testdata
+package pcm
 
 var (
 	Test8bitPCM = []byte{
