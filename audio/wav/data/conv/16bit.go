@@ -9,11 +9,11 @@ const (
 	// minInt16 float64 = ^1<<14 + 1
 )
 
-// Conv16Bit is a 16bit audio Converter
-type Conv16Bit struct{}
+// PCM16Bit is a 16bit audio Converter
+type PCM16Bit struct{}
 
 // Parse consumes the input audio buffer, returning its floating point audio representation
-func (Conv16Bit) Parse(buf []byte) []float64 {
+func (PCM16Bit) Parse(buf []byte) []float64 {
 	data := *(*[]int16)(unsafe.Pointer(&buf))
 
 	return convert(
@@ -25,7 +25,7 @@ func (Conv16Bit) Parse(buf []byte) []float64 {
 }
 
 // Bytes consumes the input floating point audio buffer, returning its byte representation
-func (Conv16Bit) Bytes(buf []float64) []byte {
+func (PCM16Bit) Bytes(buf []float64) []byte {
 	value := convert(
 		buf, func(f float64) int16 {
 			return int16(f * maxInt16)
@@ -41,7 +41,7 @@ func (Conv16Bit) Bytes(buf []float64) []byte {
 }
 
 // Value consumes the input floating point audio buffer, returning its PCM audio values as a slice of int
-func (Conv16Bit) Value(buf []float64) []int {
+func (PCM16Bit) Value(buf []float64) []int {
 	return convert(
 		buf, func(f float64) int {
 			return int(f * maxInt16)
