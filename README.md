@@ -42,7 +42,7 @@ _________
 |     [`x/log/attr`](./log/attr)     |  [🚀](https://github.com/zalgonoise/attr)   |                                            a key-value attribute generic data structure, for any type of requirement.                                            |
 |        [`x/parse`](./parse)        |  [🚀](https://github.com/zalgonoise/parse)  | generic parser, as a continuation of [`x/lex`](./lex), that builds a generic AST based on defined tokens and processing rules, and optionally output generation. |
 |         [`x/pcap`](./pcap)         |       [🤖](https://chat.openai.com/)        |                                                                        packet capture app                                                                        |
-|          [`x/ptr`](./ptr)          |                                             |                                          generic pointer utilities library, for conversion, copying, casting and more.                                           |
+|          [`x/ptr`](./ptr)          |                                             |                                    generic pointer (and unsafe) utilities library, for conversion, copying, casting and more.                                    |
 |         [`x/secr`](./secr)         | [🚀](https://github.com/zalgonoise/cloaki)  |                                 a compact yet module secrets / passwords storage solution, with a Domain Driven Design approach.                                 |
 |      [`x/spanner`](./spanner)      | [🚀](https://github.com/zalgonoise/spanner) |          a simple (but flavored) tracer / spanner solution inspired by OpenTelemetry's, used interchangeably alongside `logx` in `ghttp`, for example.           |
 
