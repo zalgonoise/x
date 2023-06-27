@@ -292,3 +292,70 @@ func (w *Stream) decodeIntoData(n int) (int, error) {
 	w.Data.Parse(chunkBuffer)
 	return n + ln, nil
 }
+
+// Read implements the io.Reader interface
+//
+// Read will write to the input slice of bytes `buf` the contents
+// of the Wav `w`.
+//
+// It returns the number of bytes written to the buffer, and an error if the buffer
+// is not big enough
+func (w *Stream) Read(buf []byte) (n int, err error) {
+	if !w.readOnly.Load() {
+		w.encode()
+		w.readOnly.Store(true)
+	}
+
+	return w.buf.Read(buf)
+}
+
+// Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding
+func (w *Stream) Bytes() []byte {
+	if !w.readOnly.Load() {
+		w.encode()
+		w.readOnly.Store(true)
+	}
+
+	return w.buf.Bytes()
+}
+
+func (w *Stream) encode() {
+	var (
+		n    int
+		size = header.Size
+	)
+
+	for i := range w.Chunks {
+		if w.Chunks[i].Header().Subchunk2ID == dataheader.Junk {
+			size += dataheader.Size + int(w.Chunks[i].Header().Subchunk2Size)
+			continue
+		}
+
+		size += dataheader.Size + w.size
+	}
+
+	if w.Header.ChunkSize == 0 {
+		w.Header.ChunkSize = uint32(size)
+	}
+
+	buf := make([]byte, size)
+	_, _ = w.Header.Read(buf[n : n+header.Size])
+	n += header.Size
+
+	for i := range w.Chunks {
+		var (
+			chunkHeader = w.Chunks[i].Header()
+			chunkSize   = int(chunkHeader.Subchunk2Size)
+		)
+
+		_, _ = chunkHeader.Read(buf[n : n+dataheader.Size])
+		n += dataheader.Size
+		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
+		n += chunkSize
+	}
+
+	w.readOnly.Store(true)
+	w.buf = bytes.NewBuffer(buf)
+
+	return
+}
