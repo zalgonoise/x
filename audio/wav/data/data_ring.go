@@ -56,6 +56,8 @@ func (d *DataRing) Bytes() []byte {
 }
 
 func (d *DataRing) Header() *header.Header {
+	d.ChunkHeader.Subchunk2Size = uint32(d.Data.Cap() * (int(d.Depth) / 8))
+
 	return d.ChunkHeader
 }
 
