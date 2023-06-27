@@ -3,7 +3,7 @@ package wav
 import (
 	"bytes"
 
-	datah "github.com/zalgonoise/x/audio/wav/data/header"
+	dataheader "github.com/zalgonoise/x/audio/wav/data/header"
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
@@ -40,7 +40,7 @@ func (w *Wav) encode() {
 	)
 
 	for i := range w.Chunks {
-		size += datah.Size + int(w.Chunks[i].Header().Subchunk2Size)
+		size += dataheader.Size + int(w.Chunks[i].Header().Subchunk2Size)
 	}
 
 	if w.Header.ChunkSize == 0 {
@@ -57,8 +57,8 @@ func (w *Wav) encode() {
 			chunkSize   = int(chunkHeader.Subchunk2Size)
 		)
 
-		_, _ = chunkHeader.Read(buf[n : n+datah.Size])
-		n += datah.Size
+		_, _ = chunkHeader.Read(buf[n : n+dataheader.Size])
+		n += dataheader.Size
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
 		n += chunkSize
 	}
