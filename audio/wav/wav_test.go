@@ -521,14 +521,9 @@ func TestStream(t *testing.T) {
 	td, err := load()
 	require.NoError(t, err)
 
-	t.Run("WriteRead", func(t *testing.T) {
+	t.Run("WriteAndRead", func(t *testing.T) {
 		for idx, test := range td {
 			var size = 64
-
-			// TODO: ensure that size is compatible with bitDepth
-			if test.bitDepth == 24 {
-				size = 96 // 24-bit-compatible size
-			}
 
 			// Write
 			w := wav.NewStream(size, func([]float64) error {
@@ -539,12 +534,46 @@ func TestStream(t *testing.T) {
 			require.NoError(t, err, "index", idx)
 
 			headerBytes := int(header.Size + dataheader.Size + w.Chunks[0].Header().Subchunk2Size + dataheader.Size)
+
+			// 24bit will have a different size
+			if w.Size != size {
+				size = w.Size
+			}
+
 			buf := make([]byte, headerBytes+size)
 
 			_, err = w.Read(buf)
 			require.NoError(t, err, "index", idx)
 			require.Equal(t, test.data[len(test.data)-size:], buf[headerBytes:], "index", idx)
 		}
-
 	})
+
+	// TODO: fix RingFilter.ReadFrom to update r.start as r.end overwrites the ring
+	//t.Run("ReadFromAndBytes", func(t *testing.T) {
+	//	for idx, test := range td {
+	//		var size = 64
+	//
+	//		// Write
+	//		w := wav.NewStream(size, func([]float64) error {
+	//			return nil
+	//		})
+	//
+	//		r := bytes.NewReader(test.data)
+	//		_, err = w.ReadFrom(r)
+	//		require.NoError(t, err, "index", idx)
+	//
+	//		headerBytes := int(header.Size + dataheader.Size + w.Chunks[0].Header().Subchunk2Size + dataheader.Size)
+	//
+	//		// 24bit will have a different size
+	//		if w.Size != size {
+	//			size = w.Size
+	//		}
+	//
+	//		buf := make([]byte, headerBytes+size)
+	//
+	//		_, err = w.Read(buf)
+	//		require.NoError(t, err, "index", idx)
+	//		require.Equal(t, test.data[len(test.data)-size:], buf[headerBytes:], "index", idx)
+	//	}
+	//})
 }
