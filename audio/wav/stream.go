@@ -80,15 +80,15 @@ func RatioToBufferSize(byteRate uint32, ratio float64) (size int64) {
 type Stream struct {
 	*Wav
 
-	size int
+	Size int
 	proc func([]float64) error
 }
 
-// NewStream creates a Stream with a certain size `size` and processor function `proc`
+// NewStream creates a Stream with a certain Size `Size` and processor function `proc`
 func NewStream(size int, proc func([]float64) error) *Stream {
 	return &Stream{
 		Wav:  new(Wav),
-		size: size,
+		Size: size,
 		proc: proc,
 	}
 }
@@ -179,6 +179,9 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 
 	n += num
 
+	// correct Stream.Size if it is off with the bit-depth in the signal
+	w.checkSize()
+
 	for w.Data == nil {
 		h := new(dataheader.Header)
 
@@ -188,7 +191,7 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 
 		n += num
 
-		chunk := NewRingChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat, w.size, w.proc)
+		chunk := NewRingChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, w.proc)
 		w.Chunks = append(w.Chunks, chunk)
 
 		if chunk.BitDepth() > 0 {
@@ -205,6 +208,16 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 	return n, nil
 }
 
+func (w *Stream) checkSize() {
+	if w.Header == nil {
+		return
+	}
+
+	if offset := w.Size % int(w.Header.BitsPerSample); offset > 0 {
+		w.Size += int(w.Header.BitsPerSample) - offset
+	}
+}
+
 func (w *Stream) decode() (n int, err error) {
 	if w.Header == nil {
 		n, err = w.decodeHeader()
@@ -217,6 +230,9 @@ func (w *Stream) decode() (n int, err error) {
 			return n, ErrMissingHeader
 		}
 	}
+
+	// correct Stream.Size if it is off with the bit-depth in the signal
+	w.checkSize()
 
 	for w.buf.Len() > 0 {
 		if w.Data != nil {
@@ -247,7 +263,7 @@ func (w *Stream) decodeNewSubChunk(n int) (int, error) {
 
 		if subchunk, err = dataheader.From(subchunkBuffer); err == nil {
 			n += dataheader.Size
-			chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.size, w.proc)
+			chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, w.proc)
 			if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
 				w.Data = chunk
 			}
@@ -331,7 +347,7 @@ func (w *Stream) encode() {
 			continue
 		}
 
-		size += dataheader.Size + w.size
+		size += dataheader.Size + w.Size
 	}
 
 	if w.Header.ChunkSize == 0 {
