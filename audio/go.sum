@@ -238,6 +238,10 @@ github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d h1:FQmuKnqJefm/vZV
 github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d/go.mod h1:AJnYvJHd3CA3CWDK/XTzHqENx1M6Jc+riBrp7myrm8o=
 github.com/zalgonoise/gbuf v0.0.0-20230618111702-c178749edeea h1:e64TbClgbt1pC4uSprn8PNP95/8w1z5VPMIg0GnXadY=
 github.com/zalgonoise/gbuf v0.0.0-20230618111702-c178749edeea/go.mod h1:hVQn/TZx0RJ+76jnTxQovUJsf+Hs++IJzY3BnWl1I/M=
+github.com/zalgonoise/gbuf v0.0.0-20230629174807-95fc3b51045a h1:oDOC4yxRZlT2pI/rpEkpQOfixEzYjqm7o6S81ZiJuL8=
+github.com/zalgonoise/gbuf v0.0.0-20230629174807-95fc3b51045a/go.mod h1:hVQn/TZx0RJ+76jnTxQovUJsf+Hs++IJzY3BnWl1I/M=
+github.com/zalgonoise/gbuf v0.0.0-20230629180259-90d1674ea394 h1:LPHzSqp/OLrfiCdECGlHFvKy18JQx1yuSEJ34dxZtHk=
+github.com/zalgonoise/gbuf v0.0.0-20230629180259-90d1674ea394/go.mod h1:hVQn/TZx0RJ+76jnTxQovUJsf+Hs++IJzY3BnWl1I/M=
 github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0 h1:44zHj6dgTnGhtGRrVaiBoDu3R5H4+sJT0geLPNIdkZE=
 github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0/go.mod h1:nhc82H2KvRf8/28o3RGBnJM/k7NapcDGPegqGIOqATY=
 github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2 h1:sKUwtJlsw+Dt7zpl9QyZ9NAmJ3bqIyPQewlSkXIujpI=
