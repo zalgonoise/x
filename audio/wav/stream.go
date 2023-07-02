@@ -364,6 +364,10 @@ func (w *Stream) encode() {
 			chunkSize   = int(chunkHeader.Subchunk2Size)
 		)
 
+		if w.Chunks[i].Header().Subchunk2ID == dataheader.Data && w.Size < chunkSize {
+			chunkSize = w.Size
+		}
+
 		_, _ = chunkHeader.Read(buf[n : n+dataheader.Size])
 		n += dataheader.Size
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
