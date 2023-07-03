@@ -11,6 +11,8 @@ import (
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
+const defaultSize = 64
+
 type multiProc struct {
 	fns []func(float64) error
 }
@@ -56,23 +58,23 @@ func ByteRate(sampleRate uint32, bitDepth, numChannels uint16) uint32 {
 
 // TimeToBufferSize calculates the number of samples that are in a certain `dur` time.Duration,
 // in the context of a byte-rate of `byteRate`
-func TimeToBufferSize(byteRate uint32, dur time.Duration) (size int64) {
-	rate := (int64)(time.Second) / (int64)(byteRate)
+func TimeToBufferSize(byteRate uint32, dur time.Duration) (size int) {
+	rate := (int)(time.Second) / (int)(byteRate)
 
-	return (int64)(dur) / rate
+	return (int)(dur) / rate
 }
 
 // RatioToBufferSize calculates the number of samples that are in a buffer,
 // when a byte-rate of `byteRate` (that is equivalent to one second of audio) is multiplied by
 // float64 `ratio`
-func RatioToBufferSize(byteRate uint32, ratio float64) (size int64) {
-	rate := (int64)(time.Second) / (int64)(byteRate)
+func RatioToBufferSize(byteRate uint32, ratio float64) (size int) {
+	rate := (int)(time.Second) / (int)(byteRate)
 
 	if ratio <= 0.0 {
 		return rate
 	}
 
-	return int64(float64(rate) * ratio)
+	return int(float64(rate) * ratio)
 }
 
 // Stream wraps a Wav type with custom functionality, allowing a ring-buffer approach
@@ -85,6 +87,8 @@ type Stream struct {
 }
 
 // NewStream creates a Stream with a certain Size `Size` and processor function `proc`
+//
+// The size is in bytes and can be calculated through one of the available *ToBufferSize functions
 func NewStream(size int, proc func([]float64) error) *Stream {
 	return &Stream{
 		Wav:  new(Wav),
@@ -209,12 +213,14 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 }
 
 func (w *Stream) checkSize() {
-	if w.Header == nil {
-		return
-	}
-
-	if offset := w.Size % int(w.Header.BitsPerSample); offset > 0 {
-		w.Size += int(w.Header.BitsPerSample) - offset
+	switch {
+	case w.Header == nil:
+	case w.Size <= int(w.Header.BitsPerSample):
+		w.Size = int(w.Header.BitsPerSample)
+	default:
+		if offset := w.Size % int(w.Header.BitsPerSample); offset > 0 {
+			w.Size += int(w.Header.BitsPerSample) - offset
+		}
 	}
 }
 
