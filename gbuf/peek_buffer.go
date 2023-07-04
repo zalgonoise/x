@@ -1,14 +1,9 @@
 package gbuf
 
 import (
-	"errors"
 	"fmt"
 	"io"
 )
-
-// ErrIndexOutOfBounds is caused when a PeekBuffer method call is made involving an index
-// that is out of bounds of the underlying slice
-var ErrIndexOutOfBounds = errors.New("gbuf.PeekBuffer: index out of bounds")
 
 // A PeekBuffer is a variable-sized buffer of T items with Read and Write methods.
 // The zero value for PeekBuffer is an empty buffer ready to use.

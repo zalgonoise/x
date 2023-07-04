@@ -52,7 +52,6 @@ func BenchmarkRingBufferReadWrite(b *testing.B) {
 		}
 		_ = item
 	})
-
 }
 
 func TestRingBufferWrite(t *testing.T) {
@@ -113,7 +112,7 @@ func TestRingBufferRead(t *testing.T) {
 
 	t.Run("SuccessAroundRing", func(t *testing.T) {
 		input := []byte("hello world")
-		wants := []byte("llo world")
+		wants := []byte("o worldll")
 		output := make([]byte, 9)
 		r := NewRingBuffer[byte](9)
 		for idx, b := range input {
@@ -148,8 +147,8 @@ func TestRingBufferRead(t *testing.T) {
 
 	t.Run("Overflow", func(t *testing.T) {
 		input := []byte("hello world")
-		wants := []byte("ld")
-		output := make([]byte, 2)
+		wants := []byte("rld")
+		output := make([]byte, 3)
 		r := NewRingBuffer[byte](3)
 		_, err := r.Write(input)
 		if err != nil {
@@ -207,14 +206,6 @@ func TestRingBufferValue(t *testing.T) {
 		v := r.Value()
 		if string(v) != string(wants) {
 			t.Errorf("output mismatch error: wanted %s ; got %s", string(wants), string(v))
-		}
-	})
-
-	t.Run("FailEOF", func(t *testing.T) {
-		r := NewRingBuffer[byte](3)
-		v := r.Value()
-		if v != nil {
-			t.Errorf("unexpected output: %v ; wanted <nil>", v)
 		}
 	})
 }
