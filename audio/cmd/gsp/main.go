@@ -31,14 +31,9 @@ func run() (error, int) {
 		return fmt.Errorf("initializing configuration: %w", err), 1
 	}
 
-	c, cancel, err := client.New(cfg.URL, cfg.Dur)
+	res, cancel, err := client.New(cfg.URL, cfg.Dur)
 	if err != nil {
 		return fmt.Errorf("setting up HTTP client: %w", err), 1
-	}
-
-	res, err := c.Do()
-	if err != nil {
-		return fmt.Errorf("issuing HTTP request: %w", err), 1
 	}
 
 	wav, err := stream.New(cfg, res.Body)
@@ -49,14 +44,14 @@ func run() (error, int) {
 	// start processing the audio from the HTTP stream
 	// create a local context cancel func to exit gracefully (on sigint, for example)
 	errCh := make(chan error)
-	ctx, mainCancel := context.WithCancel(c.Context())
+	ctx, mainCancel := context.WithCancel(res.Request.Context())
 	go wav.Stream(ctx, errCh)
 
 	for {
 		select {
-		case err := <-errCh:
+		case streamErr := <-errCh:
 			mainCancel()
-			if !errors.Is(err, context.Canceled) {
+			if !errors.Is(streamErr, context.Canceled) {
 				return fmt.Errorf("audio stream: %w", err), 1
 			}
 		case <-ctx.Done():
