@@ -393,10 +393,10 @@ func TestWavSegmentedWrite(t *testing.T) {
 }
 
 func TestWav_WriteProcessRead(t *testing.T) {
-	testdata, err := load()
+	td, err := load()
 	require.NoError(t, err)
 
-	for idx, test := range testdata {
+	for idx, test := range td {
 		// Write
 		w := new(wav.Wav)
 		_, err = w.Write(test.data)
@@ -412,7 +412,7 @@ func TestWav_WriteProcessRead(t *testing.T) {
 		buf := make([]byte, len(test.data))
 		_, err = w.Read(buf)
 		require.NoError(t, err)
-		require.Equal(t, buf, test)
+		require.Equal(t, buf, test.data)
 
 		// Write read bytes
 		newWav := new(wav.Wav)
