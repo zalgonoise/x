@@ -4,34 +4,46 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zalgonoise/x/ptr"
-)
-
-type err string
-
-func (e err) Error() string { return (string)(e) }
-
-const (
-	ErrEmptyURL         err = "gsp/conf: empty URL"
-	ErrModeNotSupported err = "gsp/conf: operation is not supported"
-	ErrModeUnset        err = "gsp/conf: operation is undefined"
-	ErrRecTimeUnset     err = "gsp/conf: recording time is undefined"
-	ErrDurationUnset    err = "gsp/conf: runtime duration is undefined"
-	ErrInvalidRatio     err = "gsp/conf: buffer size ratio cannot be zero or below"
-	ErrInvalidBlockSize err = "gsp/conf: block size cannot be less than zero"
-	ErrEmptyDirectory   err = "gsp/conf: recording operation without a target file path"
-	ErrEmptyThreshold   err = "gsp/conf: peak threshold is unset"
-	ErrShortDuration    err = "gsp/conf: runtime duration is shorter than recording time"
+	"github.com/zalgonoise/x/audio/errs"
 )
 
 const (
-	defaultRecTime time.Duration = time.Second * 30
+	confDomain = errs.Domain("gps/conf")
+
+	ErrEmpty        = errs.Kind("empty")
+	ErrUnsupported  = errs.Kind("unsupported")
+	ErrLessThanZero = errs.Kind("less than zero")
+	ErrShort        = errs.Kind("short")
+
+	ErrURL             = errs.Entity("URL")
+	ErrMode            = errs.Entity("operation mode")
+	ErrRecordingTime   = errs.Entity("recording time")
+	ErrRuntimeDuration = errs.Entity("runtime duration")
+	ErrBufferSizeRatio = errs.Entity("buffer size ratio")
+	ErrBlockSize       = errs.Entity("block size")
+	ErrFilePath        = errs.Entity("file path")
+	ErrPeakThreshold   = errs.Entity("peak threshold")
 )
+
+var (
+	ErrEmptyURL         = errs.New(confDomain, ErrEmpty, ErrURL)
+	ErrUnsupportedMode  = errs.New(confDomain, ErrUnsupported, ErrMode)
+	ErrUnsetMode        = errs.New(confDomain, ErrEmpty, ErrMode)
+	ErrUnsetRecTime     = errs.New(confDomain, ErrEmpty, ErrRecordingTime)
+	ErrUnsetDuration    = errs.New(confDomain, ErrEmpty, ErrRuntimeDuration)
+	ErrInvalidRatio     = errs.New(confDomain, ErrLessThanZero, ErrBufferSizeRatio)
+	ErrInvalidBlockSize = errs.New(confDomain, ErrLessThanZero, ErrBlockSize)
+	ErrEmptyDirectory   = errs.New(confDomain, ErrEmpty, ErrFilePath)
+	ErrEmptyThreshold   = errs.New(confDomain, ErrEmpty, ErrPeakThreshold)
+	ErrShortDuration    = errs.New(confDomain, ErrShort, ErrRuntimeDuration)
+)
+
+var defaultRecTime = 30 * time.Second
 
 // Default is an initialized Config with sane default values
 var Default = Config{
 	Mode:       Monitor,
-	Dur:        ptr.To(time.Second * 30),
+	Dur:        &defaultRecTime,
 	BufferSize: 0.5,
 }
 
@@ -44,6 +56,7 @@ type Config struct {
 	BufferSize float64        // BufferSize is a ratio for the ring buffer's size (1.0 is 1 second; 0.5 is 500ms; etc)
 	BlockSize  int            // BlockSize is a specific size for the ring buffer, when a specific concrete value is needed
 	Peak       []int          // Peak is the peak PCM integer value that will trigger recording the stream
+	FloatPeaks []float64      // FloatPeaks is the floating-point value that will trigger recording the stream
 	Dir        *string        // Dir is the output directory (and filename prefix) where the recording(s) should be stored
 	Prom       bool           // Prom is a boolean to set the output as a Prometheus /metrics HTTP endpoint; instead of os.Stdout
 	Port       int            // Port defines an override to the Prometheus metrics port if defined
@@ -101,14 +114,14 @@ func (c *Config) Validate() error {
 	case Monitor:
 	case Record:
 		if c.RecTime == nil {
-			return ErrRecTimeUnset
+			return ErrUnsetRecTime
 		}
 		if c.Dir == nil {
 			return ErrEmptyDirectory
 		}
 	case Filter:
 		if c.RecTime == nil {
-			return ErrRecTimeUnset
+			return ErrUnsetRecTime
 		}
 		if len(c.Peak) == 0 {
 			return ErrEmptyThreshold
@@ -118,13 +131,13 @@ func (c *Config) Validate() error {
 		}
 	case Analyze:
 	case Unset:
-		return ErrModeUnset
+		return ErrUnsetMode
 	default:
-		return fmt.Errorf("%w: invalid mode: %d", ErrModeNotSupported, c.Mode)
+		return fmt.Errorf("%w: %d", ErrUnsupportedMode, c.Mode)
 	}
 
 	if c.Dur == nil {
-		return ErrDurationUnset
+		return ErrUnsetDuration
 	}
 
 	if c.RecTime != nil && *c.Dur < *c.RecTime {
