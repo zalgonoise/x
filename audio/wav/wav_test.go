@@ -524,9 +524,14 @@ func TestStream(t *testing.T) {
 	t.Run("WriteAndRead", func(t *testing.T) {
 		for idx, test := range td {
 			var size = 64
+			var cfg = &wav.StreamConfig{
+				Size: wav.SizeConfig{
+					Size: size,
+				},
+			}
 
 			// Write
-			w := wav.NewStream(size, func([]float64) error {
+			w := wav.NewStream(cfg, func([]float64) error {
 				return nil
 			})
 
@@ -551,9 +556,14 @@ func TestStream(t *testing.T) {
 	t.Run("ReadFromAndRead", func(t *testing.T) {
 		for idx, test := range td {
 			var size = 64
+			var cfg = &wav.StreamConfig{
+				Size: wav.SizeConfig{
+					Size: size,
+				},
+			}
 
 			// Write
-			w := wav.NewStream(size, func([]float64) error {
+			w := wav.NewStream(cfg, func([]float64) error {
 				return nil
 			})
 
