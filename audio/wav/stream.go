@@ -11,8 +11,6 @@ import (
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
-const defaultSize = 64
-
 type multiProc struct {
 	fns []func(float64) error
 }
@@ -238,7 +236,9 @@ func (w *Stream) checkSize() {
 	switch {
 	case w.Header == nil:
 	case w.cfg.Size.Ratio > 0.0:
-		w.Size = int(float64(time.Second) * w.cfg.Size.Ratio)
+		w.Size = RatioToBufferSize(ByteRate(
+			w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels,
+		), w.cfg.Size.Ratio)
 
 	case w.cfg.Size.Size > 0:
 		w.Size = w.cfg.Size.Size
