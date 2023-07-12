@@ -53,7 +53,7 @@ func MultiProc(failFast bool, fns ...func([]float64) error) func([]float64) erro
 
 // ByteRate calculates the byte rate of a certain signal from its header metadata
 func ByteRate(sampleRate uint32, bitDepth, numChannels uint16) uint32 {
-	return sampleRate * uint32(bitDepth) * uint32(numChannels) / 8
+	return sampleRate * uint32(numChannels) * (uint32(bitDepth) / 8)
 }
 
 // TimeToBufferSize calculates the number of samples that are in a certain `dur` time.Duration,
@@ -84,15 +84,37 @@ type Stream struct {
 
 	Size int
 	proc func([]float64) error
+
+	cfg *StreamConfig
 }
 
-// NewStream creates a Stream with a certain Size `Size` and processor function `proc`
+// StreamConfig holds different configuration settings for a Stream
+type StreamConfig struct {
+	// Size describes different settings for the Stream's buffer size
+	Size SizeConfig
+}
+
+// SizeConfig contains different configurations to define the Stream's buffer size
+type SizeConfig struct {
+	// Size is a concrete value for the Stream's buffer size (in bytes)
+	Size int
+	// Dur is a time.Duration value for the desired Stream buffer, that is later translated to a concrete value
+	Dur time.Duration
+	// Ratio is a float64 value describing a ratio against 1 second (e.g. 0.5 is half-a-second, 2.0 is two seconds)
+	Ratio float64
+}
+
+// NewStream creates a Stream with a certain StreamConfig `cfg` and processor function `proc`
 //
 // The size is in bytes and can be calculated through one of the available *ToBufferSize functions
-func NewStream(size int, proc func([]float64) error) *Stream {
+func NewStream(cfg *StreamConfig, proc func([]float64) error) *Stream {
+	if cfg == nil {
+		cfg = new(StreamConfig)
+	}
+
 	return &Stream{
 		Wav:  new(Wav),
-		Size: size,
+		cfg:  cfg,
 		proc: proc,
 	}
 }
@@ -215,12 +237,29 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 func (w *Stream) checkSize() {
 	switch {
 	case w.Header == nil:
-	case w.Size <= int(w.Header.BitsPerSample):
-		w.Size = int(w.Header.BitsPerSample)
+	case w.cfg.Size.Ratio > 0.0:
+		w.Size = int(float64(time.Second) * w.cfg.Size.Ratio)
+
+	case w.cfg.Size.Size > 0:
+		w.Size = w.cfg.Size.Size
+
+	case w.cfg.Size.Dur > 0:
+		w.Size = TimeToBufferSize(ByteRate(
+			w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels,
+		), w.cfg.Size.Dur)
+
 	default:
-		if offset := w.Size % int(w.Header.BitsPerSample); offset > 0 {
-			w.Size += int(w.Header.BitsPerSample) - offset
-		}
+		w.Size = int(ByteRate(
+			w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels,
+		))
+	}
+
+	if w.Size < int(w.Header.BitsPerSample) {
+		w.Size = int(w.Header.BitsPerSample)
+	}
+
+	if offset := w.Size % int(w.Header.BitsPerSample); offset > 0 {
+		w.Size += int(w.Header.BitsPerSample) - offset
 	}
 }
 
