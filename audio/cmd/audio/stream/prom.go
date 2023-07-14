@@ -11,9 +11,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+const defaultTimeout = 5 * time.Second
+
 type PromWriter struct {
 	*Metrics
 	MetricsServer
+}
+
+func (w PromWriter) Close() error {
+	ctx, done := context.WithTimeout(context.Background(), defaultTimeout)
+	defer done()
+
+	return w.MetricsServer.Shutdown(ctx)
 }
 
 type Metrics struct {
