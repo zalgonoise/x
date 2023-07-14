@@ -1,5 +1,9 @@
 package config
 
+import (
+	"time"
+)
+
 type OpMode string
 
 const (
@@ -9,6 +13,7 @@ const (
 type Config struct {
 	Mode       OpMode
 	URL        string
+	Duration   time.Duration
 	Output     Output
 	OutputPath string
 	ExitCode   int

@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"time"
 )
 
 func NewConfig() (*Config, error) {
@@ -10,12 +11,22 @@ func NewConfig() (*Config, error) {
 	out := flag.String("to", "logger", "defines the output mode [logger, file, prometheus]")
 	path := flag.String("o", "", "defines the path to the output (if a file, or a port / address for Prometheus)")
 	exit := flag.Int("exit", 0, "sets a custom exit code for when the app exits")
+	timeout := flag.String("dur", "30s", "sets the duration of the recording or analysis")
 
 	flag.Parse()
+
+	var dur time.Duration
+	var err error
+
+	dur, err = time.ParseDuration(*timeout)
+	if err != nil || dur < 0 {
+		dur = 0
+	}
 
 	config := &Config{
 		Mode:       OpMode(*mode),
 		URL:        *url,
+		Duration:   dur,
 		Output:     Output(*out),
 		OutputPath: *path,
 		ExitCode:   *exit,
