@@ -42,5 +42,10 @@ func run() (error, int) {
 		return err, 1
 	}
 
+	err = s.Close()
+	if err != nil {
+		return err, 1
+	}
+
 	return nil, 0
 }
