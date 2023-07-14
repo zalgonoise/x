@@ -2,20 +2,25 @@ package stream
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/zalgonoise/logx"
 	"github.com/zalgonoise/logx/handlers/texth"
 
 	"github.com/zalgonoise/x/audio/cmd/audio/config"
+	"github.com/zalgonoise/x/audio/cmd/audio/http"
 	"github.com/zalgonoise/x/audio/wav"
 )
 
 type Reporter interface {
 	SetPeakValue(data float64) (err error)
 	SetPeakValues(data []float64) (err error)
+	io.Closer
 }
 
 type Stream struct {
@@ -26,20 +31,48 @@ type Stream struct {
 }
 
 func (s Stream) Run(ctx context.Context) error {
-	wav := wav.NewStream(nil, s.proc)
+	var (
+		w         = wav.NewStream(nil, s.proc)
+		streamCtx = ctx
+		done      context.CancelFunc
+		errCh     = make(chan error)
+		sigCh     = make(chan os.Signal, 1)
+	)
 
-	errCh := make(chan error)
-	// TODO: HTTP call to fetch this reader
-	var r io.Reader
+	signal.Notify(sigCh, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	go wav.Stream(ctx, r, errCh)
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-errCh:
+	response, cancel, err := http.New(s.cfg.URL, s.cfg.Duration)
+	if err != nil {
 		return err
 	}
+
+	defer cancel()
+
+	if s.cfg.Duration > 0 {
+		streamCtx, done = context.WithTimeout(ctx, s.cfg.Duration)
+		defer done()
+	}
+
+	go w.Stream(streamCtx, response.Body, errCh)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-sigCh:
+			return ctx.Err()
+		case err = <-errCh:
+			if errors.Is(err, context.DeadlineExceeded) {
+				return nil
+			}
+
+			return err
+		}
+	}
+}
+
+func (s Stream) Close() error {
+	return s.out.Close()
 }
 
 func New(cfg *config.Config) (*Stream, error) {
