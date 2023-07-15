@@ -24,7 +24,8 @@ type Reporter interface {
 }
 
 type Stream struct {
-	cfg *config.Config
+	cfg    *config.Config
+	logger logx.Logger
 
 	proc func([]float64) error
 	out  Reporter
@@ -41,7 +42,7 @@ func (s Stream) Run(ctx context.Context) error {
 
 	signal.Notify(sigCh, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	response, cancel, err := http.New(s.cfg.URL, s.cfg.Duration)
+	response, cancel, err := http.New(s.logger, s.cfg.URL, s.cfg.Duration)
 	if err != nil {
 		return err
 	}
@@ -50,6 +51,7 @@ func (s Stream) Run(ctx context.Context) error {
 
 	if s.cfg.Duration > 0 {
 		streamCtx, done = context.WithTimeout(ctx, s.cfg.Duration)
+
 		defer done()
 	}
 
@@ -72,6 +74,8 @@ func (s Stream) Run(ctx context.Context) error {
 }
 
 func (s Stream) Close() error {
+	s.logger.Info("closing stream")
+
 	return s.out.Close()
 }
 
@@ -87,7 +91,9 @@ func New(cfg *config.Config) (*Stream, error) {
 			return nil, err
 		}
 
-		s.out = NewLogWriter("", logx.New(texth.New(io.MultiWriter(f, os.Stderr))))
+		logger := logx.New(texth.New(io.MultiWriter(f, os.Stderr)))
+		s.out = NewLogWriter("", logger)
+		s.logger = logger
 	case config.ToPrometheus:
 		port, err := strconv.Atoi(cfg.OutputPath)
 		if err != nil {
@@ -99,9 +105,12 @@ func New(cfg *config.Config) (*Stream, error) {
 			return nil, err
 		}
 
+		s.logger = logx.New(texth.New(os.Stderr))
 		s.out = prom
 	default:
-		s.out = NewLogWriter("", logx.New(texth.New(os.Stderr)))
+		logger := logx.New(texth.New(os.Stderr))
+		s.out = NewLogWriter("", logger)
+		s.logger = logger
 	}
 
 	switch cfg.Mode {
