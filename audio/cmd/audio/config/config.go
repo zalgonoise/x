@@ -8,6 +8,7 @@ type OpMode string
 
 const (
 	Monitor OpMode = "monitor"
+	Analyze OpMode = "analyze"
 )
 
 type Config struct {
