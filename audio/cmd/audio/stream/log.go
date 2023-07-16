@@ -28,6 +28,15 @@ func (w LogWriter) SetPeakValue(data float64) (err error) {
 	return nil
 }
 
+func (w LogWriter) SetPeakFreq(frequency int, magnitude float64) (err error) {
+	w.logger.Info(w.msg,
+		attr.Int("frequency", frequency),
+		attr.Float("magnitude", magnitude),
+	)
+
+	return nil
+}
+
 func (w LogWriter) Close() error {
 	return nil
 }
