@@ -14,12 +14,15 @@ import (
 
 	"github.com/zalgonoise/x/audio/cmd/audio/config"
 	"github.com/zalgonoise/x/audio/cmd/audio/http"
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/fft/window"
 	"github.com/zalgonoise/x/audio/wav"
 )
 
 type Reporter interface {
 	SetPeakValue(data float64) (err error)
 	SetPeakValues(data []float64) (err error)
+	SetPeakFreq(frequency int, magnitude float64) (err error)
 	io.Closer
 }
 
@@ -27,18 +30,20 @@ type Stream struct {
 	cfg    *config.Config
 	logger logx.Logger
 
-	proc func([]float64) error
-	out  Reporter
+	proc   func([]float64) error
+	out    Reporter
+	stream *wav.Stream
 }
 
-func (s Stream) Run(ctx context.Context) error {
+func (s *Stream) Run(ctx context.Context) error {
 	var (
-		w         = wav.NewStream(nil, s.proc)
 		streamCtx = ctx
 		done      context.CancelFunc
 		errCh     = make(chan error)
 		sigCh     = make(chan os.Signal, 1)
 	)
+
+	s.stream = wav.NewStream(nil, s.proc)
 
 	signal.Notify(sigCh, os.Interrupt, os.Kill, syscall.SIGTERM)
 
@@ -55,7 +60,7 @@ func (s Stream) Run(ctx context.Context) error {
 		defer done()
 	}
 
-	go w.Stream(streamCtx, response.Body, errCh)
+	go s.stream.Stream(streamCtx, response.Body, errCh)
 
 	for {
 		select {
@@ -73,7 +78,7 @@ func (s Stream) Run(ctx context.Context) error {
 	}
 }
 
-func (s Stream) Close() error {
+func (s *Stream) Close() error {
 	s.logger.Info("closing stream")
 
 	return s.out.Close()
@@ -125,6 +130,33 @@ func New(cfg *config.Config) (*Stream, error) {
 			}
 
 			return s.out.SetPeakValue(max)
+		}
+	case config.Analyze:
+		bs := fft.Block1024
+		windowBlock := window.New(window.Blackman, int(bs))
+
+		s.proc = func(data []float64) error {
+			for i := 0; i+int(bs) < len(data); i += int(bs) {
+				spectrum := fft.Apply(
+					int(s.stream.Wav.Header.SampleRate),
+					data[i:i+int(bs)],
+					windowBlock,
+				)
+
+				var max float64
+				var freq int
+
+				for idx := range spectrum {
+					if max < spectrum[idx].Mag {
+						max = spectrum[idx].Mag
+						freq = spectrum[idx].Freq
+					}
+				}
+
+				return s.out.SetPeakFreq(freq, max)
+			}
+
+			return nil
 		}
 	}
 
