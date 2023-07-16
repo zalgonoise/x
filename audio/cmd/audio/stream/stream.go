@@ -153,7 +153,9 @@ func New(cfg *config.Config) (*Stream, error) {
 					}
 				}
 
-				return s.out.SetPeakFreq(freq, max)
+				if err := s.out.SetPeakFreq(freq, max); err != nil {
+					return err
+				}
 			}
 
 			return nil
