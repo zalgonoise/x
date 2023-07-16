@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -26,7 +27,8 @@ func (w PromWriter) Close() error {
 }
 
 type Metrics struct {
-	peakValues prometheus.Gauge
+	peakValues     prometheus.Gauge
+	spectrumValues *prometheus.GaugeVec
 }
 
 func (m Metrics) SetPeakValue(data float64) error {
@@ -41,6 +43,12 @@ func (m Metrics) SetPeakValues(data []float64) error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (w Metrics) SetPeakFreq(frequency int, magnitude float64) (err error) {
+	w.spectrumValues.WithLabelValues(strconv.Itoa(frequency)).Set(magnitude)
 
 	return nil
 }
@@ -69,6 +77,10 @@ func NewMetrics() *Metrics {
 			Name: "peak_value",
 			Help: "input signal's peak value",
 		}),
+		spectrumValues: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "spectrum_value",
+			Help: "input signal's peak frequency magnitude",
+		}, []string{"frequency"}),
 	}
 }
 
