@@ -18,6 +18,13 @@ type multiProc struct {
 // MultiProc merges multiple processor functions for floating point audio data, with
 // or without a fail-fast strategy
 func MultiProc(failFast bool, fns ...func([]float64) error) func([]float64) error {
+	switch len(fns) {
+	case 0:
+		return nil
+	case 1:
+		return fns[0]
+	}
+
 	if failFast {
 		return func(data []float64) error {
 			for i := range fns {
