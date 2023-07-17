@@ -25,7 +25,7 @@ var (
 
 func Validate(c *Config) error {
 	switch c.Mode {
-	case Monitor, Analyze:
+	case Monitor, Analyze, Combined:
 	// OK state
 	default:
 		return ErrInvalidMode

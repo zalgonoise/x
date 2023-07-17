@@ -7,8 +7,9 @@ import (
 type OpMode string
 
 const (
-	Monitor OpMode = "monitor"
-	Analyze OpMode = "analyze"
+	Monitor  OpMode = "monitor"
+	Analyze  OpMode = "analyze"
+	Combined OpMode = "combined"
 )
 
 type Config struct {
