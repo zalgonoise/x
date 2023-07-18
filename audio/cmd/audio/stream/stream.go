@@ -30,13 +30,17 @@ const (
 
 var ErrInvalidMode = errs.New(streamDomain, ErrInvalid, ErrMode)
 
+// Reporter describes the actions that a config.Output should expose
 type Reporter interface {
+	// SetPeakValue registers the float64 `data` value as an audio peak
 	SetPeakValue(data float64) (err error)
-	SetPeakValues(data []float64) (err error)
+	// SetPeakFreq registers the int `frequency` value as an audio peak frequency
 	SetPeakFreq(frequency int) (err error)
+	// Closer is an io.Closer, that is used to gracefully stop the Reporter
 	io.Closer
 }
 
+// Stream describes an instance of an audio stream processor
 type Stream struct {
 	cfg    *config.Config
 	logger logx.Logger
@@ -46,6 +50,7 @@ type Stream struct {
 	stream *wav.Stream
 }
 
+// Run will consume the audio from the stream, returning an error if raised. Run is a blocking call.
 func (s *Stream) Run(ctx context.Context) error {
 	var (
 		streamCtx = ctx
@@ -89,12 +94,14 @@ func (s *Stream) Run(ctx context.Context) error {
 	}
 }
 
+// Close implements the io.Closer interface, to gracefully stop the audio stream
 func (s *Stream) Close() error {
 	s.logger.Info("closing stream")
 
 	return s.out.Close()
 }
 
+// New creates a Stream from the input Config, also returning an error if raised
 func New(cfg *config.Config) (*Stream, error) {
 	s := &Stream{
 		cfg: cfg,

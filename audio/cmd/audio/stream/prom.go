@@ -36,16 +36,6 @@ func (m Metrics) SetPeakValue(data float64) error {
 	return nil
 }
 
-func (m Metrics) SetPeakValues(data []float64) error {
-	for i := range data {
-		if err := m.SetPeakValue(data[i]); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (w Metrics) SetPeakFreq(frequency int) (err error) {
 	w.spectrumValues.Set(float64(frequency))
 
