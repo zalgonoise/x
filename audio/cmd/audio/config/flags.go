@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// NewConfig creates a new Config by reading the input flags to the application startup
+//
+// It returns a new Config and an error, which is a call to the Validate(Config) function
 func NewConfig() (*Config, error) {
 	url := flag.String("url", "", "the URL for the WAV audio stream")
 	mode := flag.String("mode", "monitor", "defines the operation mode")

@@ -23,6 +23,7 @@ var (
 	ErrEmptyOutputPath = errs.New(confDomain, ErrEmpty, ErrOutputPath)
 )
 
+// Validate returns an error if the input Config contains invalid data
 func Validate(c *Config) error {
 	switch c.Mode {
 	case Monitor, Analyze, Combined:
