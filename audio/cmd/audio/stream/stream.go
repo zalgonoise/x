@@ -35,7 +35,7 @@ type Reporter interface {
 	// SetPeakValue registers the float64 `data` value as an audio peak
 	SetPeakValue(data float64) (err error)
 	// SetPeakFreq registers the int `frequency` value as an audio peak frequency
-	SetPeakFreq(frequency int) (err error)
+	SetPeakFreq(frequency int, magnitude float64) (err error)
 	// Closer is an io.Closer, that is used to gracefully stop the Reporter
 	io.Closer
 }
@@ -190,7 +190,7 @@ func newAnalyzeFunc(s *Stream) func([]float64) error {
 				}
 			}
 
-			if err := s.out.SetPeakFreq(freq); err != nil {
+			if err := s.out.SetPeakFreq(freq, max); err != nil {
 				return err
 			}
 		}
