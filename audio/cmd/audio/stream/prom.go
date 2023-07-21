@@ -2,7 +2,6 @@ package stream
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -128,11 +127,7 @@ func (s MetricsServer) ListenAndServe() error {
 	return nil
 }
 
-func NewServer(port int, registry *prometheus.Registry) MetricsServer {
-	if port < 0 {
-		port = 0
-	}
-
+func NewServer(addr string, registry *prometheus.Registry) MetricsServer {
 	mux := http.NewServeMux()
 
 	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{
@@ -141,15 +136,21 @@ func NewServer(port int, registry *prometheus.Registry) MetricsServer {
 
 	server := &http.Server{
 		Handler:      mux,
-		Addr:         fmt.Sprintf(":%d", port),
+		Addr:         addr,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 	}
 
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			panic(err)
+		}
+	}()
+
 	return MetricsServer{server: server}
 }
 
-func NewPromWriter(port int) (*PromWriter, error) {
+func NewPromWriter(addr string) (*PromWriter, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	w := &PromWriter{
@@ -178,9 +179,7 @@ func NewPromWriter(port int) (*PromWriter, error) {
 		return nil, err
 	}
 
-	w.MetricsServer = NewServer(port, reg)
-
-	go w.MetricsServer.ListenAndServe()
+	w.MetricsServer = NewServer(addr, reg)
 
 	return w, nil
 }
