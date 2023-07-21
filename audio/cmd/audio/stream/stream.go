@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/zalgonoise/logx"
@@ -118,12 +117,7 @@ func New(cfg *config.Config) (*Stream, error) {
 		s.out = NewLogWriter("", logger)
 		s.logger = logger
 	case config.ToPrometheus:
-		port, err := strconv.Atoi(cfg.OutputPath)
-		if err != nil {
-			port = 0
-		}
-
-		prom, err := NewPromWriter(port)
+		prom, err := NewPromWriter(cfg.OutputPath)
 		if err != nil {
 			return nil, err
 		}
