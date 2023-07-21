@@ -1,8 +1,8 @@
 global:
-  scrape_interval:     500ms
-  evaluation_interval: 500ms
+  scrape_interval:     200ms
+  evaluation_interval: 200ms
 
 scrape_configs:
-  - job_name: 'gsp'
+  - job_name: 'audio'
     static_configs:
-    - targets: ['gsp-monitor:13088']
+    - targets: ['audio:13088']
