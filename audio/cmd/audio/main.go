@@ -6,7 +6,6 @@ import (
 
 	"github.com/zalgonoise/attr"
 	"github.com/zalgonoise/logx"
-	"github.com/zalgonoise/logx/handlers/texth"
 
 	"github.com/zalgonoise/x/audio/cmd/audio/config"
 	"github.com/zalgonoise/x/audio/cmd/audio/stream"
@@ -15,7 +14,7 @@ import (
 func main() {
 	err, code := run()
 	if err != nil {
-		logx.New(texth.New(os.Stderr)).Error(
+		logx.Error(
 			"audio/gsp: runtime error",
 			attr.String("error", err.Error()),
 		)
@@ -25,7 +24,7 @@ func main() {
 }
 
 func run() (error, int) {
-	cfg, err := config.NewConfig()
+	cfg, err := config.WithDefaults()
 	if err != nil {
 		return err, 1
 	}
