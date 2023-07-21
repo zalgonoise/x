@@ -7,11 +7,11 @@ COPY ./ ./
 
 RUN go mod download 
 RUN mkdir /build \
-    && go build -o /build/gsp ./cmd/gsp \
-    && chmod +x /build/gsp
+    && go build -o /build/audio ./cmd/audio \
+    && chmod +x /build/audio
 
 
 FROM alpine:edge
 
-COPY --from=builder /build/gsp /.
-CMD [ "/gsp" ]
+COPY --from=builder /build/audio /.
+CMD [ "/audio" ]
