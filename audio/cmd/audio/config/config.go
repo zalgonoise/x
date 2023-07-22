@@ -1,11 +1,6 @@
 package config
 
-import (
-	"errors"
-	"time"
-
-	_ "github.com/kelseyhightower/envconfig"
-)
+import "time"
 
 const (
 	defaultMode     = Combined
@@ -40,32 +35,32 @@ const (
 // Config describes an audio stream processor configuration
 type Config struct {
 	// Mode sets the operation mode for the processor
-	Mode OpMode `envconfig:"X_AUDIO_MODE"`
+	Mode OpMode
 	// URL points to an HTTP audio stream source
-	URL string `envconfig:"X_AUDIO_URL"`
+	URL string
 	// Duration delimits a stream's runtime duration
-	Duration time.Duration `envconfig:"X_AUDIO_TIMEOUT"`
+	Duration time.Duration
 	// Output sets the type of Output for the processor
-	Output Output `envconfig:"X_AUDIO_OUTPUT_TYPE"`
+	Output Output
 	// OutputPath describes the path (or URL) for the set Output if applicable
-	OutputPath string `envconfig:"X_AUDIO_OUTPUT_PATH"`
+	OutputPath string
 	// ExitCode forces a custom exit code on the processor when done or errored
-	ExitCode int `envconfig:"X_AUDIO_EXIT_CODE"`
+	ExitCode int
 }
 
 // NewConfig creates a new Config by reading the input flags to the application startup
 //
 // It returns a new Config and an error, which is a call to the Validate(Config) function
 func NewConfig() (*Config, error) {
-	env, envErr := FromEnv()
-	flags, flagsErr := FromFlags()
+	env := FromEnv()
+	flags := FromFlags()
 
 	switch {
-	case envErr != nil && flagsErr != nil:
-		return Merge(env, flags), errors.Join(envErr, flagsErr)
-	case envErr != nil:
+	case env == nil && flags == nil:
+		return nil, ErrMissingConfig
+	case env == nil:
 		return flags, Validate(flags)
-	case flagsErr != nil:
+	case flags == nil:
 		return env, Validate(env)
 	default:
 		merged := Merge(env, flags)
