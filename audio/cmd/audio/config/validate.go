@@ -7,9 +7,11 @@ import (
 const (
 	confDomain = errs.Domain("audio/config")
 
+	ErrMissing = errs.Kind("missing")
 	ErrEmpty   = errs.Kind("empty")
 	ErrInvalid = errs.Kind("invalid")
 
+	ErrConfig     = errs.Entity("configuration")
 	ErrURL        = errs.Entity("URL")
 	ErrMode       = errs.Entity("operation mode")
 	ErrOutput     = errs.Entity("output")
@@ -17,6 +19,7 @@ const (
 )
 
 var (
+	ErrMissingConfig   = errs.New(confDomain, ErrMissing, ErrConfig)
 	ErrEmptyURL        = errs.New(confDomain, ErrEmpty, ErrURL)
 	ErrInvalidMode     = errs.New(confDomain, ErrInvalid, ErrMode)
 	ErrInvalidOutput   = errs.New(confDomain, ErrInvalid, ErrOutput)
