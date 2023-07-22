@@ -32,13 +32,19 @@ func (c *envConfig) Config() *Config {
 	}
 }
 
+var emptyEnvConfig = envConfig{}
+
 // FromEnv loads a Config from the set environment variables in the system
-func FromEnv() (*Config, error) {
+func FromEnv() *Config {
 	var conf = new(envConfig)
 
 	if err := envconfig.Process("", conf); err != nil {
-		return nil, err
+		return nil
 	}
 
-	return conf.Config(), nil
+	if *conf == emptyEnvConfig {
+		return nil
+	}
+
+	return conf.Config()
 }
