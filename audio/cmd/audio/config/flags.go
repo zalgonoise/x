@@ -5,8 +5,10 @@ import (
 	"time"
 )
 
+var emptyFlagsConfig = Config{}
+
 // FromFlags loads a Config from the input command-line flags, in the app's runtime
-func FromFlags() (*Config, error) {
+func FromFlags() *Config {
 	url := flag.String("url", "", "the URL for the WAV audio stream")
 	mode := flag.String("mode", "", "defines the operation mode")
 	out := flag.String("to", "", "defines the output mode [logger, file, prometheus]")
@@ -30,5 +32,9 @@ func FromFlags() (*Config, error) {
 		ExitCode:   *exit,
 	}
 
-	return config, Validate(config)
+	if *config == emptyFlagsConfig {
+		return nil
+	}
+
+	return config
 }
