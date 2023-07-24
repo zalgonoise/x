@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -16,7 +17,7 @@ const defaultTimeout = 5 * time.Second
 
 type PromWriter struct {
 	*Metrics
-	MetricsServer
+	*http.Server
 
 	done context.CancelFunc
 }
@@ -26,15 +27,16 @@ func (w PromWriter) Close() error {
 	ctx, done := context.WithTimeout(context.Background(), defaultTimeout)
 	defer done()
 
-	return w.MetricsServer.Shutdown(ctx)
+	return w.Server.Shutdown(ctx)
 }
 
 type Metrics struct {
 	peakValues     prometheus.Gauge
-	spectrumValues prometheus.Gauge
+	spectrumValues *prometheus.GaugeVec
 
-	peakReg *MaxRegistry[float64]
-	freqReg *MaxRegistry[fft.FrequencyPower]
+	peakReg    *MaxRegistry[float64]
+	freqReg    *MaxRegistry[fft.FrequencyPower]
+	freqBucket *bucketMapper[int]
 }
 
 func (m Metrics) SetPeakValue(data float64) error {
@@ -58,6 +60,7 @@ func (m Metrics) registry() (*prometheus.Registry, error) {
 			ReportErrors: false,
 		}),
 		m.peakValues,
+		m.spectrumValues,
 	} {
 		if err := reg.Register(metric); err != nil {
 			return nil, err
@@ -67,8 +70,8 @@ func (m Metrics) registry() (*prometheus.Registry, error) {
 	return reg, nil
 }
 
-func (m Metrics) setPeakFreq(frequency int) {
-	m.spectrumValues.Set(float64(frequency))
+func (m Metrics) setPeakFreq(frequency int, magnitude float64) {
+	m.spectrumValues.WithLabelValues(m.freqBucket.Get(frequency)).Set(magnitude)
 }
 
 func (m Metrics) setPeakValue(data float64) {
@@ -80,20 +83,22 @@ func (m Metrics) flush() {
 		m.setPeakValue(peak)
 	}
 	if freq := m.freqReg.Flush(); freq.Freq > 0 {
-		m.setPeakFreq(freq.Freq)
+		m.setPeakFreq(freq.Freq, freq.Mag)
 	}
 }
 
 func NewMetrics() *Metrics {
 	return &Metrics{
 		peakValues: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "peak_value",
-			Help: "input signal's peak value",
+			Namespace: "audio",
+			Name:      "peak_value",
+			Help:      "input signal's peak value",
 		}),
-		spectrumValues: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "spectrum_value",
-			Help: "input signal's peak frequency value",
-		}),
+		spectrumValues: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: "audio",
+			Name:      "spectrum_value",
+			Help:      "input signal's peak frequency value",
+		}, []string{"frequency"}),
 
 		peakReg: NewMaxRegistry(func(i, j float64) bool {
 			return i < j
@@ -101,33 +106,12 @@ func NewMetrics() *Metrics {
 		freqReg: NewMaxRegistry(func(i, j fft.FrequencyPower) bool {
 			return i.Mag < j.Mag
 		}),
+
+		freqBucket: newBucketMapper[int](nil, nil),
 	}
 }
 
-type MetricsServer struct {
-	server *http.Server
-	err    error
-}
-
-func (s MetricsServer) Shutdown(ctx context.Context) error {
-	return s.server.Shutdown(ctx)
-}
-
-func (s MetricsServer) ListenAndServe() error {
-	if s.err != nil {
-		return s.err
-	}
-
-	go func() {
-		if err := s.server.ListenAndServe(); err != nil {
-			s.err = err
-		}
-	}()
-
-	return nil
-}
-
-func NewServer(addr string, registry *prometheus.Registry) MetricsServer {
+func NewServer(addr string, registry *prometheus.Registry) *http.Server {
 	mux := http.NewServeMux()
 
 	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{
@@ -137,17 +121,17 @@ func NewServer(addr string, registry *prometheus.Registry) MetricsServer {
 	server := &http.Server{
 		Handler:      mux,
 		Addr:         addr,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
 	}
 
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			panic(err)
 		}
 	}()
 
-	return MetricsServer{server: server}
+	return server
 }
 
 func NewPromWriter(addr string) (*PromWriter, error) {
@@ -179,7 +163,7 @@ func NewPromWriter(addr string) (*PromWriter, error) {
 		return nil, err
 	}
 
-	w.MetricsServer = NewServer(addr, reg)
+	w.Server = NewServer(addr, reg)
 
 	return w, nil
 }
