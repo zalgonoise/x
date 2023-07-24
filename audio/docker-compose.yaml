@@ -10,12 +10,12 @@ services:
     environment:
       - X_AUDIO_TIMEOUT=4h
       - X_AUDIO_OUTPUT_TYPE=prom
-      - X_AUDIO_OUTPUT_PATH=":13088"
-#      - GSP_SIZE=0.5
+      - X_AUDIO_OUTPUT_PATH=:13088
+      - X_AUDIO_MODE=combined
     env_file:
       - "./.env"
     ports:
-      - "13088"
+      - "13088:13088"
   
   prom:
     image: prom/prometheus
@@ -26,11 +26,10 @@ services:
     volumes:
       - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
-    links:
-      - audio
 
   grafana:
     image: grafana/grafana
+    container_name: grafana
     ports:
       - "3000:3000"
     env_file:
