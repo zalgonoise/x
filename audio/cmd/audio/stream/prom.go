@@ -36,7 +36,7 @@ type Metrics struct {
 
 	peakReg    *MaxRegistry[float64]
 	freqReg    *MaxRegistry[fft.FrequencyPower]
-	freqBucket *bucketMapper[int]
+	freqBucket *bucketMapper[int, string]
 }
 
 func (m Metrics) SetPeakValue(data float64) error {
@@ -107,7 +107,7 @@ func NewMetrics() *Metrics {
 			return i.Mag < j.Mag
 		}),
 
-		freqBucket: newBucketMapper[int](nil, nil),
+		freqBucket: newBucketMapper[int, string](nil, nil),
 	}
 }
 
