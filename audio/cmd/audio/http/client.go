@@ -28,9 +28,8 @@ var (
 )
 
 const (
-	defaultTimeout = 30 * time.Second
-	minBackoff     = 125 * time.Millisecond
-	maxBackoff     = 10 * time.Second
+	minBackoff = 125 * time.Millisecond
+	maxBackoff = 10 * time.Second
 )
 
 // New issues an HTTP GET request based on the input URL `url` and timeout `timeout`
@@ -84,6 +83,7 @@ func doWithBackoff(logger logx.Logger, url string, timeout time.Duration) (*http
 
 func do(url string, timeout time.Duration) (*http.Response, context.CancelFunc, error) {
 	ctx, cancel := context.WithCancel(context.Background())
+
 	if timeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 	}
@@ -98,7 +98,7 @@ func do(url string, timeout time.Duration) (*http.Response, context.CancelFunc, 
 	req.Header.Set("Content-Type", "audio/wav")
 
 	res, err := (&http.Client{
-		Timeout: defaultTimeout,
+		Timeout: timeout,
 	}).Do(req)
 
 	if err != nil {
