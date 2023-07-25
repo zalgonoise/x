@@ -11,31 +11,31 @@ var frequencyLabels = []string{
 }
 
 type bucketConstraint interface {
-	int | uint | float32 | float64
+	int | uint | float32 | float64 | string
 }
 
-type bucketMapper[T bucketConstraint] struct {
-	values []T
-	labels []string
+type bucketMapper[K bucketConstraint, V comparable] struct {
+	values []K
+	labels []V
 }
 
-func newBucketMapper[T bucketConstraint](values []T, labels []string) *bucketMapper[T] {
+func newBucketMapper[K bucketConstraint, V comparable](values []K, labels []V) *bucketMapper[K, V] {
 	if len(values) == 0 || len(values) != len(labels) {
-		return &bucketMapper[T]{
-			values: *(*[]T)(unsafe.Pointer(&frequencyValues)),
-			labels: frequencyLabels,
+		return &bucketMapper[K, V]{
+			values: *(*[]K)(unsafe.Pointer(&frequencyValues)),
+			labels: *(*[]V)(unsafe.Pointer(&frequencyLabels)),
 		}
 	}
 
-	return &bucketMapper[T]{values, labels}
+	return &bucketMapper[K, V]{values, labels}
 }
 
-func (m *bucketMapper[T]) Get(value T) string {
+func (m *bucketMapper[K, V]) Get(value K) V {
 	for i := range m.values {
 		if value < m.values[i] {
 			return m.labels[i]
 		}
 	}
 
-	return ""
+	return *new(V)
 }
