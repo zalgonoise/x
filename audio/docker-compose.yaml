@@ -15,7 +15,7 @@ services:
     env_file:
       - "./.env"
     ports:
-      - "13088:13088"
+      - "13088"
   
   prom:
     image: prom/prometheus
@@ -26,6 +26,8 @@ services:
     volumes:
       - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
+    links:
+      - audio
 
   grafana:
     image: grafana/grafana
