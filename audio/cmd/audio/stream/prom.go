@@ -34,9 +34,8 @@ type Metrics struct {
 	peakValues     prometheus.Gauge
 	spectrumValues *prometheus.GaugeVec
 
-	peakReg    *MaxRegistry[float64]
-	freqReg    *MaxRegistry[fft.FrequencyPower]
-	freqBucket *bucketMapper[int, string]
+	peakReg     *MaxRegistry[float64]
+	spectrumReg BucketRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower]
 }
 
 func (m Metrics) SetPeakValue(data float64) error {
@@ -46,7 +45,7 @@ func (m Metrics) SetPeakValue(data float64) error {
 }
 
 func (m Metrics) SetPeakFreq(frequency int, magnitude float64) (err error) {
-	m.freqReg.Register(fft.FrequencyPower{Freq: frequency, Mag: magnitude})
+	m.spectrumReg.Register(fft.FrequencyPower{Freq: frequency, Mag: magnitude})
 
 	return nil
 }
@@ -70,8 +69,8 @@ func (m Metrics) registry() (*prometheus.Registry, error) {
 	return reg, nil
 }
 
-func (m Metrics) setPeakFreq(frequency int, magnitude float64) {
-	m.spectrumValues.WithLabelValues(m.freqBucket.Get(frequency)).Set(magnitude)
+func (m Metrics) setPeakFreq(frequencyLabel string, magnitude float64) {
+	m.spectrumValues.WithLabelValues(frequencyLabel).Set(magnitude)
 }
 
 func (m Metrics) setPeakValue(data float64) {
@@ -82,12 +81,25 @@ func (m Metrics) flush() {
 	if peak := m.peakReg.Flush(); peak > 0.0 {
 		m.setPeakValue(peak)
 	}
-	if freq := m.freqReg.Flush(); freq.Freq > 0 {
-		m.setPeakFreq(freq.Freq, freq.Mag)
+
+	if spectrum := m.spectrumReg.Flush(); len(spectrum) > 0 {
+		for k, v := range spectrum {
+			m.setPeakFreq(k, v.Mag)
+		}
 	}
 }
 
-func NewMetrics() *Metrics {
+func NewMetrics() (*Metrics, error) {
+	spectrumReg, err := NewBucketRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower](
+		defaultLabels[fft.FrequencyPower](
+			func(i int) fft.FrequencyPower { return fft.FrequencyPower{Freq: i} },
+			func(power fft.FrequencyPower) int { return power.Freq },
+		),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Metrics{
 		peakValues: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: "audio",
@@ -103,12 +115,8 @@ func NewMetrics() *Metrics {
 		peakReg: NewMaxRegistry(func(i, j float64) bool {
 			return i < j
 		}),
-		freqReg: NewMaxRegistry(func(i, j fft.FrequencyPower) bool {
-			return i.Mag < j.Mag
-		}),
-
-		freqBucket: newBucketMapper[int, string](nil, nil),
-	}
+		spectrumReg: spectrumReg,
+	}, nil
 }
 
 func NewServer(addr string, registry *prometheus.Registry) *http.Server {
@@ -137,8 +145,15 @@ func NewServer(addr string, registry *prometheus.Registry) *http.Server {
 func NewPromWriter(addr string) (*PromWriter, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	m, err := NewMetrics()
+	if err != nil {
+		cancel()
+
+		return nil, err
+	}
+
 	w := &PromWriter{
-		Metrics: NewMetrics(),
+		Metrics: m,
 		done:    cancel,
 	}
 
@@ -160,6 +175,8 @@ func NewPromWriter(addr string) (*PromWriter, error) {
 
 	reg, err := w.Metrics.registry()
 	if err != nil {
+		cancel()
+
 		return nil, err
 	}
 
