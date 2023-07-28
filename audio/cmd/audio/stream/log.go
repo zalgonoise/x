@@ -20,7 +20,7 @@ type LogWriter struct {
 
 	peakReg    *MaxRegistry[float64]
 	freqReg    *MaxRegistry[fft.FrequencyPower]
-	freqBucket *bucketMapper[int, int]
+	freqBucket *bucket[int]
 
 	logger logx.Logger
 	done   context.CancelFunc
@@ -50,7 +50,7 @@ func (w LogWriter) setPeakValue(data float64) {
 
 func (w LogWriter) setPeakFreq(frequency int, magnitude float64) {
 	w.logger.Info(w.msg,
-		attr.Int("freq_bucket", w.freqBucket.Get(frequency)),
+		attr.String("freq_bucket", w.freqBucket.Get(frequency)),
 		attr.Int("frequency", frequency),
 		attr.Float("magnitude", magnitude),
 	)
@@ -84,7 +84,7 @@ func NewLogWriter(message string, logger logx.Logger) LogWriter {
 			return i.Mag < j.Mag
 		}),
 
-		freqBucket: newBucketMapper(frequencyValues, frequencyValues),
+		freqBucket: newBucket(frequencyValues, frequencyLabels, func(i, j int) bool { return i < j }),
 	}
 
 	go func(ctx context.Context) {
