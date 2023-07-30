@@ -53,6 +53,43 @@ func NewMaxRegistry[T any](lessFn LessFunc[T]) *MaxRegistry[T] {
 	}
 }
 
+type LabeledRegistry[T any, F ~map[string]T] struct {
+	max   map[string]T
+	less  LessFunc[T]
+	label func(T) string
+}
+
+func (r LabeledRegistry[T, F]) Register(value T) {
+	label := r.label(value)
+	max, ok := r.max[label]
+	if ok && r.less(max, value) {
+		r.max[label] = value
+
+		return
+	}
+
+	r.max[label] = value
+}
+
+func (r LabeledRegistry[T, F]) Flush() F {
+	values := make(map[string]T, len(r.max))
+	maps.Copy(values, r.max)
+
+	for k := range r.max {
+		r.max[k] = *new(T)
+	}
+
+	return values
+}
+
+func NewLabeledRegistry[T any, F ~map[string]T](lessFunc LessFunc[T], labelFunc func(T) string) LabeledRegistry[T, F] {
+	return LabeledRegistry[T, F]{
+		max:   make(map[string]T, 2048),
+		less:  lessFunc,
+		label: labelFunc,
+	}
+}
+
 type BucketRegistry[T any, F ~map[string]T] struct {
 	max map[string]T
 
