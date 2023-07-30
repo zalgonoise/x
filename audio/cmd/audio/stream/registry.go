@@ -1,8 +1,6 @@
 package stream
 
 import (
-	"errors"
-
 	"golang.org/x/exp/maps"
 )
 
@@ -88,67 +86,4 @@ func NewLabeledRegistry[T any, F ~map[string]T](lessFunc LessFunc[T], labelFunc 
 		less:  lessFunc,
 		label: labelFunc,
 	}
-}
-
-type BucketRegistry[T any, F ~map[string]T] struct {
-	max map[string]T
-
-	bucket bucket[T]
-	less   LessFunc[T]
-}
-
-func (r BucketRegistry[T, F]) Register(value T) {
-	if label := r.bucket.Get(value); label != "" {
-		if max, ok := r.max[label]; ok && r.less(max, value) {
-			r.max[label] = value
-		}
-	}
-}
-
-func (r BucketRegistry[T, F]) Flush() F {
-	values := make(map[string]T, len(r.max))
-	maps.Copy(values, r.max)
-
-	for k := range r.max {
-		r.max[k] = *new(T)
-	}
-
-	return values
-}
-
-func NewBucketRegistry[T any, F ~map[string]T](
-	values []T, labels []string, lessFunc LessFunc[T],
-) (r BucketRegistry[T, F], err error) {
-	switch {
-	case len(labels) == 0 && len(values) == 0, len(labels) > 0 && len(values) == 0:
-		//labels = frequencyLabels
-		//values = make([]T, len(frequencyValues))
-		//for i := range values {
-		//	values[i] = T(frequencyValues[i])
-		//}
-		return r, errors.New("invalid set of labels and values")
-
-	case len(labels) == 0 && len(values) > 0:
-		//labels = make([]string, len(values))
-		//for i := range labels {
-		//	labels[i] = fmt.Sprintf("%d", int(values[i]))
-		//}
-		return r, errors.New("invalid set of labels and values")
-	}
-
-	max := make(map[string]T, len(labels))
-	for i := range labels {
-		max[labels[i]] = *new(T)
-	}
-
-	b := newBucket[T](values, labels, lessFunc)
-	if b == nil {
-		return r, errors.New("failed to create bucket")
-	}
-
-	return BucketRegistry[T, F]{
-		max:    max,
-		bucket: *b,
-		less:   lessFunc,
-	}, nil
 }
