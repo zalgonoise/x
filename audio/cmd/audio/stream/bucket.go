@@ -8,22 +8,6 @@ var frequencyLabels = []string{
 	"125", "250", "500", "1000", "2000", "4000", "6000", "8000", "16000", "22000",
 }
 
-func defaultLabels[T any, L bucketConstraint](toFunc func(L) T, fromFunc func(T) L) ([]T, []string, LessFunc[T]) {
-	values := make([]T, 0, len(frequencyValues))
-
-	for i := range frequencyValues {
-		values = append(values, toFunc(L(frequencyValues[i])))
-	}
-
-	return values, frequencyLabels, func(i, j T) bool {
-		return fromFunc(i) < fromFunc(j)
-	}
-}
-
-type bucketConstraint interface {
-	int | uint | float32 | float64
-}
-
 type bucket[T any] struct {
 	values []T
 	labels []string
