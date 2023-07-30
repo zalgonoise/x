@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,10 +33,10 @@ func (w PromWriter) Close() error {
 
 type Metrics struct {
 	peakValues     prometheus.Gauge
-	spectrumValues *prometheus.GaugeVec
+	spectrumValues *prometheus.HistogramVec
 
 	peakReg     *MaxRegistry[float64]
-	spectrumReg BucketRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower]
+	spectrumReg LabeledRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower]
 }
 
 func (m Metrics) SetPeakValue(data float64) error {
@@ -70,7 +71,7 @@ func (m Metrics) registry() (*prometheus.Registry, error) {
 }
 
 func (m Metrics) setPeakFreq(frequencyLabel string, magnitude float64) {
-	m.spectrumValues.WithLabelValues(frequencyLabel).Set(magnitude)
+	m.spectrumValues.WithLabelValues(frequencyLabel).Observe(magnitude)
 }
 
 func (m Metrics) setPeakValue(data float64) {
@@ -90,23 +91,13 @@ func (m Metrics) flush() {
 }
 
 func NewMetrics() (*Metrics, error) {
-	spectrumReg, err := NewBucketRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower](
-		defaultLabels[fft.FrequencyPower](
-			func(i int) fft.FrequencyPower { return fft.FrequencyPower{Freq: i} },
-			func(power fft.FrequencyPower) int { return power.Freq },
-		),
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Metrics{
 		peakValues: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: "audio",
 			Name:      "peak_value",
 			Help:      "input signal's peak value",
 		}),
-		spectrumValues: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		spectrumValues: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "audio",
 			Name:      "spectrum_value",
 			Help:      "input signal's peak frequency value",
@@ -115,7 +106,10 @@ func NewMetrics() (*Metrics, error) {
 		peakReg: NewMaxRegistry(func(i, j float64) bool {
 			return i < j
 		}),
-		spectrumReg: spectrumReg,
+		spectrumReg: NewLabeledRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower](
+			func(i, j fft.FrequencyPower) bool { return i.Mag < j.Mag },
+			func(power fft.FrequencyPower) string { return strconv.Itoa(power.Freq) },
+		),
 	}, nil
 }
 
