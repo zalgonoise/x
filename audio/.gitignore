@@ -1,3 +1,14 @@
+# exclude build output directory
 build/
+
+# exclude benchmark-created *.test files
 *.test
+
+# exclude local dev environment
 .env
+
+# exclude local prometheus data
+prometheus/data
+
+# exclude local grafana data
+grafana/
