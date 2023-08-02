@@ -15,30 +15,5 @@ services:
     env_file:
       - "./.env"
     ports:
-      - "13088"
+      - "13088:13088"
   
-  prom:
-    image: prom/prometheus
-    container_name: prom
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    links:
-      - audio
-
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    ports:
-      - "3000:3000"
-    env_file:
-      - "./.env"
-    volumes:
-      - grafana-data:/var/lib/grafana
-
-volumes:
-  prometheus-data:
-  grafana-data:

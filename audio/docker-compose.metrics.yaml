@@ -1,0 +1,35 @@
+version: '3.7'
+services:
+
+  prom:
+    image: prom/prometheus
+    container_name: prom
+    user: "1001"
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      - PUID=1001
+      - PGID=1001
+    volumes:
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ${PROMETHEUS_DATA}:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    user: "1001"
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - "./.env"
+    volumes:
+      - ${GRAFANA_PROV}:/etc/grafana/provisioning/datasources
+      - ${GRAFANA_DATA}:/var/lib/grafana
