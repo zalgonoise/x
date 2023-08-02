@@ -4,5 +4,6 @@ global:
 
 scrape_configs:
   - job_name: 'audio'
+    scrape_interval: 500ms
     static_configs:
-    - targets: ['audio:13088']
+    - targets: ['localhost:13088']
