@@ -2,14 +2,19 @@ package logbuf
 
 import (
 	"context"
+	"errors"
+	"io"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/exp/slog"
 )
 
+const minAlloc = 64
+
 // Repository describes the actions that the trace ID store should contain
 type Repository interface {
+	io.Closer
 	// InsertTrace adds the input trace.TraceID to the database if it does not yet exist, alongside with the current
 	// timestamp (of when it is registered). Returns an error if raised.
 	InsertTrace(ctx context.Context, traceID trace.TraceID) (err error)
@@ -45,15 +50,27 @@ type BufferedHandler struct {
 
 	h slog.Handler
 
+	done       func()
 	repository Repository
 	cache      map[trace.TraceID][]slog.Record
 }
 
-// NewBufferedHandler
-//
-// TODO: implement function; document requirements
-func NewBufferedHandler(cfg *BufferedHandlerConfig) (BufferedHandler, error) {
-	return BufferedHandler{}, nil
+// NewBufferedHandler creates a BufferedHandler with the input BufferedHandlerConfig, slog.Handler and Repository.
+func NewBufferedHandler(
+	ctx context.Context, cfg *BufferedHandlerConfig, handler slog.Handler, repo Repository,
+) (*BufferedHandler, error) {
+	h := &BufferedHandler{
+		cfg:        cfg,
+		h:          handler,
+		repository: repo,
+		cache:      make(map[trace.TraceID][]slog.Record),
+	}
+
+	ctx, h.done = context.WithCancel(ctx)
+
+	go h.run(ctx)
+
+	return h, nil
 }
 
 // Enabled reports whether the handler handles records at the given level.
@@ -65,11 +82,7 @@ func NewBufferedHandler(cfg *BufferedHandlerConfig) (BufferedHandler, error) {
 // or the method does not take a context.
 // The context is passed so Enabled can use its values
 // to make a decision.
-//
-// TODO: replace with the comparison against the config's level element (commented out while missing)
-func (h BufferedHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	// return level >= h.cfg.Level
-
+func (h *BufferedHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return h.h.Enabled(ctx, level)
 }
 
@@ -90,17 +103,52 @@ func (h BufferedHandler) Enabled(ctx context.Context, level slog.Level) bool {
 //   - If a group's key is empty, inline the group's Attrs.
 //   - If a group has no Attrs (even if it has a non-empty key),
 //     ignore it.
-//
-// TODO: continue method implementation by adding the slog.Record to the BufferedHandler's cache
-func (h BufferedHandler) Handle(ctx context.Context, r slog.Record) error {
+func (h *BufferedHandler) Handle(ctx context.Context, r slog.Record) error {
 	traceID, err := GetTraceID(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err = h.repository.InsertTrace(ctx, traceID); err != nil {
-		return err
+	if r.Level >= slog.Level(h.cfg.FlushLevel) {
+		if logs, ok := h.cache[traceID]; ok {
+			errs := make([]error, 0, len(logs))
+
+			for i := range logs {
+				if err = h.h.Handle(ctx, logs[i]); err != nil {
+					errs = append(errs, err)
+				}
+			}
+
+			if err = h.h.Handle(ctx, r); err != nil {
+				errs = append(errs, err)
+			}
+
+			switch len(errs) {
+			case 0:
+				delete(h.cache, traceID)
+
+				return nil
+			case 1:
+				return errs[0]
+			default:
+				return errors.Join(errs...)
+			}
+		}
+
 	}
+
+	if _, ok := h.cache[traceID]; !ok {
+		h.cache[traceID] = make([]slog.Record, 0, minAlloc)
+		h.cache[traceID] = append(h.cache[traceID], r)
+
+		if err = h.repository.InsertTrace(ctx, traceID); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	h.cache[traceID] = append(h.cache[traceID], r)
 
 	return nil
 }
@@ -108,10 +156,10 @@ func (h BufferedHandler) Handle(ctx context.Context, r slog.Record) error {
 // WithAttrs returns a new Handler whose attributes consist of
 // both the receiver's attributes and the arguments.
 // The Handler owns the slice: it may retain, modify or discard it.
-//
-// TODO: implement method by returning a new BufferedHandler with its own slog.Handler after calling the same method
-func (h BufferedHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return nil
+func (h *BufferedHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	h.h.WithAttrs(attrs)
+
+	return h
 }
 
 // WithGroup returns a new Handler with the given group appended to
@@ -133,23 +181,37 @@ func (h BufferedHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 //	logger.LogAttrs(level, msg, slog.Group("s", slog.Int("a", 1), slog.Int("b", 2)))
 //
 // If the name is empty, WithGroup returns the receiver.
-//
-// TODO: implement method by returning a new BufferedHandler with its own slog.Handler after calling the same method
-func (h BufferedHandler) WithGroup(name string) slog.Handler {
+func (h *BufferedHandler) WithGroup(name string) slog.Handler {
+	h.h.WithGroup(name)
 
-	return nil
+	return h
 }
 
 // Shutdown gracefully stops the BufferedHandler, returning an error if raised
-//
-// TODO: implement method
-func (h BufferedHandler) Shutdown(ctx context.Context) error {
+func (h *BufferedHandler) Shutdown(_ context.Context) error {
+	h.done()
 
-	return nil
+	return h.repository.Close()
 }
 
 // run periodically scans the database for expired trace IDs, pruning them from both the database and the slog.Record
 // cache. This function should be non-blocking, to be executed as a goroutine.
-//
-// TODO: implement method
-func (h BufferedHandler) run() {}
+func (h *BufferedHandler) run(ctx context.Context) {
+	ticker := time.NewTicker(h.cfg.FlushFrequency)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case _ = <-ticker.C:
+			// don't remove logs from cache on DB error
+			// needs a different approach
+			if traceIDs, err := h.repository.DeleteTraces(ctx, h.cfg.DeletionThresh); err == nil {
+				for i := range traceIDs {
+					delete(h.cache, traceIDs[i])
+				}
+			}
+		}
+	}
+}
