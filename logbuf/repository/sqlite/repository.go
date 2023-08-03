@@ -105,3 +105,7 @@ func (r Repository) DeleteTraces(ctx context.Context, threshold time.Duration) (
 
 	return pruned, nil
 }
+
+func (r Repository) Close() error {
+	return r.db.Close()
+}
