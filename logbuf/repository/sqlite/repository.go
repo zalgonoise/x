@@ -106,6 +106,7 @@ func (r Repository) DeleteTraces(ctx context.Context, threshold time.Duration) (
 	return pruned, nil
 }
 
-func (r Repository) Close() error {
+// Shutdown gracefully stops the Repository's underlying sql.DB
+func (r Repository) Shutdown(_ context.Context) error {
 	return r.db.Close()
 }
