@@ -3,7 +3,9 @@ package logbuf
 import (
 	"context"
 	"errors"
-	"io"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -14,7 +16,8 @@ const minAlloc = 64
 
 // Repository describes the actions that the trace ID store should contain
 type Repository interface {
-	io.Closer
+	// Shutdown gracefully stops the Repository's underlying sql.DB
+	Shutdown(ctx context.Context) error
 	// InsertTrace adds the input trace.TraceID to the database if it does not yet exist, alongside with the current
 	// timestamp (of when it is registered). Returns an error if raised.
 	InsertTrace(ctx context.Context, traceID trace.TraceID) (err error)
@@ -188,21 +191,28 @@ func (h *BufferedHandler) WithGroup(name string) slog.Handler {
 }
 
 // Shutdown gracefully stops the BufferedHandler, returning an error if raised
-func (h *BufferedHandler) Shutdown(_ context.Context) error {
+func (h *BufferedHandler) Shutdown(ctx context.Context) error {
 	h.done()
 
-	return h.repository.Close()
+	return h.repository.Shutdown(ctx)
 }
 
 // run periodically scans the database for expired trace IDs, pruning them from both the database and the slog.Record
 // cache. This function should be non-blocking, to be executed as a goroutine.
 func (h *BufferedHandler) run(ctx context.Context) {
-	ticker := time.NewTicker(h.cfg.FlushFrequency)
+	var (
+		ticker = time.NewTicker(h.cfg.FlushFrequency)
+		sigCh  = make(chan os.Signal, 1)
+	)
 	defer ticker.Stop()
+
+	signal.Notify(sigCh, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-sigCh:
 			return
 		case _ = <-ticker.C:
 			// don't remove logs from cache on DB error
