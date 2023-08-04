@@ -21,7 +21,7 @@ type Logger interface {
 
 // Connect creates a new instance of a SQLite database from the input URI. This URI can be empty (or ":memory:", if the
 // caller wishes to run the database in-memory.
-func Connect(uri string) (*sql.DB, error) {
+func Connect(_ context.Context, uri string) (*sql.DB, error) {
 	if uri == "" {
 		uri = ":memory:"
 	}
