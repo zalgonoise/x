@@ -136,9 +136,9 @@ func New(cfg *config.Config) (*Stream, error) {
 	case config.Monitor:
 		procFns = append(procFns, newMontiorFunc(s))
 	case config.Analyze:
-		procFns = append(procFns, newAnalyzeFunc(s))
+		procFns = append(procFns, newAnalyzeFunc(s, cfg.NumSpectrumBuckets))
 	case config.Combined:
-		procFns = append(procFns, newMontiorFunc(s), newAnalyzeFunc(s))
+		procFns = append(procFns, newMontiorFunc(s), newAnalyzeFunc(s, cfg.NumSpectrumBuckets))
 	default:
 		return nil, ErrInvalidMode
 	}
@@ -162,8 +162,8 @@ func newMontiorFunc(s *Stream) func([]float64) error {
 	}
 }
 
-func newAnalyzeFunc(s *Stream) func([]float64) error {
-	bs := fft.Block1024
+func newAnalyzeFunc(s *Stream, blockSize int) func([]float64) error {
+	bs := fft.NearestBlock(blockSize)
 	windowBlock := window.New(window.Blackman, int(bs))
 
 	return func(data []float64) error {
