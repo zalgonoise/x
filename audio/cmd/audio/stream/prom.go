@@ -14,7 +14,11 @@ import (
 	"github.com/zalgonoise/x/audio/fft"
 )
 
-const defaultTimeout = 5 * time.Second
+const (
+	defaultTimeout        = 5 * time.Second
+	expectedMaxFreqString = "22000"
+	expectedMaxFreqLen    = len(expectedMaxFreqString)
+)
 
 type PromWriter struct {
 	*Metrics
@@ -85,7 +89,7 @@ func (m Metrics) flush() {
 
 	if spectrum := m.spectrumReg.Flush(); len(spectrum) > 0 {
 		for k, v := range spectrum {
-			m.setPeakFreq(k, v.Mag)
+			m.setPeakFreq(minLen(k, expectedMaxFreqLen), v.Mag)
 		}
 	}
 }
@@ -177,4 +181,20 @@ func NewPromWriter(addr string) (*PromWriter, error) {
 	w.Server = NewServer(addr, reg)
 
 	return w, nil
+}
+
+func minLen(s string, size int) string {
+	out := make([]byte, size)
+	j := size - 1
+
+	for i := len(s) - 1; j >= 0; i-- {
+		out[j] = s[i]
+		j--
+	}
+
+	for ; j >= 0; j-- {
+		out[j] = '0'
+	}
+
+	return string(out)
 }
