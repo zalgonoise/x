@@ -7,8 +7,5 @@ build/
 # exclude local dev environment
 .env
 
-# exclude local prometheus data
-prometheus/data
-
-# exclude local grafana data
-grafana/
+# exclude local data
+local/
