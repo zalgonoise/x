@@ -16,6 +16,7 @@ const (
 	ErrMode       = errs.Entity("operation mode")
 	ErrOutput     = errs.Entity("output")
 	ErrOutputPath = errs.Entity("output path")
+	ErrNumBuckets = errs.Entity("number of spectrum buckets")
 )
 
 var (
@@ -24,13 +25,20 @@ var (
 	ErrInvalidMode     = errs.New(confDomain, ErrInvalid, ErrMode)
 	ErrInvalidOutput   = errs.New(confDomain, ErrInvalid, ErrOutput)
 	ErrEmptyOutputPath = errs.New(confDomain, ErrEmpty, ErrOutputPath)
+	ErrEmptyNumBuckets = errs.New(confDomain, ErrEmpty, ErrNumBuckets)
 )
+
+const minNumBuckets = 8
 
 // Validate returns an error if the input Config contains invalid data
 func Validate(c *Config) error {
 	switch c.Mode {
-	case Monitor, Analyze, Combined:
+	case Monitor:
 	// OK state
+	case Analyze, Combined:
+		if c.NumSpectrumBuckets < minNumBuckets {
+			return ErrEmptyNumBuckets
+		}
 	default:
 		return ErrInvalidMode
 	}
