@@ -89,7 +89,7 @@ func (m Metrics) flush() {
 
 	if spectrum := m.spectrumReg.Flush(); len(spectrum) > 0 {
 		for k, v := range spectrum {
-			m.setPeakFreq(minLen(k, expectedMaxFreqLen), v.Mag)
+			m.setPeakFreq(k, v.Mag)
 		}
 	}
 }
@@ -112,7 +112,7 @@ func NewMetrics() (*Metrics, error) {
 		}),
 		spectrumReg: NewLabeledRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower](
 			func(i, j fft.FrequencyPower) bool { return i.Mag < j.Mag },
-			func(power fft.FrequencyPower) string { return strconv.Itoa(power.Freq) },
+			func(power fft.FrequencyPower) string { return minLen(strconv.Itoa(power.Freq), expectedMaxFreqLen) },
 		),
 	}, nil
 }
