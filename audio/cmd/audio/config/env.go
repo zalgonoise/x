@@ -17,18 +17,21 @@ type envConfig struct {
 	Output string `envconfig:"X_AUDIO_OUTPUT_TYPE"`
 	// OutputPath describes the path (or URL) for the set Output if applicable
 	OutputPath string `envconfig:"X_AUDIO_OUTPUT_PATH"`
+	// NumSpectrumBuckets defines the number of buckets to distribute frequencies on, when analyzing a signal's spectrum
+	NumSpectrumBuckets int `envconfig:"X_AUDIO_NUM_SPECTRUM_BUCKETS"`
 	// ExitCode forces a custom exit code on the processor when done or errored
 	ExitCode int `envconfig:"X_AUDIO_EXIT_CODE"`
 }
 
 func (c *envConfig) Config() *Config {
 	return &Config{
-		Mode:       OpMode(c.Mode),
-		URL:        c.URL,
-		Duration:   c.Duration,
-		Output:     Output(c.Output),
-		OutputPath: c.OutputPath,
-		ExitCode:   c.ExitCode,
+		Mode:               OpMode(c.Mode),
+		URL:                c.URL,
+		Duration:           c.Duration,
+		Output:             Output(c.Output),
+		OutputPath:         c.OutputPath,
+		NumSpectrumBuckets: c.NumSpectrumBuckets,
+		ExitCode:           c.ExitCode,
 	}
 }
 
