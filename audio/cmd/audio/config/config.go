@@ -3,9 +3,10 @@ package config
 import "time"
 
 const (
-	defaultMode     = Combined
-	defaultDuration = 30 * time.Second
-	defaultOutput   = ToLogger
+	defaultMode               = Combined
+	defaultDuration           = 30 * time.Second
+	defaultOutput             = ToLogger
+	defaultNumSpectrumBuckets = 64
 )
 
 // OpMode enumerates valid operation modes
@@ -44,6 +45,8 @@ type Config struct {
 	Output Output
 	// OutputPath describes the path (or URL) for the set Output if applicable
 	OutputPath string
+	// NumSpectrumBuckets defines the number of buckets to distribute frequencies on, when analyzing a signal's spectrum
+	NumSpectrumBuckets int
 	// ExitCode forces a custom exit code on the processor when done or errored
 	ExitCode int
 }
@@ -97,6 +100,10 @@ func applyDefaults(c *Config) *Config {
 		c.Output = defaultOutput
 	}
 
+	if c.NumSpectrumBuckets == 0 {
+		c.NumSpectrumBuckets = defaultNumSpectrumBuckets
+	}
+
 	return c
 }
 
@@ -128,6 +135,10 @@ func Merge(main, extra *Config) *Config {
 
 	if main.OutputPath == "" {
 		main.OutputPath = extra.OutputPath
+	}
+
+	if main.NumSpectrumBuckets == 0 {
+		main.NumSpectrumBuckets = extra.NumSpectrumBuckets
 	}
 
 	if main.ExitCode == 0 {
