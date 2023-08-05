@@ -187,7 +187,7 @@ func minLen(s string, size int) string {
 	out := make([]byte, size)
 	j := size - 1
 
-	for i := len(s) - 1; j >= 0; i-- {
+	for i := len(s) - 1; i >= 0; i-- {
 		out[j] = s[i]
 		j--
 	}
