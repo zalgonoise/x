@@ -1,0 +1,78 @@
+version: '3.7'
+services:
+
+  prom:
+    image: prom/prometheus
+    container_name: prom
+    user: "1000"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${PROMETHEUS_DATA}:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=730d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--enable-feature=exemplar-storage'
+      - '--enable-feature=memory-snapshot-on-shutdown'
+#      - '--enable-feature=traceToMetrics'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    user: "1000"
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - "./.env"
+    environment:
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - ${GRAFANA_PROV}:/etc/grafana/provisioning/datasources
+      - ${GRAFANA_DATA}:/var/lib/grafana
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    user: "1000"
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml
+      - ${TEMPO_DATA}:/tmp/tempo
+    ports:
+      - "3200:3200"   # tempo
+      - "4317:4317"  # otlp grpc
+
+  loki:
+    image: grafana/loki:2.8.3
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/loki.yaml:/etc/loki/local-config.yaml:ro
+
+  promtail:
+    image: grafana/promtail:2.8.3
+    container_name: loki-promtail
+    volumes:
+      -  /var/run/docker.sock:/var/run/docker.sock
+      - ./loki/promtail.yaml:/etc/promtail/config.yaml:ro
+    command: -config.file=/etc/promtail/config.yaml
+    ports:
+      - "9080:9080"
