@@ -9,7 +9,7 @@ clean:
 	docker compose down
 	docker compose -f docker-compose.monitor.yaml down
 	rm -rf ./local
-	mkdir -p ./local/{tempo/data,minio/data,prometheus/data,grafana/data}
+	mkdir -p ./local/{tempo/data,prometheus/data,grafana/data}
 
 up:
 	docker compose -f docker-compose.monitor.yaml up -d
