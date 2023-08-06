@@ -4,7 +4,7 @@ global:
 
 
 scrape_configs:
-  - job_name: 'exemplars-ex'
+  - job_name: 'exemplars'
     scrape_interval: 500ms
     params:
       headers: ['Accept: application/openmetrics-text']
