@@ -1,0 +1,13 @@
+version: '3.7'
+services:
+
+  exemplars:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: exemplars
+    environment:
+      X_OBSERVABILITY_TRACER_URI: "tempo:4317"
+      X_OBSERVABILITY_DUR: "3m"
+    ports:
+      - "13090:13090"
