@@ -1,6 +1,6 @@
-.PHONY : default build clean up run fresh
+.PHONY : default build clean up down run fresh
 
-default: run
+default: clean up run
 
 build:
 	docker compose build
@@ -9,10 +9,14 @@ clean:
 	docker compose down
 	docker compose -f docker-compose.monitor.yaml down
 	rm -rf ./local
-	mkdir -p ./local/{tempo/data,minio/data,prometheus/data,grafana/{data,provisioning/datasources}}
+	mkdir -p ./local/{tempo/data,minio/data,prometheus/data,grafana/data}
 
 up:
 	docker compose -f docker-compose.monitor.yaml up -d
+
+down:
+	docker compose down
+	docker compose -f docker-compose.monitor.yaml down
 
 run:
 	docker compose up
