@@ -23,7 +23,7 @@ services:
       - '--web.enable-lifecycle'
       - '--enable-feature=exemplar-storage'
       - '--enable-feature=memory-snapshot-on-shutdown'
-#      - '--enable-feature=traceToMetrics'
+      - '--enable-feature=traceToMetrics'
 
   grafana:
     image: grafana/grafana
