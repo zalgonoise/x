@@ -6,7 +6,7 @@ COPY ./ ./
 
 RUN go mod download
 RUN mkdir /build \
-    && go build -o /build/app ./cmd/exemplars-ex \
+    && go build -o /build/app ./cmd/exemplars \
     && chmod +x /build/app
 
 
