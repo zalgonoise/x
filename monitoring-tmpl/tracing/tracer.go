@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const ServiceName = "observability-with-exemplars"
+const ServiceName = "exemplars"
 
 func Tracer() trace.Tracer {
 	return otel.GetTracerProvider().Tracer(ServiceName)
