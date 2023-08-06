@@ -25,7 +25,7 @@ func (h HandlerWithLogs) Handle(ctx context.Context, value int) (err error) {
 	attrs = append(attrs, "value", value)
 
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
-		attrs = append(attrs, "trace_id", sc.TraceID().String())
+		attrs = append(attrs, "traceID", sc.TraceID().String())
 	}
 
 	h.logger.InfoContext(ctx, "received a new value to process", attrs...)
