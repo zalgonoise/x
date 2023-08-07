@@ -15,7 +15,7 @@ datasources:
         spanStartTimeShift: '1h'
         spanEndTimeShift: '-1h'
         tags: [{ key: 'service.name', value: 'container' }]
-        filterByTraceID: false
+        filterByTraceID: true
         filterBySpanID: false
         customQuery: false
       tracesToMetrics:
