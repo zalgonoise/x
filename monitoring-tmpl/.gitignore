@@ -1,5 +1,2 @@
 # exclude local environment's data
 ./local/
-
-# exclude .env from being comitted in the future
-./.env
