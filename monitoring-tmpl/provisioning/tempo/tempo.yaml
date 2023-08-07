@@ -1,6 +1,11 @@
 server:
   http_listen_port: 3200
 
+overrides:
+  metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
+  ingestion_burst_size_bytes: 10_000_000
+  max_traces_per_user: 1000000
+
 distributor:
   receivers:
     otlp:
@@ -9,10 +14,13 @@ distributor:
 
 ingester:
   max_block_duration: 5m               # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally
+  flush_all_on_shutdown: true
 
 compactor:
   compaction:
-    block_retention: 1h                # overall Tempo trace retention. set for demo purposes
+    block_retention: 1440h
+    compacted_block_retention: 8760h
+    max_block_bytes: 100_000_000
 
 metrics_generator:
   registry:
@@ -27,11 +35,14 @@ metrics_generator:
 
 storage:
   trace:
-    backend: local                     # backend configuration to use
+    backend: s3
+    s3:
+      bucket: tempo
+      endpoint: minio:9000
+      access_key: accesskey
+      secret_key: accesssecret
+      insecure: true
+    pool:
+      queue_depth: 2000
     wal:
-      path: /tmp/tempo/wal             # where to store the wal locally
-    local:
-      path: /tmp/tempo/blocks
-
-overrides:
-  metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
+      path: /var/tempo/wal
