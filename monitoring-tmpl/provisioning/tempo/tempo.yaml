@@ -2,7 +2,7 @@ server:
   http_listen_port: 3200
 
 overrides:
-  metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
+#  metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
   ingestion_burst_size_bytes: 10_000_000
   max_traces_per_user: 1000000
 
@@ -28,9 +28,9 @@ metrics_generator:
       source: tempo
       cluster: docker-compose
   storage:
-    path: /tmp/tempo/generator/wal
+    path: /data/tempo/generator/wal
     remote_write:
-      - url: http://prometheus:9090/api/v1/write
+      - url: http://prom:9090/api/v1/write
         send_exemplars: true
 
 storage:
@@ -45,4 +45,4 @@ storage:
     pool:
       queue_depth: 2000
     wal:
-      path: /var/tempo/wal
+      path: /data/tempo/wal
