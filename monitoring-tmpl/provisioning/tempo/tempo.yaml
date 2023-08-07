@@ -2,7 +2,7 @@ server:
   http_listen_port: 3200
 
 overrides:
-#  metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
+  metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
   ingestion_burst_size_bytes: 10_000_000
   max_traces_per_user: 1000000
 
