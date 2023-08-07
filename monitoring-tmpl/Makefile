@@ -8,8 +8,8 @@ build:
 clean:
 	docker compose down
 	docker compose -f docker-compose.monitor.yaml down
-	rm -rf ./local
-	mkdir -p ./local/{tempo/data,prometheus/data,grafana/data}
+	sudo rm -rf ./local
+	mkdir -p ./local/{tempo/data,prometheus/data,grafana/data,minio/data}
 
 up:
 	docker compose -f docker-compose.monitor.yaml up -d
