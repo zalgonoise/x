@@ -3,8 +3,6 @@ server:
 
 overrides:
   metrics_generator_processors: [service-graphs, span-metrics] # enables metrics generator
-  ingestion_burst_size_bytes: 10_000_000
-  max_traces_per_user: 1000000
 
 distributor:
   receivers:
@@ -19,8 +17,6 @@ ingester:
 compactor:
   compaction:
     block_retention: 1440h
-    compacted_block_retention: 8760h
-    max_block_bytes: 100_000_000
 
 metrics_generator:
   registry:
@@ -42,7 +38,5 @@ storage:
       access_key: accesskey
       secret_key: accesssecret
       insecure: true
-    pool:
-      queue_depth: 2000
     wal:
       path: /data/tempo/wal
