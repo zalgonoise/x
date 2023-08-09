@@ -11,3 +11,9 @@ services:
       X_OBSERVABILITY_DUR: "3m"
     ports:
       - "13090:13090"
+    networks:
+      app-runtime:
+
+
+networks:
+  app-runtime:
