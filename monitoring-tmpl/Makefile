@@ -1,6 +1,9 @@
-.PHONY : default build clean up down run fresh
+.PHONY : default get-loki-driver build clean up down run fresh
 
 default: clean up run
+
+get-loki-driver:
+	docker plugin install grafana/loki-docker-driver:2.8.2 --alias loki --grant-all-permissions
 
 build:
 	docker compose build
