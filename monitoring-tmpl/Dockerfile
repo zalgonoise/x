@@ -6,11 +6,11 @@ COPY ./ ./
 
 RUN go mod download
 RUN mkdir /build \
-    && go build -o /build/app ./cmd/exemplars \
+    && CGO_ENABLED=0 go build -ldflags="-s -w" -o /build/app ./cmd/exemplars \
     && chmod +x /build/app
 
 
-FROM alpine:edge
+FROM gcr.io/distroless/static
 
-COPY --from=builder /build/app /.
+COPY --from=builder /build/app /
 CMD [ "/app" ]
