@@ -39,8 +39,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-admin}"
+      GF_FEATURE_TOGGLES_ENABLE: "traceqlEditor"
+      GF_PATHS_PROVISIONING: "/etc/grafana/provisioning"
     volumes:
       - ./provisioning/grafana/datasources:/etc/grafana/provisioning/datasources:ro
       - grafana:/var/lib/grafana
