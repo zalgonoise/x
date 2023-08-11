@@ -1,7 +1,17 @@
 global:
   scrape_interval:     500ms
   evaluation_interval: 500ms
+  external_labels:
+    cluster: observability
+    namespace: exemplars
 
+
+remote_write:
+  - url: http://mimir-lb:9009/api/v1/push
+    headers:
+      X-Scope-OrgID: "anonymous"
+    send_exemplars: true
+    send_native_histograms: true
 
 scrape_configs:
   - job_name: 'exemplars'
