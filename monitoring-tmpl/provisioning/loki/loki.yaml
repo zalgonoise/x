@@ -22,6 +22,8 @@ ingester:
     final_sleep: 0s
 
 memberlist:
+  cluster_label: "loki"
+  cluster_label_verification_disabled: true
   abort_if_cluster_join_fails: false
   bind_port: 7946
   join_members:
