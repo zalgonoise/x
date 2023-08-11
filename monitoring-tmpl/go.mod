@@ -1,6 +1,6 @@
 module github.com/zalgonoise/x/monitoring-tmpl
 
-go 1.20
+go 1.21
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -9,7 +9,6 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
 	go.opentelemetry.io/otel/sdk v1.16.0
 	go.opentelemetry.io/otel/trace v1.16.0
-	golang.org/x/exp v0.0.0-20230801115018-d63ba01acd4b
 	google.golang.org/grpc v1.57.0
 )
 
