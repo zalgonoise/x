@@ -19,12 +19,12 @@ datasources:
         filterBySpanID: false
         customQuery: false
       tracesToMetrics:
-        datasourceUid: 'Prometheus'
+        datasourceUid: 'Mimir'
         spanStartTimeShift: '1h'
         spanEndTimeShift: '-1h'
         tags: [{ key: 'service.name', value: 'job' }]
       serviceMap:
-        datasourceUid: 'Prometheus'
+        datasourceUid: 'Mimir'
       nodeGraph:
         enabled: true
       search:
