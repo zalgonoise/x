@@ -26,7 +26,7 @@ metrics_generator:
   storage:
     path: /data/tempo/generator/wal
     remote_write:
-      - url: http://prom:9090/api/v1/write
+      - url: http://mimir-lb:8080/api/v1/write
         send_exemplars: true
 
 storage:
@@ -40,3 +40,7 @@ storage:
       insecure: true
     wal:
       path: /data/tempo/wal
+
+memberlist:
+  cluster_label: "tempo"
+  cluster_label_verification_disabled: true
