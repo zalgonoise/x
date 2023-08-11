@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"math/rand"
 	"os"
 	"time"
-
-	"golang.org/x/exp/slog"
 
 	"github.com/zalgonoise/x/monitoring-tmpl/config"
 	"github.com/zalgonoise/x/monitoring-tmpl/metrics"
