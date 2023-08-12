@@ -19,6 +19,12 @@ blocks_storage:
   tsdb:
     dir: /data/ingester
 
+ingester:
+  ring:
+    kvstore:
+      store: memberlist
+
+
 memberlist:
   cluster_label: "mimir"
   cluster_label_verification_disabled: true
