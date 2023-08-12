@@ -21,11 +21,11 @@ type Metrics struct {
 	reqLatency  prometheus.Histogram
 }
 
-func (m *Metrics) IncRequestsReceived() {
+func (m *Metrics) IncRequestsReceived(_ context.Context) {
 	m.reqReceived.Inc()
 }
 
-func (m *Metrics) IncRequestsFailed() {
+func (m *Metrics) IncRequestsFailed(_ context.Context) {
 	m.reqFailed.Inc()
 }
 
