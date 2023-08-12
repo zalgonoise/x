@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/x/monitoring-tmpl/config"
+	"github.com/zalgonoise/x/monitoring-tmpl/log"
 	"github.com/zalgonoise/x/monitoring-tmpl/metrics"
 	"github.com/zalgonoise/x/monitoring-tmpl/service"
 	"github.com/zalgonoise/x/monitoring-tmpl/tracing"
@@ -32,9 +33,12 @@ func run() (error, int) {
 		return err, 1
 	}
 
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		AddSource: true,
-	}))
+	logger := slog.New(log.NewSpanContextHandler(
+		log.WithHandler(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			AddSource: true,
+		})),
+		log.WithSpanID(),
+	))
 
 	exporter, err := tracing.GRPCExporter(ctx, cfg.TracerURI)
 	if err != nil {
