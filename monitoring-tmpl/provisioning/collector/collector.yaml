@@ -1,0 +1,20 @@
+receivers:
+  otlp: # the OTLP receiver the app is sending metrics to
+    protocols:
+      http:
+
+processors:
+  batch:
+
+exporters:
+  otlphttp:
+    endpoint: http://mimir-lb:9009/otlp
+    headers:
+      X-Scope-OrgID: anonymous
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]
