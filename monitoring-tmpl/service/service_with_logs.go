@@ -2,8 +2,7 @@ package service
 
 import (
 	"context"
-
-	"go.opentelemetry.io/otel/trace"
+	"log/slog"
 )
 
 type Logger interface {
@@ -21,18 +20,13 @@ type HandlerWithLogs struct {
 }
 
 func (h HandlerWithLogs) Handle(ctx context.Context, value int) (err error) {
-	attrs := make([]any, 0, 6)
-	attrs = append(attrs, "value", value)
-
-	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
-		attrs = append(attrs, "traceID", sc.TraceID().String())
-	}
-
-	h.logger.InfoContext(ctx, "received a new value to process", attrs...)
+	h.logger.InfoContext(ctx, "received a new value to process", slog.Int("value", value))
 
 	if err = h.s.Handle(ctx, value); err != nil {
-		attrs = append(attrs, "error", err.Error())
-		h.logger.ErrorContext(ctx, "failed to handle the input value", attrs...)
+		h.logger.ErrorContext(ctx, "failed to handle the input value",
+			slog.Int("value", value),
+			slog.String("error", err.Error()),
+		)
 
 		return err
 	}
