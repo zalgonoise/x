@@ -8,6 +8,7 @@ services:
     container_name: exemplars
     environment:
       X_OBSERVABILITY_TRACER_URI: "tempo:4317"
+      X_OBSERVABILITY_METRICS_URI: "collector:4318"
       X_OBSERVABILITY_DUR: "3m"
     ports:
       - "13090:13090"
