@@ -48,15 +48,26 @@ func run() (error, int) {
 
 	defer tracerDone(ctx)
 
-	m := metrics.NewMetrics()
-
-	reg, err := m.Registry()
+	metricsDone, err := metrics.Init(ctx, cfg.MetricsURI)
 	if err != nil {
 		return err, 1
 	}
 
-	metricsServer := metrics.NewServer(cfg.MetricsPort, reg)
-	defer metricsServer.Shutdown(ctx)
+	defer metricsDone(ctx)
+
+	m, err := metrics.NewMetricsV2()
+	if err != nil {
+		return err, 1
+	}
+
+	//
+	//reg, err := m.Registry()
+	//if err != nil {
+	//	return err, 1
+	//}
+	//
+	//metricsServer := metrics.NewServer(cfg.MetricsPort, reg)
+	//defer metricsServer.Shutdown(ctx)
 
 	var handler service.Service = service.NewHandler(cfg.Threshold)
 	handler = service.WithLogs(handler, logger)
