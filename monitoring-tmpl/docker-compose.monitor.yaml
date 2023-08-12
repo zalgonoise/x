@@ -1,36 +1,36 @@
 version: '3.8'
 services:
 
-  prom:
-    image: prom/prometheus
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./provisioning/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=730d'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-      - '--web.enable-remote-write-receiver'
-      - '--enable-feature=exemplar-storage'
-      - '--enable-feature=memory-snapshot-on-shutdown'
-    logging:
-      driver: loki
-      options:
-        loki-url: http://localhost:3100/loki/api/v1/push
-        loki-external-labels: job=dockerlogs,environment=observability,service=prom
-    healthcheck:
-      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      app-runtime:
+#  prom:
+#    image: prom/prometheus
+#    restart: unless-stopped
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./provisioning/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#      - prometheus:/prometheus
+#    command:
+#      - '--config.file=/etc/prometheus/prometheus.yml'
+#      - '--storage.tsdb.path=/prometheus'
+#      - '--storage.tsdb.retention.time=730d'
+#      - '--web.console.libraries=/etc/prometheus/console_libraries'
+#      - '--web.console.templates=/etc/prometheus/consoles'
+#      - '--web.enable-lifecycle'
+#      - '--web.enable-remote-write-receiver'
+#      - '--enable-feature=exemplar-storage'
+#      - '--enable-feature=memory-snapshot-on-shutdown'
+#    logging:
+#      driver: loki
+#      options:
+#        loki-url: http://localhost:3100/loki/api/v1/push
+#        loki-external-labels: job=dockerlogs,environment=observability,service=prom
+#    healthcheck:
+#      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    networks:
+#      app-runtime:
 
   grafana:
     image: grafana/grafana
@@ -185,13 +185,36 @@ services:
     networks:
       app-runtime:
 
+  collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    deploy:
+      resources:
+        limits:
+          memory: 125M
+    restart: unless-stopped
+    command: [ "--config=/etc/otelcol-config.yml" ]
+    volumes:
+      - ./provisioning/collector/collector.yaml:/etc/otelcol-config.yml
+    ports:
+      - "4318:4318"     # OTLP over HTTP receiver
+      - "9464"          # Prometheus exporter
+      - "8888"          # metrics endpoint
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=loki
+    networks:
+      app-runtime:
+
+
 volumes:
   grafana:
   mimir-1:
   mimir-2:
   loki:
   minio:
-  prometheus:
+#  prometheus:
   tempo:
 
 networks:
