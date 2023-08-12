@@ -12,6 +12,7 @@ type ServiceConfig struct {
 	Duration      time.Duration `envconfig:"X_OBSERVABILITY_DUR" default:"30s"`
 
 	TracerURI   string `envconfig:"X_OBSERVABILITY_TRACER_URI" default:"localhost:4317"`
+	MetricsURI  string `envconfig:"X_OBSERVABILITY_METRICS_URI" default:"localhost:4318"`
 	MetricsPort int    `enconfig:"X_OBSERVABILITY_METRICS_PORT" default:"13090"`
 }
 
