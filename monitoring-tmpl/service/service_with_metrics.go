@@ -6,8 +6,8 @@ import (
 )
 
 type Metrics interface {
-	IncRequestsReceived()
-	IncRequestsFailed()
+	IncRequestsReceived(ctx context.Context)
+	IncRequestsFailed(ctx context.Context)
 	ObserveHandlingLatency(ctx context.Context, dur time.Duration)
 }
 
@@ -20,10 +20,10 @@ type HandlerWithMetrics struct {
 
 func (h HandlerWithMetrics) Handle(ctx context.Context, value int) (err error) {
 	start := time.Now()
-	h.metrics.IncRequestsReceived()
+	h.metrics.IncRequestsReceived(ctx)
 
 	if err = h.s.Handle(ctx, value); err != nil {
-		h.metrics.IncRequestsFailed()
+		h.metrics.IncRequestsFailed(ctx)
 	}
 
 	h.metrics.ObserveHandlingLatency(ctx, time.Since(start))
