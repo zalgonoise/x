@@ -2,10 +2,8 @@ package stream
 
 import (
 	"context"
+	"log/slog"
 	"time"
-
-	"github.com/zalgonoise/attr"
-	"github.com/zalgonoise/logx"
 
 	"github.com/zalgonoise/x/audio/fft"
 )
@@ -22,7 +20,7 @@ type LogWriter struct {
 	freqReg    *MaxRegistry[fft.FrequencyPower]
 	freqBucket *bucket[int]
 
-	logger logx.Logger
+	logger *slog.Logger
 	done   context.CancelFunc
 }
 
@@ -45,14 +43,14 @@ func (w LogWriter) Close() error {
 }
 
 func (w LogWriter) setPeakValue(data float64) {
-	w.logger.Info(w.msg, attr.Float("power", data))
+	w.logger.Info(w.msg, slog.Float64("power", data))
 }
 
 func (w LogWriter) setPeakFreq(frequency int, magnitude float64) {
 	w.logger.Info(w.msg,
-		attr.String("freq_bucket", w.freqBucket.Get(frequency)),
-		attr.Int("frequency", frequency),
-		attr.Float("magnitude", magnitude),
+		slog.String("freq_bucket", w.freqBucket.Get(frequency)),
+		slog.Int("frequency", frequency),
+		slog.Float64("magnitude", magnitude),
 	)
 }
 
@@ -65,7 +63,7 @@ func (w LogWriter) flush() {
 	}
 }
 
-func NewLogWriter(message string, logger logx.Logger) LogWriter {
+func NewLogWriter(message string, logger *slog.Logger) LogWriter {
 	if message == "" {
 		message = defaultMessage
 	}
