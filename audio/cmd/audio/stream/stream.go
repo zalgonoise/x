@@ -31,8 +31,8 @@ var ErrInvalidMode = errs.New(streamDomain, ErrInvalid, ErrMode)
 type Reporter interface {
 	// SetPeakValue registers the float64 `data` value as an audio peak
 	SetPeakValue(data float64) (err error)
-	// SetPeakFreq registers the int `frequency` value as an audio peak frequency
-	SetPeakFreq(frequency int, magnitude float64) (err error)
+	// ObserveFrequencies keeps track of changes in the registered frequencies
+	ObserveFrequencies([]fft.FrequencyPower) (err error)
 	// Closer is an io.Closer, that is used to gracefully stop the Reporter
 	io.Closer
 }
@@ -178,17 +178,7 @@ func newAnalyzeFunc(s *Stream, blockSize int) func([]float64) error {
 				windowBlock,
 			)
 
-			var maximum float64
-			var freq int
-
-			for idx := range spectrum {
-				if maximum < spectrum[idx].Mag {
-					maximum = spectrum[idx].Mag
-					freq = spectrum[idx].Freq
-				}
-			}
-
-			if err := s.out.SetPeakFreq(freq, maximum); err != nil {
+			if err := s.out.ObserveFrequencies(spectrum); err != nil {
 				return err
 			}
 		}
