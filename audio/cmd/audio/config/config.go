@@ -25,7 +25,7 @@ const (
 type Output string
 
 const (
-	// ToLogger is an Output that emits the collected metadata through a logx.Logger
+	// ToLogger is an Output that emits the collected metadata through a slog.Logger
 	ToLogger Output = "logger"
 	// ToFile is an Output that emits the collected metadata by writing it to a file in the system
 	ToFile Output = "file"
