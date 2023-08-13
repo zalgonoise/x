@@ -3,11 +3,9 @@ package http
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
-
-	"github.com/zalgonoise/attr"
-	"github.com/zalgonoise/logx"
 
 	"github.com/zalgonoise/x/audio/errs"
 )
@@ -35,7 +33,7 @@ const (
 // New issues an HTTP GET request based on the input URL `url` and timeout `timeout`
 //
 // The body of the response is then used as an audio stream
-func New(logger logx.Logger, url string, timeout time.Duration) (*http.Response, context.CancelFunc, error) {
+func New(logger *slog.Logger, url string, timeout time.Duration) (*http.Response, context.CancelFunc, error) {
 	if len(url) > 0 {
 		if url[0] == '"' {
 			url = url[1:]
@@ -57,7 +55,7 @@ func New(logger logx.Logger, url string, timeout time.Duration) (*http.Response,
 	return res, done, nil
 }
 
-func doWithBackoff(logger logx.Logger, url string, timeout time.Duration) (*http.Response, context.CancelFunc, error) {
+func doWithBackoff(logger *slog.Logger, url string, timeout time.Duration) (*http.Response, context.CancelFunc, error) {
 	backoff := minBackoff
 
 	for {
@@ -67,8 +65,8 @@ func doWithBackoff(logger logx.Logger, url string, timeout time.Duration) (*http
 		}
 
 		logger.Warn("request has failed",
-			attr.String("error", err.Error()),
-			attr.String("backoff", backoff.String()),
+			slog.String("error", err.Error()),
+			slog.String("backoff", backoff.String()),
 		)
 
 		time.Sleep(backoff)
