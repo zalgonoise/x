@@ -1,6 +1,6 @@
 module github.com/zalgonoise/x/audio
 
-go 1.20
+go 1.21
 
 require (
 	github.com/charmbracelet/bubbletea v0.23.2
@@ -12,7 +12,6 @@ require (
 	github.com/zalgonoise/gbuf v1.0.0
 	github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2
 	github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37
-	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea
 )
 
 require (
