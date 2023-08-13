@@ -30,8 +30,10 @@ func (w LogWriter) SetPeakValue(data float64) (err error) {
 	return nil
 }
 
-func (w LogWriter) SetPeakFreq(frequency int, magnitude float64) (err error) {
-	w.freqReg.Register(fft.FrequencyPower{Freq: frequency, Mag: magnitude})
+func (w LogWriter) ObserveFrequencies(frequencies []fft.FrequencyPower) (err error) {
+	for i := range frequencies {
+		w.freqReg.Register(frequencies[i])
+	}
 
 	return nil
 }
@@ -42,11 +44,11 @@ func (w LogWriter) Close() error {
 	return nil
 }
 
-func (w LogWriter) setPeakValue(data float64) {
+func (w LogWriter) writePeakValue(data float64) {
 	w.logger.Info(w.msg, slog.Float64("power", data))
 }
 
-func (w LogWriter) setPeakFreq(frequency int, magnitude float64) {
+func (w LogWriter) writePeakFreq(frequency int, magnitude float64) {
 	w.logger.Info(w.msg,
 		slog.String("freq_bucket", w.freqBucket.Get(frequency)),
 		slog.Int("frequency", frequency),
@@ -56,10 +58,11 @@ func (w LogWriter) setPeakFreq(frequency int, magnitude float64) {
 
 func (w LogWriter) flush() {
 	if peak := w.peakReg.Flush(); peak > 0.0 {
-		w.setPeakValue(peak)
+		w.writePeakValue(peak)
 	}
+
 	if freq := w.freqReg.Flush(); freq.Freq > 0 {
-		w.setPeakFreq(freq.Freq, freq.Mag)
+		w.writePeakFreq(freq.Freq, freq.Mag)
 	}
 }
 
