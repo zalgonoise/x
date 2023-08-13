@@ -9,3 +9,6 @@ build/
 
 # exclude local data
 local/
+
+# exclude changes in the provisioning directory
+provisioning/
