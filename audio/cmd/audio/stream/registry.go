@@ -1,7 +1,7 @@
 package stream
 
 import (
-	"golang.org/x/exp/maps"
+	"maps"
 )
 
 // LessFunc is a generic, injectable function that determines how to
@@ -33,10 +33,10 @@ func (r *MaxRegistry[T]) Register(value T) {
 // Flush returns the max value in the MaxRegistry, while resetting the one
 // it has stored
 func (r *MaxRegistry[T]) Flush() T {
-	max := r.max
+	maximum := r.max
 	r.max = *new(T)
 
-	return max
+	return maximum
 }
 
 // NewMaxRegistry creates a MaxRegistry from the input LessFunc
@@ -59,8 +59,8 @@ type LabeledRegistry[T any, F ~map[string]T] struct {
 
 func (r LabeledRegistry[T, F]) Register(value T) {
 	label := r.label(value)
-	max, ok := r.max[label]
-	if ok && r.less(max, value) {
+	maximum, ok := r.max[label]
+	if ok && r.less(maximum, value) {
 		r.max[label] = value
 
 		return

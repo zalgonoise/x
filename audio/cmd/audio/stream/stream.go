@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/zalgonoise/logx"
-	"github.com/zalgonoise/logx/handlers/texth"
 
 	"github.com/zalgonoise/x/audio/cmd/audio/config"
 	"github.com/zalgonoise/x/audio/cmd/audio/http"
@@ -42,7 +40,7 @@ type Reporter interface {
 // Stream describes an instance of an audio stream processor
 type Stream struct {
 	cfg    *config.Config
-	logger logx.Logger
+	logger *slog.Logger
 
 	proc   func([]float64) error
 	out    Reporter
@@ -113,7 +111,9 @@ func New(cfg *config.Config) (*Stream, error) {
 			return nil, err
 		}
 
-		logger := logx.New(texth.New(io.MultiWriter(f, os.Stderr)))
+		logger := slog.New(slog.NewTextHandler(io.MultiWriter(f, os.Stderr), &slog.HandlerOptions{
+			AddSource: true,
+		}))
 		s.out = NewLogWriter("", logger)
 		s.logger = logger
 	case config.ToPrometheus:
@@ -122,10 +122,14 @@ func New(cfg *config.Config) (*Stream, error) {
 			return nil, err
 		}
 
-		s.logger = logx.New(texth.New(os.Stderr))
+		s.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			AddSource: true,
+		}))
 		s.out = prom
 	default:
-		logger := logx.New(texth.New(os.Stderr))
+		logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			AddSource: true,
+		}))
 		s.out = NewLogWriter("", logger)
 		s.logger = logger
 	}
@@ -150,15 +154,15 @@ func New(cfg *config.Config) (*Stream, error) {
 
 func newMontiorFunc(s *Stream) func([]float64) error {
 	return func(data []float64) error {
-		var max float64
+		var maximum float64
 
 		for i := range data {
-			if data[i] > max {
-				max = data[i]
+			if data[i] > maximum {
+				maximum = data[i]
 			}
 		}
 
-		return s.out.SetPeakValue(max)
+		return s.out.SetPeakValue(maximum)
 	}
 }
 
@@ -174,17 +178,17 @@ func newAnalyzeFunc(s *Stream, blockSize int) func([]float64) error {
 				windowBlock,
 			)
 
-			var max float64
+			var maximum float64
 			var freq int
 
 			for idx := range spectrum {
-				if max < spectrum[idx].Mag {
-					max = spectrum[idx].Mag
+				if maximum < spectrum[idx].Mag {
+					maximum = spectrum[idx].Mag
 					freq = spectrum[idx].Freq
 				}
 			}
 
-			if err := s.out.SetPeakFreq(freq, max); err != nil {
+			if err := s.out.SetPeakFreq(freq, maximum); err != nil {
 				return err
 			}
 		}
