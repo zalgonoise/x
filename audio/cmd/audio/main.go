@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
-
-	"github.com/zalgonoise/attr"
-	"github.com/zalgonoise/logx"
 
 	"github.com/zalgonoise/x/audio/cmd/audio/config"
 	"github.com/zalgonoise/x/audio/cmd/audio/stream"
@@ -14,9 +12,9 @@ import (
 func main() {
 	err, code := run()
 	if err != nil {
-		logx.Error(
+		slog.Error(
 			"audio/gsp: runtime error",
-			attr.String("error", err.Error()),
+			slog.String("error", err.Error()),
 		)
 	}
 
