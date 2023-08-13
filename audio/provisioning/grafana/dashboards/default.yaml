@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: Audio # A uniquely identifiable name for the provider
+    folder: Audio # The folder where to place the dashboards
+    type: file
+    disableDeletion: true
+    allowUiUpdates: true
+    options:
+      path: /etc/dashboards
+      foldersFromFilesStructure: true
