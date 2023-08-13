@@ -1,4 +1,4 @@
-FROM golang:alpine3.17 AS builder
+FROM golang:alpine3.18 AS builder
 
 
 WORKDIR /go/src/github.com/zalgonoise/x/audio
