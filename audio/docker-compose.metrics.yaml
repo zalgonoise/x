@@ -24,7 +24,6 @@ services:
 
   grafana:
     image: grafana/grafana
-    user: "1001"
     restart: unless-stopped
     ports:
       - "3000:3000"
