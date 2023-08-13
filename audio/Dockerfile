@@ -7,11 +7,11 @@ COPY ./ ./
 
 RUN go mod download 
 RUN mkdir /build \
-    && go build -o /build/audio ./cmd/audio \
+    && CGO_ENABLED=0 go build -ldflags="-s -w" -o /build/audio ./cmd/audio \
     && chmod +x /build/audio
 
 
-FROM alpine:edge
+FROM gcr.io/distroless/static
 
 COPY --from=builder /build/audio /.
 CMD [ "/audio" ]
