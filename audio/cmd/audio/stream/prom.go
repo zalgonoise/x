@@ -23,12 +23,9 @@ const (
 type PromWriter struct {
 	*Metrics
 	*http.Server
-
-	done context.CancelFunc
 }
 
 func (w PromWriter) Close() error {
-	defer w.done()
 	ctx, done := context.WithTimeout(context.Background(), defaultTimeout)
 	defer done()
 
@@ -38,19 +35,20 @@ func (w PromWriter) Close() error {
 type Metrics struct {
 	peakValues     prometheus.Gauge
 	spectrumValues *prometheus.HistogramVec
-
-	peakReg     *MaxRegistry[float64]
-	spectrumReg LabeledRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower]
 }
 
 func (m Metrics) SetPeakValue(data float64) error {
-	m.peakReg.Register(data)
+	m.peakValues.Set(data)
 
 	return nil
 }
 
-func (m Metrics) SetPeakFreq(frequency int, magnitude float64) (err error) {
-	m.spectrumReg.Register(fft.FrequencyPower{Freq: frequency, Mag: magnitude})
+func (m Metrics) ObserveFrequencies(frequencies []fft.FrequencyPower) (err error) {
+	for i := range frequencies {
+		m.spectrumValues.
+			WithLabelValues(minLen(strconv.Itoa(frequencies[i].Freq), expectedMaxFreqLen)).
+			Observe(frequencies[i].Mag)
+	}
 
 	return nil
 }
@@ -74,26 +72,6 @@ func (m Metrics) registry() (*prometheus.Registry, error) {
 	return reg, nil
 }
 
-func (m Metrics) setPeakFreq(frequencyLabel string, magnitude float64) {
-	m.spectrumValues.WithLabelValues(frequencyLabel).Observe(magnitude)
-}
-
-func (m Metrics) setPeakValue(data float64) {
-	m.peakValues.Set(data)
-}
-
-func (m Metrics) flush() {
-	if peak := m.peakReg.Flush(); peak > 0.0 {
-		m.setPeakValue(peak)
-	}
-
-	if spectrum := m.spectrumReg.Flush(); len(spectrum) > 0 {
-		for k, v := range spectrum {
-			m.setPeakFreq(k, v.Mag)
-		}
-	}
-}
-
 func NewMetrics() (*Metrics, error) {
 	return &Metrics{
 		peakValues: prometheus.NewGauge(prometheus.GaugeOpts{
@@ -104,16 +82,8 @@ func NewMetrics() (*Metrics, error) {
 		spectrumValues: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "audio",
 			Name:      "spectrum_value",
-			Help:      "input signal's peak frequency value",
+			Help:      "input signal's frequency value",
 		}, []string{"frequency"}),
-
-		peakReg: NewMaxRegistry(func(i, j float64) bool {
-			return i < j
-		}),
-		spectrumReg: NewLabeledRegistry[fft.FrequencyPower, map[string]fft.FrequencyPower](
-			func(i, j fft.FrequencyPower) bool { return i.Mag < j.Mag },
-			func(power fft.FrequencyPower) string { return minLen(strconv.Itoa(power.Freq), expectedMaxFreqLen) },
-		),
 	}, nil
 }
 
@@ -141,46 +111,20 @@ func NewServer(addr string, registry *prometheus.Registry) *http.Server {
 }
 
 func NewPromWriter(addr string) (*PromWriter, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-
 	m, err := NewMetrics()
 	if err != nil {
-		cancel()
-
 		return nil, err
 	}
 
-	w := &PromWriter{
-		Metrics: m,
-		done:    cancel,
-	}
-
-	go func(ctx context.Context) {
-		ticker := time.NewTicker(defaultTickerFreq)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				w.flush()
-
-				return
-			case <-ticker.C:
-				w.flush()
-			}
-		}
-	}(ctx)
-
-	reg, err := w.Metrics.registry()
+	reg, err := m.registry()
 	if err != nil {
-		cancel()
-
 		return nil, err
 	}
 
-	w.Server = NewServer(addr, reg)
-
-	return w, nil
+	return &PromWriter{
+		Metrics: m,
+		Server:  NewServer(addr, reg),
+	}, nil
 }
 
 func minLen(s string, size int) string {
