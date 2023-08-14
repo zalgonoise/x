@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	TraceIDKey = "traceID"
-	SpanIDKey  = "spanID"
+	TraceIDKey = "trace_id" // https://opentelemetry.io/docs/specs/otel/compatibility/logging_trace_context/
+	SpanIDKey  = "span_id"  // https://opentelemetry.io/docs/specs/otel/compatibility/logging_trace_context/
 )
 
 type SpanContextHandler struct {
