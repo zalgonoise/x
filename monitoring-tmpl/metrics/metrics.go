@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const traceIDKey = "TraceID"
+const traceIDKey = "trace_id" // https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exemplars
 
 type Metrics struct {
 	reqReceived prometheus.Counter
