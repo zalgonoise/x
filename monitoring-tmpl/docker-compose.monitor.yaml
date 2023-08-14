@@ -29,6 +29,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    depends_on:
+      - mimir-1
+      - mimir-2
     networks:
       app-runtime:
 
