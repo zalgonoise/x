@@ -14,10 +14,15 @@ limits:
   compactor_blocks_retention_period: 2y
   max_global_exemplars_per_user: 100000
 
+querier:
+  query_store_after: 12h
+
 blocks_storage:
   storage_prefix: blocks
   tsdb:
     dir: /data/ingester
+  bucket_store:
+    ignore_blocks_within: 10h
 
 memberlist:
   cluster_label: "mimir"
