@@ -393,7 +393,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": 3600000,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -427,7 +427,7 @@
         "y": 12
       },
       "id": 11,
-      "interval": "1s",
+      "interval": "775ms",
       "options": {
         "legend": {
           "calcs": [],
@@ -447,14 +447,14 @@
             "uid": "Prometheus"
           },
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.25, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__rate_interval]))",
+          "expr": "histogram_quantile(0.25, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__interval]))",
           "format": "heatmap",
           "legendFormat": "{{frequency}}Hz",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Frequencies - 1s - P25 rate",
+      "title": "Frequencies - 775ms - P25 rate",
       "transparent": true,
       "type": "timeseries"
     },
@@ -494,7 +494,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": 3600000,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -528,7 +528,7 @@
         "y": 12
       },
       "id": 12,
-      "interval": "5s",
+      "interval": "775ms",
       "options": {
         "legend": {
           "calcs": [],
@@ -548,14 +548,14 @@
             "uid": "Prometheus"
           },
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.95, rate(audio_spectrum_value_bucket{job=\"audio\"}[1m]))",
+          "expr": "histogram_quantile(0.95, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__interval]))",
           "format": "heatmap",
           "legendFormat": "{{frequency}}Hz",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Frequencies - 5s - P95 rate",
+      "title": "Frequencies - 775ms - P95 rate",
       "transparent": true,
       "type": "timeseries"
     },
@@ -595,7 +595,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": 3600000,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -629,7 +629,7 @@
         "y": 20
       },
       "id": 13,
-      "interval": "15s",
+      "interval": "775ms",
       "options": {
         "legend": {
           "calcs": [],
@@ -649,14 +649,14 @@
             "uid": "Prometheus"
           },
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.75, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__rate_interval]))",
+          "expr": "histogram_quantile(0.75, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__interval]))",
           "format": "heatmap",
           "legendFormat": "{{frequency}}Hz",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Frequencies - 15s - P75 rate",
+      "title": "Frequencies - 775ms - P75 rate",
       "transparent": true,
       "type": "timeseries"
     },
