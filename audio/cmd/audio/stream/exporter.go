@@ -15,6 +15,8 @@ import (
 	"github.com/zalgonoise/x/audio/fft"
 )
 
+// PromExporter is an implementation of Exporter that pushes processed audio values as
+// Prometheus metrics
 type PromExporter struct {
 	peakValues     prometheus.Gauge
 	spectrumValues *prometheus.HistogramVec
@@ -103,6 +105,8 @@ func NewPromExporter(address string) (*PromExporter, error) {
 	return exporter, nil
 }
 
+// LogExporter is an implementation of Exporter that pushes processed audio values as
+// log events
 type LogExporter struct {
 	writer io.Writer
 	logger *slog.Logger
