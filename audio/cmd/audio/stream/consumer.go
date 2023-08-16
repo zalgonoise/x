@@ -20,6 +20,10 @@ const (
 
 var ErrEmptyAddress = errs.New(consumerDomain, ErrEmpty, ErrAddress)
 
+// HTTPConsumer implements the Consumer interface, by dialing a HTTP address
+// to extract its body as an io.Reader, that is in turned processed by the Processor
+//
+// TODO: replace Stream implementation with this type
 type HTTPConsumer struct {
 	address string
 	timeout time.Duration
@@ -27,6 +31,7 @@ type HTTPConsumer struct {
 	cancel context.CancelCauseFunc
 }
 
+// Consume will interact with the audio source to extract its audio content or stream as an io.Reader
 func (i *HTTPConsumer) Consume(ctx context.Context) (io.Reader, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
 
@@ -53,6 +58,7 @@ func (i *HTTPConsumer) Consume(ctx context.Context) (io.Reader, error) {
 	return res.Body, nil
 }
 
+// Shutdown gracefully shuts down the Consumer
 func (i *HTTPConsumer) Shutdown(ctx context.Context) error {
 	i.cancel(ctx.Err())
 
