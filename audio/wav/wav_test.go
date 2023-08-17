@@ -531,7 +531,7 @@ func TestStream(t *testing.T) {
 			}
 
 			// Write
-			w := wav.NewStream(cfg, func([]float64) error {
+			w := wav.NewStream(cfg, func(h *header.Header, data []float64) error {
 				return nil
 			})
 
@@ -563,7 +563,7 @@ func TestStream(t *testing.T) {
 			}
 
 			// Write
-			w := wav.NewStream(cfg, func([]float64) error {
+			w := wav.NewStream(cfg, func(h *header.Header, data []float64) error {
 				return nil
 			})
 
