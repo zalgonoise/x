@@ -15,6 +15,7 @@ import (
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/fft/window"
 	"github.com/zalgonoise/x/audio/wav"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 const (
@@ -42,7 +43,7 @@ type Stream struct {
 	cfg    *config.Config
 	logger *slog.Logger
 
-	proc   func([]float64) error
+	proc   func(h *header.Header, data []float64) error
 	out    Reporter
 	stream *wav.Stream
 }
@@ -134,7 +135,7 @@ func New(cfg *config.Config) (*Stream, error) {
 		s.logger = logger
 	}
 
-	procFns := make([]func([]float64) error, 0)
+	procFns := make([]wav.ProcessFunc, 0)
 
 	switch cfg.Mode {
 	case config.Monitor:
@@ -152,8 +153,8 @@ func New(cfg *config.Config) (*Stream, error) {
 	return s, nil
 }
 
-func newMontiorFunc(s *Stream) func([]float64) error {
-	return func(data []float64) error {
+func newMontiorFunc(s *Stream) func(*header.Header, []float64) error {
+	return func(_ *header.Header, data []float64) error {
 		var maximum float64
 
 		for i := range data {
@@ -166,14 +167,14 @@ func newMontiorFunc(s *Stream) func([]float64) error {
 	}
 }
 
-func newAnalyzeFunc(s *Stream, blockSize int) func([]float64) error {
+func newAnalyzeFunc(s *Stream, blockSize int) func(*header.Header, []float64) error {
 	bs := fft.NearestBlock(blockSize)
 	windowBlock := window.New(window.Blackman, int(bs))
 
-	return func(data []float64) error {
+	return func(h *header.Header, data []float64) error {
 		for i := 0; i+int(bs) < len(data); i += int(bs) {
 			spectrum := fft.Apply(
-				int(s.stream.Wav.Header.SampleRate),
+				int(h.SampleRate),
 				data[i:i+int(bs)],
 				windowBlock,
 			)
