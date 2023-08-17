@@ -133,20 +133,10 @@ func (w *Wav) decodeHeader() (n int, err error) {
 		return 0, ErrShortDataBuffer
 	}
 
-	var head *header.Header
+	w.Header = new(header.Header)
 
-	headerBuffer := make([]byte, header.Size)
-	if _, err = w.buf.Read(headerBuffer); err != nil {
-		return 0, err
-	}
-
-	head, err = header.From(headerBuffer)
-	if err != nil {
-		return header.Size, err
-	}
-
-	w.Header = head
-	return header.Size, nil
+	num, err := w.Header.ReadFrom(w.buf)
+	return int(num), err
 }
 
 func (w *Wav) decodeNewSubChunk(n int) (int, error) {
