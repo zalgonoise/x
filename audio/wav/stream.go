@@ -11,13 +11,13 @@ import (
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
-type multiProc struct {
-	fns []func(float64) error
-}
+// ProcessFunc describes a function that processes a portion of the audio buffer
+// as it is read and decoded from the incoming byte stream
+type ProcessFunc func(header *header.Header, data []float64) error
 
 // MultiProc merges multiple processor functions for floating point audio data, with
 // or without a fail-fast strategy
-func MultiProc(failFast bool, fns ...func([]float64) error) func([]float64) error {
+func MultiProc(failFast bool, fns ...ProcessFunc) ProcessFunc {
 	switch len(fns) {
 	case 0:
 		return nil
@@ -26,9 +26,9 @@ func MultiProc(failFast bool, fns ...func([]float64) error) func([]float64) erro
 	}
 
 	if failFast {
-		return func(data []float64) error {
+		return func(h *header.Header, data []float64) error {
 			for i := range fns {
-				if err := fns[i](data); err != nil {
+				if err := fns[i](h, data); err != nil {
 					return err
 				}
 			}
@@ -37,10 +37,10 @@ func MultiProc(failFast bool, fns ...func([]float64) error) func([]float64) erro
 		}
 	}
 
-	return func(data []float64) error {
+	return func(h *header.Header, data []float64) error {
 		var errs = make([]error, 0, len(fns))
 		for i := range fns {
-			if err := fns[i](data); err != nil {
+			if err := fns[i](h, data); err != nil {
 				errs = append(errs, err)
 			}
 		}
@@ -88,7 +88,7 @@ type Stream struct {
 	*Wav
 
 	Size int
-	proc func([]float64) error
+	proc ProcessFunc
 
 	cfg *StreamConfig
 }
@@ -112,7 +112,7 @@ type SizeConfig struct {
 // NewStream creates a Stream with a certain StreamConfig `cfg` and processor function `proc`
 //
 // The size is in bytes and can be calculated through one of the available *ToBufferSize functions
-func NewStream(cfg *StreamConfig, proc func([]float64) error) *Stream {
+func NewStream(cfg *StreamConfig, proc ProcessFunc) *Stream {
 	if cfg == nil {
 		cfg = new(StreamConfig)
 	}
@@ -131,8 +131,8 @@ func NewStream(cfg *StreamConfig, proc func([]float64) error) *Stream {
 func (w *Stream) Stream(ctx context.Context, r io.Reader, errCh chan<- error) {
 	origFn := w.proc
 
-	w.proc = func(data []float64) (err error) {
-		if err = origFn(data); err != nil {
+	w.proc = func(h *header.Header, data []float64) (err error) {
+		if err = origFn(h, data); err != nil {
 			errCh <- err
 		}
 		return err
@@ -145,10 +145,14 @@ func (w *Stream) Stream(ctx context.Context, r io.Reader, errCh chan<- error) {
 }
 
 func (w *Stream) stream(ctx context.Context, r io.Reader) (err error) {
-	go w.ReadFrom(r)
-
 	streamCtx, cancel := context.WithCancelCause(ctx)
 	defer cancel(nil)
+
+	go func() {
+		if _, readErr := w.ReadFrom(r); err != nil {
+			cancel(readErr)
+		}
+	}()
 
 	for {
 		select {
@@ -190,9 +194,25 @@ func (w *Stream) Write(buf []byte) (n int, err error) {
 	return w.decode()
 }
 
-// ReadFrom implements the io.ReaderFrom interface
+// Head returns the Stream's Wav.Header, or it will set it from consuming the first header.Size bytes
+// from the input io.Reader.
+func (w *Stream) Head(r io.Reader) (*header.Header, error) {
+	if w.Header == nil {
+		h := new(header.Header)
+
+		if _, err := h.ReadFrom(r); err != nil {
+			return nil, err
+		}
+
+		w.Header = h
+	}
+
+	return w.Header, nil
+}
+
+// ReadFrom implements the io.ReaderFrom interface.
 //
-// # It allows for a Wav file (or stream) to be read and decoded into a data structure
+// It allows for a Wav file (or stream) to be read and decoded into a data structure.
 //
 // This implementation differs from a stream implementation of the Wav data structure, which
 // would scope the stored PCM data in a ring buffer, both to save on storage / memory, and
@@ -202,13 +222,13 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 
 	if w.Header == nil {
 		w.Header = new(header.Header)
-	}
 
-	if num, err = w.Header.ReadFrom(r); err != nil {
-		return n, err
-	}
+		if num, err = w.Header.ReadFrom(r); err != nil {
+			return n, err
+		}
 
-	n += num
+		n += num
+	}
 
 	// correct Stream.Size if it is off with the bit-depth in the signal
 	w.checkSize()
@@ -222,7 +242,10 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 
 		n += num
 
-		chunk := NewRingChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, w.proc)
+		chunk := NewRingChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
+			return w.proc(w.Header, data)
+		})
+
 		w.Chunks = append(w.Chunks, chunk)
 
 		if chunk.BitDepth() > 0 {
@@ -315,7 +338,11 @@ func (w *Stream) decodeNewSubChunk(n int) (int, error) {
 
 		if subchunk, err = dataheader.From(subchunkBuffer); err == nil {
 			n += dataheader.Size
-			chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, w.proc)
+
+			chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
+				return w.proc(w.Header, data)
+			})
+
 			if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
 				w.Data = chunk
 			}
