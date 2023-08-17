@@ -12,6 +12,7 @@ import (
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/fft/window"
 	"github.com/zalgonoise/x/audio/wav"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 // Exporter describes the actions supported by an audio metadata exporter
@@ -28,19 +29,11 @@ type Exporter interface {
 type ProcessorConfig struct {
 	// Size limits a certain size, in the context of the processor
 	Size int
-	// SampleRate denotes the input signal's sample rate
-	SampleRate int
 }
 
-// ProcessorFunc is a type of function that creates other ProcessFunc. The resulting ProcessFunc
+// ProcessorFunc is a type of function that creates other ProcessFunc. The resulting wav.ProcessFunc
 // will pipe the (processed) data to the input Exporter, using the ProcessorConfig if it needs so
-type ProcessorFunc func(exporter Exporter, config *ProcessorConfig) ProcessFunc
-
-// ProcessFunc is a function used by gbuf.RingFilter which is called on each pass through read data, as floating-point
-// audio. It is always the responsibility of the caller or user to create any processing for that data
-//
-// An error can be returned from this function, indicating to the gbuf.RingFilter that reading should stop.
-type ProcessFunc func(data []float64) error
+type ProcessorFunc func(exporter Exporter, config *ProcessorConfig) wav.ProcessFunc
 
 const (
 	processorDomain = errs.Domain("audio/stream/processor")
@@ -67,11 +60,11 @@ var (
 //
 // TODO: replace Stream implementation with this type
 type PCMProcessor struct {
-	Exporter      Exporter
-	processorFunc func([]float64) error
+	Exporter Exporter
 
+	stream *wav.Stream
 	cancel context.CancelFunc
-	err    error
+	err    chan error
 }
 
 // Process consumes the input io.Reader as a WAV buffer, while also moving the
@@ -84,11 +77,9 @@ func (p *PCMProcessor) Process(ctx context.Context, reader io.Reader) {
 	var (
 		signalCh = make(chan os.Signal, 1)
 		errCh    = make(chan error)
-		stream   = wav.NewStream(nil, p.processorFunc)
 	)
 
 	ctx, cancel := context.WithCancel(ctx)
-
 	p.cancel = func() {
 		cancel()
 		if closer, ok := (reader).(io.Closer); ok {
@@ -101,21 +92,25 @@ func (p *PCMProcessor) Process(ctx context.Context, reader io.Reader) {
 
 	signal.Notify(signalCh, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	go stream.Stream(ctx, reader, errCh)
+	go p.stream.Stream(ctx, reader, errCh)
 
 	for {
 		select {
 		case <-ctx.Done():
-			p.err = ctx.Err()
+			if err := ctx.Err(); err != nil {
+				p.err <- err
+			}
 
 			return
 		case <-signalCh:
-			p.err = ctx.Err()
+			if err := ctx.Err(); err != nil {
+				p.err <- err
+			}
 
 			return
 		case err := <-errCh:
-			if !errors.Is(err, context.DeadlineExceeded) {
-				p.err = err
+			if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+				p.err <- err
 			}
 
 			return
@@ -123,15 +118,16 @@ func (p *PCMProcessor) Process(ctx context.Context, reader io.Reader) {
 	}
 }
 
-// Shutdown gracefully stops the processor, returning any stored error if it exists
+// Shutdown gracefully stops the processor
 func (p *PCMProcessor) Shutdown(_ context.Context) error {
 	p.cancel()
+	close(p.err)
 
-	return p.err
+	return nil
 }
 
 // Err returns any internal error in the PCMProcessor, raised while reading the audio stream
-func (p *PCMProcessor) Err() error {
+func (p *PCMProcessor) Err() <-chan error {
 	return p.err
 }
 
@@ -148,19 +144,20 @@ func NewPCMProcessor(
 		return nil, ErrEmptyProcessorFunc
 	}
 
-	processors := make([]func([]float64) error, 0, len(processorFuncs))
+	processors := make([]wav.ProcessFunc, 0, len(processorFuncs))
 	for i := range processorFuncs {
 		processors = append(processors, processorFuncs[i](exporter, config))
 	}
 
 	return &PCMProcessor{
-		processorFunc: wav.MultiProc(false, processors...),
+		stream: wav.NewStream(nil, wav.MultiProc(false, processors...)),
+		err:    make(chan error),
 	}, nil
 }
 
 // ProcessPeaks is a ProcessorFunc that processes the signal to extract the peak value (in intensity) in the signal
-func ProcessPeaks(exporter Exporter, _ *ProcessorConfig) ProcessFunc {
-	return func(data []float64) error {
+func ProcessPeaks(exporter Exporter, _ *ProcessorConfig) wav.ProcessFunc {
+	return func(h *header.Header, data []float64) error {
 		var maximum float64
 
 		for i := range data {
@@ -175,14 +172,25 @@ func ProcessPeaks(exporter Exporter, _ *ProcessorConfig) ProcessFunc {
 
 // ProcessSpectrum is a ProcessorFunc that processes the signal to extract the peak frequency (in magnitude, relative to
 // the other analyzed frequencies) in the signal
-func ProcessSpectrum(exporter Exporter, config *ProcessorConfig) ProcessFunc {
-	bs := fft.NearestBlock(config.Size)
-	windowBlock := window.New(window.Blackman, int(bs))
+func ProcessSpectrum(exporter Exporter, config *ProcessorConfig) wav.ProcessFunc {
+	size := 64
+	if config != nil && config.Size >= 8 {
+		size = config.Size
+	}
 
-	return func(data []float64) error {
+	sampleRate := 44100
+
+	return func(h *header.Header, data []float64) error {
+		if h != nil {
+			sampleRate = int(h.SampleRate)
+		}
+
+		bs := fft.NearestBlock(size)
+		windowBlock := window.New(window.Blackman, int(bs))
+
 		for i := 0; i+int(bs) < len(data); i += int(bs) {
 			spectrum := fft.Apply(
-				config.SampleRate,
+				sampleRate,
 				data[i:i+int(bs)],
 				windowBlock,
 			)
