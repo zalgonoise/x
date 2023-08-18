@@ -2,7 +2,7 @@ package stream
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
@@ -17,10 +17,10 @@ import (
 
 // Exporter describes the actions supported by an audio metadata exporter
 type Exporter interface {
-	// SetPeakValue registers the float64 `data` value as an audio peak
-	SetPeakValue(data float64) (err error)
-	// ObserveFrequencies keeps track of changes in the registered frequencies
-	ObserveFrequencies(frequencies []fft.FrequencyPower) (err error)
+	// SendPeak registers the float64 `data` value as an audio peak in the exporter
+	SendPeak(data float64) (err error)
+	// SendSpectrum registers the frequency spectrum in the exporter
+	SendSpectrum(frequencies []fft.FrequencyPower) (err error)
 	// Shutdown gracefully stops the Exporter
 	Shutdown(ctx context.Context) (err error)
 }
@@ -63,8 +63,6 @@ type PCMProcessor struct {
 	Exporter Exporter
 
 	stream *wav.Stream
-	cancel context.CancelFunc
-	err    chan error
 }
 
 // Process consumes the input io.Reader as a WAV buffer, while also moving the
@@ -73,45 +71,42 @@ type PCMProcessor struct {
 // Process is a blocking operation but should be executed in a goroutine. If an operation fails
 // during this call, Process and the underlying audio stream read are halted, and its internal error value
 // (retrievable with Err()) is populated.
-func (p *PCMProcessor) Process(ctx context.Context, reader io.Reader) {
+func (p *PCMProcessor) Process(ctx context.Context, cancel context.CancelCauseFunc, reader io.Reader) {
 	var (
+		err      = new(error)
 		signalCh = make(chan os.Signal, 1)
-		errCh    = make(chan error)
+		errorCh  = make(chan error)
 	)
 
-	ctx, cancel := context.WithCancel(ctx)
-	p.cancel = func() {
-		cancel()
+	defer func(err *error) {
+		cancel(*err)
 		if closer, ok := (reader).(io.Closer); ok {
 			_ = closer.Close()
 		}
 
-		close(errCh)
 		close(signalCh)
-	}
+	}(err)
 
 	signal.Notify(signalCh, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	go p.stream.Stream(ctx, reader, errCh)
+	go p.stream.Stream(ctx, reader, errorCh)
 
 	for {
 		select {
+		case procErr := <-errorCh:
+			if procErr != nil {
+				*err = procErr
+
+				return
+			}
 		case <-ctx.Done():
-			if err := ctx.Err(); err != nil {
-				p.err <- err
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				*err = ctxErr
 			}
 
 			return
-		case <-signalCh:
-			if err := ctx.Err(); err != nil {
-				p.err <- err
-			}
-
-			return
-		case err := <-errCh:
-			if err != nil && !errors.Is(err, context.DeadlineExceeded) {
-				p.err <- err
-			}
+		case sig := <-signalCh:
+			*err = fmt.Errorf("received shutdown signal: %s", sig.String())
 
 			return
 		}
@@ -120,15 +115,7 @@ func (p *PCMProcessor) Process(ctx context.Context, reader io.Reader) {
 
 // Shutdown gracefully stops the processor
 func (p *PCMProcessor) Shutdown(_ context.Context) error {
-	p.cancel()
-	close(p.err)
-
 	return nil
-}
-
-// Err returns any internal error in the PCMProcessor, raised while reading the audio stream
-func (p *PCMProcessor) Err() <-chan error {
-	return p.err
 }
 
 func NewPCMProcessor(
@@ -151,7 +138,6 @@ func NewPCMProcessor(
 
 	return &PCMProcessor{
 		stream: wav.NewStream(nil, wav.MultiProc(false, processors...)),
-		err:    make(chan error),
 	}, nil
 }
 
@@ -166,7 +152,7 @@ func ProcessPeaks(exporter Exporter, _ *ProcessorConfig) wav.ProcessFunc {
 			}
 		}
 
-		return exporter.SetPeakValue(maximum)
+		return exporter.SendPeak(maximum)
 	}
 }
 
@@ -195,7 +181,7 @@ func ProcessSpectrum(exporter Exporter, config *ProcessorConfig) wav.ProcessFunc
 				windowBlock,
 			)
 
-			if err := exporter.ObserveFrequencies(spectrum); err != nil {
+			if err := exporter.SendSpectrum(spectrum); err != nil {
 				return err
 			}
 		}
