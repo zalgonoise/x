@@ -25,15 +25,15 @@ type PromExporter struct {
 	err    error
 }
 
-// SetPeakValue registers the float64 `data` value as an audio peak
-func (e *PromExporter) SetPeakValue(data float64) (err error) {
+// SendPeak registers the float64 `data` value as an audio peak
+func (e *PromExporter) SendPeak(data float64) (err error) {
 	e.peakValues.Set(data)
 
 	return nil
 }
 
-// ObserveFrequencies keeps track of changes in the registered frequencies
-func (e *PromExporter) ObserveFrequencies(frequencies []fft.FrequencyPower) (err error) {
+// SendSpectrum keeps track of changes in the registered frequencies
+func (e *PromExporter) SendSpectrum(frequencies []fft.FrequencyPower) (err error) {
 	for i := range frequencies {
 		e.spectrumValues.
 			WithLabelValues(minLen(strconv.Itoa(frequencies[i].Freq), expectedMaxFreqLen)).
@@ -112,15 +112,15 @@ type LogExporter struct {
 	logger *slog.Logger
 }
 
-// SetPeakValue registers the float64 `data` value as an audio peak
-func (e *LogExporter) SetPeakValue(data float64) (err error) {
+// SendPeak registers the float64 `data` value as an audio peak
+func (e *LogExporter) SendPeak(data float64) (err error) {
 	e.logger.Info("audio peak value registered", slog.Float64("power", data))
 
 	return nil
 }
 
-// ObserveFrequencies keeps track of changes in the registered frequencies
-func (e *LogExporter) ObserveFrequencies(frequencies []fft.FrequencyPower) (err error) {
+// SendSpectrum keeps track of changes in the registered frequencies
+func (e *LogExporter) SendSpectrum(frequencies []fft.FrequencyPower) (err error) {
 	var maximum fft.FrequencyPower
 
 	for i := range frequencies {
