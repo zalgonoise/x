@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"os"
-	"time"
 
 	"github.com/zalgonoise/x/audio/cmd/audio/config"
 	"github.com/zalgonoise/x/audio/cmd/audio/stream"
@@ -14,7 +13,7 @@ func main() {
 	err, code := runV2()
 	if err != nil {
 		slog.Error(
-			"audio/gsp: runtime error",
+			"audio: runtime error",
 			slog.String("error", err.Error()),
 		)
 	}
@@ -70,23 +69,27 @@ func runV2() (error, int) {
 		return err, 1
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancelCause(context.Background())
+	defer cancel(nil)
+
 	reader, err := consumer.Consume(ctx)
 	if err != nil {
 		return err, 1
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
+	ctx, timeout := context.WithTimeout(ctx, cfg.Duration)
+	defer timeout()
 
-	go processor.Process(ctx, reader)
+	go processor.Process(ctx, cancel, reader)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err(), 0
-		case err := <-processor.Err():
-			return err, 1
+		default:
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return context.Cause(ctx), 1
+			}
 		}
 	}
 }
