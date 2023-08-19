@@ -21,6 +21,9 @@ type Exporter interface {
 	SendPeak(data float64) (err error)
 	// SendSpectrum registers the frequency spectrum in the exporter
 	SendSpectrum(frequencies []fft.FrequencyPower) (err error)
+	// ForceFlush is used in Exporter implementations that buffer or batch their values, as a means of immediately
+	// exporting any values that are in-memory.
+	ForceFlush(ctx context.Context) (err error)
 	// Shutdown gracefully stops the Exporter
 	Shutdown(ctx context.Context) (err error)
 }
