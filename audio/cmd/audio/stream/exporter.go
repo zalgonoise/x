@@ -43,6 +43,12 @@ func (e *PromExporter) SendSpectrum(frequencies []fft.FrequencyPower) (err error
 	return nil
 }
 
+// ForceFlush is used in Exporter implementations that buffer or batch their values, as a means of immediately
+// exporting any values that are in-memory.
+func (e *PromExporter) ForceFlush(_ context.Context) error {
+	return nil
+}
+
 // Shutdown gracefully stops the Exporter
 func (e *PromExporter) Shutdown(ctx context.Context) (err error) {
 	if e.err != nil {
@@ -134,6 +140,12 @@ func (e *LogExporter) SendSpectrum(frequencies []fft.FrequencyPower) (err error)
 		slog.Float64("magnitude", maximum.Mag),
 	)
 
+	return nil
+}
+
+// ForceFlush is used in Exporter implementations that buffer or batch their values, as a means of immediately
+// exporting any values that are in-memory.
+func (e *LogExporter) ForceFlush(_ context.Context) error {
 	return nil
 }
 
