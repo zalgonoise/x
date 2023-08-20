@@ -39,6 +39,7 @@ type MaxAggregator struct {
 	config   *AggregatorConfig
 }
 
+// SendPeak registers the float64 `data` value as an audio peak in the exporter
 func (a MaxAggregator) SendPeak(value float64) (err error) {
 	if value == 0.0 {
 		return
@@ -60,6 +61,7 @@ func (a MaxAggregator) SendPeak(value float64) (err error) {
 	return nil
 }
 
+// SendSpectrum registers the frequency spectrum in the exporter
 func (a MaxAggregator) SendSpectrum(frequencies []fft.FrequencyPower) (err error) {
 	slices.SortFunc(frequencies, func(a, b fft.FrequencyPower) int {
 		switch {
@@ -88,6 +90,7 @@ func (a MaxAggregator) SendSpectrum(frequencies []fft.FrequencyPower) (err error
 	return nil
 }
 
+// ForceFlush immediately exports any values that are in-memory.
 func (a MaxAggregator) ForceFlush(_ context.Context) error {
 	errs := make([]error, 0, 2)
 
@@ -109,6 +112,7 @@ func (a MaxAggregator) ForceFlush(_ context.Context) error {
 	}
 }
 
+// Shutdown gracefully stops the Aggregator
 func (a MaxAggregator) Shutdown(ctx context.Context) error {
 	return a.exporter.Shutdown(ctx)
 }
