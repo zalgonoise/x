@@ -125,6 +125,10 @@ func NewMaxAggregator(
 		config = new(AggregatorConfig)
 	}
 
+	if config.FlushFrequency == 0 {
+		config.FlushFrequency = defaultFlushFrequency
+	}
+
 	aggregator := &MaxAggregator{
 		peaks: &aggregation[float64]{
 			mu: new(sync.Mutex),
@@ -138,10 +142,6 @@ func NewMaxAggregator(
 
 		exporter: exporter,
 		config:   config,
-	}
-
-	if config.FlushFrequency == 0 {
-		config.FlushFrequency = defaultFlushFrequency
 	}
 
 	go func() {
