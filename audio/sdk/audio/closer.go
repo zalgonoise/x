@@ -3,7 +3,7 @@ package audio
 import "context"
 
 // StreamCloser defines common methods when interacting with a streaming module, targeting actions to either flush
-// the module or to shut it down gracefully.
+// any buffered values or items in the module and to shut it down gracefully.
 type StreamCloser interface {
 	// ForceFlush is used in implementations that buffer or batch their values or items, as a means of immediately
 	// exporting any values or items that are in-memory to the next destination or component.
