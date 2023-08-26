@@ -245,6 +245,8 @@ github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0 h1:44zHj6dgTnGhtGRr
 github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0/go.mod h1:nhc82H2KvRf8/28o3RGBnJM/k7NapcDGPegqGIOqATY=
 github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2 h1:sKUwtJlsw+Dt7zpl9QyZ9NAmJ3bqIyPQewlSkXIujpI=
 github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2/go.mod h1:BhECNvhwwHrppvvIXkE9ctO3afT6zPMduw3lI2rbLyk=
+github.com/zalgonoise/x/cfg v0.0.0-20230826163601-3ba3790bb910 h1:dulJUBFjWhXDCEUBuwo5n9MZQh+FRYhqzVt7twcnaT0=
+github.com/zalgonoise/x/cfg v0.0.0-20230826163601-3ba3790bb910/go.mod h1:TLAH/vhUedknjEPPEsKtBIfaHRy5Gnx9YvWMYnZ7Hkk=
 github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37 h1:ze8BJDCpc/MBfUI3IGeHV0XFC8YoVmSWw6q8buEeNlM=
 github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37/go.mod h1:8FJE6g42HqjHLVszmfbt6M25Rl5FdIKg93w+ob7bFWw=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
