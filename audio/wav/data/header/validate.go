@@ -2,7 +2,7 @@ package header
 
 import "github.com/zalgonoise/x/audio/validation"
 
-var headerValidator = validation.New[*Header](validateHeaderSubChunkID)
+var headerValidator = validation.Register[*Header](validateHeaderSubChunkID)
 
 func validateHeaderSubChunkID(h *Header) error {
 	switch string(h.Subchunk2ID[:]) {
