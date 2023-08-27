@@ -34,7 +34,7 @@ const (
 	FloatFormat
 )
 
-var headerValidator = validation.New[*Header](
+var headerValidator = validation.Register[*Header](
 	validateChunkID,
 	validateFormat,
 	validateSampleRate,
