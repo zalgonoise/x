@@ -9,6 +9,11 @@ import (
 	"github.com/zalgonoise/x/cfg"
 )
 
+const (
+	headerContentTypeKey   = "Content-Type"
+	headerContentTypeValue = "audio/wav"
+)
+
 type httpConsumer struct {
 	cfg HTTPConfig
 
@@ -26,7 +31,7 @@ func (c httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error)
 		return nil, err
 	}
 
-	req.Header.Set("Content-Type", "audio/wav")
+	req.Header.Set(headerContentTypeKey, headerContentTypeValue)
 
 	res, err := (&http.Client{
 		Timeout: c.cfg.timeout,
