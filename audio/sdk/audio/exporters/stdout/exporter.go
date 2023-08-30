@@ -13,8 +13,8 @@ import (
 type logExporter struct {
 	cfg LoggerConfig
 
-	peaks    audio.Aggregator
-	spectrum audio.Aggregator
+	peaks    audio.Collector
+	spectrum audio.Collector
 
 	logger *slog.Logger
 }
@@ -43,14 +43,14 @@ func ToLogger(options ...cfg.Option[LoggerConfig]) (audio.Exporter, error) {
 	}
 
 	if config.withPeaks {
-		exporter.peaks = audio.NewAggregator[float64](
+		exporter.peaks = audio.NewCollector[float64](
 			audio.MaxPeak(),
 			audio.NewRegistry[float64](), // replace with a batch registry or registry factory
 		)
 	}
 
 	if config.withSpectrum {
-		exporter.spectrum = audio.NewAggregator[[]fft.FrequencyPower](
+		exporter.spectrum = audio.NewCollector[[]fft.FrequencyPower](
 			audio.MaxSpectrum(config.spectrumBlockSize),
 			audio.NewRegistry[[]fft.FrequencyPower](), // replace with a batch registry or registry factory
 		)
