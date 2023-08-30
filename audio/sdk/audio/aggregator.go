@@ -15,37 +15,48 @@ import (
 	"github.com/zalgonoise/x/cfg"
 )
 
-type Aggregator interface {
-	Aggregate(h *header.Header, data []float64) error
+// Collector is a generic type that is able to parse incoming audio chunks to retrieve
+// meaningful information about the signal.
+//
+// A Collector can process the audio data and extract whatever it wants, creating suitable
+// metrics for its needs.
+//
+// It is the responsibility of the Exporter to store collected values and push them to the
+// appropriate backend
+type Collector interface {
+	Collect(h *header.Header, data []float64) error
 }
 
+// Registerer is a generic type that registers and loads values on a specific type context.
+//
+// Registries are responsible for handling aggregations and compacting values into one, when Load is called
 type Registerer[T any] interface {
 	Register(T) error
 	Load() (T, error)
 }
 
-type Registry[T any] func(T) error
-
-func (r Registry[T]) Register(value T) error {
-	return r(value)
-}
-
-type aggregator[T any] struct {
+type collector[T any] struct {
 	extractor  Extractor[T]
 	registerer Registerer[T]
 }
 
-func (a aggregator[T]) Aggregate(h *header.Header, data []float64) error {
+// Collect implements the Collector interface.
+//
+// It will use its inner Registerer and Extractor to register the extracted value from the input.
+func (a collector[T]) Collect(h *header.Header, data []float64) error {
 	return a.registerer.Register(a.extractor.Extract(h, data))
 }
 
-func NewAggregator[T any](extractor Extractor[T], registerer Registerer[T]) Aggregator {
-	return aggregator[T]{
+// NewCollector creates a Collector from hte input Extractor and Registerer
+func NewCollector[T any](extractor Extractor[T], registerer Registerer[T]) Collector {
+	return collector[T]{
 		extractor:  extractor,
 		registerer: registerer,
 	}
 }
 
+// Compactor is a function that creates a summary of a set of values based on a certain rule (max, average, rate, etc)
+// returning one single value of the same type and an error if raised.
 type Compactor[T any] func([]T) (T, error)
 
 // Extraction is a generic function type that serves as an audio processor function,
@@ -63,11 +74,13 @@ func (a Extraction[T]) Extract(h *header.Header, data []float64) T {
 	return a(h, data)
 }
 
+// Extractor is a generic interface for a type that implements the Extract method, which can return a value from
+// parsing an audio chunk.
 type Extractor[T any] interface {
 	Extract(*header.Header, []float64) T
 }
 
-// MaxPeak returns a float64 Aggregator that calculates the maximum peak value in an audio signal
+// MaxPeak returns a float64 Collector that calculates the maximum peak value in an audio signal
 func MaxPeak() Extractor[float64] {
 	return Extraction[float64](func(_ *header.Header, data []float64) (maximum float64) {
 		for i := range data {
@@ -80,7 +93,7 @@ func MaxPeak() Extractor[float64] {
 	})
 }
 
-// AveragePeak returns a float64 Aggregator that calculates the average peak value in an audio signal
+// AveragePeak returns a float64 Collector that calculates the average peak value in an audio signal
 func AveragePeak() Extractor[float64] {
 	return Extraction[float64](func(_ *header.Header, data []float64) (average float64) {
 		for i := range data {
@@ -91,7 +104,7 @@ func AveragePeak() Extractor[float64] {
 	})
 }
 
-// MaxSpectrum returns a []fft.FrequencyPower Aggregator that calculates the maximum spectrum values in an audio signal
+// MaxSpectrum returns a []fft.FrequencyPower Collector that calculates the maximum spectrum values in an audio signal
 func MaxSpectrum(size int) Extractor[[]fft.FrequencyPower] {
 	if size < 8 {
 		size = 64
