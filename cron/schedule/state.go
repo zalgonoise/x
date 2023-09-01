@@ -70,6 +70,7 @@ func stateException(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
 	})
 
 	if l.Width() > 0 {
+		l.Next() // we can safely advance in the cursor / iterator
 		l.Emit(tokenAlphanum)
 	}
 
