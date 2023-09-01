@@ -7,15 +7,17 @@ import (
 )
 
 func process(t *parse.Tree[token, byte]) (string, error) {
+	if err := validate(t); err != nil {
+		return "", err
+	}
+
 	sb := new(strings.Builder)
 	nodes := t.List()
 
 	for i := range nodes {
 		switch nodes[i].Type {
 		case tokenStar:
-			sb.WriteString("everything: ")
-			sb.Write(nodes[i].Value)
-			sb.WriteString(" ;")
+			processStar(sb, nodes[i])
 		case tokenAlphanum:
 			processAlphanum(sb, nodes[i])
 		case tokenComma:
@@ -31,9 +33,7 @@ func process(t *parse.Tree[token, byte]) (string, error) {
 			sb.Write(nodes[i].Value)
 			sb.WriteString(" ;")
 		case tokenAt:
-			sb.WriteString("exception: ")
-			sb.Write(nodes[i].Value)
-			sb.WriteString(" ;")
+			processException(sb, nodes[i])
 		default:
 			break
 		}
@@ -58,6 +58,36 @@ func processAlphanum(sb *strings.Builder, n *parse.Node[token, byte]) {
 
 		if len(n.Edges[i].Edges) > 0 {
 			sb.Write(n.Edges[i].Edges[0].Value)
+		}
+	}
+
+	sb.WriteString(" ; ")
+}
+
+func processStar(sb *strings.Builder, n *parse.Node[token, byte]) {
+	sb.WriteString("everything: ")
+	sb.Write(n.Value)
+
+	for i := 0; i < len(n.Edges); i++ {
+		if n.Edges[i].Type == tokenSlash {
+			sb.WriteString(" by ")
+			if len(n.Edges[i].Edges) > 0 {
+				sb.Write(n.Edges[i].Edges[0].Value)
+			}
+		}
+	}
+
+	sb.WriteString(" ; ")
+}
+
+func processException(sb *strings.Builder, n *parse.Node[token, byte]) {
+	sb.WriteString("exception: ")
+	sb.Write(n.Value)
+
+	for i := 0; i < len(n.Edges); i++ {
+		if n.Edges[i].Type == tokenAlphanum {
+			sb.WriteString(" freq: ")
+			sb.Write(n.Edges[i].Value)
 		}
 	}
 
