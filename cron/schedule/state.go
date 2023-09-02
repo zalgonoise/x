@@ -45,6 +45,11 @@ func stateAlphanumeric(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
 	})
 
 	if l.Width() > 0 {
+		// advance cursor on last item
+		if item := l.Peek(); item == 0 {
+			l.Next()
+		}
+
 		l.Emit(tokenAlphanum)
 	}
 
@@ -70,7 +75,11 @@ func stateException(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
 	})
 
 	if l.Width() > 0 {
-		l.Next() // we can safely advance in the cursor / iterator
+		// advance cursor on last item
+		if item := l.Peek(); item == 0 {
+			l.Next()
+		}
+
 		l.Emit(tokenAlphanum)
 	}
 
