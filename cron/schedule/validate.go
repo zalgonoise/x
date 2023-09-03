@@ -67,6 +67,16 @@ var (
 		6: "SAT",
 		7: "SUN", // non-standard
 	}
+
+	exceptionsList = []string{
+		0: "reboot",
+		1: "hourly",
+		2: "daily",
+		3: "weekly",
+		4: "monthly",
+		5: "annually",
+		6: "yearly",
+	}
 )
 
 func validate(t *parse.Tree[token, byte]) error {
@@ -230,7 +240,6 @@ func validateHours(node *parse.Node[token, byte]) error {
 	return nil
 }
 
-// TODO: implement validateMonthDays
 func validateMonthDays(node *parse.Node[token, byte]) error {
 	if err := validateField(node, 31, 1, 31, func(s string) error {
 		return validateNumber(s, 1, 31)
