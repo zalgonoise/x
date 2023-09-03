@@ -1,12 +1,21 @@
 package schedule
 
-import "time"
+import (
+	"time"
+
+	"github.com/zalgonoise/parse"
+	"github.com/zalgonoise/x/cfg"
+)
 
 type resolver interface {
 	Resolve(value int) int
 }
 
-type cronSchedule struct {
+type Scheduler interface {
+	Next(now time.Time) time.Time
+}
+
+type CronSchedule struct {
 	Loc *time.Location
 
 	min      resolver
@@ -16,7 +25,35 @@ type cronSchedule struct {
 	dayWeek  resolver
 }
 
-func (s cronSchedule) Next(t time.Time) time.Time {
+func New(options ...cfg.Option[CronConfig]) (Scheduler, error) {
+	config := cfg.New(options...)
+
+	// parse cron string
+	cron, err := parse.Run([]byte(config.cronString), initState, initParse, process)
+	if err != nil {
+		return noOpScheduler{}, err
+	}
+
+	// set location if provided
+	if config.loc != nil {
+		return withLocation(cron, config.loc), nil
+	}
+
+	return cron, nil
+}
+
+func withLocation(s CronSchedule, loc *time.Location) CronSchedule {
+	return CronSchedule{
+		Loc:      loc,
+		min:      s.min,
+		hour:     s.hour,
+		dayMonth: s.dayMonth,
+		month:    s.month,
+		dayWeek:  s.dayWeek,
+	}
+}
+
+func (s CronSchedule) Next(t time.Time) time.Time {
 	t = t.Truncate(time.Minute)
 	year, month, day := t.Date()
 	hour := t.Hour()
@@ -66,4 +103,10 @@ func (s cronSchedule) Next(t time.Time) time.Time {
 	}
 
 	return weekdayTime
+}
+
+type noOpScheduler struct{}
+
+func (s noOpScheduler) Next(_ time.Time) time.Time {
+	return time.Time{}
 }
