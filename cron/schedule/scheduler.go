@@ -36,21 +36,12 @@ func New(options ...cfg.Option[CronConfig]) (Scheduler, error) {
 
 	// set location if provided
 	if config.loc != nil {
-		return withLocation(cron, config.loc), nil
+		cron.Loc = config.loc
+
+		return cron, nil
 	}
 
 	return cron, nil
-}
-
-func withLocation(s CronSchedule, loc *time.Location) CronSchedule {
-	return CronSchedule{
-		Loc:      loc,
-		min:      s.min,
-		hour:     s.hour,
-		dayMonth: s.dayMonth,
-		month:    s.month,
-		dayWeek:  s.dayWeek,
-	}
 }
 
 func (s CronSchedule) Next(t time.Time) time.Time {
