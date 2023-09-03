@@ -9,7 +9,7 @@ import (
 	"github.com/zalgonoise/parse"
 )
 
-func process(t *parse.Tree[token, byte]) (c cronSchedule, err error) {
+func process(t *parse.Tree[token, byte]) (c CronSchedule, err error) {
 	if err = validate(t); err != nil {
 		return c, err
 	}
@@ -20,7 +20,7 @@ func process(t *parse.Tree[token, byte]) (c cronSchedule, err error) {
 	case 1:
 		return buildException(nodes[0], time.Local), nil
 	case 5:
-		return cronSchedule{
+		return CronSchedule{
 			Loc:      time.Local,
 			min:      buildMinutes(nodes[0]),
 			hour:     buildHours(nodes[1]),
@@ -88,8 +88,8 @@ func buildWeekdays(node *parse.Node[token, byte]) resolver {
 	}
 }
 
-func defaultSchedule(loc *time.Location) cronSchedule {
-	return cronSchedule{
+func defaultSchedule(loc *time.Location) CronSchedule {
+	return CronSchedule{
 		Loc: loc,
 		min: fixedSchedule{
 			maximum: 59,
@@ -102,7 +102,7 @@ func defaultSchedule(loc *time.Location) cronSchedule {
 	}
 }
 
-func buildException(node *parse.Node[token, byte], loc *time.Location) cronSchedule {
+func buildException(node *parse.Node[token, byte], loc *time.Location) CronSchedule {
 	if node.Type != tokenAt {
 		return defaultSchedule(loc)
 	}
@@ -113,7 +113,7 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) cronSched
 		case 1:
 			return defaultSchedule(loc)
 		case 2:
-			return cronSchedule{
+			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
 					maximum: 59,
@@ -128,7 +128,7 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) cronSched
 				dayWeek:  everytime{},
 			}
 		case 3:
-			return cronSchedule{
+			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
 					maximum: 59,
@@ -146,7 +146,7 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) cronSched
 				},
 			}
 		case 4:
-			return cronSchedule{
+			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
 					maximum: 59,
@@ -164,7 +164,7 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) cronSched
 				dayWeek: everytime{},
 			}
 		case 5, 6:
-			return cronSchedule{
+			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
 					maximum: 59,
