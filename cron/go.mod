@@ -1,10 +1,11 @@
 module github.com/zalgonoise/x/cron
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7
 	github.com/zalgonoise/parse v0.0.0-20230205181257-0ceebea8442c
+	github.com/zalgonoise/x/cfg v0.0.0-20230903162410-168ccab82d02
 	github.com/zalgonoise/x/errs v0.0.0-20230831192720-a9c7f58a77f0
 )
 
