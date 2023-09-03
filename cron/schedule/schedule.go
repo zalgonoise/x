@@ -2,7 +2,7 @@ package schedule
 
 type everytime struct{}
 
-func (s everytime) Resolve(value int) int {
+func (s everytime) Resolve(_ int) int {
 	return 0
 }
 
@@ -61,14 +61,18 @@ func diff(value, from, to, maximum int) int {
 }
 
 func newStepSchedule(from, to, maximum, frequency int) stepSchedule {
+	return stepSchedule{
+		maximum: maximum,
+		steps:   newValueRange(from, to, frequency),
+	}
+}
+
+func newValueRange(from, to, frequency int) []int {
 	var r = make([]int, 0, to-from/frequency)
 
-	for i := from; i < maximum; i += frequency {
+	for i := from; i < to; i += frequency {
 		r = append(r, i)
 	}
 
-	return stepSchedule{
-		maximum: maximum,
-		steps:   r,
-	}
+	return r
 }
