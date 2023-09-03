@@ -1,21 +1,27 @@
 package schedule
 
-type fixedSchedule struct {
-	maximum int8
-	at      int8
+type everytime struct{}
+
+func (s everytime) Resolve(value int) int {
+	return 0
 }
 
-func (s fixedSchedule) Resolve(value int8) int8 {
+type fixedSchedule struct {
+	maximum int
+	at      int
+}
+
+func (s fixedSchedule) Resolve(value int) int {
 	return diff(value, s.at, s.at, s.maximum)
 }
 
 type rangeSchedule struct {
-	maximum int8
-	from    int8
-	to      int8
+	maximum int
+	from    int
+	to      int
 }
 
-func (s rangeSchedule) Resolve(value int8) int8 {
+func (s rangeSchedule) Resolve(value int) int {
 	if value > s.from && value < s.to {
 		return 0
 	}
@@ -24,12 +30,12 @@ func (s rangeSchedule) Resolve(value int8) int8 {
 }
 
 type stepSchedule struct {
-	maximum int8
-	steps   []int8
+	maximum int
+	steps   []int
 }
 
-func (s stepSchedule) Resolve(value int8) int8 {
-	var offset int8 = -1
+func (s stepSchedule) Resolve(value int) int {
+	var offset int = -1
 
 	for i := range s.steps {
 		if offset == -1 {
@@ -46,7 +52,7 @@ func (s stepSchedule) Resolve(value int8) int8 {
 	return offset
 }
 
-func diff(value, from, to, maximum int8) int8 {
+func diff(value, from, to, maximum int) int {
 	if value > to {
 		return from + maximum - value
 	}
@@ -54,8 +60,8 @@ func diff(value, from, to, maximum int8) int8 {
 	return from - value
 }
 
-func newStepSchedule(from, to, maximum, frequency int8) stepSchedule {
-	var r = make([]int8, 0, to-from/frequency)
+func newStepSchedule(from, to, maximum, frequency int) stepSchedule {
+	var r = make([]int, 0, to-from/frequency)
 
 	for i := from; i < maximum; i += frequency {
 		r = append(r, i)
