@@ -69,13 +69,13 @@ var (
 	}
 
 	exceptionsList = []string{
-		0: "reboot",
-		1: "hourly",
-		2: "daily",
-		3: "weekly",
-		4: "monthly",
-		5: "annually",
-		6: "yearly",
+		0: "REBOOT",
+		1: "HOURLY",
+		2: "DAILY",
+		3: "WEEKLY",
+		4: "MONTHLY",
+		5: "ANNUALLY",
+		6: "YEARLY",
 	}
 )
 
