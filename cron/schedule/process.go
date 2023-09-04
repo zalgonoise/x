@@ -20,14 +20,28 @@ func process(t *parse.Tree[token, byte]) (c CronSchedule, err error) {
 	case 1:
 		return buildException(nodes[0], time.Local), nil
 	case 5:
-		return CronSchedule{
+		c = CronSchedule{
 			Loc:      time.Local,
 			min:      buildMinutes(nodes[0]),
 			hour:     buildHours(nodes[1]),
 			dayMonth: buildMonthDays(nodes[2]),
 			month:    buildMonths(nodes[3]),
 			dayWeek:  buildWeekdays(nodes[4]),
-		}, nil
+		}
+
+		// convert sundays as 7 into a 0
+		if r, ok := c.dayWeek.(stepSchedule); ok {
+			for i := range r.steps {
+				if r.steps[i] == 7 {
+					r.steps[i] = 0
+
+					slices.Sort(r.steps)
+					c.dayWeek = r
+				}
+			}
+		}
+
+		return c, nil
 	default:
 		return c, ErrInvalidNumNodes
 	}
@@ -107,12 +121,14 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) CronSched
 		return defaultSchedule(loc)
 	}
 
-	if value, ok := getValueFromSymbol(node.Edges[0], 0, 6, exceptionsList); ok {
+	if value, ok := getValue(node.Edges[0], 0, 6, exceptionsList); ok {
 		switch value {
 		// TODO: implement reboot (case 0:)
-		case 1:
+		case 0: // reboot
 			return defaultSchedule(loc)
-		case 2:
+		case 1: // hourly
+			return defaultSchedule(loc)
+		case 2: // daily
 			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
@@ -127,7 +143,7 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) CronSched
 				month:    everytime{},
 				dayWeek:  everytime{},
 			}
-		case 3:
+		case 3: // weekly
 			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
@@ -145,7 +161,7 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) CronSched
 					at:      0,
 				},
 			}
-		case 4:
+		case 4: // monthly
 			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
@@ -163,7 +179,7 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) CronSched
 				month:   everytime{},
 				dayWeek: everytime{},
 			}
-		case 5, 6:
+		case 5, 6: // yearly, annually
 			return CronSchedule{
 				Loc: loc,
 				min: fixedSchedule{
@@ -190,43 +206,49 @@ func buildException(node *parse.Node[token, byte], loc *time.Location) CronSched
 	return defaultSchedule(loc)
 }
 
+func getValue(
+	node *parse.Node[token, byte], minimum, maximum int, valueList []string,
+) (int, bool) {
+	value := node.Value
+
+	// try to use the value as a number
+	if len(value) > 0 && value[0] >= '0' && value[0] <= '9' {
+		num, err := strconv.Atoi(string(value))
+		if err == nil {
+			return num, true
+		}
+	}
+
+	// fallback to using it as a string
+	v := strings.ToUpper(string(value))
+	num := -1
+
+	for idx := range valueList {
+		if v == valueList[idx] {
+			num = idx
+		}
+	}
+
+	if num > -1 && num >= minimum && num <= maximum {
+		return num, true
+	}
+
+	return -1, false
+}
+
 func getValueFromSymbol(
 	symbol *parse.Node[token, byte], minimum, maximum int, valueList []string,
 ) (int, bool) {
 	if len(symbol.Edges) == 1 {
-		value := symbol.Edges[0].Value
-
-		// try to use the value as a number
-		if len(value) > 0 && value[0] > '0' && value[0] < '9' {
-			num, err := strconv.Atoi(string(value))
-			if err == nil {
-				return num, true
-			}
-
-			return -1, false
-		}
-
-		// fallback to using it as a string
-		v := strings.ToUpper(string(value))
-		num := -1
-
-		for idx := range valueList {
-			if v == valueList[idx] {
-				num = idx
-			}
-		}
-
-		if num > -1 && num >= minimum && num <= maximum {
-			return num, true
-		}
+		return getValue(symbol.Edges[0], minimum, maximum, valueList)
 	}
 
 	return -1, false
 }
 
 func processAlphanum(n *parse.Node[token, byte], minimum, maximum int, valueList []string) resolver {
-	atValue, err := strconv.Atoi(string(n.Value))
-	if err != nil {
+	atValue, ok := getValue(n, minimum, maximum, valueList)
+	if !ok {
 		return everytime{}
 	}
 
@@ -266,6 +288,11 @@ func processAlphanum(n *parse.Node[token, byte], minimum, maximum int, valueList
 
 		// handle step values only
 		if every == -1 && rangeEnd == -1 && len(stepValues) > 0 {
+			stepValues = append(stepValues, atValue)
+
+			slices.Sort(stepValues)
+			slices.Compact(stepValues)
+
 			return stepSchedule{
 				maximum: maximum,
 				steps:   stepValues,
