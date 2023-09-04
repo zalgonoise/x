@@ -96,6 +96,12 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestNoOp(t *testing.T) {
+	config := cfg.New[testConfig](cfg.NoOp[testConfig]{})
+
+	mustMatch(t, testConfig{}, config)
+}
+
 // mustMatch is an over-simplification of a testify/require.Equal() call, or a
 // reflect.DeepEqual call; but leverages the generics in Go and the comparable type constraint.
 //
