@@ -239,8 +239,8 @@ github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d h1:FQmuKnqJefm/vZV0nYJ/cBElgros1Q9nRD41GflLULY=
 github.com/zalgonoise/attr v0.0.0-20221218020548-25d0939ced5d/go.mod h1:AJnYvJHd3CA3CWDK/XTzHqENx1M6Jc+riBrp7myrm8o=
-github.com/zalgonoise/gbuf v1.0.0 h1:MubWGePEtPSDOvEijP/n+6PyeIsSCaPOaHKZnLRako8=
-github.com/zalgonoise/gbuf v1.0.0/go.mod h1:hVQn/TZx0RJ+76jnTxQovUJsf+Hs++IJzY3BnWl1I/M=
+github.com/zalgonoise/gbuf v1.0.1 h1:I/IwY/O9qLixkMy1MsJsy3cMj+IM4EEu1d3qvrtwcRQ=
+github.com/zalgonoise/gbuf v1.0.1/go.mod h1:Ura1k68eaqYimCmG2nFhStqp6zJvuKbmHrZoz3e/Rzc=
 github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0 h1:44zHj6dgTnGhtGRrVaiBoDu3R5H4+sJT0geLPNIdkZE=
 github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0/go.mod h1:nhc82H2KvRf8/28o3RGBnJM/k7NapcDGPegqGIOqATY=
 github.com/zalgonoise/logx v0.0.0-20221218020805-7893cc3cdef2 h1:sKUwtJlsw+Dt7zpl9QyZ9NAmJ3bqIyPQewlSkXIujpI=
