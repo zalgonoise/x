@@ -29,6 +29,7 @@ const (
 	ErrMonthDays = errs.Entity("days of the month value")
 	ErrMonths    = errs.Entity("month value")
 	ErrWeekDays  = errs.Entity("days of the week value")
+	ErrScheduler = errs.Entity("scheduler")
 )
 
 var (
@@ -40,6 +41,7 @@ var (
 	ErrOutOfBoundsAlphanum = errs.New(errDomain, ErrOutOfBounds, ErrAlphanum)
 	ErrEmptyAlphanum       = errs.New(errDomain, ErrEmpty, ErrAlphanum)
 	ErrInvalidAlphanum     = errs.New(errDomain, ErrInvalid, ErrAlphanum)
+	ErrInvalidScheduler    = errs.New(errDomain, ErrInvalid, ErrScheduler)
 
 	monthsList = []string{
 		0:  "",
