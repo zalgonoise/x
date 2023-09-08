@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"context"
 	"time"
 
 	"github.com/zalgonoise/parse"
@@ -12,7 +13,7 @@ type resolver interface {
 }
 
 type Scheduler interface {
-	Next(now time.Time) time.Time
+	Next(ctx context.Context, now time.Time) time.Time
 }
 
 type CronSchedule struct {
@@ -25,9 +26,30 @@ type CronSchedule struct {
 	dayWeek  resolver
 }
 
-func New(options ...cfg.Option[CronConfig]) (Scheduler, error) {
+func New(options ...cfg.Option[SchedulerConfig]) (Scheduler, error) {
 	config := cfg.New(options...)
 
+	cron, err := newScheduler(config)
+	if err != nil {
+		return noOpScheduler{}, err
+	}
+
+	if config.metrics != nil {
+		cron = withMetrics(cron, config.metrics)
+	}
+
+	if config.logger != nil {
+		cron = withLogs(cron, config.logger)
+	}
+
+	if config.tracer != nil {
+		cron = withTrace(cron, config.tracer)
+	}
+
+	return cron, nil
+}
+
+func newScheduler(config SchedulerConfig) (Scheduler, error) {
 	// parse cron string
 	cron, err := parse.Run([]byte(config.cronString), initState, initParse, process)
 	if err != nil {
@@ -37,14 +59,12 @@ func New(options ...cfg.Option[CronConfig]) (Scheduler, error) {
 	// set location if provided
 	if config.loc != nil {
 		cron.Loc = config.loc
-
-		return cron, nil
 	}
 
 	return cron, nil
 }
 
-func (s CronSchedule) Next(t time.Time) time.Time {
+func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 	t = t.Truncate(time.Minute)
 	year, month, day := t.Date()
 	hour := t.Hour()
@@ -98,6 +118,6 @@ func (s CronSchedule) Next(t time.Time) time.Time {
 
 type noOpScheduler struct{}
 
-func (s noOpScheduler) Next(_ time.Time) time.Time {
+func (s noOpScheduler) Next(_ context.Context, _ time.Time) time.Time {
 	return time.Time{}
 }
