@@ -4,19 +4,20 @@ import (
 	"log/slog"
 
 	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/x/cron/executor"
 	"go.opentelemetry.io/otel/trace"
 )
 
-type RuntimeConfig struct {
-	exec []Executor
+type Config struct {
+	exec []executor.Executor
 
 	logger  *slog.Logger
 	metrics CronMetrics
 	tracer  trace.Tracer
 }
 
-func WithExecutors(executors ...Executor) cfg.Option[RuntimeConfig] {
-	return cfg.Register(func(config RuntimeConfig) RuntimeConfig {
+func WithExecutors(executors ...executor.Executor) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		if len(executors) == 0 {
 			return config
 		}
@@ -33,24 +34,24 @@ func WithExecutors(executors ...Executor) cfg.Option[RuntimeConfig] {
 	})
 }
 
-func WithCronMetrics(m CronMetrics) cfg.Option[RuntimeConfig] {
-	return cfg.Register(func(config RuntimeConfig) RuntimeConfig {
+func WithCronMetrics(m CronMetrics) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		config.metrics = m
 
 		return config
 	})
 }
 
-func WithCronLogs(logger *slog.Logger) cfg.Option[RuntimeConfig] {
-	return cfg.Register(func(config RuntimeConfig) RuntimeConfig {
+func WithCronLogs(logger *slog.Logger) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		config.logger = logger
 
 		return config
 	})
 }
 
-func WithCronTrace(tracer trace.Tracer) cfg.Option[RuntimeConfig] {
-	return cfg.Register(func(config RuntimeConfig) RuntimeConfig {
+func WithCronTrace(tracer trace.Tracer) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		config.tracer = tracer
 
 		return config

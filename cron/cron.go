@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/x/cron/executor"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -15,7 +16,7 @@ type Runtime interface {
 }
 
 type runtime struct {
-	exec []Executor
+	exec []executor.Executor
 
 	tracer trace.Tracer
 	err    chan error
@@ -102,7 +103,7 @@ func (r runtime) nextTaskIndex(ctx context.Context) int {
 	return idx
 }
 
-func New(options ...cfg.Option[RuntimeConfig]) (Runtime, error) {
+func New(options ...cfg.Option[Config]) (Runtime, error) {
 	config := cfg.New(options...)
 
 	cron, err := newRuntime(config)
@@ -121,10 +122,10 @@ func New(options ...cfg.Option[RuntimeConfig]) (Runtime, error) {
 	return cron, nil
 }
 
-func newRuntime(config RuntimeConfig) (Runtime, error) {
+func newRuntime(config Config) (Runtime, error) {
 	// validate input
 	if len(config.exec) == 0 {
-		return noOpRuntime{}, ErrEmptyExecutableList
+		return noOpRuntime{}, executor.ErrEmptyExecutableList
 	}
 
 	tracer := trace.NewNoopTracerProvider().Tracer("cron")
