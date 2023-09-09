@@ -1,4 +1,4 @@
-package cron
+package executor
 
 import (
 	"context"
@@ -86,7 +86,7 @@ func (e Executable) Exec(ctx context.Context) error {
 	}
 }
 
-func NewExecutor(options ...cfg.Option[ExecutorConfig]) (Executor, error) {
+func NewExecutor(options ...cfg.Option[Config]) (Executor, error) {
 	config := cfg.New(options...)
 
 	exec, err := newExecutable(config)
@@ -109,7 +109,7 @@ func NewExecutor(options ...cfg.Option[ExecutorConfig]) (Executor, error) {
 	return exec, nil
 }
 
-func newExecutable(config ExecutorConfig) (Executor, error) {
+func newExecutable(config Config) (Executor, error) {
 	// validate input
 	if len(config.runners) == 0 {
 		return noOpExecutable{}, ErrEmptyRunnerList
