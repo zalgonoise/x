@@ -15,15 +15,15 @@ const (
 
 	ErrEmpty = errs.Kind("empty")
 
-	ErrRunnerList     = errs.Entity("runners list")
-	ErrScheduler      = errs.Entity("scheduler")
-	ErrExecutableList = errs.Entity("executable list")
+	ErrRunnerList = errs.Entity("runners list")
+	ErrScheduler  = errs.Entity("scheduler")
+	ErrSelector   = errs.Entity("task selector")
 )
 
 var (
-	ErrEmptyRunnerList     = errs.New(errDomain, ErrEmpty, ErrRunnerList)
-	ErrEmptyScheduler      = errs.New(errDomain, ErrEmpty, ErrScheduler)
-	ErrEmptyExecutableList = errs.New(errDomain, ErrEmpty, ErrExecutableList)
+	ErrEmptyRunnerList = errs.New(errDomain, ErrEmpty, ErrRunnerList)
+	ErrEmptyScheduler  = errs.New(errDomain, ErrEmpty, ErrScheduler)
+	ErrEmptySelector   = errs.New(errDomain, ErrEmpty, ErrSelector)
 )
 
 type Runner interface {
@@ -36,7 +36,6 @@ func (r Runnable) Run(ctx context.Context) error {
 	return r(ctx)
 }
 
-// TODO: probably better to move the Executor type to its own package
 type Executor interface {
 	Exec(ctx context.Context) error
 	Next(ctx context.Context) time.Time
@@ -58,6 +57,7 @@ func (e Executable) Exec(ctx context.Context) error {
 	now := time.Now()
 	next := e.cron.Next(execCtx, now)
 	timer := time.NewTimer(next.Sub(now))
+	defer timer.Stop()
 
 	for {
 		select {
@@ -86,7 +86,7 @@ func (e Executable) Exec(ctx context.Context) error {
 	}
 }
 
-func NewExecutor(options ...cfg.Option[Config]) (Executor, error) {
+func New(options ...cfg.Option[Config]) (Executor, error) {
 	config := cfg.New(options...)
 
 	exec, err := newExecutable(config)

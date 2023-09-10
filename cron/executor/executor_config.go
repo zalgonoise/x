@@ -62,7 +62,7 @@ func WithLocation(loc *time.Location) cfg.Option[Config] {
 	})
 }
 
-func WithExecutorMetrics(m ExecutorMetrics) cfg.Option[Config] {
+func WithMetrics(m ExecutorMetrics) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.metrics = m
 
@@ -70,7 +70,7 @@ func WithExecutorMetrics(m ExecutorMetrics) cfg.Option[Config] {
 	})
 }
 
-func WithExecutorLogs(logger *slog.Logger) cfg.Option[Config] {
+func WithLogs(logger *slog.Logger) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.logger = logger
 
@@ -78,7 +78,7 @@ func WithExecutorLogs(logger *slog.Logger) cfg.Option[Config] {
 	})
 }
 
-func WithExecutorTrace(tracer trace.Tracer) cfg.Option[Config] {
+func WithTrace(tracer trace.Tracer) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.tracer = tracer
 
