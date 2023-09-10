@@ -4,37 +4,41 @@ import (
 	"log/slog"
 
 	"github.com/zalgonoise/x/cfg"
-	"github.com/zalgonoise/x/cron/executor"
+	"github.com/zalgonoise/x/cron/selector"
 	"go.opentelemetry.io/otel/trace"
 )
 
+const (
+	minBufferSize     = 64
+	defaultBufferSize = 1024
+)
+
 type Config struct {
-	exec []executor.Executor
+	sel           selector.Selector
+	errBufferSize int
 
 	logger  *slog.Logger
-	metrics CronMetrics
+	metrics Metrics
 	tracer  trace.Tracer
 }
 
-func WithExecutors(executors ...executor.Executor) cfg.Option[Config] {
+func WithSelector(sel selector.Selector) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
-		if len(executors) == 0 {
-			return config
-		}
-
-		if len(config.exec) == 0 {
-			config.exec = executors
-
-			return config
-		}
-
-		config.exec = append(config.exec, executors...)
+		config.sel = sel
 
 		return config
 	})
 }
 
-func WithCronMetrics(m CronMetrics) cfg.Option[Config] {
+func WithErrorBufferSize(size int) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
+		config.errBufferSize = size
+
+		return config
+	})
+}
+
+func WithMetrics(m Metrics) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.metrics = m
 
@@ -42,7 +46,7 @@ func WithCronMetrics(m CronMetrics) cfg.Option[Config] {
 	})
 }
 
-func WithCronLogs(logger *slog.Logger) cfg.Option[Config] {
+func WithLogs(logger *slog.Logger) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.logger = logger
 
@@ -50,7 +54,7 @@ func WithCronLogs(logger *slog.Logger) cfg.Option[Config] {
 	})
 }
 
-func WithCronTrace(tracer trace.Tracer) cfg.Option[Config] {
+func WithTrace(tracer trace.Tracer) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.tracer = tracer
 

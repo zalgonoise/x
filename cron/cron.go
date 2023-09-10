@@ -2,12 +2,10 @@ package cron
 
 import (
 	"context"
-	"time"
 
 	"github.com/zalgonoise/x/cfg"
 	"github.com/zalgonoise/x/cron/executor"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
+	"github.com/zalgonoise/x/cron/selector"
 )
 
 type Runtime interface {
@@ -16,56 +14,19 @@ type Runtime interface {
 }
 
 type runtime struct {
-	exec []executor.Executor
+	sel selector.Selector
 
-	tracer trace.Tracer
-	err    chan error
+	err chan error
 }
 
 func (r runtime) Run(ctx context.Context) {
-	var (
-		runnerCtx context.Context
-		cancel    context.CancelFunc
-	)
-
 	for {
 		select {
 		case <-ctx.Done():
-			if cancel != nil {
-				cancel()
-			}
-
 			return
 		default:
-			if cancel == nil {
-				// TODO: refactor to include a collector (or w/e) type to wrap this section
-				ctx, span := r.tracer.Start(ctx, "Runtime.Run")
-
-				runnerCtx, cancel = context.WithCancel(ctx)
-
-				idx := r.nextTaskIndex(runnerCtx)
-				if idx < 0 {
-					cancel()
-					cancel = nil
-
-					span.End()
-
-					return
-				}
-
-				go func() {
-					if err := r.exec[idx].Exec(runnerCtx); err != nil {
-						span.SetStatus(codes.Error, err.Error())
-						span.RecordError(err)
-
-						r.err <- err
-					}
-
-					span.End()
-
-					cancel()
-					cancel = nil
-				}()
+			if err := r.sel.Next(ctx); err != nil {
+				r.err <- err
 			}
 		}
 	}
@@ -73,34 +34,6 @@ func (r runtime) Run(ctx context.Context) {
 
 func (r runtime) Err() <-chan error {
 	return r.err
-}
-
-func (r runtime) nextTaskIndex(ctx context.Context) int {
-	if len(r.exec) < 1 {
-		return -1
-	}
-
-	var (
-		nextTime time.Time
-		idx      int
-	)
-
-	for i := range r.exec {
-		t := r.exec[i].Next(ctx)
-
-		if i == 0 {
-			nextTime = t
-
-			continue
-		}
-
-		if t.Before(nextTime) {
-			nextTime = t
-			idx = i
-		}
-	}
-
-	return idx
 }
 
 func New(options ...cfg.Option[Config]) (Runtime, error) {
@@ -119,23 +52,27 @@ func New(options ...cfg.Option[Config]) (Runtime, error) {
 		cron = cronWithLogs(cron, config.logger)
 	}
 
+	if config.tracer != nil {
+		cron = cronWithTrace(cron, config.tracer)
+	}
+
 	return cron, nil
 }
 
 func newRuntime(config Config) (Runtime, error) {
 	// validate input
-	if len(config.exec) == 0 {
-		return noOpRuntime{}, executor.ErrEmptyExecutableList
+	if config.sel == nil {
+		return noOpRuntime{}, executor.ErrEmptySelector
 	}
 
-	tracer := trace.NewNoopTracerProvider().Tracer("cron")
-	if config.tracer != nil {
-		tracer = config.tracer
+	size := config.errBufferSize
+	if size < minBufferSize {
+		size = defaultBufferSize
 	}
 
 	return runtime{
-		exec:   config.exec,
-		tracer: tracer,
+		sel: config.sel,
+		err: make(chan error, size),
 	}, nil
 }
 

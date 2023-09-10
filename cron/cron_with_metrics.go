@@ -2,13 +2,13 @@ package cron
 
 import "context"
 
-type CronMetrics interface {
+type Metrics interface {
 	IsUp(bool)
 }
 
 type CronWithMetrics struct {
 	r Runtime
-	m CronMetrics
+	m Metrics
 }
 
 func (c CronWithMetrics) Run(ctx context.Context) {
@@ -21,7 +21,7 @@ func (c CronWithMetrics) Err() <-chan error {
 	return c.r.Err()
 }
 
-func cronWithMetrics(r Runtime, m CronMetrics) Runtime {
+func cronWithMetrics(r Runtime, m Metrics) Runtime {
 	if r == nil {
 		return noOpRuntime{}
 	}
