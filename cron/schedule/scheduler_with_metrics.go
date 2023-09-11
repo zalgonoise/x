@@ -6,7 +6,7 @@ import (
 )
 
 type Metrics interface {
-	IncNextCalls()
+	IncSchedulerNextCalls()
 }
 
 type SchedulerWithMetrics struct {
@@ -15,7 +15,7 @@ type SchedulerWithMetrics struct {
 }
 
 func (s SchedulerWithMetrics) Next(ctx context.Context, now time.Time) time.Time {
-	s.m.IncNextCalls()
+	s.m.IncSchedulerNextCalls()
 
 	return s.s.Next(ctx, now)
 }
