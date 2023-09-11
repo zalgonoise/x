@@ -6,9 +6,10 @@ import (
 )
 
 type ExecutorMetrics interface {
-	IncExecCalls()
-	IncExecErrors()
-	IncNextCalls()
+	IncExecutorExecCalls(id string)
+	IncExecutorExecErrors(id string)
+	ObserveExecLatency(ctx context.Context, id string, dur time.Duration)
+	IncExecutorNextCalls(id string)
 }
 
 type ExecutorWithMetrics struct {
@@ -17,20 +18,30 @@ type ExecutorWithMetrics struct {
 }
 
 func (e ExecutorWithMetrics) Exec(ctx context.Context) error {
-	e.m.IncNextCalls()
+	id := e.e.ID()
+	e.m.IncExecutorExecCalls(id)
+
+	before := time.Now()
 
 	err := e.e.Exec(ctx)
+
+	e.m.ObserveExecLatency(ctx, id, time.Now().Sub(before))
+
 	if err != nil {
-		e.m.IncExecErrors()
+		e.m.IncExecutorExecErrors(id)
 	}
 
 	return err
 }
 
 func (e ExecutorWithMetrics) Next(ctx context.Context) time.Time {
-	e.m.IncNextCalls()
+	e.m.IncExecutorNextCalls(e.e.ID())
 
 	return e.e.Next(ctx)
+}
+
+func (e ExecutorWithMetrics) ID() string {
+	return e.e.ID()
 }
 
 func executorWithMetrics(e Executor, m ExecutorMetrics) Executor {

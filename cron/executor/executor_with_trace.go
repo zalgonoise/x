@@ -18,6 +18,8 @@ func (e ExecutorWithTrace) Exec(ctx context.Context) error {
 	ctx, span := e.tracer.Start(ctx, "Executor.Exec")
 	defer span.End()
 
+	span.SetAttributes(attribute.String("id", e.e.ID()))
+
 	err := e.e.Exec(ctx)
 	if err != nil {
 		span.RecordError(err)
@@ -33,9 +35,16 @@ func (e ExecutorWithTrace) Next(ctx context.Context) time.Time {
 
 	next := e.e.Next(ctx)
 
-	span.SetAttributes(attribute.String("at", next.Format(time.RFC3339)))
+	span.SetAttributes(
+		attribute.String("id", e.e.ID()),
+		attribute.String("at", next.Format(time.RFC3339)),
+	)
 
 	return next
+}
+
+func (e ExecutorWithTrace) ID() string {
+	return e.e.ID()
 }
 
 func executorWithTrace(e Executor, tracer trace.Tracer) Executor {

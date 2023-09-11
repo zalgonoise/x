@@ -11,6 +11,8 @@ import (
 )
 
 const (
+	defaultID = "cron.executor"
+
 	errDomain = errs.Domain("x/cron")
 
 	ErrEmpty = errs.Kind("empty")
@@ -39,9 +41,11 @@ func (r Runnable) Run(ctx context.Context) error {
 type Executor interface {
 	Exec(ctx context.Context) error
 	Next(ctx context.Context) time.Time
+	ID() string
 }
 
 type Executable struct {
+	id      string
 	cron    schedule.Scheduler
 	runners []Runner
 }
@@ -86,10 +90,14 @@ func (e Executable) Exec(ctx context.Context) error {
 	}
 }
 
-func New(options ...cfg.Option[Config]) (Executor, error) {
+func (e Executable) ID() string {
+	return e.id
+}
+
+func New(id string, options ...cfg.Option[Config]) (Executor, error) {
 	config := cfg.New(options...)
 
-	exec, err := newExecutable(config)
+	exec, err := newExecutable(id, config)
 	if err != nil {
 		return noOpExecutable{}, err
 	}
@@ -109,8 +117,12 @@ func New(options ...cfg.Option[Config]) (Executor, error) {
 	return exec, nil
 }
 
-func newExecutable(config Config) (Executor, error) {
+func newExecutable(id string, config Config) (Executor, error) {
 	// validate input
+	if id == "" {
+		id = defaultID
+	}
+
 	if len(config.runners) == 0 {
 		return noOpExecutable{}, ErrEmptyRunnerList
 	}
@@ -149,6 +161,7 @@ func newExecutable(config Config) (Executor, error) {
 
 	// return the object with the provided runners
 	return Executable{
+		id:      id,
 		cron:    sched,
 		runners: config.runners,
 	}, nil
@@ -162,4 +175,8 @@ func (e noOpExecutable) Exec(_ context.Context) error {
 
 func (e noOpExecutable) Next(_ context.Context) (t time.Time) {
 	return t
+}
+
+func (e noOpExecutable) ID() string {
+	return ""
 }
