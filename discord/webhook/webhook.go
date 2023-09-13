@@ -7,74 +7,45 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/switchupcb/dasgo/v10/dasgo"
-	"github.com/zalgonoise/x/cfg"
 )
 
 const (
 	baseURL                 = "https://discord.com/api"
 	webhookExecuteURLFormat = "%s/webhooks/%s/%s" // /webhooks/{webhook.id}/{webhook.token}
+	defaultTimeout          = 15 * time.Second
 )
 
 type Webhook struct {
 	id    string
 	token string
 
-	config Config
+	timeout time.Duration
 }
 
-func New(id, token string, options ...cfg.Option[Config]) (Webhook, error) {
-	config := cfg.New(options...)
-	if config.timeout == 0 {
-		config.timeout = defaultTimeout
+func New(id, token string, timeout time.Duration) (Webhook, error) {
+	if timeout == 0 {
+		timeout = defaultTimeout
 	}
 
 	return Webhook{
-		id:     id,
-		token:  token,
-		config: config,
+		id:      id,
+		token:   token,
+		timeout: timeout,
 	}, nil
 }
 
-func (w Webhook) Execute(ctx context.Context, content string) error {
-	if content == "" {
-		return ErrEmptyContent
-	}
-
-	var (
-		username  *string
-		avatarURL *string
-		tts       *bool
-	)
-
-	if w.config.username != "" {
-		username = &w.config.username
-	}
-
-	if w.config.avatarURL != "" {
-		avatarURL = &w.config.avatarURL
-	}
-
-	if w.config.tts {
-		tts = &w.config.tts
-	}
-
-	h := dasgo.ExecuteWebhook{
-		Content:   &content,
-		Username:  username,
-		AvatarURL: avatarURL,
-		TTS:       tts,
-	}
-
-	buf, err := json.Marshal(h)
+func (w Webhook) Execute(ctx context.Context, content *dasgo.ExecuteWebhook) (data []byte, err error) {
+	buf, err := json.Marshal(content)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	client := http.Client{
 		Transport: http.DefaultTransport,
-		Timeout:   w.config.timeout,
+		Timeout:   w.timeout,
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -83,24 +54,27 @@ func (w Webhook) Execute(ctx context.Context, content string) error {
 		fmt.Sprintf(webhookExecuteURLFormat, baseURL, w.id, w.token),
 		bytes.NewReader(buf))
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
 
 	res, err := client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer res.Body.Close()
 
-	if res.StatusCode > 399 {
-		body, readErr := io.ReadAll(res.Body)
-		if readErr != nil {
-			return fmt.Errorf("HTTP request failed: status %s; body read error: %w", res.Status, err)
-		}
-
-		return fmt.Errorf("HTTP request failed: status %s; body: %s", res.Status, string(body))
+	body, readErr := io.ReadAll(res.Body)
+	if readErr != nil {
+		return nil, fmt.Errorf("HTTP request failed: status %s; body read error: %w", res.Status, err)
 	}
 
-	return nil
+	if res.StatusCode > 399 {
+		return body, fmt.Errorf("HTTP request failed: status %s; body: %s", res.Status, string(body))
+	}
+
+	return body, nil
 }
