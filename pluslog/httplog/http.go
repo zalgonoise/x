@@ -106,17 +106,30 @@ func (h HTTPLogger) Handle(ctx context.Context, record slog.Record) error {
 		}
 	}
 
+	var src *slog.Source
+	if h.config.source {
+		src = source(record.PC)
+	}
+
 	r := HTTPRecord{
 		Time:    record.Time,
 		Message: record.Message,
 		Level:   record.Level.String(),
-		Source:  source(record.PC),
+		Source:  src,
 		Attrs:   attrs,
 	}
 
 	buf, err := h.config.encoder.Encode(r)
+	if err != nil {
+		return err
+	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, h.url, bytes.NewReader(buf))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		h.url,
+		bytes.NewReader(buf),
+	)
 	if err != nil {
 		return err
 	}

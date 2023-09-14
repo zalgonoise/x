@@ -8,9 +8,18 @@ import (
 )
 
 type Config struct {
+	source  bool
 	encoder Encoder
 	level   slog.Leveler
 	timeout time.Duration
+}
+
+func WithSource() cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
+		config.source = true
+
+		return config
+	})
 }
 
 func WithEncoder(enc Encoder) cfg.Option[Config] {
