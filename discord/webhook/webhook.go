@@ -5,30 +5,35 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/zalgonoise/x/cfg"
-	"github.com/zalgonoise/x/errs"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/switchupcb/dasgo/v10/dasgo"
+	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/x/errs"
 )
 
 const (
-	baseURL                 = "https://discord.com/api"
-	webhookExecuteURLFormat = "%s/webhooks/%s/%s" // /webhooks/{webhook.id}/{webhook.token}
+	baseURL                 = "https://discord.com/api/webhooks"
+	webhookExecuteURLFormat = "%s/%s/%s" // /webhooks/{webhook.id}/{webhook.token}
 	defaultTimeout          = 15 * time.Second
 
 	errDomain = errs.Domain("x/discord/webhook")
 
-	ErrEmpty = errs.Kind("empty")
+	ErrEmpty   = errs.Kind("empty")
+	ErrInvalid = errs.Kind("invalid")
 
 	ErrID    = errs.Entity("ID")
 	ErrToken = errs.Entity("token")
+	ErrURL   = errs.Entity("URL")
 )
 
 var (
 	ErrEmptyID    = errs.New(errDomain, ErrEmpty, ErrID)
 	ErrEmptyToken = errs.New(errDomain, ErrEmpty, ErrToken)
+	ErrEmptyURL   = errs.New(errDomain, ErrEmpty, ErrURL)
+	ErrInvalidURL = errs.New(errDomain, ErrInvalid, ErrURL)
 )
 
 type Webhook interface {
@@ -75,6 +80,21 @@ func (w webhook) Execute(ctx context.Context, content *dasgo.ExecuteWebhook) (re
 	}
 
 	return res, nil
+}
+
+func Extract(url string) (id, token string, err error) {
+	if url == "" {
+		return "", "", ErrEmptyURL
+	}
+
+	split := strings.Split(strings.TrimPrefix(url, baseURL), "/")
+
+	if len(split) == 3 && split[0] == "" &&
+		split[1] != "" && split[2] != "" {
+		return split[1], split[2], nil
+	}
+
+	return "", "", fmt.Errorf("invalid URL: %s", url)
 }
 
 func New(id, token string, options ...cfg.Option[Config]) (Webhook, error) {
