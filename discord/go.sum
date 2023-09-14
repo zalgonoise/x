@@ -1,5 +1,7 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
+github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
@@ -10,16 +12,8 @@ github.com/zalgonoise/x/cfg v0.0.0-20230914182321-1749fe42581a h1:w1JD38JVj8uFYh
 github.com/zalgonoise/x/cfg v0.0.0-20230914182321-1749fe42581a/go.mod h1:TLAH/vhUedknjEPPEsKtBIfaHRy5Gnx9YvWMYnZ7Hkk=
 github.com/zalgonoise/x/errs v0.0.0-20230914182321-1749fe42581a h1:Pqi7n7DobcGa5ixaaBl4oePm/9jc/2wtQghtjw1K0Tw=
 github.com/zalgonoise/x/errs v0.0.0-20230914182321-1749fe42581a/go.mod h1:81+GVOd4CaXVycIqVfRmj/DaPJ1M4DZz6BxSUux5DW8=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914193155-0bcd660915c7 h1:oDWByFD+AK97wLGXGyaqCldE0sw7GcSJyG75leWtP+I=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914193155-0bcd660915c7/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914194437-f4acafac2465 h1:BvAy/GgJzhC5uWpUBFyG6sftmHMu/oHFMO1oKZo7AoI=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914194437-f4acafac2465/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914201502-ab416eeea5f2 h1:CwpoHinabxU6OGmkgMiNJTxNEWO0G3rMthmwKKfjdVk=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914201502-ab416eeea5f2/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914203628-d20b4861cd8a h1:4SvP6osV31UGIrA7tUxl+lNCyE+lLWI/wmKKkiGFlkk=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914203628-d20b4861cd8a/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914205942-f348deeab1e9 h1:FHF5ERDsF5iK8nsxGAA6CJAQY2L+uBkMdbptfhzuGwQ=
-github.com/zalgonoise/x/pluslog v0.0.0-20230914205942-f348deeab1e9/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914231232-76b61b0eca4f h1:tv4GtAee4g3RnbPNdCczaScQIkUyFxG+q4RDE8Jx5F0=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914231232-76b61b0eca4f/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
 go.opentelemetry.io/otel v1.18.0 h1:TgVozPGZ01nHyDZxK5WGPFB9QexeTMXEH7+tIClWfzs=
 go.opentelemetry.io/otel v1.18.0/go.mod h1:9lWqYO0Db579XzVuCKFNPDl4s73Voa+zEck3wHaAYQI=
 go.opentelemetry.io/otel/trace v1.18.0 h1:NY+czwbHbmndxojTEKiSMHkG2ClNH2PwmcHrdo0JY10=
