@@ -7,7 +7,7 @@ require (
 	github.com/switchupcb/dasgo/v10 v10.0.0-20221206085309-6335a3c15f52
 	github.com/zalgonoise/x/cfg v0.0.0-20230914182321-1749fe42581a
 	github.com/zalgonoise/x/errs v0.0.0-20230914182321-1749fe42581a
-	github.com/zalgonoise/x/pluslog v0.0.0-20230914203628-d20b4861cd8a
+	github.com/zalgonoise/x/pluslog v0.0.0-20230914205942-f348deeab1e9
 )
 
 require (
