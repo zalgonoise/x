@@ -1,0 +1,16 @@
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
+github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
+github.com/switchupcb/dasgo/v10 v10.0.0-20221206085309-6335a3c15f52 h1:bA0Mz5WyD22MXTjJDVc9A2LuQQwvoFUs5JAffkRHTLc=
+github.com/switchupcb/dasgo/v10 v10.0.0-20221206085309-6335a3c15f52/go.mod h1:iDGcTHA5TX2Nkl7zUqIutXxS4m1ptA05VHcKJhuykcM=
+github.com/zalgonoise/x/cfg v0.0.0-20230912165132-bba09ff5e43e h1:7XDk4MCvfqh4Uk0A+H2LipsGOZEWADPWGATs8HFEQbk=
+github.com/zalgonoise/x/cfg v0.0.0-20230912165132-bba09ff5e43e/go.mod h1:TLAH/vhUedknjEPPEsKtBIfaHRy5Gnx9YvWMYnZ7Hkk=
+github.com/zalgonoise/x/errs v0.0.0-20230912165132-bba09ff5e43e h1:XoyFMyozdE9jD5nXcVsOE724hKD09nX8boBli/tFuWQ=
+github.com/zalgonoise/x/errs v0.0.0-20230912165132-bba09ff5e43e/go.mod h1:81+GVOd4CaXVycIqVfRmj/DaPJ1M4DZz6BxSUux5DW8=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
