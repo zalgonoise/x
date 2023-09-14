@@ -74,7 +74,7 @@ func New(url string, options ...cfg.Option[Config]) slog.Handler {
 // The context is passed so Enabled can use its values
 // to make a decision.
 func (h HTTPLogger) Enabled(_ context.Context, level slog.Level) bool {
-	return level < h.config.level.Level()
+	return level > h.config.level.Level()
 }
 
 // Handle handles the Record.
