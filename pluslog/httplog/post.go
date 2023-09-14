@@ -15,6 +15,8 @@ import (
 )
 
 const (
+	defaultTimeout = 15 * time.Second
+
 	errDomain = errs.Domain("x/pluslog/httplog")
 
 	ErrFailed = errs.Kind("failed")
@@ -39,8 +41,18 @@ func New(url string, options ...cfg.Option[Config]) slog.Handler {
 		return nil
 	}
 
+	config := cfg.New(options...)
+
+	if config.level == nil {
+		config.level = slog.LevelDebug
+	}
+
+	if config.timeout == 0 {
+		config.timeout = defaultTimeout
+	}
+
 	return HTTPLogger{
-		config: cfg.New(options...),
+		config: config,
 		url:    url,
 	}
 }
