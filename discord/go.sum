@@ -12,6 +12,16 @@ github.com/zalgonoise/x/errs v0.0.0-20230914182321-1749fe42581a h1:Pqi7n7DobcGa5
 github.com/zalgonoise/x/errs v0.0.0-20230914182321-1749fe42581a/go.mod h1:81+GVOd4CaXVycIqVfRmj/DaPJ1M4DZz6BxSUux5DW8=
 github.com/zalgonoise/x/pluslog v0.0.0-20230914193155-0bcd660915c7 h1:oDWByFD+AK97wLGXGyaqCldE0sw7GcSJyG75leWtP+I=
 github.com/zalgonoise/x/pluslog v0.0.0-20230914193155-0bcd660915c7/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914194437-f4acafac2465 h1:BvAy/GgJzhC5uWpUBFyG6sftmHMu/oHFMO1oKZo7AoI=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914194437-f4acafac2465/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914201502-ab416eeea5f2 h1:CwpoHinabxU6OGmkgMiNJTxNEWO0G3rMthmwKKfjdVk=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914201502-ab416eeea5f2/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914203628-d20b4861cd8a h1:4SvP6osV31UGIrA7tUxl+lNCyE+lLWI/wmKKkiGFlkk=
+github.com/zalgonoise/x/pluslog v0.0.0-20230914203628-d20b4861cd8a/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
+go.opentelemetry.io/otel v1.18.0 h1:TgVozPGZ01nHyDZxK5WGPFB9QexeTMXEH7+tIClWfzs=
+go.opentelemetry.io/otel v1.18.0/go.mod h1:9lWqYO0Db579XzVuCKFNPDl4s73Voa+zEck3wHaAYQI=
+go.opentelemetry.io/otel/trace v1.18.0 h1:NY+czwbHbmndxojTEKiSMHkG2ClNH2PwmcHrdo0JY10=
+go.opentelemetry.io/otel/trace v1.18.0/go.mod h1:T2+SGJGuYZY3bjj5rgh/hN7KIrlpWC5nS8Mjvzckz+0=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
