@@ -105,6 +105,8 @@ func (h HTTPLogger) Handle(ctx context.Context, record slog.Record) error {
 		return err
 	}
 
+	req.Header.Add("Content-Type", "application/json")
+
 	client := &http.Client{
 		Timeout: h.config.timeout,
 	}
