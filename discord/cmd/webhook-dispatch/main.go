@@ -3,35 +3,17 @@ package main
 import (
 	"context"
 	"flag"
-	"log/slog"
+	"fmt"
 	"os"
-
-	"github.com/zalgonoise/x/pluslog"
-	"github.com/zalgonoise/x/pluslog/httplog"
-
-	"github.com/zalgonoise/x/discord/log"
-	"github.com/zalgonoise/x/discord/webhook"
 )
 
 func main() {
-
-}
-
-func newLogger(webhookURL string) *slog.Logger {
-	handlers := make([]slog.Handler, 0, 2)
-	handlers = append(handlers,
-		slog.NewTextHandler(os.Stderr, nil),
-	)
-
-	if webhookURL != "" {
-		if _, _, err := webhook.Extract(webhookURL); err == nil {
-			handlers = append(handlers, httplog.New(
-				webhookURL, httplog.WithEncoder(log.New(log.JSON(true))),
-			))
-		}
+	err, code := run()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "failed to execute webhook-dispatch: %s", err.Error())
 	}
 
-	return slog.New(pluslog.Multi(handlers...))
+	os.Exit(code)
 }
 
 func run() (error, int) {
@@ -52,12 +34,16 @@ func run() (error, int) {
 		config.ModelsPath = *modelsDir
 	}
 
+	logger.InfoContext(ctx, "loading models")
+
 	models, err := newModels(config, logger)
 	if err != nil {
 		logger.ErrorContext(ctx, "loading models", "error", err.Error())
 
 		return nil, 1
 	}
+
+	logger.InfoContext(ctx, "executing webhook")
 
 	if err = models.Execute(ctx); err != nil {
 		logger.ErrorContext(ctx, "executing webhook", "error", err.Error())

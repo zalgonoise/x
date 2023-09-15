@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/switchupcb/dasgo/v10/dasgo"
@@ -15,19 +16,25 @@ import (
 )
 
 const (
-	defaultModelsPath = "./models.json"
+	defaultModelsPath = "models.json"
 	defaultTimeout    = 15 * time.Second
 )
 
 func (m Models) Execute(ctx context.Context) error {
+	target := strings.ToUpper(m.config.Template)
+
 	for i := range m.ModelSet {
-		if m.ModelSet[i].Name == m.config.Template {
+		if strings.ToUpper(m.ModelSet[i].Name) == target {
+			m.logger.InfoContext(ctx, "found matching target", "name", m.config.Template)
+
 			return m.exec(ctx, m.ModelSet[i].Content)
 		}
 	}
 
 	if m.config.Message != "" {
 		// execute webhook with message string
+		m.logger.InfoContext(ctx, "executing as message", "content", m.config.Message)
+
 		return m.exec(ctx, []*dasgo.ExecuteWebhook{{
 			Content: &m.config.Message,
 		}})

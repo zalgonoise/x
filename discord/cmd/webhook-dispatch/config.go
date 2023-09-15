@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 
+	"github.com/zalgonoise/x/pluslog"
+	"github.com/zalgonoise/x/pluslog/httplog"
 	"gopkg.in/yaml.v3"
 
+	"github.com/zalgonoise/x/discord/log"
 	"github.com/zalgonoise/x/discord/webhook"
 )
 
-const defaultConfigFile = "./config.yaml"
+const defaultConfigFile = "config.yaml"
 
 type Config struct {
 	WebhookURL     string `yaml:"url,omitempty"`
@@ -19,29 +23,6 @@ type Config struct {
 	Template       string `yaml:"template,omitempty"`
 	ModelsPath     string `yaml:"models,omitempty"`
 	Message        string `yaml:"message,omitempty"`
-}
-
-func validate(config *Config) error {
-	if config.WebhookURL == "" {
-		return errors.New("empty target webhook URL")
-	}
-
-	if _, _, err := webhook.Extract(config.WebhookURL); err != nil {
-		return err
-	}
-
-	if config.LogsWebhookURL != "" {
-		_, _, err := webhook.Extract(config.LogsWebhookURL)
-		if err != nil {
-			return err
-		}
-	}
-
-	if config.Template == "" && config.Message == "" {
-		return errors.New("must have at least a template selection or message content to execute in the webhook")
-	}
-
-	return nil
 }
 
 func newConfig(path string) (*Config, error) {
@@ -78,4 +59,44 @@ func newConfig(path string) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+func newLogger(webhookURL string) *slog.Logger {
+	handlers := make([]slog.Handler, 0, 2)
+	handlers = append(handlers,
+		slog.NewTextHandler(os.Stderr, nil),
+	)
+
+	if webhookURL != "" {
+		if _, _, err := webhook.Extract(webhookURL); err == nil {
+			handlers = append(handlers, httplog.New(
+				webhookURL, httplog.WithEncoder(log.New(log.JSON(true))),
+			))
+		}
+	}
+
+	return slog.New(pluslog.Multi(handlers...))
+}
+
+func validate(config *Config) error {
+	if config.WebhookURL == "" {
+		return errors.New("empty target webhook URL")
+	}
+
+	if _, _, err := webhook.Extract(config.WebhookURL); err != nil {
+		return err
+	}
+
+	if config.LogsWebhookURL != "" {
+		_, _, err := webhook.Extract(config.LogsWebhookURL)
+		if err != nil {
+			return err
+		}
+	}
+
+	if config.Template == "" && config.Message == "" {
+		return errors.New("must have at least a template selection or message content to execute in the webhook")
+	}
+
+	return nil
 }
