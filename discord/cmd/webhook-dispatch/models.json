@@ -1,0 +1,15 @@
+{
+  "models": [
+    {
+      "name": "something",
+      "content": [
+        {
+          "content": "my webhook message #1"
+        },
+        {
+          "content": "my webhook message #2"
+        }
+      ]
+    }
+  ]
+}
