@@ -18,19 +18,6 @@ func Content(content string, options ...cfg.Option[Request]) *dasgo.ExecuteWebho
 	return h
 }
 
-func Embed(embeds []*dasgo.Embed, options ...cfg.Option[Request]) *dasgo.ExecuteWebhook {
-	if len(embeds) == 0 {
-		return nil
-	}
-
-	req := cfg.New(options...)
-	h := newExecuteWebhook(req)
-
-	h.Embeds = embeds
-
-	return h
-}
-
 func newExecuteWebhook(req Request) *dasgo.ExecuteWebhook {
 	var (
 		username   *string
