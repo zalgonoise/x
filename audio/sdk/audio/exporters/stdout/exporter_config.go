@@ -17,27 +17,27 @@ const (
 var (
 	ErrTinyBlockSize = errs.New(consumerDomain, ErrTiny, ErrBlockSize)
 
-	configValidator = validation.Register[LoggerConfig](validateSpectrumBlockSize)
-	defaultConfig   = LoggerConfig{}
+	configValidator = validation.Register[Config](validateSpectrumBlockSize)
+	defaultConfig   = Config{}
 )
 
-type LoggerConfig struct {
+type Config struct {
 	withPeaks bool
 
 	withSpectrum      bool
 	spectrumBlockSize int
 }
 
-func WithPeaks() cfg.Option[LoggerConfig] {
-	return cfg.Register(func(config LoggerConfig) LoggerConfig {
+func WithPeaks() cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		config.withPeaks = true
 
 		return config
 	})
 }
 
-func WithSpectrum(blockSize int) cfg.Option[LoggerConfig] {
-	return cfg.Register(func(config LoggerConfig) LoggerConfig {
+func WithSpectrum(blockSize int) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		config.withSpectrum = true
 
 		if blockSize < 8 {
@@ -50,7 +50,7 @@ func WithSpectrum(blockSize int) cfg.Option[LoggerConfig] {
 	})
 }
 
-func validateSpectrumBlockSize(config LoggerConfig) error {
+func validateSpectrumBlockSize(config Config) error {
 	if config.spectrumBlockSize < 8 {
 		return ErrTinyBlockSize
 	}
@@ -58,6 +58,6 @@ func validateSpectrumBlockSize(config LoggerConfig) error {
 	return nil
 }
 
-func Validate(config LoggerConfig) error {
+func Validate(config Config) error {
 	return configValidator.Validate(config)
 }
