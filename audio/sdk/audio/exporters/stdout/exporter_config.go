@@ -1,6 +1,8 @@
 package stdout
 
 import (
+	"log/slog"
+
 	"github.com/zalgonoise/x/audio/errs"
 	"github.com/zalgonoise/x/audio/validation"
 	"github.com/zalgonoise/x/cfg"
@@ -22,10 +24,12 @@ var (
 )
 
 type Config struct {
-	withPeaks bool
-
+	withPeaks         bool
 	withSpectrum      bool
 	spectrumBlockSize int
+
+	logger  *slog.Logger
+	handler slog.Handler
 }
 
 func WithPeaks() cfg.Option[Config] {
@@ -51,8 +55,10 @@ func WithSpectrum(blockSize int) cfg.Option[Config] {
 }
 
 func validateSpectrumBlockSize(config Config) error {
-	if config.spectrumBlockSize < 8 {
-		return ErrTinyBlockSize
+	if config.withSpectrum {
+		if config.spectrumBlockSize < 8 {
+			return ErrTinyBlockSize
+		}
 	}
 
 	return nil
@@ -60,4 +66,20 @@ func validateSpectrumBlockSize(config Config) error {
 
 func Validate(config Config) error {
 	return configValidator.Validate(config)
+}
+
+func WithLogger(logger *slog.Logger) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
+		config.logger = logger
+
+		return config
+	})
+}
+
+func WithHandler(h slog.Handler) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
+		config.handler = h
+
+		return config
+	})
 }
