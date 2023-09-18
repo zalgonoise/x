@@ -29,28 +29,28 @@ var (
 	ErrEmptyTimeoutDur = errs.New(consumerDomain, ErrEmpty, ErrTimeoutDur)
 	ErrInvalidProtocol = errs.New(consumerDomain, ErrInvalid, ErrProtocol)
 
-	configValidator = validation.Register[HTTPConfig](validateTarget, validateDuration)
-	defaultConfig   = HTTPConfig{
+	configValidator = validation.Register[Config](validateTarget, validateDuration)
+	defaultConfig   = Config{
 		timeout: defaultConnTimeout,
 	}
 )
 
-// HTTPConfig defines a data structure for configurations and options related to a HTTP audio.Consumer.
-type HTTPConfig struct {
+// Config defines a data structure for configurations and options related to a HTTP audio.Consumer.
+type Config struct {
 	target  string
 	timeout time.Duration
 }
 
 // WithTimeout sets a general timeout for the HTTP connection.
-func WithTimeout(dur time.Duration) cfg.Option[HTTPConfig] {
-	return cfg.Register(func(config HTTPConfig) HTTPConfig {
+func WithTimeout(dur time.Duration) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		config.timeout = dur
 
 		return config
 	})
 }
 
-func validateDuration(config HTTPConfig) error {
+func validateDuration(config Config) error {
 	if config.timeout == 0 {
 		return ErrEmptyTimeoutDur
 	}
@@ -59,20 +59,20 @@ func validateDuration(config HTTPConfig) error {
 }
 
 // WithTarget defines the HTTP URL of the audio source.
-func WithTarget(target string) cfg.Option[HTTPConfig] {
-	return cfg.Register(func(config HTTPConfig) HTTPConfig {
+func WithTarget(target string) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
 		config.target = target
 
 		return config
 	})
 }
 
-func validateTarget(config HTTPConfig) error {
+func validateTarget(config Config) error {
 	if config.target == "" {
 		return ErrEmptyAddress
 	}
 
-	if !strings.HasPrefix(config.target, protoHTTP) ||
+	if !strings.HasPrefix(config.target, protoHTTP) &&
 		!strings.HasPrefix(config.target, protoHTTPS) {
 		return ErrInvalidProtocol
 	}
@@ -80,7 +80,7 @@ func validateTarget(config HTTPConfig) error {
 	return nil
 }
 
-// Validate verifies if the input HTTPConfig contains missing or invalid fields
-func Validate(config HTTPConfig) error {
+// Validate verifies if the input Config contains missing or invalid fields
+func Validate(config Config) error {
 	return configValidator.Validate(config)
 }

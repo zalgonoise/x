@@ -15,7 +15,7 @@ const (
 )
 
 type httpConsumer struct {
-	cfg HTTPConfig
+	cfg Config
 
 	cancel context.CancelFunc
 }
@@ -54,8 +54,8 @@ func (c httpConsumer) Shutdown(_ context.Context) error {
 	return nil
 }
 
-func NewConsumer(options ...cfg.Option[HTTPConfig]) (audio.Consumer, error) {
-	config := cfg.Set[HTTPConfig](defaultConfig, options...)
+func New(options ...cfg.Option[Config]) (audio.Consumer, error) {
+	config := cfg.Set[Config](defaultConfig, options...)
 
 	if err := Validate(config); err != nil {
 		return nil, err
