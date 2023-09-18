@@ -10,7 +10,10 @@ import (
 	"github.com/zalgonoise/x/cfg"
 )
 
-const defaultFlushFrequency = time.Second
+const (
+	defaultFlushFrequency = time.Second
+	defaultMaxBatchSize   = 256
+)
 
 type batchRegistry[T any] struct {
 	buffer    *gbuf.RingBuffer[T]
@@ -85,8 +88,12 @@ func (r batchRegistry[T]) ForceFlush() error {
 func New[T any](options ...cfg.Option[Config[T]]) audio.Registerer[T] {
 	config := cfg.New(options...)
 
+	if config.maxBatchSize == 0 {
+		config.maxBatchSize = defaultMaxBatchSize
+	}
+
 	if config.reg == nil {
-		config.reg = unitreg.New[T]()
+		config.reg = unitreg.New[T](config.maxBatchSize)
 	}
 
 	if config.flushFrequency == 0 {
