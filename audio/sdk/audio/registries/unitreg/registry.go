@@ -26,6 +26,8 @@ func (r *unitRegistry[T]) Shutdown(context.Context) error {
 	return nil
 }
 
-func New[T any]() audio.Registerer[T] {
-	return &unitRegistry[T]{}
+func New[T any](size int) audio.Registerer[T] {
+	return &unitRegistry[T]{
+		ch: make(chan T, size),
+	}
 }
