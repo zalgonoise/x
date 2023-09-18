@@ -17,15 +17,9 @@ import (
 type pcm struct {
 	exporters []audio.Exporter
 
-	chunks chan dataChunk
 	errCh  chan error
 	cancel context.CancelFunc
 	stream *wav.Stream
-}
-
-type dataChunk struct {
-	h    *header.Header
-	data []float64
 }
 
 func (p *pcm) Process(ctx context.Context, reader io.Reader) {
@@ -33,25 +27,6 @@ func (p *pcm) Process(ctx context.Context, reader io.Reader) {
 	signal.Notify(signalCh, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	ctx, p.cancel = context.WithCancel(ctx)
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case chunk := <-p.chunks:
-				for i := range p.exporters {
-					if err := p.exporters[i].Export(chunk.h, chunk.data); err != nil {
-						p.errCh <- err
-
-						p.Shutdown(context.Background())
-					}
-
-					return
-				}
-			}
-		}
-	}()
 
 	go p.stream.Stream(ctx, reader, p.errCh)
 
@@ -97,7 +72,6 @@ func (p *pcm) Shutdown(ctx context.Context) error {
 		}
 	}
 
-	close(p.chunks)
 	close(p.errCh)
 
 	return errors.Join(errs...)
@@ -108,19 +82,19 @@ func NewPCM(exporters ...audio.Exporter) audio.Processor {
 		return nil
 	}
 
-	chunks := make(chan dataChunk)
-
 	return &pcm{
 		exporters: exporters,
 		errCh:     make(chan error),
-		chunks:    chunks,
 		stream: wav.NewStream(nil, func(h *header.Header, data []float64) error {
-			chunks <- dataChunk{
-				h:    h,
-				data: data,
+			errs := make([]error, 0, len(exporters))
+
+			for i := range exporters {
+				if err := exporters[i].Export(h, data); err != nil {
+					errs = append(errs, err)
+				}
 			}
 
-			return nil
+			return errors.Join(errs...)
 		}),
 	}
 }
