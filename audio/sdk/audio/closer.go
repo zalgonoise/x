@@ -26,3 +26,13 @@ type StreamCloser interface {
 	// should still continue and close the Consumer on this call.
 	Shutdown(ctx context.Context) error
 }
+
+type noOpCloser struct{}
+
+func (noOpCloser) ForceFlush() error              { return nil }
+func (noOpCloser) Shutdown(context.Context) error { return nil }
+
+// NoOpCloser returns a no-op StreamCloser
+func NoOpCloser() StreamCloser {
+	return noOpCloser{}
+}
