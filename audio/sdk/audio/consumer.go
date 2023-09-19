@@ -39,3 +39,13 @@ type Consumer interface {
 	// should still continue and close the Consumer on this call.
 	Shutdown(ctx context.Context) error
 }
+
+type noOpConsumer struct{}
+
+func (noOpConsumer) Consume(context.Context) (reader io.Reader, err error) { return nil, nil }
+func (noOpConsumer) Shutdown(context.Context) error                        { return nil }
+
+// NoOpConsumer returns a no-op Consumer
+func NoOpConsumer() Consumer {
+	return noOpConsumer{}
+}
