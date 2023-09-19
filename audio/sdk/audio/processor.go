@@ -40,3 +40,15 @@ type Processor interface {
 	// the module or to shut it down gracefully.
 	StreamCloser
 }
+
+type noOpProcessor struct{}
+
+func (noOpProcessor) Process(context.Context, io.Reader) {}
+func (noOpProcessor) Err() <-chan error                  { return nil }
+func (noOpProcessor) ForceFlush() error                  { return nil }
+func (noOpProcessor) Shutdown(context.Context) error     { return nil }
+
+// NoOpProcessor returns a no-op Processor
+func NoOpProcessor() Processor {
+	return noOpProcessor{}
+}
