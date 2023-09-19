@@ -6,6 +6,8 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio"
 )
 
+const defaultBufferSize = 64
+
 type unitRegistry[T any] struct {
 	ch chan T
 }
@@ -27,6 +29,10 @@ func (r *unitRegistry[T]) Shutdown(context.Context) error {
 }
 
 func New[T any](size int) audio.Registerer[T] {
+	if size < 0 {
+		size = defaultBufferSize
+	}
+
 	return &unitRegistry[T]{
 		ch: make(chan T, size),
 	}
