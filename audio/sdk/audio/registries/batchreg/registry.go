@@ -112,6 +112,8 @@ func New[T any](options ...cfg.Option[Config[T]]) audio.Registerer[T] {
 	}
 
 	go func() {
+		defer close(batchReg.errCh)
+
 		ticker := time.NewTicker(config.flushFrequency)
 		defer ticker.Stop()
 
