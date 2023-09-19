@@ -1,6 +1,10 @@
 package audio
 
-import "github.com/zalgonoise/x/audio/wav/header"
+import (
+	"context"
+
+	"github.com/zalgonoise/x/audio/wav/header"
+)
 
 // Exporter is responsible for pushing the processed data into a certain destination.
 //
@@ -29,4 +33,15 @@ type Exporter interface {
 	// StreamCloser defines common methods when interacting with a streaming module, targeting actions to either flush
 	// the module or to shut it down gracefully.
 	StreamCloser
+}
+
+type noOpExporter struct{}
+
+func (noOpExporter) Export(*header.Header, []float64) error { return nil }
+func (noOpExporter) ForceFlush() error                      { return nil }
+func (noOpExporter) Shutdown(context.Context) error         { return nil }
+
+// NoOpExporter returns a no-op Exporter
+func NoOpExporter() Exporter {
+	return noOpExporter{}
 }
