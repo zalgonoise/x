@@ -65,18 +65,11 @@ type Compactor[T any] func([]T) (T, error)
 
 type noOpCollector[T any] struct{}
 
-func (noOpCollector[T]) Collect(*header.Header, []float64) error {
-	return nil
-}
+func (noOpCollector[T]) Collect(*header.Header, []float64) error { return nil }
+func (noOpCollector[T]) ForceFlush() error                       { return nil }
+func (noOpCollector[T]) Load() <-chan T                          { return nil }
 
-func (noOpCollector[T]) ForceFlush() error {
-	return nil
-}
-
-func (noOpCollector[T]) Load() <-chan T {
-	return nil
-}
-
+// NoOpCollector returns a no-op Collector for a given type
 func NoOpCollector[T any]() Collector[T] {
 	return noOpCollector[T]{}
 }
