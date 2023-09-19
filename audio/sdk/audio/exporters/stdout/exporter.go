@@ -12,6 +12,7 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/extractors"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
+	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
 	"github.com/zalgonoise/x/audio/wav/header"
 	"github.com/zalgonoise/x/cfg"
 )
@@ -94,19 +95,29 @@ func ToLogger(options ...cfg.Option[Config]) (audio.Exporter, error) {
 	)
 
 	if config.withPeaks {
-		peaksCollector = audio.NewCollector[float64](
-			extractors.MaxPeak(),
-			batchreg.New[float64](),
-		)
+		var reg audio.Registerer[float64]
+
+		if config.batchedPeaks {
+			reg = batchreg.New[float64](config.batchedPeaksOptions...)
+		} else {
+			reg = unitreg.New[float64](0)
+		}
+
+		peaksCollector = audio.NewCollector[float64](extractors.MaxPeak(), reg)
 	}
 
 	exporter.peaks = peaksCollector
 
 	if config.withSpectrum {
-		spectrumCollector = audio.NewCollector[[]fft.FrequencyPower](
-			extractors.MaxSpectrum(config.spectrumBlockSize),
-			batchreg.New[[]fft.FrequencyPower](),
-		)
+		var reg audio.Registerer[[]fft.FrequencyPower]
+
+		if config.batchedSpectrum {
+			reg = batchreg.New[[]fft.FrequencyPower](config.batchedSpectrumOptions...)
+		} else {
+			reg = unitreg.New[[]fft.FrequencyPower](0)
+		}
+
+		spectrumCollector = audio.NewCollector[[]fft.FrequencyPower](extractors.MaxSpectrum(config.spectrumBlockSize), reg)
 	}
 
 	exporter.spectrum = spectrumCollector

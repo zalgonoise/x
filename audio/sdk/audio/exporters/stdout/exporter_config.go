@@ -4,6 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/zalgonoise/x/audio/errs"
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
 	"github.com/zalgonoise/x/audio/validation"
 	"github.com/zalgonoise/x/cfg"
 )
@@ -28,8 +30,32 @@ type Config struct {
 	withSpectrum      bool
 	spectrumBlockSize int
 
+	batchedPeaks        bool
+	batchedPeaksOptions []cfg.Option[batchreg.Config[float64]]
+
+	batchedSpectrum        bool
+	batchedSpectrumOptions []cfg.Option[batchreg.Config[[]fft.FrequencyPower]]
+
 	logger  *slog.Logger
 	handler slog.Handler
+}
+
+func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
+		config.batchedPeaks = true
+		config.batchedPeaksOptions = options
+
+		return config
+	})
+}
+
+func WithBatchedSpectrum(options ...cfg.Option[batchreg.Config[[]fft.FrequencyPower]]) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
+		config.batchedSpectrum = true
+		config.batchedSpectrumOptions = options
+
+		return config
+	})
 }
 
 func WithPeaks() cfg.Option[Config] {
