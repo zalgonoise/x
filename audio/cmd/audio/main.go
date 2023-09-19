@@ -4,13 +4,18 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"time"
 
-	"github.com/zalgonoise/x/audio/cmd/audio/config"
-	"github.com/zalgonoise/x/audio/cmd/audio/stream"
+	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
+	"github.com/zalgonoise/x/audio/sdk/audio/consumers/httpaudio"
+	"github.com/zalgonoise/x/audio/sdk/audio/exporters/stdout"
+	"github.com/zalgonoise/x/audio/sdk/audio/processors"
+	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
 )
 
 func main() {
-	err, code := runV2()
+	err, code := run()
 	if err != nil {
 		slog.Error(
 			"audio: runtime error",
@@ -22,74 +27,54 @@ func main() {
 }
 
 func run() (error, int) {
-	cfg, err := config.WithDefaults()
-	if err != nil {
-		return err, 1
-	}
-
-	s, err := stream.New(cfg)
-	if err != nil {
-		return err, 1
-	}
-
-	ctx := context.Background()
-
-	err = s.Run(ctx)
-	if err != nil {
-		return err, 1
-	}
-
-	err = s.Close()
-	if err != nil {
-		return err, 1
-	}
-
-	return nil, 0
-}
-
-func runV2() (error, int) {
-	cfg, err := config.WithDefaults()
-	if err != nil {
-		return err, 1
-	}
-
-	consumer, err := stream.NewHTTPConsumer(cfg.URL, cfg.Duration)
-	if err != nil {
-		return err, 1
-	}
-
-	exporter := stream.NewLogExporter(os.Stderr)
-
-	processor, err := stream.NewPCMProcessor(
-		exporter,
-		&stream.ProcessorConfig{Size: 64},
-		stream.ProcessPeaks, stream.ProcessSpectrum,
+	consumer, err := httpaudio.New(
+		httpaudio.WithTarget("http://192.168.10.12:8080/audio.wav"),
+		httpaudio.WithTimeout(3*time.Minute),
 	)
+
 	if err != nil {
 		return err, 1
 	}
 
-	ctx, cancel := context.WithCancelCause(context.Background())
-	defer cancel(nil)
+	exporter, err := stdout.ToLogger(
+		stdout.WithPeaks(),
+		stdout.WithBatchedPeaks(
+			batchreg.WithBatchSize[float64](256),
+			batchreg.WithFlushFrequency[float64](500*time.Millisecond),
+			batchreg.WithCompactor[float64](compactors.Max[float64]),
+		),
+		stdout.WithSpectrum(128),
+		stdout.WithBatchedSpectrum(
+			batchreg.WithBatchSize[[]fft.FrequencyPower](256),
+			batchreg.WithFlushFrequency[[]fft.FrequencyPower](500*time.Millisecond),
+			batchreg.WithCompactor[[]fft.FrequencyPower](compactors.MaxSpectra),
+		),
+	)
 
-	reader, err := consumer.Consume(ctx)
 	if err != nil {
 		return err, 1
 	}
 
-	ctx, timeout := context.WithTimeout(ctx, cfg.Duration)
-	defer timeout()
+	proc := processors.NewPCM(exporter)
 
-	go processor.Process(ctx, cancel, reader)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	r, err := consumer.Consume(ctx)
+	if err != nil {
+		return err, 1
+	}
+
+	go proc.Process(ctx, r)
+
+	errs := proc.Err()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err(), 0
-		default:
-			if ctxErr := ctx.Err(); ctxErr != nil {
-				return context.Cause(ctx), 1
-			}
+		case err = <-errs:
+			return err, 1
 		}
 	}
 }
