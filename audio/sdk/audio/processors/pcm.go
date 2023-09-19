@@ -79,7 +79,7 @@ func (p *pcm) Shutdown(ctx context.Context) error {
 
 func NewPCM(exporters ...audio.Exporter) audio.Processor {
 	if len(exporters) == 0 {
-		return nil
+		return audio.NoOpProcessor()
 	}
 
 	return &pcm{
