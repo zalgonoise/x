@@ -58,7 +58,7 @@ func New(options ...cfg.Option[Config]) (audio.Consumer, error) {
 	config := cfg.Set[Config](defaultConfig, options...)
 
 	if err := Validate(config); err != nil {
-		return nil, err
+		return audio.NoOpConsumer(), err
 	}
 
 	return httpConsumer{
