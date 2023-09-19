@@ -68,7 +68,7 @@ func ToLogger(options ...cfg.Option[Config]) (audio.Exporter, error) {
 	config := cfg.Set[Config](defaultConfig, options...)
 
 	if err := Validate(config); err != nil {
-		return nil, err
+		return audio.NoOpExporter(), err
 	}
 
 	switch {
