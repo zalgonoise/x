@@ -3,27 +3,12 @@ package stdout
 import (
 	"log/slog"
 
-	"github.com/zalgonoise/x/audio/errs"
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
-	"github.com/zalgonoise/x/audio/validation"
 	"github.com/zalgonoise/x/cfg"
 )
 
-const (
-	consumerDomain = errs.Domain("audio/sdk/audio/exporters/stdout")
-
-	ErrTiny = errs.Kind("tiny")
-
-	ErrBlockSize = errs.Entity("spectrum block size")
-)
-
-var (
-	ErrTinyBlockSize = errs.New(consumerDomain, ErrTiny, ErrBlockSize)
-
-	configValidator = validation.Register[Config](validateSpectrumBlockSize)
-	defaultConfig   = Config{}
-)
+const defaultBlockSize = 64
 
 type Config struct {
 	withPeaks         bool
@@ -36,7 +21,6 @@ type Config struct {
 	batchedSpectrum        bool
 	batchedSpectrumOptions []cfg.Option[batchreg.Config[[]fft.FrequencyPower]]
 
-	logger  *slog.Logger
 	handler slog.Handler
 }
 
@@ -71,7 +55,7 @@ func WithSpectrum(blockSize int) cfg.Option[Config] {
 		config.withSpectrum = true
 
 		if blockSize < 8 {
-			blockSize = 64
+			blockSize = defaultBlockSize
 		}
 
 		config.spectrumBlockSize = blockSize
@@ -80,23 +64,9 @@ func WithSpectrum(blockSize int) cfg.Option[Config] {
 	})
 }
 
-func validateSpectrumBlockSize(config Config) error {
-	if config.withSpectrum {
-		if config.spectrumBlockSize < 8 {
-			return ErrTinyBlockSize
-		}
-	}
-
-	return nil
-}
-
-func Validate(config Config) error {
-	return configValidator.Validate(config)
-}
-
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
-		config.logger = logger
+		config.handler = logger.Handler()
 
 		return config
 	})
