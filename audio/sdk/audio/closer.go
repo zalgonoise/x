@@ -1,6 +1,10 @@
 package audio
 
-import "context"
+import (
+	"context"
+	"errors"
+	"time"
+)
 
 // StreamCloser defines common methods when interacting with a streaming module, targeting actions to either flush
 // any buffered values or items in the module and to shut it down gracefully.
@@ -27,6 +31,16 @@ type StreamCloser interface {
 	Shutdown(ctx context.Context) error
 }
 
+type Closer interface {
+	Shutdown(ctx context.Context) error
+}
+
+type CloserFunc func(context.Context) error
+
+func (fn CloserFunc) Shutdown(ctx context.Context) error {
+	return fn(ctx)
+}
+
 type noOpCloser struct{}
 
 func (noOpCloser) ForceFlush() error              { return nil }
@@ -35,4 +49,23 @@ func (noOpCloser) Shutdown(context.Context) error { return nil }
 // NoOpCloser returns a no-op StreamCloser
 func NoOpCloser() StreamCloser {
 	return noOpCloser{}
+}
+
+func Shutdown(ctx context.Context, timeout time.Duration, closers ...Closer) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	if len(closers) == 0 {
+		return nil
+	}
+
+	errs := make([]error, 0, len(closers))
+
+	for i := range closers {
+		if err := closers[i].Shutdown(ctx); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
 }
