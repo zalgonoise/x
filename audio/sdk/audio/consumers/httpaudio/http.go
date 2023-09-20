@@ -21,7 +21,7 @@ type httpConsumer struct {
 }
 
 // Consume interacts with the audio source to extract its audio content or stream as an io.Reader.
-func (c httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error) {
+func (c *httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.cfg.target, http.NoBody)
@@ -48,7 +48,7 @@ func (c httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error)
 }
 
 // Shutdown gracefully shuts down the Consumer.
-func (c httpConsumer) Shutdown(_ context.Context) error {
+func (c *httpConsumer) Shutdown(_ context.Context) error {
 	c.cancel()
 
 	return nil
@@ -61,7 +61,7 @@ func New(options ...cfg.Option[Config]) (audio.Consumer, error) {
 		return audio.NoOpConsumer(), err
 	}
 
-	return httpConsumer{
+	return &httpConsumer{
 		cfg: config,
 	}, nil
 }
