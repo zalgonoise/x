@@ -36,14 +36,13 @@ func (r batchRegistry[T]) Load() <-chan T {
 func (r batchRegistry[T]) Shutdown(ctx context.Context) error {
 	_ = r.ForceFlush()
 
-	if flusher, ok := r.reg.(interface {
+	if closer, ok := r.reg.(interface {
 		Shutdown(ctx context.Context) error
 	}); ok {
-		_ = flusher.Shutdown(ctx)
+		_ = closer.Shutdown(ctx)
 	}
 
 	r.cancel()
-	close(r.errCh)
 
 	return nil
 }
@@ -85,6 +84,30 @@ func (r batchRegistry[T]) ForceFlush() error {
 	return r.reg.Register(item)
 }
 
+func (r batchRegistry[T]) run(ctx context.Context, flushFrequency time.Duration) {
+	defer close(r.errCh)
+
+	ticker := time.NewTicker(flushFrequency)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err := r.ForceFlush(); err != nil {
+				r.errCh <- err
+			}
+
+			return
+		case <-ticker.C:
+			if err := r.ForceFlush(); err != nil {
+				r.errCh <- err
+
+				return
+			}
+		}
+	}
+}
+
 func New[T any](options ...cfg.Option[Config[T]]) audio.Registerer[T] {
 	config := cfg.New(options...)
 
@@ -111,29 +134,7 @@ func New[T any](options ...cfg.Option[Config[T]]) audio.Registerer[T] {
 		cancel:    cancel,
 	}
 
-	go func() {
-		defer close(batchReg.errCh)
-
-		ticker := time.NewTicker(config.flushFrequency)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				if err := batchReg.ForceFlush(); err != nil {
-					batchReg.errCh <- err
-				}
-
-				return
-			case <-ticker.C:
-				if err := batchReg.ForceFlush(); err != nil {
-					batchReg.errCh <- err
-
-					return
-				}
-			}
-		}
-	}()
+	go batchReg.run(ctx, config.flushFrequency)
 
 	return batchReg
 }
