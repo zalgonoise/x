@@ -1,6 +1,9 @@
 package audio
 
 import (
+	"context"
+	"errors"
+
 	"github.com/zalgonoise/x/audio/wav/header"
 )
 
@@ -14,9 +17,8 @@ import (
 // appropriate backend
 type Collector[T any] interface {
 	Collect(h *header.Header, data []float64) error
-	ForceFlush() error
-
 	Loader[T]
+	StreamCloser
 }
 
 type collector[T any] struct {
@@ -47,6 +49,28 @@ func (c collector[T]) ForceFlush() error {
 	return nil
 }
 
+func (c collector[T]) Shutdown(ctx context.Context) error {
+	errs := make([]error, 0, 2)
+
+	if closer, ok := c.registerer.(interface {
+		Shutdown(ctx context.Context) error
+	}); ok {
+		if err := closer.Shutdown(ctx); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if closer, ok := c.extractor.(interface {
+		Shutdown(ctx context.Context) error
+	}); ok {
+		if err := closer.Shutdown(ctx); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 // NewCollector creates a Collector from hte input Extractor and Registerer
 func NewCollector[T any](extractor Extractor[T], registerer Registerer[T]) Collector[T] {
 	if extractor == nil || registerer == nil {
@@ -66,8 +90,9 @@ type Compactor[T any] func([]T) (T, error)
 type noOpCollector[T any] struct{}
 
 func (noOpCollector[T]) Collect(*header.Header, []float64) error { return nil }
-func (noOpCollector[T]) ForceFlush() error                       { return nil }
 func (noOpCollector[T]) Load() <-chan T                          { return nil }
+func (noOpCollector[T]) ForceFlush() error                       { return nil }
+func (noOpCollector[T]) Shutdown(context.Context) error          { return nil }
 
 // NoOpCollector returns a no-op Collector for a given type
 func NoOpCollector[T any]() Collector[T] {
