@@ -19,17 +19,15 @@ const (
 	ErrEmpty   = errs.Kind("empty")
 	ErrInvalid = errs.Kind("invalid")
 
-	ErrAddress    = errs.Entity("address")
-	ErrTimeoutDur = errs.Entity("timeout duration")
-	ErrProtocol   = errs.Entity("protocol")
+	ErrAddress  = errs.Entity("address")
+	ErrProtocol = errs.Entity("protocol")
 )
 
 var (
 	ErrEmptyAddress    = errs.New(consumerDomain, ErrEmpty, ErrAddress)
-	ErrEmptyTimeoutDur = errs.New(consumerDomain, ErrEmpty, ErrTimeoutDur)
 	ErrInvalidProtocol = errs.New(consumerDomain, ErrInvalid, ErrProtocol)
 
-	configValidator = validation.Register[Config](validateTarget, validateDuration)
+	configValidator = validation.Register[Config](validateTarget)
 	defaultConfig   = Config{
 		timeout: defaultConnTimeout,
 	}
@@ -44,18 +42,14 @@ type Config struct {
 // WithTimeout sets a general timeout for the HTTP connection.
 func WithTimeout(dur time.Duration) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
+		if dur == 0 {
+			dur = defaultConnTimeout
+		}
+
 		config.timeout = dur
 
 		return config
 	})
-}
-
-func validateDuration(config Config) error {
-	if config.timeout == 0 {
-		return ErrEmptyTimeoutDur
-	}
-
-	return nil
 }
 
 // WithTarget defines the HTTP URL of the audio source.
