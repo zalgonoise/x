@@ -59,100 +59,114 @@ func (e logExporter) ForceFlush() error {
 	return nil
 }
 
-func (e logExporter) Shutdown(_ context.Context) error {
+func (e logExporter) Shutdown(ctx context.Context) error {
+	e.logger.InfoContext(ctx, "log exporter shutting down")
 	e.cancel()
 
-	return nil
+	errs := make([]error, 0, 2)
+	if err := e.peaks.Shutdown(ctx); err != nil {
+		errs = append(errs, err)
+	}
+
+	if err := e.spectrum.Shutdown(ctx); err != nil {
+		errs = append(errs, err)
+	}
+
+	return errors.Join(errs...)
+}
+
+func (e logExporter) export(ctx context.Context) {
+	peaksValues := e.peaks.Load()
+	spectrumValues := e.spectrum.Load()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case v, ok := <-peaksValues:
+			if !ok {
+				return
+			}
+
+			e.logger.InfoContext(context.Background(), peaksMessage, slog.Float64("peak_value", v))
+		case v, ok := <-spectrumValues:
+			if !ok {
+				return
+			}
+
+			if len(v) == 0 {
+				continue
+			}
+
+			slices.SortFunc(v, func(a, b fft.FrequencyPower) int {
+				return cmp.Compare(a.Mag, b.Mag)
+			})
+
+			e.logger.InfoContext(context.Background(), spectrumMessage, slog.Int("frequency", v[0].Freq))
+		}
+	}
 }
 
 func ToLogger(options ...cfg.Option[Config]) (audio.Exporter, error) {
-	config := cfg.Set[Config](defaultConfig, options...)
-
-	if err := Validate(config); err != nil {
-		return audio.NoOpExporter(), err
-	}
-
-	switch {
-	case config.logger == nil && config.handler == nil:
-		config.logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			AddSource: true,
-		}))
-	case config.logger == nil && config.handler != nil:
-		config.logger = slog.New(config.handler)
-	}
+	config := cfg.Set[Config](Config{}, options...)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	exporter := &logExporter{
-		logger: config.logger,
-		config: config,
-		cancel: cancel,
+		config:   config,
+		peaks:    newPeaksCollector(config),
+		spectrum: newSpectrumCollector(config),
+		logger:   newLogger(config.handler),
+		cancel:   cancel,
 	}
 
-	var (
-		peaksCollector    = audio.NoOpCollector[float64]()
-		spectrumCollector = audio.NoOpCollector[[]fft.FrequencyPower]()
-	)
-
-	if config.withPeaks {
-		var reg audio.Registerer[float64]
-
-		if config.batchedPeaks {
-			reg = batchreg.New[float64](config.batchedPeaksOptions...)
-		} else {
-			reg = unitreg.New[float64](0)
-		}
-
-		peaksCollector = audio.NewCollector[float64](extractors.MaxPeak(), reg)
-	}
-
-	exporter.peaks = peaksCollector
-
-	if config.withSpectrum {
-		var reg audio.Registerer[[]fft.FrequencyPower]
-
-		if config.batchedSpectrum {
-			reg = batchreg.New[[]fft.FrequencyPower](config.batchedSpectrumOptions...)
-		} else {
-			reg = unitreg.New[[]fft.FrequencyPower](0)
-		}
-
-		spectrumCollector = audio.NewCollector[[]fft.FrequencyPower](extractors.MaxSpectrum(config.spectrumBlockSize), reg)
-	}
-
-	exporter.spectrum = spectrumCollector
-
-	go func() {
-		peaksValues := peaksCollector.Load()
-		spectrumValues := spectrumCollector.Load()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case v, ok := <-peaksValues:
-				if !ok {
-					return
-				}
-
-				exporter.logger.InfoContext(context.Background(), peaksMessage, slog.Float64("peak_value", v))
-			case v, ok := <-spectrumValues:
-				if !ok {
-					return
-				}
-
-				if len(v) == 0 {
-					continue
-				}
-
-				slices.SortFunc(v, func(a, b fft.FrequencyPower) int {
-					return cmp.Compare(a.Mag, b.Mag)
-				})
-
-				exporter.logger.InfoContext(context.Background(), spectrumMessage, slog.Int("frequency", v[0].Freq))
-			}
-		}
-	}()
+	go exporter.export(ctx)
 
 	return exporter, nil
+}
+
+func newLogger(h slog.Handler) *slog.Logger {
+	if h == nil {
+		return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			AddSource: true,
+		}))
+	}
+
+	return slog.New(h)
+}
+
+func newPeaksCollector(config Config) audio.Collector[float64] {
+	if !config.withPeaks {
+		return audio.NoOpCollector[float64]()
+	}
+
+	if !config.batchedPeaks {
+		return audio.NewCollector[float64](
+			extractors.MaxPeak(),
+			unitreg.New[float64](0),
+		)
+	}
+
+	return audio.NewCollector[float64](
+		extractors.MaxPeak(),
+		batchreg.New[float64](config.batchedPeaksOptions...),
+	)
+}
+
+func newSpectrumCollector(config Config) audio.Collector[[]fft.FrequencyPower] {
+	if !config.withSpectrum {
+		return audio.NoOpCollector[[]fft.FrequencyPower]()
+	}
+
+	if !config.batchedPeaks {
+		return audio.NewCollector[[]fft.FrequencyPower](
+			extractors.MaxSpectrum(config.spectrumBlockSize),
+			unitreg.New[[]fft.FrequencyPower](0),
+		)
+	}
+
+	return audio.NewCollector[[]fft.FrequencyPower](
+		extractors.MaxSpectrum(config.spectrumBlockSize),
+		batchreg.New[[]fft.FrequencyPower](config.batchedSpectrumOptions...),
+	)
 }
