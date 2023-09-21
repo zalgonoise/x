@@ -11,11 +11,11 @@ type Config[T any] struct {
 	flushFrequency time.Duration
 	maxBatchSize   int
 
-	reg       audio.Registerer[T]
+	reg       audio.Registry[T]
 	compactor audio.Compactor[T]
 }
 
-func WithRegistry[T any](reg audio.Registerer[T]) cfg.Option[Config[T]] {
+func WithRegistry[T any](reg audio.Registry[T]) cfg.Option[Config[T]] {
 	return cfg.Register(func(config Config[T]) Config[T] {
 		config.reg = reg
 
