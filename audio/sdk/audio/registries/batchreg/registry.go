@@ -17,7 +17,7 @@ const (
 
 type batchRegistry[T any] struct {
 	buffer    *gbuf.RingBuffer[T]
-	reg       audio.Registerer[T]
+	reg       audio.Registry[T]
 	compactor audio.Compactor[T]
 
 	batchSize int
@@ -108,7 +108,7 @@ func (r batchRegistry[T]) run(ctx context.Context, flushFrequency time.Duration)
 	}
 }
 
-func New[T any](options ...cfg.Option[Config[T]]) audio.Registerer[T] {
+func New[T any](options ...cfg.Option[Config[T]]) audio.Registry[T] {
 	config := cfg.New(options...)
 
 	if config.maxBatchSize == 0 {
