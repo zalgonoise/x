@@ -28,7 +28,7 @@ func (r *unitRegistry[T]) Shutdown(context.Context) error {
 	return nil
 }
 
-func New[T any](size int) audio.Registerer[T] {
+func New[T any](size int) audio.Registry[T] {
 	if size < 0 {
 		size = defaultBufferSize
 	}
