@@ -2,7 +2,6 @@ package processors
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,11 +10,10 @@ import (
 
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 type pcm struct {
-	exporters []audio.Exporter
+	exporter audio.Exporter
 
 	errCh  chan error
 	cancel context.CancelFunc
@@ -50,31 +48,14 @@ func (p *pcm) Err() <-chan error {
 }
 
 func (p *pcm) ForceFlush() error {
-	errs := make([]error, 0, len(p.exporters))
-
-	for i := range p.exporters {
-		if err := p.exporters[i].ForceFlush(); err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	return errors.Join(errs...)
+	return p.exporter.ForceFlush()
 }
 
 func (p *pcm) Shutdown(ctx context.Context) error {
 	p.cancel()
-
-	errs := make([]error, 0, len(p.exporters))
-
-	for i := range p.exporters {
-		if err := p.exporters[i].Shutdown(ctx); err != nil {
-			errs = append(errs, err)
-		}
-	}
-
 	close(p.errCh)
 
-	return errors.Join(errs...)
+	return p.exporter.Shutdown(ctx)
 }
 
 func NewPCM(exporters ...audio.Exporter) audio.Processor {
@@ -82,19 +63,11 @@ func NewPCM(exporters ...audio.Exporter) audio.Processor {
 		return audio.NoOpProcessor()
 	}
 
+	exporter := audio.MultiExporter(exporters...)
+
 	return &pcm{
-		exporters: exporters,
-		errCh:     make(chan error),
-		stream: wav.NewStream(nil, func(h *header.Header, data []float64) error {
-			errs := make([]error, 0, len(exporters))
-
-			for i := range exporters {
-				if err := exporters[i].Export(h, data); err != nil {
-					errs = append(errs, err)
-				}
-			}
-
-			return errors.Join(errs...)
-		}),
+		exporter: exporter,
+		errCh:    make(chan error),
+		stream:   wav.NewStream(nil, exporter.Export),
 	}
 }
