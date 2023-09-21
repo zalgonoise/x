@@ -31,26 +31,45 @@ type StreamCloser interface {
 	Shutdown(ctx context.Context) error
 }
 
+// Closer gracefully shuts down the component.
+//
+// It's a single-method interface for components that implement Shutdown, and can be used in interface type checks
+// for better readability.
 type Closer interface {
 	Shutdown(ctx context.Context) error
 }
 
+// CloserFunc is a function type that is perceived as an instance of a Closer interface.
 type CloserFunc func(context.Context) error
 
+// Shutdown implements the Closer interface.
+//
+// It allows a CloserFunc to be used as an interface type.
 func (fn CloserFunc) Shutdown(ctx context.Context) error {
 	return fn(ctx)
 }
 
 type noOpCloser struct{}
 
-func (noOpCloser) ForceFlush() error              { return nil }
+// ForceFlush implements the StreamCloser interface.
+//
+// This is a no-op implementation and the returned error is always nil.
+func (noOpCloser) ForceFlush() error { return nil }
+
+// Shutdown implements the StreamCloser interface.
+//
+// This is a no-op implementation and the returned error is always nil.
 func (noOpCloser) Shutdown(context.Context) error { return nil }
 
-// NoOpCloser returns a no-op StreamCloser
+// NoOpCloser returns a no-op StreamCloser.
 func NoOpCloser() StreamCloser {
 	return noOpCloser{}
 }
 
+// Shutdown dispatches graceful shutdown signals to all provided Closer interfaces, returning a joined error
+// of any non-nil resulting errors; doing so under a timeout using contexts.
+//
+// This is a wrapper function to simplify Shutdown calls.
 func Shutdown(ctx context.Context, timeout time.Duration, closers ...Closer) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
