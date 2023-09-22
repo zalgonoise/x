@@ -8,9 +8,20 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/zalgonoise/x/audio/errs"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/wav"
 )
+
+const (
+	errDomain = errs.Domain("x/audio/sdk/processors/pcm")
+
+	ErrHalt = errs.Kind("process stopped")
+
+	ErrSignal = errs.Entity("with OS signal")
+)
+
+var ErrHaltSignal = errs.New(errDomain, ErrHalt, ErrSignal)
 
 type pcm struct {
 	exporter audio.Exporter
@@ -23,6 +34,7 @@ type pcm struct {
 func (p *pcm) Process(ctx context.Context, reader io.Reader) {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt, os.Kill, syscall.SIGTERM)
+	defer close(signalCh)
 
 	ctx, p.cancel = context.WithCancel(ctx)
 
@@ -35,7 +47,7 @@ func (p *pcm) Process(ctx context.Context, reader io.Reader) {
 
 			return
 		case sig := <-signalCh:
-			p.errCh <- fmt.Errorf("received signal %s", sig.String())
+			p.errCh <- fmt.Errorf("%w: %s", ErrHaltSignal, sig.String())
 			p.cancel()
 
 			return
@@ -52,8 +64,8 @@ func (p *pcm) ForceFlush() error {
 }
 
 func (p *pcm) Shutdown(ctx context.Context) error {
+	defer close(p.errCh)
 	p.cancel()
-	close(p.errCh)
 
 	return p.exporter.Shutdown(ctx)
 }
