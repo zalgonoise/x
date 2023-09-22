@@ -12,22 +12,33 @@ type unitRegistry[T any] struct {
 	ch chan T
 }
 
+// Register stores the input data in the audio.Registry, returning an error if raised
 func (r *unitRegistry[T]) Register(value T) error {
 	r.ch <- value
 
 	return nil
 }
 
+// Load returns a receive-only channel of items of a given type, usually as part of a Registry features.
+//
+// The audio.Registry's Shutdown method will close this channel.
 func (r *unitRegistry[T]) Load() <-chan T {
 	return r.ch
 }
 
+// Shutdown gracefully stops the audio.Registry.
+//
+// It effectively closes the value channel returned by the Load method.
 func (r *unitRegistry[T]) Shutdown(context.Context) error {
 	close(r.ch)
 
 	return nil
 }
 
+// New creates a units-audio.Registry for a given type, allocating a buffer with the provided size in the input
+// parameter, for its values channel.
+//
+// If the size of the buffer is a negative number, the default size will be applied.
 func New[T any](size int) audio.Registry[T] {
 	if size < 0 {
 		size = defaultBufferSize
