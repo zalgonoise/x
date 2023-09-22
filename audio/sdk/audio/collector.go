@@ -36,8 +36,8 @@ type Collector[T any] interface {
 }
 
 type collector[T any] struct {
-	extractor  Extractor[T]
-	registerer Registry[T]
+	extractor Extractor[T]
+	registry  Registry[T]
 }
 
 // Collect implements the Collector interface.
@@ -47,20 +47,20 @@ type collector[T any] struct {
 // Collect involves using the Collector's Extractor to retrieve meaningful data from the signal (of a given
 // data type) and passing this value to its Registry to store, cache or buffer it, for instance.
 func (c collector[T]) Collect(h *header.Header, data []float64) error {
-	return c.registerer.Register(c.extractor.Extract(h, data))
+	return c.registry.Register(c.extractor.Extract(h, data))
 }
 
 // Load returns a receive-only channel of a given type, that is used by the Exporter to retrieve processed data
 // from a Collector. Depending on the configured Registry strategy, the Loader will provide data based off of that
 // same Registry.
 func (c collector[T]) Load() <-chan T {
-	return c.registerer.Load()
+	return c.registry.Load()
 }
 
 // ForceFlush flushes any values or items that are pending or cached in the Registry, calling its ForceFlush method
 // if it exists.
 func (c collector[T]) ForceFlush() error {
-	if flusher, ok := c.registerer.(interface {
+	if flusher, ok := c.registry.(interface {
 		ForceFlush() error
 	}); ok {
 		if err := flusher.ForceFlush(); err != nil {
@@ -76,14 +76,6 @@ func (c collector[T]) ForceFlush() error {
 func (c collector[T]) Shutdown(ctx context.Context) error {
 	errs := make([]error, 0, 2)
 
-	if closer, ok := c.registerer.(interface {
-		Shutdown(ctx context.Context) error
-	}); ok {
-		if err := closer.Shutdown(ctx); err != nil {
-			errs = append(errs, err)
-		}
-	}
-
 	if closer, ok := c.extractor.(interface {
 		Shutdown(ctx context.Context) error
 	}); ok {
@@ -92,18 +84,22 @@ func (c collector[T]) Shutdown(ctx context.Context) error {
 		}
 	}
 
+	if err := c.registry.Shutdown(ctx); err != nil {
+		errs = append(errs, err)
+	}
+
 	return errors.Join(errs...)
 }
 
 // NewCollector creates a Collector from the input Extractor and Registry.
-func NewCollector[T any](extractor Extractor[T], registerer Registry[T]) Collector[T] {
-	if extractor == nil || registerer == nil {
+func NewCollector[T any](extractor Extractor[T], registry Registry[T]) Collector[T] {
+	if extractor == nil || registry == nil {
 		return nil
 	}
 
 	return collector[T]{
-		extractor:  extractor,
-		registerer: registerer,
+		extractor: extractor,
+		registry:  registry,
 	}
 }
 
