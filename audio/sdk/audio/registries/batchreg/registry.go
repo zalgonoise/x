@@ -2,6 +2,7 @@ package batchreg
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/zalgonoise/gbuf"
@@ -25,35 +26,44 @@ type batchRegistry[T any] struct {
 	cancel    context.CancelFunc
 }
 
+// Register stores the input data in the audio.Registry's inner buffer, returning an error if raised.
 func (r batchRegistry[T]) Register(value T) error {
 	return r.buffer.WriteItem(value)
 }
 
+// Load returns a receive-only channel of items of a given type, usually as part of a Registry features.
+//
+// The returned channel is actually the underlying audio.Registry's values channel.
 func (r batchRegistry[T]) Load() <-chan T {
 	return r.reg.Load()
 }
 
+// Shutdown gracefully stops the audio.Registry.
+//
+// It will both ForceFlush and call its inner audio.Registry's Shutdown method, returning any error if raised.
 func (r batchRegistry[T]) Shutdown(ctx context.Context) error {
-	_ = r.ForceFlush()
+	defer r.cancel()
+	errs := make([]error, 0, 2)
 
-	if closer, ok := r.reg.(interface {
-		Shutdown(ctx context.Context) error
-	}); ok {
-		_ = closer.Shutdown(ctx)
+	if err := r.ForceFlush(); err != nil {
+		errs = append(errs, err)
 	}
 
-	r.cancel()
+	if err := r.reg.Shutdown(ctx); err != nil {
+		errs = append(errs, err)
+	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
+// Err provides access to this audio.Registry's error channel, to provide
+// visibility over its runtime errors.
 func (r batchRegistry[T]) Err() <-chan error {
 	return r.errCh
 }
 
-func (r batchRegistry[T]) ForceFlush() error {
+func (r batchRegistry[T]) flushToCompactor() error {
 	length := r.buffer.Len()
-
 	if length == 0 {
 		return nil
 	}
@@ -62,26 +72,52 @@ func (r batchRegistry[T]) ForceFlush() error {
 		length = r.batchSize
 	}
 
-	if r.compactor != nil {
-		data := make([]T, length)
-		if _, err := r.buffer.Read(data); err != nil {
-			return err
-		}
-
-		v, err := r.compactor(data)
-		if err != nil {
-			return err
-		}
-
-		return r.reg.Register(v)
+	data := make([]T, length)
+	if _, err := r.buffer.Read(data); err != nil {
+		return err
 	}
 
-	item, err := r.buffer.ReadItem()
+	v, err := r.compactor(data)
 	if err != nil {
 		return err
 	}
 
-	return r.reg.Register(item)
+	if err = r.reg.Register(v); err != nil {
+		return err
+	}
+
+	if r.buffer.Len() > 0 {
+		return r.flushToCompactor()
+	}
+
+	return nil
+}
+
+// ForceFlush checks if the audio.Registry's value buffer contains any items, flushing them
+// to the underlying audio.Registry if applicable.
+//
+// If an audio.Compactor is configured, the existing items are reduced with it in batches, if configured.
+// The audio.Registry goes through multiple passes through the data if necessary, while there are items in the buffer.
+//
+// Otherwise, the latest value is registered, instead, and the buffer is drained.
+func (r batchRegistry[T]) ForceFlush() error {
+	if r.compactor != nil {
+		return r.flushToCompactor()
+	}
+
+	length := r.buffer.Len()
+
+	if length > 0 {
+		items := make([]T, length)
+
+		if _, err := r.buffer.Read(items); err != nil {
+			return err
+		}
+
+		return r.reg.Register(items[len(items)-1])
+	}
+
+	return nil
 }
 
 func (r batchRegistry[T]) run(ctx context.Context, flushFrequency time.Duration) {
