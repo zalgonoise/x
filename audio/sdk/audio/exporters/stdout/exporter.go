@@ -112,7 +112,7 @@ func ToLogger(options ...cfg.Option[Config]) (audio.Exporter, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	exporter := &logExporter{
+	exporter := logExporter{
 		config:   config,
 		peaks:    newPeaksCollector(config),
 		spectrum: newSpectrumCollector(config),
