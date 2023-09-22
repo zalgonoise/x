@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"os"
 	"time"
 
 	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
 	"github.com/zalgonoise/x/audio/sdk/audio/consumers/httpaudio"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters/stdout"
@@ -69,11 +71,17 @@ func run() (error, int) {
 
 	errs := proc.Err()
 
+	defer audio.Shutdown(ctx, 15*time.Second, consumer, proc)
+
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err(), 0
-		case err = <-errs:
+			return nil, 0
+		case err, ok := <-errs:
+			if !ok || err == nil || errors.Is(err, processors.ErrHaltSignal) {
+				return nil, 0
+			}
+
 			return err, 1
 		}
 	}
