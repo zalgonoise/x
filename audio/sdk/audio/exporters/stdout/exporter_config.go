@@ -26,6 +26,7 @@ type Config struct {
 
 func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
+		config.withPeaks = true
 		config.batchedPeaks = true
 		config.batchedPeaksOptions = options
 
@@ -35,6 +36,7 @@ func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Optio
 
 func WithBatchedSpectrum(options ...cfg.Option[batchreg.Config[[]fft.FrequencyPower]]) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
+		config.withSpectrum = true
 		config.batchedSpectrum = true
 		config.batchedSpectrumOptions = options
 
