@@ -32,45 +32,27 @@ type logExporter struct {
 }
 
 func (e logExporter) Export(h *header.Header, data []float64) error {
-	errs := make([]error, 0, 2)
-
-	if err := e.peaks.Collect(h, data); err != nil {
-		errs = append(errs, err)
-	}
-
-	if err := e.spectrum.Collect(h, data); err != nil {
-		errs = append(errs, err)
-	}
-
-	return errors.Join(errs...)
+	return errors.Join(
+		e.peaks.Collect(h, data),
+		e.spectrum.Collect(h, data),
+	)
 }
 
 func (e logExporter) ForceFlush() error {
-	if err := e.peaks.ForceFlush(); err != nil {
-		return err
-	}
-
-	if err := e.spectrum.ForceFlush(); err != nil {
-		return err
-	}
-
-	return nil
+	return errors.Join(
+		e.peaks.ForceFlush(),
+		e.spectrum.ForceFlush(),
+	)
 }
 
 func (e logExporter) Shutdown(ctx context.Context) error {
 	e.logger.InfoContext(ctx, "log exporter shutting down")
 	e.cancel()
 
-	errs := make([]error, 0, 2)
-	if err := e.peaks.Shutdown(ctx); err != nil {
-		errs = append(errs, err)
-	}
-
-	if err := e.spectrum.Shutdown(ctx); err != nil {
-		errs = append(errs, err)
-	}
-
-	return errors.Join(errs...)
+	return errors.Join(
+		e.peaks.Shutdown(ctx),
+		e.spectrum.Shutdown(ctx),
+	)
 }
 
 func (e logExporter) export(ctx context.Context) {
@@ -80,6 +62,8 @@ func (e logExporter) export(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
+			e.logger.InfoContext(ctx, "stopping exporter's routine")
+
 			return
 		case v, ok := <-peaksValues:
 			if !ok {
