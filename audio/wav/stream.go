@@ -56,6 +56,17 @@ func MultiProc(failFast bool, fns ...ProcessFunc) ProcessFunc {
 	}
 }
 
+func ErrorPipe(fn ProcessFunc, errs chan<- error) ProcessFunc {
+	return func(header *header.Header, data []float64) error {
+		err := fn(header, data)
+		if err != nil {
+			errs <- err
+		}
+
+		return err
+	}
+}
+
 // ByteRate calculates the byte rate of a certain signal from its header metadata
 func ByteRate(sampleRate uint32, bitDepth, numChannels uint16) uint32 {
 	return sampleRate * uint32(numChannels) * (uint32(bitDepth) / 8)
@@ -129,17 +140,12 @@ func NewStream(cfg *StreamConfig, proc ProcessFunc) *Stream {
 // Any errors raised either during reading the data or processing it are piped to the input
 // errors channel `errCh`
 func (w *Stream) Stream(ctx context.Context, r io.Reader, errCh chan<- error) {
-	origFn := w.proc
-
-	w.proc = func(h *header.Header, data []float64) (err error) {
-		if err = origFn(h, data); err != nil {
-			errCh <- err
-		}
-		return err
-	}
+	w.proc = ErrorPipe(w.proc, errCh)
 
 	if err := w.stream(ctx, r); err != nil {
 		errCh <- err
+		close(errCh)
+
 		return
 	}
 }
@@ -157,10 +163,10 @@ func (w *Stream) stream(ctx context.Context, r io.Reader) (err error) {
 	for {
 		select {
 		case <-streamCtx.Done():
-			err = context.Cause(streamCtx)
-			if err != nil {
+			if err = context.Cause(streamCtx); err != nil {
 				return err
 			}
+
 			return streamCtx.Err()
 		default:
 		}
