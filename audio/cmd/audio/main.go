@@ -39,13 +39,11 @@ func run() (error, int) {
 	}
 
 	exporter, err := stdout.ToLogger(
-		stdout.WithPeaks(),
 		stdout.WithBatchedPeaks(
 			batchreg.WithBatchSize[float64](256),
 			batchreg.WithFlushFrequency[float64](500*time.Millisecond),
 			batchreg.WithCompactor[float64](compactors.Max[float64]),
 		),
-		stdout.WithSpectrum(128),
 		stdout.WithBatchedSpectrum(
 			batchreg.WithBatchSize[[]fft.FrequencyPower](256),
 			batchreg.WithFlushFrequency[[]fft.FrequencyPower](500*time.Millisecond),
