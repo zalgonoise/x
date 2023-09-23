@@ -1,12 +1,10 @@
 package stdout
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"log/slog"
 	"os"
-	"slices"
 
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
@@ -94,15 +92,21 @@ func (e logExporter) export(ctx context.Context) {
 				return
 			}
 
-			if len(v) == 0 {
-				continue
-			}
-
-			slices.SortFunc(v, func(a, b fft.FrequencyPower) int {
-				return cmp.Compare(a.Mag, b.Mag)
-			})
-
-			e.logger.InfoContext(context.Background(), spectrumMessage, slog.Int("frequency", v[0].Freq))
+			// the logger implementation will only print the data in the first item of the slice.
+			//
+			// it is the responsibility of the caller to configure an appropriate compactor for
+			// custom behavior, e.g.:
+			//
+			//     exporter, err := stdout.ToLogger(
+			//       stdout.WithBatchedSpectrum(
+			//         // ...
+			//         batchreg.WithCompactor[[]fft.FrequencyPower](compactors.MaxSpectra),
+			//       ),
+			//     )
+			e.logger.InfoContext(context.Background(), spectrumMessage,
+				slog.Int("frequency", v[0].Freq),
+				slog.Float64("magnitude", v[0].Mag),
+			)
 		}
 	}
 }
@@ -127,9 +131,7 @@ func ToLogger(options ...cfg.Option[Config]) (audio.Exporter, error) {
 
 func newLogger(h slog.Handler) *slog.Logger {
 	if h == nil {
-		return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			AddSource: true,
-		}))
+		return slog.New(slog.NewTextHandler(os.Stderr, nil))
 	}
 
 	return slog.New(h)
