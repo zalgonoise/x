@@ -43,21 +43,19 @@ func MaxSpectra(data [][]fft.FrequencyPower) ([]fft.FrequencyPower, error) {
 
 	for i := range data {
 		slices.SortFunc(data[i], func(a, b fft.FrequencyPower) int {
-			return cmp.Compare(a.Mag, b.Mag)
+			return cmp.Compare(b.Mag, a.Mag)
 		})
 	}
 
-	final := make([]fft.FrequencyPower, len(data))
-	for i := range final {
-		if len(data[i]) == 0 {
-			continue
+	final := make([]fft.FrequencyPower, 0, len(data))
+	for i := range data {
+		if len(data[i]) > 0 {
+			final = append(final, data[i][0])
 		}
-
-		final[i] = data[i][0]
 	}
 
 	slices.SortFunc(final, func(a, b fft.FrequencyPower) int {
-		return cmp.Compare(a.Mag, b.Mag)
+		return cmp.Compare(b.Mag, a.Mag)
 	})
 
 	return final, nil
