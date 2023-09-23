@@ -113,3 +113,35 @@ func MaxSpectra(data [][]fft.FrequencyPower) ([]fft.FrequencyPower, error) {
 
 	return final, nil
 }
+
+// UpperSpectra is like MaxSpectra, but keeps the spectrum slice intact in terms of its
+// frequency distribution.
+//
+// Unlike MaxSpectra, this function will return a full spectrum of the same size as the input spectra,
+// but only containing the most powerful values registered for a given frequency.
+func UpperSpectra(data [][]fft.FrequencyPower) ([]fft.FrequencyPower, error) {
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	final := make([]fft.FrequencyPower, len(data[0]))
+
+	for i := range final {
+		buf := make([]fft.FrequencyPower, 0, len(data))
+		for idx := range data {
+			if len(data[idx]) == 0 || i >= len(data[idx]) {
+				continue
+			}
+
+			buf = append(buf, data[idx][i])
+		}
+
+		slices.SortFunc(buf, func(a, b fft.FrequencyPower) int {
+			return cmp.Compare(b.Mag, a.Mag)
+		})
+
+		final[i] = buf[0]
+	}
+
+	return final, nil
+}
