@@ -14,6 +14,7 @@ import (
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters"
+	"github.com/zalgonoise/x/audio/wav/header"
 	"github.com/zalgonoise/x/cfg"
 )
 
@@ -48,8 +49,8 @@ func (e emitter) Shutdown(ctx context.Context) error {
 	return e.server.Shutdown(ctx)
 }
 
-func ToProm(port int, options ...cfg.Option[exporters.Config]) (audio.Exporter, error) {
-	emitter := emitter{
+func ToProm(port int, options ...cfg.Option[exporters.Config]) (audio.Exporter[*header.Header], error) {
+	e := emitter{
 		peaks: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: "audio",
 			Name:      "peak_value",
@@ -62,14 +63,14 @@ func ToProm(port int, options ...cfg.Option[exporters.Config]) (audio.Exporter, 
 		}, []string{"frequency"}),
 	}
 
-	reg, err := newRegistry(emitter)
+	reg, err := newRegistry(e)
 	if err != nil {
-		return audio.NoOpExporter(), err
+		return audio.NoOpExporter[*header.Header](), err
 	}
 
-	emitter.server = newServer(port, reg)
+	e.server = newServer(port, reg)
 
-	return exporters.New(emitter, options...)
+	return exporters.PCM(e, options...)
 }
 
 func newRegistry(exporter emitter) (*prometheus.Registry, error) {
