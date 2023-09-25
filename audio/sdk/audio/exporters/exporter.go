@@ -28,8 +28,8 @@ var ErrNilEmitter = errs.New(errDomain, ErrNil, ErrEmitter)
 type exporter struct {
 	config Config
 
-	peaks    audio.Collector[float64]
-	spectrum audio.Collector[[]fft.FrequencyPower]
+	peaks    audio.Collector[*header.Header, float64]
+	spectrum audio.Collector[*header.Header, []fft.FrequencyPower]
 
 	emitter audio.Emitter
 
@@ -87,9 +87,9 @@ func (e exporter) export(ctx context.Context) {
 	}
 }
 
-func New(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter, error) {
+func PCM(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter[*header.Header], error) {
 	if emitter == nil {
-		return audio.NoOpExporter(), ErrNilEmitter
+		return audio.NoOpExporter[*header.Header](), ErrNilEmitter
 	}
 
 	config := cfg.Set[Config](DefaultConfig, options...)
@@ -110,37 +110,37 @@ func New(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter, 
 	return e, nil
 }
 
-func newPeaksCollector(config Config) audio.Collector[float64] {
+func newPeaksCollector(config Config) audio.Collector[*header.Header, float64] {
 	if !config.withPeaks {
-		return audio.NoOpCollector[float64]()
+		return audio.NoOpCollector[*header.Header, float64]()
 	}
 
 	if !config.batchedPeaks {
-		return audio.NewCollector[float64](
-			extractors.MaxPeak(),
+		return audio.NewCollector[*header.Header, float64](
+			extractors.MaxPeak[*header.Header](),
 			unitreg.New[float64](0),
 		)
 	}
 
-	return audio.NewCollector[float64](
-		extractors.MaxPeak(),
+	return audio.NewCollector[*header.Header, float64](
+		extractors.MaxPeak[*header.Header](),
 		batchreg.New[float64](config.batchedPeaksOptions...),
 	)
 }
 
-func newSpectrumCollector(config Config) audio.Collector[[]fft.FrequencyPower] {
+func newSpectrumCollector(config Config) audio.Collector[*header.Header, []fft.FrequencyPower] {
 	if !config.withSpectrum {
-		return audio.NoOpCollector[[]fft.FrequencyPower]()
+		return audio.NoOpCollector[*header.Header, []fft.FrequencyPower]()
 	}
 
 	if !config.batchedPeaks {
-		return audio.NewCollector[[]fft.FrequencyPower](
+		return audio.NewCollector[*header.Header, []fft.FrequencyPower](
 			extractors.MaxSpectrum(config.spectrumBlockSize),
 			unitreg.New[[]fft.FrequencyPower](0),
 		)
 	}
 
-	return audio.NewCollector[[]fft.FrequencyPower](
+	return audio.NewCollector[*header.Header, []fft.FrequencyPower](
 		extractors.MaxSpectrum(config.spectrumBlockSize),
 		batchreg.New[[]fft.FrequencyPower](config.batchedSpectrumOptions...),
 	)
