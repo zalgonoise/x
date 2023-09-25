@@ -10,6 +10,7 @@ import (
 
 	"github.com/zalgonoise/x/audio/errs"
 	"github.com/zalgonoise/x/audio/sdk/audio"
+	"github.com/zalgonoise/x/audio/sdk/audio/exporters"
 	"github.com/zalgonoise/x/audio/wav"
 )
 
@@ -70,12 +71,12 @@ func (p *pcm) Shutdown(ctx context.Context) error {
 	return p.exporter.Shutdown(ctx)
 }
 
-func NewPCM(exporters ...audio.Exporter) audio.Processor {
-	if len(exporters) == 0 {
+func NewPCM(e ...audio.Exporter) audio.Processor {
+	if len(e) == 0 {
 		return audio.NoOpProcessor()
 	}
 
-	exporter := audio.MultiExporter(exporters...)
+	exporter := exporters.Multi(e...)
 
 	return &pcm{
 		exporter: exporter,
