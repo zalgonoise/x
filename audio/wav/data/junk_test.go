@@ -2,10 +2,11 @@ package data
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/require"
-	"github.com/zalgonoise/x/audio/wav/data/filters"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	"github.com/zalgonoise/x/audio/wav/data/filters"
 
 	"github.com/zalgonoise/x/audio/osc"
 	"github.com/zalgonoise/x/audio/wav/data/header"
