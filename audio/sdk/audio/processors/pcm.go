@@ -12,6 +12,7 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters"
 	"github.com/zalgonoise/x/audio/wav"
+	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 const (
@@ -25,7 +26,7 @@ const (
 var ErrHaltSignal = errs.New(errDomain, ErrHalt, ErrSignal)
 
 type pcm struct {
-	exporter audio.Exporter
+	exporter audio.Exporter[*header.Header]
 
 	errCh  chan error
 	cancel context.CancelFunc
@@ -71,7 +72,7 @@ func (p *pcm) Shutdown(ctx context.Context) error {
 	return p.exporter.Shutdown(ctx)
 }
 
-func NewPCM(e ...audio.Exporter) audio.Processor {
+func PCM(e ...audio.Exporter[*header.Header]) audio.Processor {
 	if len(e) == 0 {
 		return audio.NoOpProcessor()
 	}
