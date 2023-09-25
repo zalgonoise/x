@@ -7,11 +7,14 @@ services:
       dockerfile: ./Dockerfile
     restart: unless-stopped
     environment:
-      - X_AUDIO_TIMEOUT=4h
+      - X_AUDIO_DURATION=4h
       - X_AUDIO_OUTPUT_TYPE=prom
-      - X_AUDIO_OUTPUT_PATH=:13088
+      - X_AUDIO_OUTPUT=:13088
       - X_AUDIO_MODE=combined
-      - X_AUDIO_NUM_SPECTRUM_BUCKETS=64
+      - X_AUDIO_BUCKET_SIZE=64
+      - X_AUDIO_BATCH=1
+      - X_AUDIO_BATCH_SIZE=64
+      - X_AUDIO_BATCH_FREQUENCY=200ms
     env_file:
       - "./.env"
     ports:
