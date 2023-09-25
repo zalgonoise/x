@@ -1,4 +1,4 @@
-package prom
+package exporters
 
 import (
 	"log/slog"
@@ -10,9 +10,9 @@ import (
 
 const defaultBlockSize = 64
 
-var defaultConfig = Config{
+var DefaultConfig = Config{
 	spectrumBlockSize: defaultBlockSize,
-	logHandler:        noOpLogHandler{},
+	LogHandler:        noOpLogHandler{},
 }
 
 type Config struct {
@@ -26,7 +26,7 @@ type Config struct {
 	batchedSpectrum        bool
 	batchedSpectrumOptions []cfg.Option[batchreg.Config[[]fft.FrequencyPower]]
 
-	logHandler slog.Handler
+	LogHandler slog.Handler
 }
 
 func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Option[Config] {
@@ -41,6 +41,10 @@ func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Optio
 
 func WithBatchedSpectrum(blockSize int, options ...cfg.Option[batchreg.Config[[]fft.FrequencyPower]]) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
+		if blockSize < 8 {
+			blockSize = defaultBlockSize
+		}
+
 		config.withSpectrum = true
 		config.spectrumBlockSize = blockSize
 		config.batchedSpectrum = true
@@ -74,7 +78,7 @@ func WithSpectrum(blockSize int) cfg.Option[Config] {
 
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
-		config.logHandler = logger.Handler()
+		config.LogHandler = logger.Handler()
 
 		return config
 	})
@@ -82,7 +86,7 @@ func WithLogger(logger *slog.Logger) cfg.Option[Config] {
 
 func WithLogHandler(h slog.Handler) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
-		config.logHandler = h
+		config.LogHandler = h
 
 		return config
 	})

@@ -1,4 +1,4 @@
-package common
+package exporters
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	errDomain = errs.Domain("x/audio/sdk/audio/exporters/common")
+	errDomain = errs.Domain("x/audio/sdk/audio/exporters")
 
 	ErrNil = errs.Kind("nil")
 
@@ -25,49 +25,45 @@ const (
 
 var ErrNilEmitter = errs.New(errDomain, ErrNil, ErrEmitter)
 
-type Emitter interface {
-	EmitPeaks(float64)
-	EmitSpectrum([]fft.FrequencyPower)
-}
-
-type commonExporter struct {
+type exporter struct {
 	config Config
 
 	peaks    audio.Collector[float64]
 	spectrum audio.Collector[[]fft.FrequencyPower]
 
-	emitter Emitter
+	emitter audio.Emitter
 
 	logger *slog.Logger
 
 	cancel context.CancelFunc
 }
 
-func (e commonExporter) Export(h *header.Header, data []float64) error {
+func (e exporter) Export(h *header.Header, data []float64) error {
 	return errors.Join(
 		e.peaks.Collect(h, data),
 		e.spectrum.Collect(h, data),
 	)
 }
 
-func (e commonExporter) ForceFlush() error {
+func (e exporter) ForceFlush() error {
 	return errors.Join(
 		e.peaks.ForceFlush(),
 		e.spectrum.ForceFlush(),
 	)
 }
 
-func (e commonExporter) Shutdown(ctx context.Context) error {
-	e.logger.InfoContext(ctx, "log exporter shutting down")
+func (e exporter) Shutdown(ctx context.Context) error {
+	e.logger.InfoContext(ctx, "exporter shutting down")
 	e.cancel()
 
 	return errors.Join(
 		e.peaks.Shutdown(ctx),
 		e.spectrum.Shutdown(ctx),
+		e.emitter.Shutdown(ctx),
 	)
 }
 
-func (e commonExporter) export(ctx context.Context) {
+func (e exporter) export(ctx context.Context) {
 	peaksValues := e.peaks.Load()
 	spectrumValues := e.spectrum.Load()
 
@@ -91,27 +87,27 @@ func (e commonExporter) export(ctx context.Context) {
 	}
 }
 
-func ToEmitter(emitter Emitter, options ...cfg.Option[Config]) (audio.Exporter, error) {
+func New(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter, error) {
 	if emitter == nil {
 		return audio.NoOpExporter(), ErrNilEmitter
 	}
 
-	config := cfg.Set[Config](defaultConfig, options...)
+	config := cfg.Set[Config](DefaultConfig, options...)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	exporter := commonExporter{
+	e := exporter{
 		config:   config,
 		peaks:    newPeaksCollector(config),
 		spectrum: newSpectrumCollector(config),
 		emitter:  emitter,
-		logger:   slog.New(config.logHandler),
+		logger:   slog.New(config.LogHandler),
 		cancel:   cancel,
 	}
 
-	go exporter.export(ctx)
+	go e.export(ctx)
 
-	return exporter, nil
+	return e, nil
 }
 
 func newPeaksCollector(config Config) audio.Collector[float64] {
