@@ -5,11 +5,10 @@ import (
 	"errors"
 
 	"github.com/zalgonoise/x/audio/sdk/audio"
-	"github.com/zalgonoise/x/audio/wav/header"
 )
 
-type multiExporter struct {
-	exporters []audio.Exporter
+type multiExporter[T any] struct {
+	exporters []audio.Exporter[T]
 }
 
 // Export implements the Exporter interface.
@@ -18,11 +17,11 @@ type multiExporter struct {
 // from the Export call.
 //
 // This call is both blocking and sequential, as all Exporters are iterated through.
-func (m multiExporter) Export(h *header.Header, data []float64) error {
+func (m multiExporter[T]) Export(header T, data []float64) error {
 	errs := make([]error, 0, len(m.exporters))
 
 	for i := range m.exporters {
-		if err := m.exporters[i].Export(h, data); err != nil {
+		if err := m.exporters[i].Export(header, data); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -36,7 +35,7 @@ func (m multiExporter) Export(h *header.Header, data []float64) error {
 // from the ForceFlush call.
 //
 // This call is both blocking and sequential, as all Exporters are iterated through.
-func (m multiExporter) ForceFlush() error {
+func (m multiExporter[T]) ForceFlush() error {
 	errs := make([]error, 0, len(m.exporters))
 
 	for i := range m.exporters {
@@ -54,7 +53,7 @@ func (m multiExporter) ForceFlush() error {
 // from the Shutdown call.
 //
 // This call is both blocking and sequential, as all Exporters are iterated through.
-func (m multiExporter) Shutdown(ctx context.Context) error {
+func (m multiExporter[T]) Shutdown(ctx context.Context) error {
 	errs := make([]error, 0, len(m.exporters))
 
 	for i := range m.exporters {
@@ -68,22 +67,22 @@ func (m multiExporter) Shutdown(ctx context.Context) error {
 
 // Multi joins several Exporter interfaces as one, to facilitate its access when implementing
 // Processor logic, without much repetition.
-func Multi(exporters ...audio.Exporter) audio.Exporter {
+func Multi[T any](exporters ...audio.Exporter[T]) audio.Exporter[T] {
 	switch len(exporters) {
 	case 0:
-		return audio.NoOpExporter()
+		return audio.NoOpExporter[T]()
 	case 1:
 		return exporters[0]
 	default:
-		me := multiExporter{
-			exporters: make([]audio.Exporter, 0, len(exporters)),
+		me := multiExporter[T]{
+			exporters: make([]audio.Exporter[T], 0, len(exporters)),
 		}
 
 		for i := range exporters {
 			switch v := exporters[i].(type) {
 			case nil:
 				continue
-			case multiExporter:
+			case multiExporter[T]:
 				me.exporters = append(me.exporters, v.exporters...)
 			default:
 				me.exporters = append(me.exporters, v)
