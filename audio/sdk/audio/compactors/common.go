@@ -20,6 +20,7 @@ var (
 	ErrEmptyValueSet = errs.New(errDomain, ErrEmpty, ErrValueSet)
 )
 
+// Number is a type constraint that only accepts any type of integer or floating-point number
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
