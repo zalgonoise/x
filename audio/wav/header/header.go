@@ -159,3 +159,13 @@ func (h *Header) Bytes() []byte {
 
 	return buf
 }
+
+// GetSampleRate returns the SampleRate value from the Header, to satisfy a
+// common header interface among different audio encodings
+func (h *Header) GetSampleRate() int {
+	if h == nil {
+		return 0
+	}
+
+	return int(h.SampleRate)
+}
