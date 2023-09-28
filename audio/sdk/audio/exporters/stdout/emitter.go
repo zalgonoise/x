@@ -7,7 +7,6 @@ import (
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters"
-	"github.com/zalgonoise/x/audio/wav/header"
 	"github.com/zalgonoise/x/cfg"
 )
 
@@ -35,7 +34,7 @@ func (e emitter) Shutdown(context.Context) error {
 	return nil
 }
 
-func ToLogger(options ...cfg.Option[exporters.Config]) (audio.Exporter[*header.Header], error) {
+func ToLogger(options ...cfg.Option[exporters.Config]) (audio.Exporter, error) {
 	// re-use log handler from general exporter config
 	config := cfg.Set[exporters.Config](exporters.DefaultConfig, options...)
 
