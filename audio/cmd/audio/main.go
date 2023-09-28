@@ -96,11 +96,11 @@ func run() (error, int) {
 	}
 }
 
-func newExporter(ctx context.Context, config *Config, logHandler slog.Handler) (audio.Exporter[*header.Header], error) {
+func newExporter(ctx context.Context, config *Config, logHandler slog.Handler) (audio.Exporter, error) {
 	var (
 		logger       = slog.New(logHandler)
 		exporterOpts = newExporterOpts(config, logHandler)
-		exporter     audio.Exporter[*header.Header]
+		exporter     audio.Exporter
 		err          error
 	)
 
