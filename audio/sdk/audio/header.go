@@ -1,5 +1,10 @@
 package audio
 
+import (
+	"context"
+	"io"
+)
+
 // Header describes types considered headers on different audio encodings.
 //
 // Methods implemented by a Header return data that is common between all
@@ -7,6 +12,11 @@ package audio
 type Header interface {
 	// GetSampleRate returns the sample rate for this audio signal.
 	GetSampleRate() int
+}
+
+// Streamer describes types that are able to stream an audio signal
+type Streamer interface {
+	Stream(ctx context.Context, r io.Reader, errCh chan<- error)
 }
 
 type noOpHeader struct{}
