@@ -26,7 +26,7 @@ const (
 var ErrHaltSignal = errs.New(errDomain, ErrHalt, ErrSignal)
 
 type pcm struct {
-	exporter audio.Exporter[*header.Header]
+	exporter audio.Exporter
 
 	errCh  chan error
 	cancel context.CancelFunc
@@ -72,7 +72,7 @@ func (p *pcm) Shutdown(ctx context.Context) error {
 	return p.exporter.Shutdown(ctx)
 }
 
-func PCM(e ...audio.Exporter[*header.Header]) audio.Processor {
+func PCM(e ...audio.Exporter) audio.Processor {
 	if len(e) == 0 {
 		return audio.NoOpProcessor()
 	}
@@ -82,6 +82,8 @@ func PCM(e ...audio.Exporter[*header.Header]) audio.Processor {
 	return &pcm{
 		exporter: exporter,
 		errCh:    make(chan error),
-		stream:   wav.NewStream(nil, exporter.Export),
+		stream: wav.NewStream(nil, func(h *header.Header, data []float64) error {
+			return exporter.Export(h, data)
+		}),
 	}
 }
