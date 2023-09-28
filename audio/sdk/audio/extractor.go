@@ -7,7 +7,7 @@ package audio
 //
 // Its Extract method is intended to be executed multiple times on each audio chunk received from a stream, and it is
 // configured with a Collector in mind.
-type Extractor[H, T any] interface {
+type Extractor[T any] interface {
 	// Extract will analyze the audio chunk (as a slice of float64 values), optionally referring to the audio header's
 	// metadata, to extract a value of a given type.
 	//
@@ -15,7 +15,7 @@ type Extractor[H, T any] interface {
 	//
 	// Extract method is intended to be executed multiple times on each audio chunk received from a stream, and it is
 	// configured with a Collector in mind.
-	Extract(H, []float64) T
+	Extract(Header, []float64) T
 }
 
 // Extraction is a generic function type that serves as an audio processor function,
@@ -27,19 +27,19 @@ type Extractor[H, T any] interface {
 // The sole responsibility of an Extractor is to convert raw audio (as chunks of float64 values) into anything
 // meaningful, that is exported / handled separately. Not all Exporter will need one or more Extractor, however
 // these are supposed to be perceived as preset building blocks to work with the incoming audio chunks.
-type Extraction[H, T any] func(H, []float64) T
+type Extraction[T any] func(Header, []float64) T
 
 // Extract implements the Extractor interface.
 //
 // It will call itself as a function, using the input parameters as its arguments.
-func (e Extraction[H, T]) Extract(header H, data []float64) T {
+func (e Extraction[T]) Extract(header Header, data []float64) T {
 	return e(header, data)
 }
 
 // NoOpExtractor returns an Extractor for a given type, that does not perform any operations on the input values,
 // and only returns zero values for a given type
-func NoOpExtractor[H, T any]() Extractor[H, T] {
-	return Extraction[H, T](func(header H, float64s []float64) T {
+func NoOpExtractor[T any]() Extractor[T] {
+	return Extraction[T](func(header Header, float64s []float64) T {
 		return *new(T)
 	})
 }
