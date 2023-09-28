@@ -18,7 +18,7 @@ import (
 //
 // Exporter also implements StreamCloser as a means to both flush any batched or aggregated values and gracefully
 // shutdown the exporter
-type Exporter[T any] interface {
+type Exporter interface {
 	// Export consumes the audio data chunks from the Processor, preparing them to be pushed to their destination.
 	//
 	// The Exporter may have a set of Collector configured -- in that case it send the audio data it receives to all
@@ -27,30 +27,30 @@ type Exporter[T any] interface {
 	//
 	// The returned error from an Export call is related to an error raised when pushing the values or items to the
 	// target, or from any errors raised by the configured Collector types.
-	Export(header T, data []float64) error
+	Export(header Header, data []float64) error
 	// StreamCloser defines common methods when interacting with a streaming module, targeting actions to either flush
 	// the module or to shut it down gracefully.
 	StreamCloser
 }
 
-type noOpExporter[T any] struct{}
+type noOpExporter struct{}
 
 // Export implements the Exporter interface.
 //
 // This is a no-op call and the returned error is always nil.
-func (noOpExporter[T]) Export(T, []float64) error { return nil }
+func (noOpExporter) Export(Header, []float64) error { return nil }
 
 // ForceFlush implements the Exporter and StreamCloser interfaces.
 //
 // This is a no-op call and the returned error is always nil.
-func (noOpExporter[T]) ForceFlush() error { return nil }
+func (noOpExporter) ForceFlush() error { return nil }
 
 // Shutdown implements the Exporter, Closer and StreamCloser interfaces.
 //
 // This is a no-op call and the returned error is always nil.
-func (noOpExporter[T]) Shutdown(context.Context) error { return nil }
+func (noOpExporter) Shutdown(context.Context) error { return nil }
 
 // NoOpExporter returns a no-op Exporter
-func NoOpExporter[T any]() Exporter[T] {
-	return noOpExporter[T]{}
+func NoOpExporter() Exporter {
+	return noOpExporter{}
 }
