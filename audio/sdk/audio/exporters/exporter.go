@@ -87,7 +87,7 @@ func (e exporter) export(ctx context.Context) {
 	}
 }
 
-func PCM(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter, error) {
+func NewExporter(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter, error) {
 	if emitter == nil {
 		return audio.NoOpExporter[*header.Header](), ErrNilEmitter
 	}
