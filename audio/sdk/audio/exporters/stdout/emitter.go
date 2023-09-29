@@ -38,7 +38,7 @@ func ToLogger(options ...cfg.Option[exporters.Config]) (audio.Exporter, error) {
 	// re-use log handler from general exporter config
 	config := cfg.Set[exporters.Config](exporters.DefaultConfig, options...)
 
-	return exporters.PCM(
+	return exporters.NewExporter(
 		emitter{logger: slog.New(config.LogHandler)},
 		options...,
 	)
