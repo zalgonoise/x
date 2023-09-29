@@ -1,0 +1,86 @@
+package processors
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/zalgonoise/x/audio/errs"
+	"github.com/zalgonoise/x/audio/sdk/audio"
+)
+
+const (
+	errDomain = errs.Domain("x/audio/sdk/processors/pcm")
+
+	ErrHalt = errs.Kind("process stopped")
+
+	ErrSignal = errs.Entity("with OS signal")
+)
+
+var ErrHaltSignal = errs.New(errDomain, ErrHalt, ErrSignal)
+
+type processor struct {
+	exporter audio.Exporter
+
+	errCh  chan error
+	cancel context.CancelFunc
+	stream audio.Streamer
+}
+
+func (p *processor) Process(ctx context.Context, reader io.Reader) {
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt, os.Kill, syscall.SIGTERM)
+	defer close(signalCh)
+
+	ctx, p.cancel = context.WithCancel(ctx)
+
+	go p.stream.Stream(ctx, reader, p.errCh)
+
+	for {
+		select {
+		case <-ctx.Done():
+			p.cancel()
+
+			return
+		case sig := <-signalCh:
+			p.errCh <- fmt.Errorf("%w: %s", ErrHaltSignal, sig.String())
+			p.cancel()
+
+			return
+		}
+	}
+}
+
+func (p *processor) Err() <-chan error {
+	return p.errCh
+}
+
+func (p *processor) ForceFlush() error {
+	return p.exporter.ForceFlush()
+}
+
+func (p *processor) Shutdown(ctx context.Context) error {
+	defer close(p.errCh)
+	p.cancel()
+
+	return p.exporter.Shutdown(ctx)
+}
+
+func NewProcessor(streamer audio.Streamer, exporter audio.Exporter) audio.Processor {
+	if streamer == nil {
+		streamer = audio.NoOpStreamer()
+	}
+
+	if exporter == nil {
+		exporter = audio.NoOpExporter()
+	}
+
+	return &processor{
+		exporter: exporter,
+		errCh:    make(chan error),
+		stream:   streamer,
+	}
+}
