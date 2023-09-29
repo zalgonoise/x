@@ -70,7 +70,7 @@ func ToProm(port int, options ...cfg.Option[exporters.Config]) (audio.Exporter, 
 
 	e.server = newServer(port, reg)
 
-	return exporters.PCM(e, options...)
+	return exporters.NewExporter(e, options...)
 }
 
 func newRegistry(exporter emitter) (*prometheus.Registry, error) {
