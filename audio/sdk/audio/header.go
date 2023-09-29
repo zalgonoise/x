@@ -14,11 +14,6 @@ type Header interface {
 	GetSampleRate() int
 }
 
-// Streamer describes types that are able to stream an audio signal
-type Streamer interface {
-	Stream(ctx context.Context, r io.Reader, errCh chan<- error)
-}
-
 type noOpHeader struct{}
 
 // GetSampleRate implements the Header interface
@@ -29,4 +24,21 @@ func (noOpHeader) GetSampleRate() int { return 0 }
 // NoOpHeader returns a no-op Header
 func NoOpHeader() Header {
 	return noOpHeader{}
+}
+
+// Streamer describes types that are able to stream an audio signal
+type Streamer interface {
+	Stream(ctx context.Context, r io.Reader, errCh chan<- error)
+}
+
+type noOpStreamer struct{}
+
+// Stream implements the Streamer interface
+//
+// This is a no-op call and has no effect.
+func (noOpStreamer) Stream(context.Context, io.Reader, chan<- error) {}
+
+// NoOpStreamer returns a no-op Streamer
+func NoOpStreamer() Streamer {
+	return noOpStreamer{}
 }
