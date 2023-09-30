@@ -1,8 +1,9 @@
-package exporters
+package audio
 
 import (
 	"context"
 	"log/slog"
+	"os"
 )
 
 type noOpLogHandler struct{}
@@ -21,4 +22,12 @@ func (h noOpLogHandler) WithAttrs([]slog.Attr) slog.Handler {
 
 func (h noOpLogHandler) WithGroup(string) slog.Handler {
 	return h
+}
+
+func NoOpLogHandler() slog.Handler {
+	return noOpLogHandler{}
+}
+
+func newDefaultHandler() slog.Handler {
+	return slog.NewTextHandler(os.Stderr, nil)
 }
