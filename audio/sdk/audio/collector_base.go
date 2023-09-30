@@ -63,8 +63,13 @@ func (c collector[T]) Shutdown(ctx context.Context) error {
 
 // NewCollector creates a Collector from the input Extractor and Registry.
 func NewCollector[T any](extractor Extractor[T], registry Registry[T]) Collector[T] {
-	if extractor == nil || registry == nil {
-		return nil
+	switch {
+	case extractor == nil && registry == nil:
+		return NoOpCollector[T]()
+	case extractor == nil:
+		extractor = NoOpExtractor[T]()
+	case registry == nil:
+		registry = NoOpRegistry[T]()
 	}
 
 	return collector[T]{
