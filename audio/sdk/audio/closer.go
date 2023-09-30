@@ -49,23 +49,6 @@ func (fn CloserFunc) Shutdown(ctx context.Context) error {
 	return fn(ctx)
 }
 
-type noOpCloser struct{}
-
-// ForceFlush implements the StreamCloser interface.
-//
-// This is a no-op implementation and the returned error is always nil.
-func (noOpCloser) ForceFlush() error { return nil }
-
-// Shutdown implements the StreamCloser interface.
-//
-// This is a no-op implementation and the returned error is always nil.
-func (noOpCloser) Shutdown(context.Context) error { return nil }
-
-// NoOpCloser returns a no-op StreamCloser.
-func NoOpCloser() StreamCloser {
-	return noOpCloser{}
-}
-
 // Shutdown dispatches graceful shutdown signals to all provided Closer interfaces, returning a joined error
 // of any non-nil resulting errors; doing so under a timeout using contexts.
 //
