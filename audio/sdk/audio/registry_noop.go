@@ -24,7 +24,7 @@ func NoOpLoader[T any]() Loader[T] {
 	return noOpRegistry[T]{}
 }
 
-// NoOpRegisterer returns a no-op Registry
-func NoOpRegisterer[T any]() Registry[T] {
+// NoOpRegistry returns a no-op Registry
+func NoOpRegistry[T any]() Registry[T] {
 	return noOpRegistry[T]{}
 }
