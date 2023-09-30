@@ -12,7 +12,6 @@ const defaultBlockSize = 64
 
 var DefaultConfig = Config{
 	spectrumBlockSize: defaultBlockSize,
-	LogHandler:        noOpLogHandler{},
 }
 
 type Config struct {
