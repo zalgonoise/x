@@ -60,6 +60,9 @@ func run() (error, int) {
 
 	logger.InfoContext(ctx, "setting up exporter")
 	exporter, err := newExporter(ctx, config, logHandler)
+	if err != nil {
+		return err, 1
+	}
 
 	logger.InfoContext(ctx, "setting up processor")
 	proc := processors.PCM(exporter)
@@ -68,13 +71,13 @@ func run() (error, int) {
 	defer cancel()
 
 	logger.InfoContext(ctx, "reading from consumer")
-	r, err := consumer.Consume(ctx)
+	reader, err := consumer.Consume(ctx)
 	if err != nil {
 		return err, 1
 	}
 
 	logger.InfoContext(ctx, "processing signal")
-	go proc.Process(ctx, r)
+	go proc.Process(ctx, reader)
 
 	errs := proc.Err()
 
@@ -87,7 +90,7 @@ func run() (error, int) {
 
 			return nil, 0
 		case err, ok := <-errs:
-			if !ok || err == nil || errors.Is(err, processors.ErrHaltSignal) {
+			if !ok || err == nil || errors.Is(err, audio.ErrHaltSignal) {
 				return nil, 0
 			}
 
