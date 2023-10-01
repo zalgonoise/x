@@ -10,6 +10,7 @@ type Streamer interface {
 	Stream(ctx context.Context, r io.Reader, errCh chan<- error)
 }
 
+// StreamExporter describes a type that implements both Streamer and Exporter interfaces
 type StreamExporter interface {
 	Streamer
 	Exporter
