@@ -65,11 +65,26 @@ func (m multiExporter) Shutdown(ctx context.Context) error {
 
 // MultiExporter joins several Exporter interfaces as one, to facilitate its access when implementing
 // Processor logic, without much repetition.
+//
+// The input parameter is variadic, and it will work with any number of items.
+//
+// If the caller does not pass any Exporters to the function, or they are all nil, a no-op Exporter is returned.
+// If only one Exporter is passed to the function, it will be returned directly.
+//
+// For working with multiple exporters, a multiExporter type wraps a slice of Exporter. This function
+// creates that data structure with a capacity based on the amount of Exporters passed in on input. Each item
+// in the input is iterated on, where the function checks if it is nil (skipping it); and if it's also a
+// multiExporter type. If it is a multiExporter, then all its (inner slice) Exporter items are appended to the returned
+// multiExporter.
 func MultiExporter(exporters ...Exporter) Exporter {
 	switch len(exporters) {
 	case 0:
 		return NoOpExporter()
 	case 1:
+		if exporters[0] == nil {
+			return NoOpExporter()
+		}
+
 		return exporters[0]
 	default:
 		me := multiExporter{
@@ -85,6 +100,10 @@ func MultiExporter(exporters ...Exporter) Exporter {
 			default:
 				me.exporters = append(me.exporters, v)
 			}
+		}
+
+		if len(me.exporters) == 0 {
+			return NoOpExporter()
 		}
 
 		return me
