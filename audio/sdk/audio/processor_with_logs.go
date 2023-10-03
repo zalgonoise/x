@@ -84,7 +84,7 @@ func (p loggedProcessor) Shutdown(ctx context.Context) error {
 // text handler is created as a safe default. If the input Processor is already a logged Processor; then
 // its logger's handler is replaced with this handler (input or default one).
 //
-// This Processor will not add any new functionality besides decorating the processor with log events.
+// This Processor will not add any new functionality besides decorating the Processor with log events.
 func ProcessorWithLogs(p Processor, handler slog.Handler) Processor {
 	if p == nil {
 		return NoOpProcessor()
