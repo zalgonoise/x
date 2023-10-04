@@ -7,13 +7,9 @@ import (
 
 	"github.com/zalgonoise/gbuf"
 	"github.com/zalgonoise/x/audio/sdk/audio"
+	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
 	"github.com/zalgonoise/x/cfg"
-)
-
-const (
-	defaultFlushFrequency = time.Second
-	defaultMaxBatchSize   = 256
 )
 
 type batchRegistry[T any] struct {
@@ -27,13 +23,21 @@ type batchRegistry[T any] struct {
 }
 
 // Register stores the input data in the audio.Registry's inner buffer, returning an error if raised.
+//
+// This implementation implies that this audio.Registry will consume more than it will publish. It uses a ring-buffer
+// implementation to cache the incoming values while they are unread, before they are sent to the value channel from
+// the Load method.
+//
+// The ring-buffer is a single-allocation data structure with a fixed size, and will overwrite older values even if they
+// haven't been read since it was written.
 func (r batchRegistry[T]) Register(value T) error {
 	return r.buffer.WriteItem(value)
 }
 
 // Load returns a receive-only channel of items of a given type, usually as part of a Registry features.
 //
-// The returned channel is actually the underlying audio.Registry's values channel.
+// The returned channel is actually the underlying unit audio.Registry's values channel. However, the values registered
+// to it are managed by this audio.Registry
 func (r batchRegistry[T]) Load() <-chan T {
 	return r.reg.Load()
 }
@@ -145,14 +149,14 @@ func (r batchRegistry[T]) run(ctx context.Context, flushFrequency time.Duration)
 }
 
 func New[T any](options ...cfg.Option[Config[T]]) audio.Registry[T] {
-	config := cfg.New(options...)
-
-	if config.maxBatchSize == 0 {
-		config.maxBatchSize = defaultMaxBatchSize
-	}
+	config := cfg.Set(defaultConfig[T](), options...)
 
 	if config.reg == nil {
 		config.reg = unitreg.New[T](config.maxBatchSize)
+	}
+
+	if config.compactor == nil {
+		config.compactor = compactors.Last[T]
 	}
 
 	if config.flushFrequency == 0 {
