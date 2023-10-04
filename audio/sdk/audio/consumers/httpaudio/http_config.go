@@ -41,11 +41,11 @@ type Config struct {
 
 // WithTimeout sets a general timeout for the HTTP connection.
 func WithTimeout(dur time.Duration) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
-		if dur == 0 {
-			dur = defaultConnTimeout
-		}
+	if dur == 0 {
+		return cfg.NoOp[Config]{}
+	}
 
+	return cfg.Register(func(config Config) Config {
 		config.timeout = dur
 
 		return config
@@ -54,6 +54,10 @@ func WithTimeout(dur time.Duration) cfg.Option[Config] {
 
 // WithTarget defines the HTTP URL of the audio source.
 func WithTarget(target string) cfg.Option[Config] {
+	if target == "" {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.target = target
 
@@ -62,10 +66,6 @@ func WithTarget(target string) cfg.Option[Config] {
 }
 
 func validateTarget(config Config) error {
-	if config.target == "" {
-		return ErrEmptyAddress
-	}
-
 	if !strings.HasPrefix(config.target, protoHTTP) &&
 		!strings.HasPrefix(config.target, protoHTTPS) {
 		return ErrInvalidProtocol
