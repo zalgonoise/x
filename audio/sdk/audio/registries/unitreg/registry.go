@@ -13,6 +13,8 @@ type unitRegistry[T any] struct {
 }
 
 // Register stores the input data in the audio.Registry, returning an error if raised
+//
+// This implementation sends the input value to its value channel and returns a nil error.
 func (r *unitRegistry[T]) Register(value T) error {
 	r.ch <- value
 
@@ -20,6 +22,9 @@ func (r *unitRegistry[T]) Register(value T) error {
 }
 
 // Load returns a receive-only channel of items of a given type, usually as part of a Registry features.
+//
+// The value channel is tied to the Register method, which sends data it receives to this channel; allowing
+// asynchronous publishing and consumption of said values.
 //
 // The audio.Registry's Shutdown method will close this channel.
 func (r *unitRegistry[T]) Load() <-chan T {
