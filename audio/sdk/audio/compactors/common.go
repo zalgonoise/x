@@ -27,6 +27,15 @@ type Number interface {
 		~float32 | ~float64
 }
 
+// Last returns the last item in a slice, as a default one-fits-all compactor
+func Last[T any](values []T) (T, error) {
+	if len(values) == 0 {
+		return *new(T), nil
+	}
+
+	return values[len(values)-1], nil
+}
+
 // Max finds the biggest (ordered) value in a slice of a given type, with a bigger-than approach,
 // meaning that it will work for positive integer and float values.
 //
