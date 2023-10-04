@@ -12,7 +12,7 @@ type Registry[T any] interface {
 	// It is the responsibility of the Loader or the Registry to feed items into the returned channel for consumers to
 	// use accordingly, according to the Loader or Registry strategy implemented by the type.
 	Loader[T]
-	// Closer implements the Shutdown method, allowing a Registry to gracefully shutdown.
+	// Closer requires the Shutdown method, allowing a Registry to gracefully shutdown.
 	Closer
 }
 
