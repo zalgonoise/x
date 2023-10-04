@@ -76,6 +76,10 @@ func WithSpectrum(blockSize int) cfg.Option[Config] {
 }
 
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
+	if logger == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.LogHandler = logger.Handler()
 
@@ -84,6 +88,10 @@ func WithLogger(logger *slog.Logger) cfg.Option[Config] {
 }
 
 func WithLogHandler(h slog.Handler) cfg.Option[Config] {
+	if h == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.LogHandler = h
 
