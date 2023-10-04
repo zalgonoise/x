@@ -55,7 +55,7 @@ func (c *httpConsumer) Shutdown(_ context.Context) error {
 }
 
 func New(options ...cfg.Option[Config]) (audio.Consumer, error) {
-	config := cfg.Set[Config](defaultConfig, options...)
+	config := cfg.Set(defaultConfig, options...)
 
 	if err := Validate(config); err != nil {
 		return audio.NoOpConsumer(), err
