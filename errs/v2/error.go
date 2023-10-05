@@ -1,6 +1,6 @@
 package errs
 
-import "errors"
+import "fmt"
 
 var (
 	spaceSeparator = []rune{' '}
@@ -8,114 +8,74 @@ var (
 )
 
 type errsType interface {
+	// Error allows a simple (and standard) approach to creating
+	// an error type.
 	error
-	Unwrap() error
+	// Unwrap allows a multi-error extraction method, returning a set of all
+	// errors that compose this type.
+	//
+	// It can safely be used in an errors.Is call.
+	Unwrap() []error
 }
 
 type Domain string
 
-func (e Domain) Error() string { return (string)(e) }
-func (e Domain) Unwrap() error { return nil }
+func (e Domain) Error() string   { return (string)(e) }
+func (e Domain) Unwrap() []error { return nil }
 
 type Kind string
 
-func (e Kind) Error() string { return (string)(e) }
-func (e Kind) Unwrap() error { return nil }
+func (e Kind) Error() string   { return (string)(e) }
+func (e Kind) Unwrap() []error { return nil }
 
 type Entity string
 
-func (e Entity) Error() string { return (string)(e) }
-func (e Entity) Unwrap() error { return nil }
+func (e Entity) Error() string   { return (string)(e) }
+func (e Entity) Unwrap() []error { return nil }
 
-func newSentinel(domain Domain, kind Kind, entity Entity) error {
-	switch {
-	case kind == "" && entity == "":
-		return nil
-	case domain == "" && kind == "":
-		return entity
-	case domain == "" && entity == "":
-		return kind
+func Errorf(format string, args ...any) error {
+	if len(args) == 0 {
+		return fmt.Errorf(format)
 	}
 
-	s := sentinel{
-		kind:   kind,
-		entity: entity,
-
-		errString: sentinelErrString(kind, entity),
+	// strip domains in Errorf
+	for i := range args {
+		if a, ok := (args[i]).(sentinelWithDomain); ok {
+			args[i] = a.sentinel
+		}
 	}
 
-	if domain == "" {
-		return s
-	}
-
-	return sentinelWithDomain{
-		sentinel:  s,
-		domain:    domain,
-		errString: sentinelWithDomainErrString(domain, s.errString),
-	}
+	return fmt.Errorf(format, args...)
 }
 
-func sentinelErrString(kind Kind, entity Entity) string {
-	s := make([]rune, len(kind)+len(spaceSeparator)+len(entity))
+func Sentinel(kind Kind, entity Entity) error {
+	return newSentinel("", kind, entity)
+}
 
-	n := copy(s, []rune(kind))
+func WithDomain(domain Domain, kind Kind, entity Entity) error {
+	return newSentinel(domain, kind, entity)
+}
+
+func Wrap(err errsType, wrapper error) error {
+	return wrapErrorWithoutDomain(err, wrapper)
+}
+
+func withSpace[K, E ~string](first K, last E) string {
+	s := make([]rune, len(first)+len(spaceSeparator)+len(last))
+
+	n := copy(s, []rune(first))
 	n += copy(s[n:], spaceSeparator)
-	copy(s[n:], []rune(entity))
+	copy(s[n:], []rune(last))
 
 	return string(s)
 }
 
-func sentinelWithDomainErrString(domain Domain, err string) string {
-	s := make([]rune, len(domain)+len(colonSeparator)+len(err))
+func withColon[K, E ~string](first K, last E) string {
+	s := make([]rune, len(first)+len(colonSeparator)+len(last))
 
-	n := copy(s, []rune(domain))
+	n := copy(s, []rune(first))
 	n += copy(s[n:], colonSeparator)
-	n += copy(s, []rune(err))
+	n += copy(s, []rune(last))
 
 	return string(s)
-}
-
-type sentinel struct {
-	kind   Kind
-	entity Entity
-
-	errString string
-}
-
-func (e sentinel) Error() string {
-	return e.errString
-}
-
-func (e sentinel) Unwrap() error {
-	return errors.Join(e.kind, e.entity)
-}
-
-type sentinelWithDomain struct {
-	sentinel
-
-	domain    Domain
-	errString string
-}
-
-func (e sentinelWithDomain) Error() string {
-	return e.errString
-}
-
-func (e sentinelWithDomain) Unwrap() error {
-	return errors.Join(e.domain, e.kind, e.entity)
-}
-
-type sentinelWrapped struct {
-	err errsType
-
-	wrapped   error
-	errString string
-}
-
-func (e sentinelWrapped) Error() string {
-	return e.errString
-}
-
-func (e sentinelWrapped) Unwrap() error {
-	return errors.Join(e.err.Unwrap(), e.wrapped)
 }
