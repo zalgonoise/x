@@ -32,29 +32,36 @@ message Data {
   Requirements pc_requirements = 15 [json_name="pc_requirements"];
   Requirements mac_requirements = 16 [json_name="mac_requirements"];
   Requirements linux_requirements = 17 [json_name="linux_requirements"];
-  repeated string developers = 18 [json_name="developers"];
-  repeated string publishers = 19 [json_name="publishers"];
-  PriceOverview price_overview = 20 [json_name="price_overview"];
-  repeated int64 packages = 21 [json_name="packages"];
-  repeated PackageGroup package_groups = 22 [json_name="package_groups"];
-  Platforms platforms = 23 [json_name="platforms"];
-  Metacritic metacritic = 24 [json_name="metacritic"];
-  repeated Category categories = 25 [json_name="categories"];
-  repeated Genre genres = 26 [json_name="genres"];
-  repeated Screenshot screenshots = 27 [json_name="screenshots"];
-  repeated Movie movies = 28 [json_name="movies"];
-  Recommendations recommendations = 29 [json_name="recommendations"];
-  Achievements achievements = 30 [json_name="achievements"];
-  ReleaseDate release_date = 31 [json_name="release_date"];
-  SupportInfo support_info = 32 [json_name="support_info"];
-  string background = 33 [json_name="background"];
-  string background_raw = 34 [json_name="background_raw"];
-  ContentDescriptors content_descriptors = 35 [json_name="content_descriptors"];
+  string legal_notice = 18 [json_name="legal_notice"];
+  repeated string developers = 19 [json_name="developers"];
+  repeated string publishers = 20 [json_name="publishers"];
+  repeated Demo demos = 21 [json_name="demos"];
+  PriceOverview price_overview = 22 [json_name="price_overview"];
+  repeated int64 packages = 23 [json_name="packages"];
+  repeated PackageGroup package_groups = 24 [json_name="package_groups"];
+  Platforms platforms = 25 [json_name="platforms"];
+  Metacritic metacritic = 26 [json_name="metacritic"];
+  repeated Category categories = 27 [json_name="categories"];
+  repeated Genre genres = 28 [json_name="genres"];
+  repeated Screenshot screenshots = 29 [json_name="screenshots"];
+  repeated Movie movies = 30 [json_name="movies"];
+  Recommendations recommendations = 31 [json_name="recommendations"];
+  Achievements achievements = 32 [json_name="achievements"];
+  ReleaseDate release_date = 33 [json_name="release_date"];
+  SupportInfo support_info = 34 [json_name="support_info"];
+  string background = 35 [json_name="background"];
+  string background_raw = 36 [json_name="background_raw"];
+  ContentDescriptors content_descriptors = 37 [json_name="content_descriptors"];
 }
 
 message Requirements {
   string minimum = 1 [json_name="minimum"];
   string recommended = 2 [json_name="recommended"];
+}
+
+message Demo {
+  int64 appid = 1 [json_name="appid"];
+  string description = 2 [json_name="description"];
 }
 
 message PriceOverview {
