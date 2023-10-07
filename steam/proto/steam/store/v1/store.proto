@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package proto.steam.store.v1;
+
+
+option go_package = "github.com/zalgonoise/x/steam/pb/proto/steam/store";
+
+message AppDetailsResponse {
+  map<string, AppDetails> app_details = 1 [json_name="app_details"];
+}
+
+message AppDetails {
+  bool success = 1 [json_name="success"];
+  Data data = 2 [json_name="data"];
+}
+
+message Data {
+  string type = 1 [json_name="type"];
+  string name = 2 [json_name="name"];
+  int64 steam_appid = 3  [json_name="steam_appid"];
+  int32 required_age = 4 [json_name="required_age"];
+  bool is_free = 5 [json_name="is_free"];
+  repeated int64 dlc = 6 [json_name="dlc"];
+  string detailed_description = 7 [json_name="detailed_description"];
+  string about_the_game = 8 [json_name="about_the_game"];
+  string short_description = 9 [json_name="short_description"];
+  string supported_languages = 10 [json_name="supported_languages"];
+  string header_image = 11 [json_name="header_image"];
+  string capsule_image = 12 [json_name="capsule_image"];
+  string capsule_imagev5 = 13 [json_name="capsule_imagev5"];
+  string website = 14 [json_name="website"];
+  Requirements pc_requirements = 15 [json_name="pc_requirements"];
+  Requirements mac_requirements = 16 [json_name="mac_requirements"];
+  Requirements linux_requirements = 17 [json_name="linux_requirements"];
+  repeated string developers = 18 [json_name="developers"];
+  repeated string publishers = 19 [json_name="publishers"];
+  PriceOverview price_overview = 20 [json_name="price_overview"];
+  repeated int64 packages = 21 [json_name="packages"];
+  repeated PackageGroup package_groups = 22 [json_name="package_groups"];
+  Platforms platforms = 23 [json_name="platforms"];
+  Metacritic metacritic = 24 [json_name="metacritic"];
+  repeated Category categories = 25 [json_name="categories"];
+  repeated Genre genres = 26 [json_name="genres"];
+  repeated Screenshot screenshots = 27 [json_name="screenshots"];
+  repeated Movie movies = 28 [json_name="movies"];
+  Recommendations recommendations = 29 [json_name="recommendations"];
+  Achievements achievements = 30 [json_name="achievements"];
+  ReleaseDate release_date = 31 [json_name="release_date"];
+  SupportInfo support_info = 32 [json_name="support_info"];
+  string background = 33 [json_name="background"];
+  string background_raw = 34 [json_name="background_raw"];
+  ContentDescriptors content_descriptors = 35 [json_name="content_descriptors"];
+}
+
+message Requirements {
+  string minimum = 1 [json_name="minimum"];
+  string recommended = 2 [json_name="recommended"];
+}
+
+message PriceOverview {
+  string currency = 1 [json_name="currency"];
+  int32 initial = 2 [json_name="initial"];
+  int32 final = 3 [json_name="final"];
+  int32 discount_percent = 4 [json_name="discount_percent"];
+  string initial_formatted = 5 [json_name="initial_formatted"];
+  string final_formatted = 6 [json_name="final_formatted"];
+}
+
+message PackageGroup {
+  string name = 1 [json_name="name"];
+  string title = 2 [json_name="title"];
+  string description = 3 [json_name="description"];
+  string selection_text = 4 [json_name="selection_text"];
+  string save_text = 5 [json_name="save_text"];
+  int32 display_type = 6 [json_name="display_type"];
+  string is_recurring_subscription = 7 [json_name="is_recurring_subscription"];
+  repeated Sub subs = 8 [json_name="subs"];
+}
+
+message Sub {
+  int64 packageid = 1 [json_name="packageid"];
+  string percent_savings_text = 2 [json_name="percent_savings_text"];
+  int32 percent_savings = 3 [json_name="percent_savings"];
+  string option_text = 4 [json_name="option_text"];
+  string option_description = 5 [json_name="option_description"];
+  string can_get_free_license = 6 [json_name="can_get_free_license"];
+  bool is_free_license = 7 [json_name="is_free_license"];
+  int32 price_in_cents_with_discount = 8 [json_name="price_in_cents_with_discount"];
+}
+
+message Platforms {
+  bool windows = 1 [json_name="windows"];
+  bool mac = 2 [json_name="mac"];
+  bool linux = 3 [json_name="linux"];
+}
+
+message Metacritic {
+  int64 score = 1 [json_name="score"];
+  string url = 2 [json_name="url"];
+}
+
+message Category {
+  int64 id = 1 [json_name="id"];
+  string description = 2 [json_name="description"];
+}
+
+message Genre {
+  string id = 1 [json_name="id"];
+  string description = 2 [json_name="description"];
+}
+
+message Screenshot {
+  int64 id = 1 [json_name="id"];
+  string path_thumbnail = 2 [json_name="path_thumbnail"];
+  string path_full = 3 [json_name="path_full"];
+}
+
+message Movie {
+  int64 id = 1 [json_name="id"];
+  string name = 2 [json_name="name"];
+  string thumbnail = 3 [json_name="thumbnail"];
+  map<string, string> webm = 4 [json_name="webm"];
+  map<string, string> mp4 = 5 [json_name="mp4"];
+  bool highlight = 6 [json_name="highlight"];
+}
+
+message Recommendations {
+  int64 total = 1 [json_name="total"];
+}
+
+message Achievements {
+  int64 total = 1 [json_name="total"];
+  repeated Highlight highlighted = 2 [json_name="highlighted"];
+}
+
+message Highlight {
+  string name = 1 [json_name="name"];
+  string path = 2 [json_name="path"];
+}
+
+message ReleaseDate {
+  bool coming_soon = 1 [json_name="coming_soon"];
+  string date = 2 [json_name="date"];
+}
+
+message SupportInfo {
+  string url = 1 [json_name="url"];
+  string email = 2 [json_name="email"];
+}
+
+message ContentDescriptors {
+  repeated int64 ids = 1 [json_name="ids"];
+  string notes = 2 [json_name="notes"];
+}
