@@ -10,7 +10,7 @@ GO_DEPENDENCIES = google.golang.org/protobuf/cmd/protoc-gen-go \
 define make-go-dependency
   # target template for go tools, can be referenced e.g. via /bin/<tool>
   bin/$(notdir $(subst /v2,,$1)): go.mod
-	GOBIN=$(PWD)/bin go install $1
+	GOBIN=$(PWD)/bin go install $1@latest
 endef
 
 
