@@ -17,12 +17,14 @@ func (e sentinel) Unwrap() []error {
 
 func newSentinel(domain Domain, kind Kind, entity Entity) error {
 	switch {
-	case kind == "" && entity == "":
+	case domain == "" && kind == "" && entity == "":
 		return nil
-	case domain == "" && kind == "":
-		return entity
+	case kind == "" && entity == "":
+		return domain
 	case domain == "" && entity == "":
 		return kind
+	case domain == "" && kind == "":
+		return entity
 	}
 
 	s := sentinel{
