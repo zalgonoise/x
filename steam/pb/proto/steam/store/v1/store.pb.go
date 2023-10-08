@@ -1560,6 +1560,2398 @@ func (x *ContentDescriptors) GetNotes() string {
 	return ""
 }
 
+type DevelopersResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Developers map[string]*DevelopersFilter `protobuf:"bytes,1,rep,name=developers,proto3" json:"developers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *DevelopersResponse) Reset() {
+	*x = DevelopersResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DevelopersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DevelopersResponse) ProtoMessage() {}
+
+func (x *DevelopersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DevelopersResponse.ProtoReflect.Descriptor instead.
+func (*DevelopersResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *DevelopersResponse) GetDevelopers() map[string]*DevelopersFilter {
+	if x != nil {
+		return x.Developers
+	}
+	return nil
+}
+
+type DevelopersFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool            `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *DevelopersData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *DevelopersFilter) Reset() {
+	*x = DevelopersFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DevelopersFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DevelopersFilter) ProtoMessage() {}
+
+func (x *DevelopersFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DevelopersFilter.ProtoReflect.Descriptor instead.
+func (*DevelopersFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *DevelopersFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *DevelopersFilter) GetData() *DevelopersData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type DevelopersData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Developers []string `protobuf:"bytes,1,rep,name=developers,proto3" json:"developers,omitempty"`
+}
+
+func (x *DevelopersData) Reset() {
+	*x = DevelopersData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DevelopersData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DevelopersData) ProtoMessage() {}
+
+func (x *DevelopersData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DevelopersData.ProtoReflect.Descriptor instead.
+func (*DevelopersData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *DevelopersData) GetDevelopers() []string {
+	if x != nil {
+		return x.Developers
+	}
+	return nil
+}
+
+type PublishersResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Publishers map[string]*PublishersFilter `protobuf:"bytes,1,rep,name=publishers,proto3" json:"publishers,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *PublishersResponse) Reset() {
+	*x = PublishersResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PublishersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublishersResponse) ProtoMessage() {}
+
+func (x *PublishersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublishersResponse.ProtoReflect.Descriptor instead.
+func (*PublishersResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *PublishersResponse) GetPublishers() map[string]*PublishersFilter {
+	if x != nil {
+		return x.Publishers
+	}
+	return nil
+}
+
+type PublishersFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool            `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *PublishersData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *PublishersFilter) Reset() {
+	*x = PublishersFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PublishersFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublishersFilter) ProtoMessage() {}
+
+func (x *PublishersFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublishersFilter.ProtoReflect.Descriptor instead.
+func (*PublishersFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *PublishersFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *PublishersFilter) GetData() *PublishersData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type PublishersData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Publishers []string `protobuf:"bytes,1,rep,name=publishers,proto3" json:"publishers,omitempty"`
+}
+
+func (x *PublishersData) Reset() {
+	*x = PublishersData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PublishersData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PublishersData) ProtoMessage() {}
+
+func (x *PublishersData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PublishersData.ProtoReflect.Descriptor instead.
+func (*PublishersData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *PublishersData) GetPublishers() []string {
+	if x != nil {
+		return x.Publishers
+	}
+	return nil
+}
+
+type DemosResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Demos map[string]*DemosFilter `protobuf:"bytes,1,rep,name=demos,proto3" json:"demos,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *DemosResponse) Reset() {
+	*x = DemosResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[26]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DemosResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DemosResponse) ProtoMessage() {}
+
+func (x *DemosResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[26]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DemosResponse.ProtoReflect.Descriptor instead.
+func (*DemosResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *DemosResponse) GetDemos() map[string]*DemosFilter {
+	if x != nil {
+		return x.Demos
+	}
+	return nil
+}
+
+type DemosFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool       `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *DemosData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *DemosFilter) Reset() {
+	*x = DemosFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[27]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DemosFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DemosFilter) ProtoMessage() {}
+
+func (x *DemosFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[27]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DemosFilter.ProtoReflect.Descriptor instead.
+func (*DemosFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *DemosFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *DemosFilter) GetData() *DemosData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type DemosData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Demos []*Demo `protobuf:"bytes,1,rep,name=demos,proto3" json:"demos,omitempty"`
+}
+
+func (x *DemosData) Reset() {
+	*x = DemosData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[28]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DemosData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DemosData) ProtoMessage() {}
+
+func (x *DemosData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[28]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DemosData.ProtoReflect.Descriptor instead.
+func (*DemosData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *DemosData) GetDemos() []*Demo {
+	if x != nil {
+		return x.Demos
+	}
+	return nil
+}
+
+type PriceOverviewResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	PriceOverview map[string]*PriceOverviewFilter `protobuf:"bytes,1,rep,name=price_overview,proto3" json:"price_overview,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *PriceOverviewResponse) Reset() {
+	*x = PriceOverviewResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[29]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PriceOverviewResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PriceOverviewResponse) ProtoMessage() {}
+
+func (x *PriceOverviewResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[29]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PriceOverviewResponse.ProtoReflect.Descriptor instead.
+func (*PriceOverviewResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *PriceOverviewResponse) GetPriceOverview() map[string]*PriceOverviewFilter {
+	if x != nil {
+		return x.PriceOverview
+	}
+	return nil
+}
+
+type PriceOverviewFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool               `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *PriceOverviewData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *PriceOverviewFilter) Reset() {
+	*x = PriceOverviewFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[30]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PriceOverviewFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PriceOverviewFilter) ProtoMessage() {}
+
+func (x *PriceOverviewFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[30]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PriceOverviewFilter.ProtoReflect.Descriptor instead.
+func (*PriceOverviewFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *PriceOverviewFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *PriceOverviewFilter) GetData() *PriceOverviewData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type PriceOverviewData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	PriceOverview *PriceOverview `protobuf:"bytes,1,opt,name=price_overview,proto3" json:"price_overview,omitempty"`
+}
+
+func (x *PriceOverviewData) Reset() {
+	*x = PriceOverviewData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[31]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PriceOverviewData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PriceOverviewData) ProtoMessage() {}
+
+func (x *PriceOverviewData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[31]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PriceOverviewData.ProtoReflect.Descriptor instead.
+func (*PriceOverviewData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *PriceOverviewData) GetPriceOverview() *PriceOverview {
+	if x != nil {
+		return x.PriceOverview
+	}
+	return nil
+}
+
+type PackagesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Packages map[string]*PackagesFilter `protobuf:"bytes,1,rep,name=packages,proto3" json:"packages,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *PackagesResponse) Reset() {
+	*x = PackagesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[32]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PackagesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackagesResponse) ProtoMessage() {}
+
+func (x *PackagesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[32]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackagesResponse.ProtoReflect.Descriptor instead.
+func (*PackagesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *PackagesResponse) GetPackages() map[string]*PackagesFilter {
+	if x != nil {
+		return x.Packages
+	}
+	return nil
+}
+
+type PackagesFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool          `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *PackagesData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *PackagesFilter) Reset() {
+	*x = PackagesFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[33]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PackagesFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackagesFilter) ProtoMessage() {}
+
+func (x *PackagesFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[33]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackagesFilter.ProtoReflect.Descriptor instead.
+func (*PackagesFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *PackagesFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *PackagesFilter) GetData() *PackagesData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type PackagesData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Packages      []int64         `protobuf:"varint,1,rep,packed,name=packages,proto3" json:"packages,omitempty"`
+	PackageGroups []*PackageGroup `protobuf:"bytes,2,rep,name=package_groups,proto3" json:"package_groups,omitempty"`
+}
+
+func (x *PackagesData) Reset() {
+	*x = PackagesData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[34]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PackagesData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PackagesData) ProtoMessage() {}
+
+func (x *PackagesData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[34]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PackagesData.ProtoReflect.Descriptor instead.
+func (*PackagesData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *PackagesData) GetPackages() []int64 {
+	if x != nil {
+		return x.Packages
+	}
+	return nil
+}
+
+func (x *PackagesData) GetPackageGroups() []*PackageGroup {
+	if x != nil {
+		return x.PackageGroups
+	}
+	return nil
+}
+
+type PlatformsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Platforms map[string]*PlatformsFilter `protobuf:"bytes,1,rep,name=platforms,proto3" json:"platforms,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *PlatformsResponse) Reset() {
+	*x = PlatformsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[35]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PlatformsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlatformsResponse) ProtoMessage() {}
+
+func (x *PlatformsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[35]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlatformsResponse.ProtoReflect.Descriptor instead.
+func (*PlatformsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *PlatformsResponse) GetPlatforms() map[string]*PlatformsFilter {
+	if x != nil {
+		return x.Platforms
+	}
+	return nil
+}
+
+type PlatformsFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool           `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *PlatformsData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *PlatformsFilter) Reset() {
+	*x = PlatformsFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[36]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PlatformsFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlatformsFilter) ProtoMessage() {}
+
+func (x *PlatformsFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[36]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlatformsFilter.ProtoReflect.Descriptor instead.
+func (*PlatformsFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *PlatformsFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *PlatformsFilter) GetData() *PlatformsData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type PlatformsData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Platforms *Platforms `protobuf:"bytes,1,opt,name=platforms,proto3" json:"platforms,omitempty"`
+}
+
+func (x *PlatformsData) Reset() {
+	*x = PlatformsData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[37]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PlatformsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PlatformsData) ProtoMessage() {}
+
+func (x *PlatformsData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[37]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PlatformsData.ProtoReflect.Descriptor instead.
+func (*PlatformsData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *PlatformsData) GetPlatforms() *Platforms {
+	if x != nil {
+		return x.Platforms
+	}
+	return nil
+}
+
+type CategoriesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Categories map[string]*CategoriesFilter `protobuf:"bytes,1,rep,name=categories,proto3" json:"categories,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *CategoriesResponse) Reset() {
+	*x = CategoriesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[38]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CategoriesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CategoriesResponse) ProtoMessage() {}
+
+func (x *CategoriesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[38]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CategoriesResponse.ProtoReflect.Descriptor instead.
+func (*CategoriesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *CategoriesResponse) GetCategories() map[string]*CategoriesFilter {
+	if x != nil {
+		return x.Categories
+	}
+	return nil
+}
+
+type CategoriesFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool            `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *CategoriesData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *CategoriesFilter) Reset() {
+	*x = CategoriesFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[39]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CategoriesFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CategoriesFilter) ProtoMessage() {}
+
+func (x *CategoriesFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[39]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CategoriesFilter.ProtoReflect.Descriptor instead.
+func (*CategoriesFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *CategoriesFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *CategoriesFilter) GetData() *CategoriesData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type CategoriesData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Categories []*Category `protobuf:"bytes,1,rep,name=categories,proto3" json:"categories,omitempty"`
+}
+
+func (x *CategoriesData) Reset() {
+	*x = CategoriesData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[40]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CategoriesData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CategoriesData) ProtoMessage() {}
+
+func (x *CategoriesData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[40]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CategoriesData.ProtoReflect.Descriptor instead.
+func (*CategoriesData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *CategoriesData) GetCategories() []*Category {
+	if x != nil {
+		return x.Categories
+	}
+	return nil
+}
+
+type GenresResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Genres map[string]*GenresFilter `protobuf:"bytes,1,rep,name=genres,proto3" json:"genres,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *GenresResponse) Reset() {
+	*x = GenresResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[41]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GenresResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenresResponse) ProtoMessage() {}
+
+func (x *GenresResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[41]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenresResponse.ProtoReflect.Descriptor instead.
+func (*GenresResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *GenresResponse) GetGenres() map[string]*GenresFilter {
+	if x != nil {
+		return x.Genres
+	}
+	return nil
+}
+
+type GenresFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool        `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *GenresData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *GenresFilter) Reset() {
+	*x = GenresFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[42]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GenresFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenresFilter) ProtoMessage() {}
+
+func (x *GenresFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[42]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenresFilter.ProtoReflect.Descriptor instead.
+func (*GenresFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *GenresFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *GenresFilter) GetData() *GenresData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type GenresData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Genres []*Category `protobuf:"bytes,1,rep,name=genres,proto3" json:"genres,omitempty"`
+}
+
+func (x *GenresData) Reset() {
+	*x = GenresData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[43]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GenresData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenresData) ProtoMessage() {}
+
+func (x *GenresData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[43]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenresData.ProtoReflect.Descriptor instead.
+func (*GenresData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *GenresData) GetGenres() []*Category {
+	if x != nil {
+		return x.Genres
+	}
+	return nil
+}
+
+type ScreenshotsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Screenshots map[string]*ScreenshotsFilter `protobuf:"bytes,1,rep,name=screenshots,proto3" json:"screenshots,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *ScreenshotsResponse) Reset() {
+	*x = ScreenshotsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[44]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ScreenshotsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScreenshotsResponse) ProtoMessage() {}
+
+func (x *ScreenshotsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[44]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScreenshotsResponse.ProtoReflect.Descriptor instead.
+func (*ScreenshotsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *ScreenshotsResponse) GetScreenshots() map[string]*ScreenshotsFilter {
+	if x != nil {
+		return x.Screenshots
+	}
+	return nil
+}
+
+type ScreenshotsFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool             `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *ScreenshotsData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *ScreenshotsFilter) Reset() {
+	*x = ScreenshotsFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[45]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ScreenshotsFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScreenshotsFilter) ProtoMessage() {}
+
+func (x *ScreenshotsFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[45]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScreenshotsFilter.ProtoReflect.Descriptor instead.
+func (*ScreenshotsFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *ScreenshotsFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ScreenshotsFilter) GetData() *ScreenshotsData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type ScreenshotsData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Screenshots []*Screenshot `protobuf:"bytes,1,rep,name=screenshots,proto3" json:"screenshots,omitempty"`
+}
+
+func (x *ScreenshotsData) Reset() {
+	*x = ScreenshotsData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[46]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ScreenshotsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ScreenshotsData) ProtoMessage() {}
+
+func (x *ScreenshotsData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[46]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ScreenshotsData.ProtoReflect.Descriptor instead.
+func (*ScreenshotsData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *ScreenshotsData) GetScreenshots() []*Screenshot {
+	if x != nil {
+		return x.Screenshots
+	}
+	return nil
+}
+
+type MoviesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Movies map[string]*MoviesFilter `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *MoviesResponse) Reset() {
+	*x = MoviesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[47]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MoviesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoviesResponse) ProtoMessage() {}
+
+func (x *MoviesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[47]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoviesResponse.ProtoReflect.Descriptor instead.
+func (*MoviesResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *MoviesResponse) GetMovies() map[string]*MoviesFilter {
+	if x != nil {
+		return x.Movies
+	}
+	return nil
+}
+
+type MoviesFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool        `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *MoviesData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *MoviesFilter) Reset() {
+	*x = MoviesFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[48]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MoviesFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoviesFilter) ProtoMessage() {}
+
+func (x *MoviesFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[48]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoviesFilter.ProtoReflect.Descriptor instead.
+func (*MoviesFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{48}
+}
+
+func (x *MoviesFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *MoviesFilter) GetData() *MoviesData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type MoviesData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Movies []*Movie `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty"`
+}
+
+func (x *MoviesData) Reset() {
+	*x = MoviesData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[49]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *MoviesData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoviesData) ProtoMessage() {}
+
+func (x *MoviesData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[49]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoviesData.ProtoReflect.Descriptor instead.
+func (*MoviesData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *MoviesData) GetMovies() []*Movie {
+	if x != nil {
+		return x.Movies
+	}
+	return nil
+}
+
+type RecommendationsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Recommendations map[string]*RecommendationsFilter `protobuf:"bytes,1,rep,name=recommendations,proto3" json:"recommendations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *RecommendationsResponse) Reset() {
+	*x = RecommendationsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[50]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RecommendationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecommendationsResponse) ProtoMessage() {}
+
+func (x *RecommendationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[50]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecommendationsResponse.ProtoReflect.Descriptor instead.
+func (*RecommendationsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{50}
+}
+
+func (x *RecommendationsResponse) GetRecommendations() map[string]*RecommendationsFilter {
+	if x != nil {
+		return x.Recommendations
+	}
+	return nil
+}
+
+type RecommendationsFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool                 `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *RecommendationsData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *RecommendationsFilter) Reset() {
+	*x = RecommendationsFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[51]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RecommendationsFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecommendationsFilter) ProtoMessage() {}
+
+func (x *RecommendationsFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[51]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecommendationsFilter.ProtoReflect.Descriptor instead.
+func (*RecommendationsFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{51}
+}
+
+func (x *RecommendationsFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RecommendationsFilter) GetData() *RecommendationsData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type RecommendationsData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Recommendations *Recommendations `protobuf:"bytes,1,opt,name=recommendations,proto3" json:"recommendations,omitempty"`
+}
+
+func (x *RecommendationsData) Reset() {
+	*x = RecommendationsData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[52]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RecommendationsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecommendationsData) ProtoMessage() {}
+
+func (x *RecommendationsData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[52]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecommendationsData.ProtoReflect.Descriptor instead.
+func (*RecommendationsData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{52}
+}
+
+func (x *RecommendationsData) GetRecommendations() *Recommendations {
+	if x != nil {
+		return x.Recommendations
+	}
+	return nil
+}
+
+type AchievementsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Achievements map[string]*AchievementsFilter `protobuf:"bytes,1,rep,name=achievements,proto3" json:"achievements,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *AchievementsResponse) Reset() {
+	*x = AchievementsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[53]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AchievementsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AchievementsResponse) ProtoMessage() {}
+
+func (x *AchievementsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[53]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AchievementsResponse.ProtoReflect.Descriptor instead.
+func (*AchievementsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *AchievementsResponse) GetAchievements() map[string]*AchievementsFilter {
+	if x != nil {
+		return x.Achievements
+	}
+	return nil
+}
+
+type AchievementsFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool              `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *AchievementsData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *AchievementsFilter) Reset() {
+	*x = AchievementsFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[54]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AchievementsFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AchievementsFilter) ProtoMessage() {}
+
+func (x *AchievementsFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[54]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AchievementsFilter.ProtoReflect.Descriptor instead.
+func (*AchievementsFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *AchievementsFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *AchievementsFilter) GetData() *AchievementsData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type AchievementsData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Achievements *Achievements `protobuf:"bytes,1,opt,name=achievements,proto3" json:"achievements,omitempty"`
+}
+
+func (x *AchievementsData) Reset() {
+	*x = AchievementsData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[55]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AchievementsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AchievementsData) ProtoMessage() {}
+
+func (x *AchievementsData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[55]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AchievementsData.ProtoReflect.Descriptor instead.
+func (*AchievementsData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *AchievementsData) GetAchievements() *Achievements {
+	if x != nil {
+		return x.Achievements
+	}
+	return nil
+}
+
+type ReleaseDateResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ReleaseDate map[string]*ReleaseDateFilter `protobuf:"bytes,1,rep,name=release_date,proto3" json:"release_date,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *ReleaseDateResponse) Reset() {
+	*x = ReleaseDateResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[56]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReleaseDateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseDateResponse) ProtoMessage() {}
+
+func (x *ReleaseDateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[56]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseDateResponse.ProtoReflect.Descriptor instead.
+func (*ReleaseDateResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *ReleaseDateResponse) GetReleaseDate() map[string]*ReleaseDateFilter {
+	if x != nil {
+		return x.ReleaseDate
+	}
+	return nil
+}
+
+type ReleaseDateFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool             `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *ReleaseDateData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *ReleaseDateFilter) Reset() {
+	*x = ReleaseDateFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[57]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReleaseDateFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseDateFilter) ProtoMessage() {}
+
+func (x *ReleaseDateFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[57]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseDateFilter.ProtoReflect.Descriptor instead.
+func (*ReleaseDateFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{57}
+}
+
+func (x *ReleaseDateFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ReleaseDateFilter) GetData() *ReleaseDateData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type ReleaseDateData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ReleaseDate *ReleaseDate `protobuf:"bytes,1,opt,name=release_date,proto3" json:"release_date,omitempty"`
+}
+
+func (x *ReleaseDateData) Reset() {
+	*x = ReleaseDateData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[58]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReleaseDateData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseDateData) ProtoMessage() {}
+
+func (x *ReleaseDateData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[58]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseDateData.ProtoReflect.Descriptor instead.
+func (*ReleaseDateData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{58}
+}
+
+func (x *ReleaseDateData) GetReleaseDate() *ReleaseDate {
+	if x != nil {
+		return x.ReleaseDate
+	}
+	return nil
+}
+
+type SupportInfoResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SupportInfo map[string]*SupportInfoFilter `protobuf:"bytes,1,rep,name=support_info,proto3" json:"support_info,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *SupportInfoResponse) Reset() {
+	*x = SupportInfoResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[59]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SupportInfoResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SupportInfoResponse) ProtoMessage() {}
+
+func (x *SupportInfoResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[59]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SupportInfoResponse.ProtoReflect.Descriptor instead.
+func (*SupportInfoResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{59}
+}
+
+func (x *SupportInfoResponse) GetSupportInfo() map[string]*SupportInfoFilter {
+	if x != nil {
+		return x.SupportInfo
+	}
+	return nil
+}
+
+type SupportInfoFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool             `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *SupportInfoData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *SupportInfoFilter) Reset() {
+	*x = SupportInfoFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[60]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SupportInfoFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SupportInfoFilter) ProtoMessage() {}
+
+func (x *SupportInfoFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[60]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SupportInfoFilter.ProtoReflect.Descriptor instead.
+func (*SupportInfoFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{60}
+}
+
+func (x *SupportInfoFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SupportInfoFilter) GetData() *SupportInfoData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type SupportInfoData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SupportInfo *SupportInfo `protobuf:"bytes,1,opt,name=support_info,proto3" json:"support_info,omitempty"`
+}
+
+func (x *SupportInfoData) Reset() {
+	*x = SupportInfoData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[61]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SupportInfoData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SupportInfoData) ProtoMessage() {}
+
+func (x *SupportInfoData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[61]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SupportInfoData.ProtoReflect.Descriptor instead.
+func (*SupportInfoData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{61}
+}
+
+func (x *SupportInfoData) GetSupportInfo() *SupportInfo {
+	if x != nil {
+		return x.SupportInfo
+	}
+	return nil
+}
+
+type BackgroundResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Background map[string]*BackgroundFilter `protobuf:"bytes,1,rep,name=background,proto3" json:"background,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *BackgroundResponse) Reset() {
+	*x = BackgroundResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[62]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BackgroundResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BackgroundResponse) ProtoMessage() {}
+
+func (x *BackgroundResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[62]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BackgroundResponse.ProtoReflect.Descriptor instead.
+func (*BackgroundResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{62}
+}
+
+func (x *BackgroundResponse) GetBackground() map[string]*BackgroundFilter {
+	if x != nil {
+		return x.Background
+	}
+	return nil
+}
+
+type BackgroundFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool            `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *BackgroundData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *BackgroundFilter) Reset() {
+	*x = BackgroundFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[63]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BackgroundFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BackgroundFilter) ProtoMessage() {}
+
+func (x *BackgroundFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[63]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BackgroundFilter.ProtoReflect.Descriptor instead.
+func (*BackgroundFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{63}
+}
+
+func (x *BackgroundFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *BackgroundFilter) GetData() *BackgroundData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type BackgroundData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Background string `protobuf:"bytes,1,opt,name=background,proto3" json:"background,omitempty"`
+}
+
+func (x *BackgroundData) Reset() {
+	*x = BackgroundData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[64]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BackgroundData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BackgroundData) ProtoMessage() {}
+
+func (x *BackgroundData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[64]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BackgroundData.ProtoReflect.Descriptor instead.
+func (*BackgroundData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{64}
+}
+
+func (x *BackgroundData) GetBackground() string {
+	if x != nil {
+		return x.Background
+	}
+	return ""
+}
+
+type ContentDescriptorsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ContentDescriptors map[string]*ContentDescriptorsFilter `protobuf:"bytes,1,rep,name=content_descriptors,proto3" json:"content_descriptors,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *ContentDescriptorsResponse) Reset() {
+	*x = ContentDescriptorsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[65]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ContentDescriptorsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContentDescriptorsResponse) ProtoMessage() {}
+
+func (x *ContentDescriptorsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[65]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContentDescriptorsResponse.ProtoReflect.Descriptor instead.
+func (*ContentDescriptorsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{65}
+}
+
+func (x *ContentDescriptorsResponse) GetContentDescriptors() map[string]*ContentDescriptorsFilter {
+	if x != nil {
+		return x.ContentDescriptors
+	}
+	return nil
+}
+
+type ContentDescriptorsFilter struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Success bool                    `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Data    *ContentDescriptorsData `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+}
+
+func (x *ContentDescriptorsFilter) Reset() {
+	*x = ContentDescriptorsFilter{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[66]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ContentDescriptorsFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContentDescriptorsFilter) ProtoMessage() {}
+
+func (x *ContentDescriptorsFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[66]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContentDescriptorsFilter.ProtoReflect.Descriptor instead.
+func (*ContentDescriptorsFilter) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{66}
+}
+
+func (x *ContentDescriptorsFilter) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ContentDescriptorsFilter) GetData() *ContentDescriptorsData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+type ContentDescriptorsData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ContentDescriptors *ContentDescriptors `protobuf:"bytes,1,opt,name=content_descriptors,proto3" json:"content_descriptors,omitempty"`
+}
+
+func (x *ContentDescriptorsData) Reset() {
+	*x = ContentDescriptorsData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_steam_store_v1_store_proto_msgTypes[67]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ContentDescriptorsData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContentDescriptorsData) ProtoMessage() {}
+
+func (x *ContentDescriptorsData) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_steam_store_v1_store_proto_msgTypes[67]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContentDescriptorsData.ProtoReflect.Descriptor instead.
+func (*ContentDescriptorsData) Descriptor() ([]byte, []int) {
+	return file_proto_steam_store_v1_store_proto_rawDescGZIP(), []int{67}
+}
+
+func (x *ContentDescriptorsData) GetContentDescriptors() *ContentDescriptors {
+	if x != nil {
+		return x.ContentDescriptors
+	}
+	return nil
+}
+
 var File_proto_steam_store_v1_store_proto protoreflect.FileDescriptor
 
 var file_proto_steam_store_v1_store_proto_rawDesc = []byte{
@@ -1836,11 +4228,416 @@ var file_proto_steam_store_v1_store_proto_rawDesc = []byte{
 	0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x12, 0x10, 0x0a, 0x03, 0x69,
 	0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x03, 0x52, 0x03, 0x69, 0x64, 0x73, 0x12, 0x14, 0x0a,
 	0x05, 0x6e, 0x6f, 0x74, 0x65, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6e, 0x6f,
-	0x74, 0x65, 0x73, 0x42, 0x34, 0x5a, 0x32, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x7a, 0x61, 0x6c, 0x67, 0x6f, 0x6e, 0x6f, 0x69, 0x73, 0x65, 0x2f, 0x78, 0x2f, 0x73,
-	0x74, 0x65, 0x61, 0x6d, 0x2f, 0x70, 0x62, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x73, 0x74,
-	0x65, 0x61, 0x6d, 0x2f, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x74, 0x65, 0x73, 0x22, 0xd5, 0x01, 0x0a, 0x12, 0x44, 0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65,
+	0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x0a, 0x64, 0x65,
+	0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x38,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f,
+	0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x72, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x44, 0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70,
+	0x65, 0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0a, 0x64, 0x65, 0x76, 0x65, 0x6c, 0x6f,
+	0x70, 0x65, 0x72, 0x73, 0x1a, 0x65, 0x0a, 0x0f, 0x44, 0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65,
+	0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3c, 0x0a, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e,
+	0x44, 0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x72, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
+	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x66, 0x0a, 0x10, 0x44,
+	0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x72, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12,
+	0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x38, 0x0a, 0x04, 0x64, 0x61, 0x74,
+	0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x44,
+	0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x72, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52, 0x04, 0x64,
+	0x61, 0x74, 0x61, 0x22, 0x30, 0x0a, 0x0e, 0x44, 0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x72,
+	0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x1e, 0x0a, 0x0a, 0x64, 0x65, 0x76, 0x65, 0x6c, 0x6f, 0x70,
+	0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0a, 0x64, 0x65, 0x76, 0x65, 0x6c,
+	0x6f, 0x70, 0x65, 0x72, 0x73, 0x22, 0xd5, 0x01, 0x0a, 0x12, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73,
+	0x68, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x0a,
+	0x70, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x38, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73,
+	0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x65,
+	0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x50, 0x75, 0x62, 0x6c, 0x69,
+	0x73, 0x68, 0x65, 0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0a, 0x70, 0x75, 0x62, 0x6c,
+	0x69, 0x73, 0x68, 0x65, 0x72, 0x73, 0x1a, 0x65, 0x0a, 0x0f, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73,
+	0x68, 0x65, 0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3c, 0x0a, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x65, 0x72, 0x73, 0x46, 0x69, 0x6c, 0x74,
+	0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x66, 0x0a,
+	0x10, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x65, 0x72, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x38, 0x0a, 0x04, 0x64,
+	0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x65, 0x72, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x30, 0x0a, 0x0e, 0x50, 0x75, 0x62, 0x6c, 0x69, 0x73, 0x68,
+	0x65, 0x72, 0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x1e, 0x0a, 0x0a, 0x70, 0x75, 0x62, 0x6c, 0x69,
+	0x73, 0x68, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0a, 0x70, 0x75, 0x62,
+	0x6c, 0x69, 0x73, 0x68, 0x65, 0x72, 0x73, 0x22, 0xb2, 0x01, 0x0a, 0x0d, 0x44, 0x65, 0x6d, 0x6f,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x44, 0x0a, 0x05, 0x64, 0x65, 0x6d,
+	0x6f, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x2e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e,
+	0x44, 0x65, 0x6d, 0x6f, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x44, 0x65,
+	0x6d, 0x6f, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x05, 0x64, 0x65, 0x6d, 0x6f, 0x73, 0x1a,
+	0x5b, 0x0a, 0x0a, 0x44, 0x65, 0x6d, 0x6f, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a,
+	0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12,
+	0x37, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f,
+	0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6d, 0x6f, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x5c, 0x0a, 0x0b,
+	0x44, 0x65, 0x6d, 0x6f, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73,
+	0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75,
+	0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x33, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61,
+	0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65, 0x6d, 0x6f, 0x73,
+	0x44, 0x61, 0x74, 0x61, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x3d, 0x0a, 0x09, 0x44, 0x65,
+	0x6d, 0x6f, 0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x30, 0x0a, 0x05, 0x64, 0x65, 0x6d, 0x6f, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73,
+	0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x44, 0x65,
+	0x6d, 0x6f, 0x52, 0x05, 0x64, 0x65, 0x6d, 0x6f, 0x73, 0x22, 0xec, 0x01, 0x0a, 0x15, 0x50, 0x72,
+	0x69, 0x63, 0x65, 0x4f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x66, 0x0a, 0x0e, 0x70, 0x72, 0x69, 0x63, 0x65, 0x5f, 0x6f, 0x76, 0x65,
+	0x72, 0x76, 0x69, 0x65, 0x77, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3e, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x4f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x4f, 0x76,
+	0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0e, 0x70, 0x72, 0x69,
+	0x63, 0x65, 0x5f, 0x6f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x1a, 0x6b, 0x0a, 0x12, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x4f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x45, 0x6e, 0x74, 0x72,
+	0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
+	0x6b, 0x65, 0x79, 0x12, 0x3f, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x29, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d,
+	0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x72, 0x69, 0x63, 0x65, 0x4f,
+	0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x6c, 0x0a, 0x13, 0x50, 0x72, 0x69, 0x63,
+	0x65, 0x4f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12,
+	0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
+	0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x3b, 0x0a, 0x04, 0x64, 0x61, 0x74,
+	0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50,
+	0x72, 0x69, 0x63, 0x65, 0x4f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x44, 0x61, 0x74, 0x61,
+	0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x60, 0x0a, 0x11, 0x50, 0x72, 0x69, 0x63, 0x65, 0x4f,
+	0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x44, 0x61, 0x74, 0x61, 0x12, 0x4b, 0x0a, 0x0e, 0x70,
+	0x72, 0x69, 0x63, 0x65, 0x5f, 0x6f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61,
+	0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x72, 0x69, 0x63, 0x65,
+	0x4f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x52, 0x0e, 0x70, 0x72, 0x69, 0x63, 0x65, 0x5f,
+	0x6f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77, 0x22, 0xc7, 0x01, 0x0a, 0x10, 0x50, 0x61, 0x63,
+	0x6b, 0x61, 0x67, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a,
+	0x08, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x34, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74,
+	0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73,
+	0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x08, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x1a,
+	0x61, 0x0a, 0x0d, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79,
+	0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b,
+	0x65, 0x79, 0x12, 0x3a, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x24, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e,
+	0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65,
+	0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02,
+	0x38, 0x01, 0x22, 0x62, 0x0a, 0x0e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x46, 0x69,
+	0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x36,
+	0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x73, 0x44, 0x61, 0x74, 0x61,
+	0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x76, 0x0a, 0x0c, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x03, 0x52, 0x08, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67,
+	0x65, 0x73, 0x12, 0x4a, 0x0a, 0x0e, 0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x67, 0x72,
+	0x6f, 0x75, 0x70, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x50, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x47, 0x72, 0x6f, 0x75, 0x70, 0x52, 0x0e,
+	0x70, 0x61, 0x63, 0x6b, 0x61, 0x67, 0x65, 0x5f, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x73, 0x22, 0xce,
+	0x01, 0x0a, 0x11, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x54, 0x0a, 0x09, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x36, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50,
+	0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x2e, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52,
+	0x09, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x1a, 0x63, 0x0a, 0x0e, 0x50, 0x6c,
+	0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03,
+	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3b,
+	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x46, 0x69,
+	0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22,
+	0x64, 0x0a, 0x0f, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x46, 0x69, 0x6c, 0x74,
+	0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x37, 0x0a, 0x04,
+	0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x4e, 0x0a, 0x0d, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72,
+	0x6d, 0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x3d, 0x0a, 0x09, 0x70, 0x6c, 0x61, 0x74, 0x66, 0x6f,
+	0x72, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x50, 0x6c, 0x61, 0x74, 0x66, 0x6f, 0x72, 0x6d, 0x73, 0x52, 0x09, 0x70, 0x6c, 0x61, 0x74,
+	0x66, 0x6f, 0x72, 0x6d, 0x73, 0x22, 0xd5, 0x01, 0x0a, 0x12, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f,
+	0x72, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x0a,
+	0x63, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x38, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73,
+	0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x43, 0x61, 0x74, 0x65, 0x67,
+	0x6f, 0x72, 0x69, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0a, 0x63, 0x61, 0x74, 0x65,
+	0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x1a, 0x65, 0x0a, 0x0f, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f,
+	0x72, 0x69, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3c, 0x0a, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x46, 0x69, 0x6c, 0x74,
+	0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x66, 0x0a,
+	0x10, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x38, 0x0a, 0x04, 0x64,
+	0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x50, 0x0a, 0x0e, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72,
+	0x69, 0x65, 0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x3e, 0x0a, 0x0a, 0x63, 0x61, 0x74, 0x65, 0x67,
+	0x6f, 0x72, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x79, 0x52, 0x0a, 0x63, 0x61, 0x74,
+	0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x22, 0xb9, 0x01, 0x0a, 0x0e, 0x47, 0x65, 0x6e, 0x72,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x48, 0x0a, 0x06, 0x67, 0x65,
+	0x6e, 0x72, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x30, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x47, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x2e, 0x47, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x06, 0x67, 0x65,
+	0x6e, 0x72, 0x65, 0x73, 0x1a, 0x5d, 0x0a, 0x0b, 0x47, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x38, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65,
+	0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x6e, 0x72,
+	0x65, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
+	0x02, 0x38, 0x01, 0x22, 0x5e, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x46, 0x69, 0x6c,
+	0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x34, 0x0a,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x47, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52, 0x04, 0x64,
+	0x61, 0x74, 0x61, 0x22, 0x44, 0x0a, 0x0a, 0x47, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x44, 0x61, 0x74,
+	0x61, 0x12, 0x36, 0x0a, 0x06, 0x67, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x1e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e,
+	0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72,
+	0x79, 0x52, 0x06, 0x67, 0x65, 0x6e, 0x72, 0x65, 0x73, 0x22, 0xdc, 0x01, 0x0a, 0x13, 0x53, 0x63,
+	0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x5c, 0x0a, 0x0b, 0x73, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3a, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73,
+	0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63,
+	0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x2e, 0x53, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x45, 0x6e, 0x74,
+	0x72, 0x79, 0x52, 0x0b, 0x73, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x1a,
+	0x67, 0x0a, 0x10, 0x53, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x45, 0x6e,
+	0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3d, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65,
+	0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63, 0x72, 0x65,
+	0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x68, 0x0a, 0x11, 0x53, 0x63, 0x72, 0x65,
+	0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a,
+	0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07,
+	0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x39, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74,
+	0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x63, 0x72,
+	0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52, 0x04, 0x64, 0x61,
+	0x74, 0x61, 0x22, 0x55, 0x0a, 0x0f, 0x53, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74,
+	0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x42, 0x0a, 0x0b, 0x73, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73,
+	0x68, 0x6f, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x53, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x52, 0x0b, 0x73, 0x63,
+	0x72, 0x65, 0x65, 0x6e, 0x73, 0x68, 0x6f, 0x74, 0x73, 0x22, 0xb9, 0x01, 0x0a, 0x0e, 0x4d, 0x6f,
+	0x76, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x48, 0x0a, 0x06,
+	0x6d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x30, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x2e, 0x4d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x06,
+	0x6d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x1a, 0x5d, 0x0a, 0x0b, 0x4d, 0x6f, 0x76, 0x69, 0x65, 0x73,
+	0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x38, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73,
+	0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x6f,
+	0x76, 0x69, 0x65, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x5e, 0x0a, 0x0c, 0x4d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x46,
+	0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12,
+	0x34, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x41, 0x0a, 0x0a, 0x4d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x44,
+	0x61, 0x74, 0x61, 0x12, 0x33, 0x0a, 0x06, 0x6d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61,
+	0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x6f, 0x76, 0x69, 0x65,
+	0x52, 0x06, 0x6d, 0x6f, 0x76, 0x69, 0x65, 0x73, 0x22, 0xf8, 0x01, 0x0a, 0x17, 0x52, 0x65, 0x63,
+	0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x6c, 0x0a, 0x0f, 0x72, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e,
+	0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x42, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x52, 0x65, 0x63,
+	0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72,
+	0x79, 0x52, 0x0f, 0x72, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x1a, 0x6f, 0x0a, 0x14, 0x52, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
+	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x41, 0x0a, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2b, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e,
+	0x76, 0x31, 0x2e, 0x52, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
+	0x02, 0x38, 0x01, 0x22, 0x70, 0x0a, 0x15, 0x52, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07,
+	0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73,
+	0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x3d, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65,
+	0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x63, 0x6f,
+	0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x66, 0x0a, 0x13, 0x52, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65,
+	0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x4f, 0x0a, 0x0f,
+	0x72, 0x65, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74,
+	0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x63,
+	0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x0f, 0x72, 0x65,
+	0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x64, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0xe3, 0x01,
+	0x0a, 0x14, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x60, 0x0a, 0x0c, 0x61, 0x63, 0x68, 0x69, 0x65, 0x76,
+	0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3c, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65,
+	0x2e, 0x76, 0x31, 0x2e, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65,
+	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0c, 0x61, 0x63, 0x68, 0x69,
+	0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x1a, 0x69, 0x0a, 0x11, 0x41, 0x63, 0x68, 0x69,
+	0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a,
+	0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12,
+	0x3e, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f,
+	0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e,
+	0x74, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
+	0x02, 0x38, 0x01, 0x22, 0x6a, 0x0a, 0x12, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65,
+	0x6e, 0x74, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63,
+	0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63,
+	0x65, 0x73, 0x73, 0x12, 0x3a, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28,
+	0x0b, 0x32, 0x26, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e,
+	0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65,
+	0x6d, 0x65, 0x6e, 0x74, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22,
+	0x5a, 0x0a, 0x10, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x44,
+	0x61, 0x74, 0x61, 0x12, 0x46, 0x0a, 0x0c, 0x61, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65,
+	0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x41, 0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x0c, 0x61,
+	0x63, 0x68, 0x69, 0x65, 0x76, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x22, 0xde, 0x01, 0x0a, 0x13,
+	0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a, 0x0c, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x5f, 0x64,
+	0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3a, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65,
+	0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0c, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x5f, 0x64,
+	0x61, 0x74, 0x65, 0x1a, 0x67, 0x0a, 0x10, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61,
+	0x74, 0x65, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3d, 0x0a, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e,
+	0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x68, 0x0a, 0x11,
+	0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x39, 0x0a, 0x04, 0x64,
+	0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61, 0x74, 0x65, 0x44, 0x61, 0x74, 0x61,
+	0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x58, 0x0a, 0x0f, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73,
+	0x65, 0x44, 0x61, 0x74, 0x65, 0x44, 0x61, 0x74, 0x61, 0x12, 0x45, 0x0a, 0x0c, 0x72, 0x65, 0x6c,
+	0x65, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x21, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74,
+	0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x44, 0x61,
+	0x74, 0x65, 0x52, 0x0c, 0x72, 0x65, 0x6c, 0x65, 0x61, 0x73, 0x65, 0x5f, 0x64, 0x61, 0x74, 0x65,
+	0x22, 0xde, 0x01, 0x0a, 0x13, 0x53, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66, 0x6f,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a, 0x0c, 0x73, 0x75, 0x70, 0x70,
+	0x6f, 0x72, 0x74, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x3a,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f,
+	0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66,
+	0x6f, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x53, 0x75, 0x70, 0x70, 0x6f, 0x72,
+	0x74, 0x49, 0x6e, 0x66, 0x6f, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0c, 0x73, 0x75, 0x70, 0x70,
+	0x6f, 0x72, 0x74, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x1a, 0x67, 0x0a, 0x10, 0x53, 0x75, 0x70, 0x70,
+	0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03,
+	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3d,
+	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66, 0x6f,
+	0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38,
+	0x01, 0x22, 0x68, 0x0a, 0x11, 0x53, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66, 0x6f,
+	0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73,
+	0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73,
+	0x12, 0x39, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f,
+	0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66,
+	0x6f, 0x44, 0x61, 0x74, 0x61, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x58, 0x0a, 0x0f, 0x53,
+	0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x44, 0x61, 0x74, 0x61, 0x12, 0x45,
+	0x0a, 0x0c, 0x73, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65,
+	0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x75, 0x70, 0x70,
+	0x6f, 0x72, 0x74, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x0c, 0x73, 0x75, 0x70, 0x70, 0x6f, 0x72, 0x74,
+	0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0xd5, 0x01, 0x0a, 0x12, 0x42, 0x61, 0x63, 0x6b, 0x67, 0x72,
+	0x6f, 0x75, 0x6e, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x0a,
+	0x62, 0x61, 0x63, 0x6b, 0x67, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b,
+	0x32, 0x38, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73,
+	0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x42, 0x61, 0x63, 0x6b, 0x67, 0x72, 0x6f, 0x75,
+	0x6e, 0x64, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x42, 0x61, 0x63, 0x6b, 0x67,
+	0x72, 0x6f, 0x75, 0x6e, 0x64, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x0a, 0x62, 0x61, 0x63, 0x6b,
+	0x67, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x1a, 0x65, 0x0a, 0x0f, 0x42, 0x61, 0x63, 0x6b, 0x67, 0x72,
+	0x6f, 0x75, 0x6e, 0x64, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x3c, 0x0a, 0x05, 0x76,
+	0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x42, 0x61, 0x63, 0x6b, 0x67, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x46, 0x69, 0x6c, 0x74,
+	0x65, 0x72, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x66, 0x0a,
+	0x10, 0x42, 0x61, 0x63, 0x6b, 0x67, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12, 0x38, 0x0a, 0x04, 0x64,
+	0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31,
+	0x2e, 0x42, 0x61, 0x63, 0x6b, 0x67, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x44, 0x61, 0x74, 0x61, 0x52,
+	0x04, 0x64, 0x61, 0x74, 0x61, 0x22, 0x30, 0x0a, 0x0e, 0x42, 0x61, 0x63, 0x6b, 0x67, 0x72, 0x6f,
+	0x75, 0x6e, 0x64, 0x44, 0x61, 0x74, 0x61, 0x12, 0x1e, 0x0a, 0x0a, 0x62, 0x61, 0x63, 0x6b, 0x67,
+	0x72, 0x6f, 0x75, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x62, 0x61, 0x63,
+	0x6b, 0x67, 0x72, 0x6f, 0x75, 0x6e, 0x64, 0x22, 0x8f, 0x02, 0x0a, 0x1a, 0x43, 0x6f, 0x6e, 0x74,
+	0x65, 0x6e, 0x74, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x7a, 0x0a, 0x13, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e,
+	0x74, 0x5f, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x48, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61,
+	0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65,
+	0x6e, 0x74, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x73,
+	0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x13, 0x63,
+	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f,
+	0x72, 0x73, 0x1a, 0x75, 0x0a, 0x17, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x73,
+	0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a,
+	0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12,
+	0x44, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2e,
+	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f,
+	0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x73,
+	0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x76, 0x0a, 0x18, 0x43, 0x6f, 0x6e,
+	0x74, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x46,
+	0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x12,
+	0x40, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2c, 0x2e,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72,
+	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x73, 0x63,
+	0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x44, 0x61, 0x74, 0x61, 0x52, 0x04, 0x64, 0x61, 0x74,
+	0x61, 0x22, 0x74, 0x0a, 0x16, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x73, 0x63,
+	0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x44, 0x61, 0x74, 0x61, 0x12, 0x5a, 0x0a, 0x13, 0x63,
+	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f,
+	0x72, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x2e, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e,
+	0x43, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f,
+	0x72, 0x73, 0x52, 0x13, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x5f, 0x64, 0x65, 0x73, 0x63,
+	0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x73, 0x42, 0x34, 0x5a, 0x32, 0x67, 0x69, 0x74, 0x68, 0x75,
+	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x7a, 0x61, 0x6c, 0x67, 0x6f, 0x6e, 0x6f, 0x69, 0x73, 0x65,
+	0x2f, 0x78, 0x2f, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2f, 0x70, 0x62, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2f, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x2f, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1855,34 +4652,98 @@ func file_proto_steam_store_v1_store_proto_rawDescGZIP() []byte {
 	return file_proto_steam_store_v1_store_proto_rawDescData
 }
 
-var file_proto_steam_store_v1_store_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
+var file_proto_steam_store_v1_store_proto_msgTypes = make([]protoimpl.MessageInfo, 87)
 var file_proto_steam_store_v1_store_proto_goTypes = []interface{}{
-	(*AppDetailsResponse)(nil), // 0: proto.steam.store.v1.AppDetailsResponse
-	(*AppDetails)(nil),         // 1: proto.steam.store.v1.AppDetails
-	(*Data)(nil),               // 2: proto.steam.store.v1.Data
-	(*Requirements)(nil),       // 3: proto.steam.store.v1.Requirements
-	(*Demo)(nil),               // 4: proto.steam.store.v1.Demo
-	(*PriceOverview)(nil),      // 5: proto.steam.store.v1.PriceOverview
-	(*PackageGroup)(nil),       // 6: proto.steam.store.v1.PackageGroup
-	(*Sub)(nil),                // 7: proto.steam.store.v1.Sub
-	(*Platforms)(nil),          // 8: proto.steam.store.v1.Platforms
-	(*Metacritic)(nil),         // 9: proto.steam.store.v1.Metacritic
-	(*Category)(nil),           // 10: proto.steam.store.v1.Category
-	(*Genre)(nil),              // 11: proto.steam.store.v1.Genre
-	(*Screenshot)(nil),         // 12: proto.steam.store.v1.Screenshot
-	(*Movie)(nil),              // 13: proto.steam.store.v1.Movie
-	(*Recommendations)(nil),    // 14: proto.steam.store.v1.Recommendations
-	(*Achievements)(nil),       // 15: proto.steam.store.v1.Achievements
-	(*Highlight)(nil),          // 16: proto.steam.store.v1.Highlight
-	(*ReleaseDate)(nil),        // 17: proto.steam.store.v1.ReleaseDate
-	(*SupportInfo)(nil),        // 18: proto.steam.store.v1.SupportInfo
-	(*ContentDescriptors)(nil), // 19: proto.steam.store.v1.ContentDescriptors
-	nil,                        // 20: proto.steam.store.v1.AppDetailsResponse.AppDetailsEntry
-	nil,                        // 21: proto.steam.store.v1.Movie.WebmEntry
-	nil,                        // 22: proto.steam.store.v1.Movie.Mp4Entry
+	(*AppDetailsResponse)(nil),         // 0: proto.steam.store.v1.AppDetailsResponse
+	(*AppDetails)(nil),                 // 1: proto.steam.store.v1.AppDetails
+	(*Data)(nil),                       // 2: proto.steam.store.v1.Data
+	(*Requirements)(nil),               // 3: proto.steam.store.v1.Requirements
+	(*Demo)(nil),                       // 4: proto.steam.store.v1.Demo
+	(*PriceOverview)(nil),              // 5: proto.steam.store.v1.PriceOverview
+	(*PackageGroup)(nil),               // 6: proto.steam.store.v1.PackageGroup
+	(*Sub)(nil),                        // 7: proto.steam.store.v1.Sub
+	(*Platforms)(nil),                  // 8: proto.steam.store.v1.Platforms
+	(*Metacritic)(nil),                 // 9: proto.steam.store.v1.Metacritic
+	(*Category)(nil),                   // 10: proto.steam.store.v1.Category
+	(*Genre)(nil),                      // 11: proto.steam.store.v1.Genre
+	(*Screenshot)(nil),                 // 12: proto.steam.store.v1.Screenshot
+	(*Movie)(nil),                      // 13: proto.steam.store.v1.Movie
+	(*Recommendations)(nil),            // 14: proto.steam.store.v1.Recommendations
+	(*Achievements)(nil),               // 15: proto.steam.store.v1.Achievements
+	(*Highlight)(nil),                  // 16: proto.steam.store.v1.Highlight
+	(*ReleaseDate)(nil),                // 17: proto.steam.store.v1.ReleaseDate
+	(*SupportInfo)(nil),                // 18: proto.steam.store.v1.SupportInfo
+	(*ContentDescriptors)(nil),         // 19: proto.steam.store.v1.ContentDescriptors
+	(*DevelopersResponse)(nil),         // 20: proto.steam.store.v1.DevelopersResponse
+	(*DevelopersFilter)(nil),           // 21: proto.steam.store.v1.DevelopersFilter
+	(*DevelopersData)(nil),             // 22: proto.steam.store.v1.DevelopersData
+	(*PublishersResponse)(nil),         // 23: proto.steam.store.v1.PublishersResponse
+	(*PublishersFilter)(nil),           // 24: proto.steam.store.v1.PublishersFilter
+	(*PublishersData)(nil),             // 25: proto.steam.store.v1.PublishersData
+	(*DemosResponse)(nil),              // 26: proto.steam.store.v1.DemosResponse
+	(*DemosFilter)(nil),                // 27: proto.steam.store.v1.DemosFilter
+	(*DemosData)(nil),                  // 28: proto.steam.store.v1.DemosData
+	(*PriceOverviewResponse)(nil),      // 29: proto.steam.store.v1.PriceOverviewResponse
+	(*PriceOverviewFilter)(nil),        // 30: proto.steam.store.v1.PriceOverviewFilter
+	(*PriceOverviewData)(nil),          // 31: proto.steam.store.v1.PriceOverviewData
+	(*PackagesResponse)(nil),           // 32: proto.steam.store.v1.PackagesResponse
+	(*PackagesFilter)(nil),             // 33: proto.steam.store.v1.PackagesFilter
+	(*PackagesData)(nil),               // 34: proto.steam.store.v1.PackagesData
+	(*PlatformsResponse)(nil),          // 35: proto.steam.store.v1.PlatformsResponse
+	(*PlatformsFilter)(nil),            // 36: proto.steam.store.v1.PlatformsFilter
+	(*PlatformsData)(nil),              // 37: proto.steam.store.v1.PlatformsData
+	(*CategoriesResponse)(nil),         // 38: proto.steam.store.v1.CategoriesResponse
+	(*CategoriesFilter)(nil),           // 39: proto.steam.store.v1.CategoriesFilter
+	(*CategoriesData)(nil),             // 40: proto.steam.store.v1.CategoriesData
+	(*GenresResponse)(nil),             // 41: proto.steam.store.v1.GenresResponse
+	(*GenresFilter)(nil),               // 42: proto.steam.store.v1.GenresFilter
+	(*GenresData)(nil),                 // 43: proto.steam.store.v1.GenresData
+	(*ScreenshotsResponse)(nil),        // 44: proto.steam.store.v1.ScreenshotsResponse
+	(*ScreenshotsFilter)(nil),          // 45: proto.steam.store.v1.ScreenshotsFilter
+	(*ScreenshotsData)(nil),            // 46: proto.steam.store.v1.ScreenshotsData
+	(*MoviesResponse)(nil),             // 47: proto.steam.store.v1.MoviesResponse
+	(*MoviesFilter)(nil),               // 48: proto.steam.store.v1.MoviesFilter
+	(*MoviesData)(nil),                 // 49: proto.steam.store.v1.MoviesData
+	(*RecommendationsResponse)(nil),    // 50: proto.steam.store.v1.RecommendationsResponse
+	(*RecommendationsFilter)(nil),      // 51: proto.steam.store.v1.RecommendationsFilter
+	(*RecommendationsData)(nil),        // 52: proto.steam.store.v1.RecommendationsData
+	(*AchievementsResponse)(nil),       // 53: proto.steam.store.v1.AchievementsResponse
+	(*AchievementsFilter)(nil),         // 54: proto.steam.store.v1.AchievementsFilter
+	(*AchievementsData)(nil),           // 55: proto.steam.store.v1.AchievementsData
+	(*ReleaseDateResponse)(nil),        // 56: proto.steam.store.v1.ReleaseDateResponse
+	(*ReleaseDateFilter)(nil),          // 57: proto.steam.store.v1.ReleaseDateFilter
+	(*ReleaseDateData)(nil),            // 58: proto.steam.store.v1.ReleaseDateData
+	(*SupportInfoResponse)(nil),        // 59: proto.steam.store.v1.SupportInfoResponse
+	(*SupportInfoFilter)(nil),          // 60: proto.steam.store.v1.SupportInfoFilter
+	(*SupportInfoData)(nil),            // 61: proto.steam.store.v1.SupportInfoData
+	(*BackgroundResponse)(nil),         // 62: proto.steam.store.v1.BackgroundResponse
+	(*BackgroundFilter)(nil),           // 63: proto.steam.store.v1.BackgroundFilter
+	(*BackgroundData)(nil),             // 64: proto.steam.store.v1.BackgroundData
+	(*ContentDescriptorsResponse)(nil), // 65: proto.steam.store.v1.ContentDescriptorsResponse
+	(*ContentDescriptorsFilter)(nil),   // 66: proto.steam.store.v1.ContentDescriptorsFilter
+	(*ContentDescriptorsData)(nil),     // 67: proto.steam.store.v1.ContentDescriptorsData
+	nil,                                // 68: proto.steam.store.v1.AppDetailsResponse.AppDetailsEntry
+	nil,                                // 69: proto.steam.store.v1.Movie.WebmEntry
+	nil,                                // 70: proto.steam.store.v1.Movie.Mp4Entry
+	nil,                                // 71: proto.steam.store.v1.DevelopersResponse.DevelopersEntry
+	nil,                                // 72: proto.steam.store.v1.PublishersResponse.PublishersEntry
+	nil,                                // 73: proto.steam.store.v1.DemosResponse.DemosEntry
+	nil,                                // 74: proto.steam.store.v1.PriceOverviewResponse.PriceOverviewEntry
+	nil,                                // 75: proto.steam.store.v1.PackagesResponse.PackagesEntry
+	nil,                                // 76: proto.steam.store.v1.PlatformsResponse.PlatformsEntry
+	nil,                                // 77: proto.steam.store.v1.CategoriesResponse.CategoriesEntry
+	nil,                                // 78: proto.steam.store.v1.GenresResponse.GenresEntry
+	nil,                                // 79: proto.steam.store.v1.ScreenshotsResponse.ScreenshotsEntry
+	nil,                                // 80: proto.steam.store.v1.MoviesResponse.MoviesEntry
+	nil,                                // 81: proto.steam.store.v1.RecommendationsResponse.RecommendationsEntry
+	nil,                                // 82: proto.steam.store.v1.AchievementsResponse.AchievementsEntry
+	nil,                                // 83: proto.steam.store.v1.ReleaseDateResponse.ReleaseDateEntry
+	nil,                                // 84: proto.steam.store.v1.SupportInfoResponse.SupportInfoEntry
+	nil,                                // 85: proto.steam.store.v1.BackgroundResponse.BackgroundEntry
+	nil,                                // 86: proto.steam.store.v1.ContentDescriptorsResponse.ContentDescriptorsEntry
 }
 var file_proto_steam_store_v1_store_proto_depIdxs = []int32{
-	20, // 0: proto.steam.store.v1.AppDetailsResponse.app_details:type_name -> proto.steam.store.v1.AppDetailsResponse.AppDetailsEntry
+	68, // 0: proto.steam.store.v1.AppDetailsResponse.app_details:type_name -> proto.steam.store.v1.AppDetailsResponse.AppDetailsEntry
 	2,  // 1: proto.steam.store.v1.AppDetails.data:type_name -> proto.steam.store.v1.Data
 	3,  // 2: proto.steam.store.v1.Data.pc_requirements:type_name -> proto.steam.store.v1.Requirements
 	3,  // 3: proto.steam.store.v1.Data.mac_requirements:type_name -> proto.steam.store.v1.Requirements
@@ -1902,15 +4763,76 @@ var file_proto_steam_store_v1_store_proto_depIdxs = []int32{
 	18, // 17: proto.steam.store.v1.Data.support_info:type_name -> proto.steam.store.v1.SupportInfo
 	19, // 18: proto.steam.store.v1.Data.content_descriptors:type_name -> proto.steam.store.v1.ContentDescriptors
 	7,  // 19: proto.steam.store.v1.PackageGroup.subs:type_name -> proto.steam.store.v1.Sub
-	21, // 20: proto.steam.store.v1.Movie.webm:type_name -> proto.steam.store.v1.Movie.WebmEntry
-	22, // 21: proto.steam.store.v1.Movie.mp4:type_name -> proto.steam.store.v1.Movie.Mp4Entry
+	69, // 20: proto.steam.store.v1.Movie.webm:type_name -> proto.steam.store.v1.Movie.WebmEntry
+	70, // 21: proto.steam.store.v1.Movie.mp4:type_name -> proto.steam.store.v1.Movie.Mp4Entry
 	16, // 22: proto.steam.store.v1.Achievements.highlighted:type_name -> proto.steam.store.v1.Highlight
-	1,  // 23: proto.steam.store.v1.AppDetailsResponse.AppDetailsEntry.value:type_name -> proto.steam.store.v1.AppDetails
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	71, // 23: proto.steam.store.v1.DevelopersResponse.developers:type_name -> proto.steam.store.v1.DevelopersResponse.DevelopersEntry
+	22, // 24: proto.steam.store.v1.DevelopersFilter.data:type_name -> proto.steam.store.v1.DevelopersData
+	72, // 25: proto.steam.store.v1.PublishersResponse.publishers:type_name -> proto.steam.store.v1.PublishersResponse.PublishersEntry
+	25, // 26: proto.steam.store.v1.PublishersFilter.data:type_name -> proto.steam.store.v1.PublishersData
+	73, // 27: proto.steam.store.v1.DemosResponse.demos:type_name -> proto.steam.store.v1.DemosResponse.DemosEntry
+	28, // 28: proto.steam.store.v1.DemosFilter.data:type_name -> proto.steam.store.v1.DemosData
+	4,  // 29: proto.steam.store.v1.DemosData.demos:type_name -> proto.steam.store.v1.Demo
+	74, // 30: proto.steam.store.v1.PriceOverviewResponse.price_overview:type_name -> proto.steam.store.v1.PriceOverviewResponse.PriceOverviewEntry
+	31, // 31: proto.steam.store.v1.PriceOverviewFilter.data:type_name -> proto.steam.store.v1.PriceOverviewData
+	5,  // 32: proto.steam.store.v1.PriceOverviewData.price_overview:type_name -> proto.steam.store.v1.PriceOverview
+	75, // 33: proto.steam.store.v1.PackagesResponse.packages:type_name -> proto.steam.store.v1.PackagesResponse.PackagesEntry
+	34, // 34: proto.steam.store.v1.PackagesFilter.data:type_name -> proto.steam.store.v1.PackagesData
+	6,  // 35: proto.steam.store.v1.PackagesData.package_groups:type_name -> proto.steam.store.v1.PackageGroup
+	76, // 36: proto.steam.store.v1.PlatformsResponse.platforms:type_name -> proto.steam.store.v1.PlatformsResponse.PlatformsEntry
+	37, // 37: proto.steam.store.v1.PlatformsFilter.data:type_name -> proto.steam.store.v1.PlatformsData
+	8,  // 38: proto.steam.store.v1.PlatformsData.platforms:type_name -> proto.steam.store.v1.Platforms
+	77, // 39: proto.steam.store.v1.CategoriesResponse.categories:type_name -> proto.steam.store.v1.CategoriesResponse.CategoriesEntry
+	40, // 40: proto.steam.store.v1.CategoriesFilter.data:type_name -> proto.steam.store.v1.CategoriesData
+	10, // 41: proto.steam.store.v1.CategoriesData.categories:type_name -> proto.steam.store.v1.Category
+	78, // 42: proto.steam.store.v1.GenresResponse.genres:type_name -> proto.steam.store.v1.GenresResponse.GenresEntry
+	43, // 43: proto.steam.store.v1.GenresFilter.data:type_name -> proto.steam.store.v1.GenresData
+	10, // 44: proto.steam.store.v1.GenresData.genres:type_name -> proto.steam.store.v1.Category
+	79, // 45: proto.steam.store.v1.ScreenshotsResponse.screenshots:type_name -> proto.steam.store.v1.ScreenshotsResponse.ScreenshotsEntry
+	46, // 46: proto.steam.store.v1.ScreenshotsFilter.data:type_name -> proto.steam.store.v1.ScreenshotsData
+	12, // 47: proto.steam.store.v1.ScreenshotsData.screenshots:type_name -> proto.steam.store.v1.Screenshot
+	80, // 48: proto.steam.store.v1.MoviesResponse.movies:type_name -> proto.steam.store.v1.MoviesResponse.MoviesEntry
+	49, // 49: proto.steam.store.v1.MoviesFilter.data:type_name -> proto.steam.store.v1.MoviesData
+	13, // 50: proto.steam.store.v1.MoviesData.movies:type_name -> proto.steam.store.v1.Movie
+	81, // 51: proto.steam.store.v1.RecommendationsResponse.recommendations:type_name -> proto.steam.store.v1.RecommendationsResponse.RecommendationsEntry
+	52, // 52: proto.steam.store.v1.RecommendationsFilter.data:type_name -> proto.steam.store.v1.RecommendationsData
+	14, // 53: proto.steam.store.v1.RecommendationsData.recommendations:type_name -> proto.steam.store.v1.Recommendations
+	82, // 54: proto.steam.store.v1.AchievementsResponse.achievements:type_name -> proto.steam.store.v1.AchievementsResponse.AchievementsEntry
+	55, // 55: proto.steam.store.v1.AchievementsFilter.data:type_name -> proto.steam.store.v1.AchievementsData
+	15, // 56: proto.steam.store.v1.AchievementsData.achievements:type_name -> proto.steam.store.v1.Achievements
+	83, // 57: proto.steam.store.v1.ReleaseDateResponse.release_date:type_name -> proto.steam.store.v1.ReleaseDateResponse.ReleaseDateEntry
+	58, // 58: proto.steam.store.v1.ReleaseDateFilter.data:type_name -> proto.steam.store.v1.ReleaseDateData
+	17, // 59: proto.steam.store.v1.ReleaseDateData.release_date:type_name -> proto.steam.store.v1.ReleaseDate
+	84, // 60: proto.steam.store.v1.SupportInfoResponse.support_info:type_name -> proto.steam.store.v1.SupportInfoResponse.SupportInfoEntry
+	61, // 61: proto.steam.store.v1.SupportInfoFilter.data:type_name -> proto.steam.store.v1.SupportInfoData
+	18, // 62: proto.steam.store.v1.SupportInfoData.support_info:type_name -> proto.steam.store.v1.SupportInfo
+	85, // 63: proto.steam.store.v1.BackgroundResponse.background:type_name -> proto.steam.store.v1.BackgroundResponse.BackgroundEntry
+	64, // 64: proto.steam.store.v1.BackgroundFilter.data:type_name -> proto.steam.store.v1.BackgroundData
+	86, // 65: proto.steam.store.v1.ContentDescriptorsResponse.content_descriptors:type_name -> proto.steam.store.v1.ContentDescriptorsResponse.ContentDescriptorsEntry
+	67, // 66: proto.steam.store.v1.ContentDescriptorsFilter.data:type_name -> proto.steam.store.v1.ContentDescriptorsData
+	19, // 67: proto.steam.store.v1.ContentDescriptorsData.content_descriptors:type_name -> proto.steam.store.v1.ContentDescriptors
+	1,  // 68: proto.steam.store.v1.AppDetailsResponse.AppDetailsEntry.value:type_name -> proto.steam.store.v1.AppDetails
+	21, // 69: proto.steam.store.v1.DevelopersResponse.DevelopersEntry.value:type_name -> proto.steam.store.v1.DevelopersFilter
+	24, // 70: proto.steam.store.v1.PublishersResponse.PublishersEntry.value:type_name -> proto.steam.store.v1.PublishersFilter
+	27, // 71: proto.steam.store.v1.DemosResponse.DemosEntry.value:type_name -> proto.steam.store.v1.DemosFilter
+	30, // 72: proto.steam.store.v1.PriceOverviewResponse.PriceOverviewEntry.value:type_name -> proto.steam.store.v1.PriceOverviewFilter
+	33, // 73: proto.steam.store.v1.PackagesResponse.PackagesEntry.value:type_name -> proto.steam.store.v1.PackagesFilter
+	36, // 74: proto.steam.store.v1.PlatformsResponse.PlatformsEntry.value:type_name -> proto.steam.store.v1.PlatformsFilter
+	39, // 75: proto.steam.store.v1.CategoriesResponse.CategoriesEntry.value:type_name -> proto.steam.store.v1.CategoriesFilter
+	42, // 76: proto.steam.store.v1.GenresResponse.GenresEntry.value:type_name -> proto.steam.store.v1.GenresFilter
+	45, // 77: proto.steam.store.v1.ScreenshotsResponse.ScreenshotsEntry.value:type_name -> proto.steam.store.v1.ScreenshotsFilter
+	48, // 78: proto.steam.store.v1.MoviesResponse.MoviesEntry.value:type_name -> proto.steam.store.v1.MoviesFilter
+	51, // 79: proto.steam.store.v1.RecommendationsResponse.RecommendationsEntry.value:type_name -> proto.steam.store.v1.RecommendationsFilter
+	54, // 80: proto.steam.store.v1.AchievementsResponse.AchievementsEntry.value:type_name -> proto.steam.store.v1.AchievementsFilter
+	57, // 81: proto.steam.store.v1.ReleaseDateResponse.ReleaseDateEntry.value:type_name -> proto.steam.store.v1.ReleaseDateFilter
+	60, // 82: proto.steam.store.v1.SupportInfoResponse.SupportInfoEntry.value:type_name -> proto.steam.store.v1.SupportInfoFilter
+	63, // 83: proto.steam.store.v1.BackgroundResponse.BackgroundEntry.value:type_name -> proto.steam.store.v1.BackgroundFilter
+	66, // 84: proto.steam.store.v1.ContentDescriptorsResponse.ContentDescriptorsEntry.value:type_name -> proto.steam.store.v1.ContentDescriptorsFilter
+	85, // [85:85] is the sub-list for method output_type
+	85, // [85:85] is the sub-list for method input_type
+	85, // [85:85] is the sub-list for extension type_name
+	85, // [85:85] is the sub-list for extension extendee
+	0,  // [0:85] is the sub-list for field type_name
 }
 
 func init() { file_proto_steam_store_v1_store_proto_init() }
@@ -2159,6 +5081,582 @@ func file_proto_steam_store_v1_store_proto_init() {
 				return nil
 			}
 		}
+		file_proto_steam_store_v1_store_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DevelopersResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DevelopersFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DevelopersData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PublishersResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PublishersFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PublishersData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DemosResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DemosFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DemosData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PriceOverviewResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PriceOverviewFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PriceOverviewData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PackagesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PackagesFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PackagesData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PlatformsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PlatformsFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PlatformsData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CategoriesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CategoriesFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CategoriesData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GenresResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GenresFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GenresData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ScreenshotsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ScreenshotsFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ScreenshotsData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MoviesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MoviesFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*MoviesData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RecommendationsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RecommendationsFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RecommendationsData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AchievementsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AchievementsFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AchievementsData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReleaseDateResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReleaseDateFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReleaseDateData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SupportInfoResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SupportInfoFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SupportInfoData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BackgroundResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BackgroundFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BackgroundData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ContentDescriptorsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ContentDescriptorsFilter); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_steam_store_v1_store_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ContentDescriptorsData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -2166,7 +5664,7 @@ func file_proto_steam_store_v1_store_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_steam_store_v1_store_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   23,
+			NumMessages:   87,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
