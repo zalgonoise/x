@@ -31,7 +31,7 @@ var (
 // newURL creates a URL from the input parameters, fitting the template below
 //
 // GET https://store.steampowered.com/api/appdetails/?appids={comma_separated_ids}&cc={country}&filters={filters}
-func newURL(ids, country, filters string) string {
+func newURL(ids, country, filter string) string {
 	sb := &strings.Builder{}
 
 	sb.WriteString(baseURL)
@@ -45,10 +45,10 @@ func newURL(ids, country, filters string) string {
 		sb.WriteString(country)
 	}
 
-	if filters != "" {
+	if filter != "" {
 		sb.WriteByte('&')
 		sb.WriteString(paramFilter)
-		sb.WriteString(filters)
+		sb.WriteString(filter)
 	}
 
 	return sb.String()
@@ -81,7 +81,7 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 
 	ids := fs.String("ids", "", "comma-separated list of app ID values")
 	country := fs.String("country", "", "country code (2-character-long)")
-	filters := fs.String("filters", "", "object query filters")
+	filter := fs.String("filter", "", "object query filter")
 
 	fs.Parse(args)
 
@@ -89,7 +89,7 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return errEmptyID, 1
 	}
 
-	url := newURL(*ids, *country, *filters)
+	url := newURL(*ids, *country, *filter)
 
 	res, err := newReq(ctx, url)
 
@@ -100,7 +100,7 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return err, 1
 	}
 
-	if fn, ok := validFilters[*filters]; ok {
+	if fn, ok := validFilters[*filter]; ok {
 		if err = fn(ctx, logger, buf); err != nil {
 			return err, 1
 		}
