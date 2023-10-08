@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package proto.steam.store.v1;
 
-
 option go_package = "github.com/zalgonoise/x/steam/pb/proto/steam/store";
 
 message AppDetailsResponse {
@@ -158,4 +157,218 @@ message SupportInfo {
 message ContentDescriptors {
   repeated int64 ids = 1 [json_name="ids"];
   string notes = 2 [json_name="notes"];
+}
+
+
+message DevelopersResponse {
+  map<string, DevelopersFilter> developers = 1 [json_name="developers"];
+}
+
+message DevelopersFilter {
+  bool success = 1 [json_name="success"];
+  DevelopersData data = 2 [json_name="data"];
+}
+
+message DevelopersData {
+  repeated string developers = 1 [json_name="developers"];
+}
+
+
+message PublishersResponse {
+  map<string, PublishersFilter> publishers = 1 [json_name="publishers"];
+}
+
+message PublishersFilter {
+  bool success = 1 [json_name="success"];
+  PublishersData data = 2 [json_name="data"];
+}
+
+message PublishersData {
+  repeated string publishers = 1 [json_name="publishers"];
+}
+
+
+message DemosResponse {
+  map<string, DemosFilter> demos = 1 [json_name="demos"];
+}
+
+message DemosFilter {
+  bool success = 1 [json_name="success"];
+  DemosData data = 2 [json_name="data"];
+}
+
+message DemosData {
+  repeated Demo demos = 1 [json_name="demos"];
+}
+
+
+message PriceOverviewResponse {
+  map<string, PriceOverviewFilter> price_overview = 1 [json_name="price_overview"];
+}
+
+message PriceOverviewFilter {
+  bool success = 1 [json_name="success"];
+  PriceOverviewData data = 2 [json_name="data"];
+}
+
+message PriceOverviewData {
+  PriceOverview price_overview = 1 [json_name="price_overview"];
+}
+
+
+message PackagesResponse {
+  map<string, PackagesFilter> packages = 1 [json_name="packages"];
+}
+
+message PackagesFilter {
+  bool success = 1 [json_name="success"];
+  PackagesData data = 2 [json_name="data"];
+}
+
+message PackagesData {
+  repeated int64 packages = 1 [json_name="packages"];
+  repeated PackageGroup package_groups = 2 [json_name="package_groups"];
+}
+
+message PlatformsResponse {
+  map<string, PlatformsFilter> platforms = 1 [json_name="platforms"];
+}
+
+message PlatformsFilter {
+  bool success = 1 [json_name="success"];
+  PlatformsData data = 2 [json_name="data"];
+}
+
+message PlatformsData {
+  Platforms platforms = 1 [json_name="platforms"];
+}
+
+message CategoriesResponse {
+  map<string, CategoriesFilter> categories = 1 [json_name="categories"];
+}
+
+message CategoriesFilter {
+  bool success = 1 [json_name="success"];
+  CategoriesData data = 2 [json_name="data"];
+}
+
+message CategoriesData {
+  repeated Category categories = 1 [json_name="categories"];
+}
+
+message GenresResponse {
+  map<string, GenresFilter> genres = 1 [json_name="genres"];
+}
+
+message GenresFilter {
+  bool success = 1 [json_name="success"];
+  GenresData data = 2 [json_name="data"];
+}
+
+message GenresData {
+  repeated Category genres = 1 [json_name="genres"];
+}
+
+message ScreenshotsResponse {
+  map<string, ScreenshotsFilter> screenshots = 1 [json_name="screenshots"];
+}
+
+message ScreenshotsFilter {
+  bool success = 1 [json_name="success"];
+  ScreenshotsData data = 2 [json_name="data"];
+}
+
+message ScreenshotsData {
+  repeated Screenshot screenshots = 1 [json_name="screenshots"];
+}
+
+message MoviesResponse {
+  map<string, MoviesFilter> movies = 1 [json_name="movies"];
+}
+
+message MoviesFilter {
+  bool success = 1 [json_name="success"];
+  MoviesData data = 2 [json_name="data"];
+}
+
+message MoviesData {
+  repeated Movie movies = 1 [json_name="movies"];
+}
+
+message RecommendationsResponse {
+  map<string, RecommendationsFilter> recommendations = 1 [json_name="recommendations"];
+}
+
+message RecommendationsFilter {
+  bool success = 1 [json_name="success"];
+  RecommendationsData data = 2 [json_name="data"];
+}
+
+message RecommendationsData {
+  Recommendations recommendations = 1 [json_name="recommendations"];
+}
+
+message AchievementsResponse {
+  map<string, AchievementsFilter> achievements = 1 [json_name="achievements"];
+}
+
+message AchievementsFilter {
+  bool success = 1 [json_name="success"];
+  AchievementsData data = 2 [json_name="data"];
+}
+
+message AchievementsData {
+  Achievements achievements = 1 [json_name="achievements"];
+}
+
+message ReleaseDateResponse {
+  map<string, ReleaseDateFilter> release_date = 1 [json_name="release_date"];
+}
+
+message ReleaseDateFilter {
+  bool success = 1 [json_name="success"];
+  ReleaseDateData data = 2 [json_name="data"];
+}
+
+message ReleaseDateData {
+  ReleaseDate release_date = 1 [json_name="release_date"];
+}
+
+message SupportInfoResponse {
+  map<string, SupportInfoFilter> support_info = 1 [json_name="support_info"];
+}
+
+message SupportInfoFilter {
+  bool success = 1 [json_name="success"];
+  SupportInfoData data = 2 [json_name="data"];
+}
+
+message SupportInfoData {
+  SupportInfo support_info = 1 [json_name="support_info"];
+}
+
+message BackgroundResponse {
+  map<string, BackgroundFilter> background = 1 [json_name="background"];
+}
+
+message BackgroundFilter {
+  bool success = 1 [json_name="success"];
+  BackgroundData data = 2 [json_name="data"];
+}
+
+message BackgroundData {
+  string background = 1 [json_name="background"];
+}
+
+message ContentDescriptorsResponse {
+  map<string, ContentDescriptorsFilter> content_descriptors = 1 [json_name="content_descriptors"];
+}
+
+message ContentDescriptorsFilter {
+  bool success = 1 [json_name="success"];
+  ContentDescriptorsData data = 2 [json_name="data"];
+}
+
+message ContentDescriptorsData {
+  ContentDescriptors content_descriptors = 1 [json_name="content_descriptors"];
 }
