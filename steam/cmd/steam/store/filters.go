@@ -5,10 +5,18 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
+	"strings"
 
 	pb "github.com/zalgonoise/x/steam/pb/proto/steam/store/v1"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+)
+
+const (
+	headWrapStart = `{"`
+	headWrapEnd   = `":`
+	tail          = "}"
 )
 
 var validFilters = map[string]func(context.Context, *slog.Logger, []byte) error{
@@ -61,7 +69,17 @@ func getDemos(ctx context.Context, logger *slog.Logger, data []byte) error {
 			return response.GetDemos()
 		},
 		func(data *pb.DemosFilter) slog.Attr {
-			return slog.Any("demos", data.GetData().GetDemos())
+			demos := data.GetData().GetDemos()
+			if len(demos) == 0 {
+				return slog.Attr{}
+			}
+
+			ids := make([]int64, 0, len(demos))
+			for i := range demos {
+				ids = append(ids, demos[i].GetAppid())
+			}
+
+			return slog.Any("demos", ids)
 		},
 	)
 }
@@ -90,9 +108,26 @@ func getPackages(ctx context.Context, logger *slog.Logger, data []byte) error {
 			return response.GetPackages()
 		},
 		func(data *pb.PackagesFilter) slog.Attr {
+			groups := data.GetData().GetPackageGroups()
+			groupTitles := make([]string, 0, len(groups))
+
+			for i := range groups {
+				subs := groups[i].GetSubs()
+				subsIDs := &strings.Builder{}
+				for idx := range subs {
+					subsIDs.WriteString(strconv.Itoa(int(subs[idx].GetPackageid())))
+
+					if idx < len(subs)-1 {
+						subsIDs.WriteByte(':')
+					}
+				}
+
+				groupTitles = append(groupTitles, groups[i].GetTitle()+"::"+subsIDs.String())
+			}
+
 			return slog.Group("packages",
 				slog.Any("packages", data.GetData().GetPackages()),
-				slog.Any("package_groups", data.GetData().GetPackageGroups()),
+				slog.Any("package_groups", groupTitles),
 			)
 		},
 	)
@@ -121,7 +156,19 @@ func getCategories(ctx context.Context, logger *slog.Logger, data []byte) error 
 			return response.GetCategories()
 		},
 		func(data *pb.CategoriesFilter) slog.Attr {
-			return slog.Any("categories", data.GetData().GetCategories())
+			cat := data.GetData().GetCategories()
+			ids := make([]int64, 0, len(cat))
+			descs := make([]string, 0, len(cat))
+
+			for i := range cat {
+				ids = append(ids, cat[i].GetId())
+				descs = append(descs, cat[i].GetDescription())
+			}
+
+			return slog.Group("categories",
+				slog.Any("ids", ids),
+				slog.Any("descriptions", descs),
+			)
 		},
 	)
 }
@@ -133,7 +180,19 @@ func getGenres(ctx context.Context, logger *slog.Logger, data []byte) error {
 			return response.GetGenres()
 		},
 		func(data *pb.GenresFilter) slog.Attr {
-			return slog.Any("genres", data.GetData().GetGenres())
+			genres := data.GetData().GetGenres()
+			ids := make([]int64, 0, len(genres))
+			descs := make([]string, 0, len(genres))
+
+			for i := range genres {
+				ids = append(ids, genres[i].GetId())
+				descs = append(descs, genres[i].GetDescription())
+			}
+
+			return slog.Group("genres",
+				slog.Any("ids", ids),
+				slog.Any("descriptions", descs),
+			)
 		},
 	)
 }
@@ -145,7 +204,14 @@ func getScreenshots(ctx context.Context, logger *slog.Logger, data []byte) error
 			return response.GetScreenshots()
 		},
 		func(data *pb.ScreenshotsFilter) slog.Attr {
-			return slog.Any("screenshots", data.GetData().GetScreenshots())
+			screenshots := data.GetData().GetScreenshots()
+			urls := make([]string, 0, len(screenshots))
+
+			for i := range screenshots {
+				urls = append(urls, screenshots[i].GetPathFull())
+			}
+
+			return slog.Any("screenshots", urls)
 		},
 	)
 }
@@ -157,7 +223,33 @@ func getMovies(ctx context.Context, logger *slog.Logger, data []byte) error {
 			return response.GetMovies()
 		},
 		func(data *pb.MoviesFilter) slog.Attr {
-			return slog.Any("movies", data.GetData().GetMovies())
+			movies := data.GetData().GetMovies()
+			moviesList := make([]slog.Attr, 0, len(movies))
+
+			for i := range movies {
+				var webmAttr slog.Attr
+				var mp4Attr slog.Attr
+
+				webm := movies[i].GetWebm()
+				if wembMax, ok := webm["max"]; ok {
+					webmAttr = slog.String("webm", wembMax)
+				}
+
+				mp4 := movies[i].GetMp4()
+				if mp4Max, ok := mp4["max"]; ok {
+					mp4Attr = slog.String("webm", mp4Max)
+				}
+
+				moviesList = append(moviesList,
+					slog.Group(strconv.Itoa(int(movies[i].GetId())),
+						slog.String("name", movies[i].GetName()),
+						slog.Bool("is_highlight", movies[i].GetHighlight()),
+						webmAttr, mp4Attr,
+					),
+				)
+			}
+
+			return slog.Any("movies", moviesList)
 		},
 	)
 }
@@ -169,7 +261,7 @@ func getRecommendations(ctx context.Context, logger *slog.Logger, data []byte) e
 			return response.GetRecommendations()
 		},
 		func(data *pb.RecommendationsFilter) slog.Attr {
-			return slog.Any("recommendations", data.GetData().GetRecommendations())
+			return slog.Int("recommendations", int(data.GetData().GetRecommendations().GetTotal()))
 		},
 	)
 }
@@ -181,7 +273,17 @@ func getAchievements(ctx context.Context, logger *slog.Logger, data []byte) erro
 			return response.GetAchievements()
 		},
 		func(data *pb.AchievementsFilter) slog.Attr {
-			return slog.Any("achievements", data.GetData().GetAchievements())
+			highlighted := data.GetData().GetAchievements().GetHighlighted()
+			hl := make([]string, 0, len(highlighted))
+
+			for i := range highlighted {
+				hl = append(hl, highlighted[i].GetName())
+			}
+
+			return slog.Group("achievements",
+				slog.Int("total", int(data.GetData().GetAchievements().GetTotal())),
+				slog.Any("highlighted", hl),
+			)
 		},
 	)
 }
@@ -193,7 +295,7 @@ func getReleaseDate(ctx context.Context, logger *slog.Logger, data []byte) error
 			return response.GetReleaseDate()
 		},
 		func(data *pb.ReleaseDateFilter) slog.Attr {
-			return slog.Any("release_date", data.GetData().GetReleaseDate())
+			return slog.String("release_date", data.GetData().GetReleaseDate().GetDate())
 		},
 	)
 }
@@ -205,7 +307,10 @@ func getSupportInfo(ctx context.Context, logger *slog.Logger, data []byte) error
 			return response.GetSupportInfo()
 		},
 		func(data *pb.SupportInfoFilter) slog.Attr {
-			return slog.Any("support_info", data.GetData().GetSupportInfo())
+			return slog.Group("support_info",
+				slog.String("url", data.GetData().GetSupportInfo().GetUrl()),
+				slog.String("email", data.GetData().GetSupportInfo().GetEmail()),
+			)
 		},
 	)
 }
@@ -229,7 +334,10 @@ func getContentDescriptors(ctx context.Context, logger *slog.Logger, data []byte
 			return response.GetContentDescriptors()
 		},
 		func(data *pb.ContentDescriptorsFilter) slog.Attr {
-			return slog.Any("content_descriptors", data.GetData().GetContentDescriptors())
+			return slog.Group("content_descriptors",
+				slog.Any("ids", data.GetData().GetContentDescriptors().GetIds()),
+				slog.String("notes", data.GetData().GetContentDescriptors().GetNotes()),
+			)
 		},
 	)
 }
@@ -283,12 +391,6 @@ func addWrapper(header string, data []byte) []byte {
 
 	return buf
 }
-
-const (
-	headWrapStart = `{"`
-	headWrapEnd   = `":`
-	tail          = "}"
-)
 
 func wrapHeader(header string) string {
 	buf := make([]byte, len(header)+2+2)
