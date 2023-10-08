@@ -159,7 +159,6 @@ message ContentDescriptors {
   string notes = 2 [json_name="notes"];
 }
 
-
 message DevelopersResponse {
   map<string, DevelopersFilter> developers = 1 [json_name="developers"];
 }
@@ -172,7 +171,6 @@ message DevelopersFilter {
 message DevelopersData {
   repeated string developers = 1 [json_name="developers"];
 }
-
 
 message PublishersResponse {
   map<string, PublishersFilter> publishers = 1 [json_name="publishers"];
@@ -187,7 +185,6 @@ message PublishersData {
   repeated string publishers = 1 [json_name="publishers"];
 }
 
-
 message DemosResponse {
   map<string, DemosFilter> demos = 1 [json_name="demos"];
 }
@@ -200,7 +197,6 @@ message DemosFilter {
 message DemosData {
   repeated Demo demos = 1 [json_name="demos"];
 }
-
 
 message PriceOverviewResponse {
   map<string, PriceOverviewFilter> price_overview = 1 [json_name="price_overview"];
@@ -358,6 +354,7 @@ message BackgroundFilter {
 
 message BackgroundData {
   string background = 1 [json_name="background"];
+  string background_raw = 2 [json_name="background_raw"];
 }
 
 message ContentDescriptorsResponse {
