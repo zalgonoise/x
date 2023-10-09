@@ -1,80 +1,20 @@
 package store
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
-	"fmt"
 	"io"
 	"log/slog"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/zalgonoise/x/steam"
-)
-
-const (
-	baseURL        = "https://store.steampowered.com/api/appdetails/"
-	paramAppIDs    = "appids="
-	paramCountry   = "cc="
-	paramFilter    = "filters="
-	defaultTimeout = time.Minute
+	"github.com/zalgonoise/x/steam/cmd/steam/filters"
+	"github.com/zalgonoise/x/steam/cmd/steam/query"
 )
 
 var (
 	errEmptyID = errors.New("empty app ID")
 )
-
-// newURL creates a URL from the input parameters, fitting the template below
-//
-// GET https://store.steampowered.com/api/appdetails/?appids={comma_separated_ids}&cc={country}&filters={filters}
-func newURL(ids, country, filter string) string {
-	sb := &strings.Builder{}
-
-	sb.WriteString(baseURL)
-	sb.WriteByte('?')
-	sb.WriteString(paramAppIDs)
-	sb.WriteString(ids)
-
-	if country != "" {
-		sb.WriteByte('&')
-		sb.WriteString(paramCountry)
-		sb.WriteString(country)
-	}
-
-	if filter != "" {
-		sb.WriteByte('&')
-		sb.WriteString(paramFilter)
-		sb.WriteString(filter)
-	}
-
-	return sb.String()
-}
-
-func newReq(ctx context.Context, url string) (*http.Response, error) {
-	client := &http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   defaultTimeout,
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
 
 func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) {
 	fs := flag.NewFlagSet("store", flag.ExitOnError)
@@ -89,9 +29,9 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return errEmptyID, 1
 	}
 
-	url := newURL(*ids, *country, *filter)
+	url := query.NewURL(*ids, *country, *filter)
 
-	res, err := newReq(ctx, url)
+	res, err := query.NewRequest(ctx, url)
 
 	defer res.Body.Close()
 
@@ -100,17 +40,11 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return err, 1
 	}
 
-	if fn, ok := validFilters[*filter]; ok {
-		if err = fn(ctx, logger, buf); err != nil {
-			return err, 1
-		}
+	if p, ok := filters.ValidPrinters[*filter]; ok {
+		p(ctx, logger, buf)
 
 		return nil, 0
 	}
-
-	b := bytes.NewBuffer(nil)
-	json.Indent(b, buf, "", "  ")
-	fmt.Println(b.String())
 
 	data, err := steam.UnmarshalJSON(buf)
 	if err != nil {
