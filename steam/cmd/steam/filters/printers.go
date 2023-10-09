@@ -47,7 +47,7 @@ func printObject[T any, M map[string]T](
 	for appID, appData := range data {
 		logger.InfoContext(ctx, "listing "+name,
 			slog.String("app_id", appID),
-			slog.Any(name, dataExtractor(appData)),
+			dataExtractor(appData),
 		)
 	}
 }
