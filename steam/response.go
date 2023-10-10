@@ -2,11 +2,10 @@ package steam
 
 import (
 	"bytes"
+	"encoding/json"
 
 	"github.com/zalgonoise/x/errs"
-	"google.golang.org/protobuf/encoding/protojson"
-
-	"github.com/zalgonoise/x/steam/pb/proto/steam/store/v1"
+	pb "github.com/zalgonoise/x/steam/pb/proto/steam/store/v1"
 )
 
 const (
@@ -25,23 +24,35 @@ var (
 	ErrEmptyData = errs.WithDomain(errDomain, ErrEmpty, ErrData)
 )
 
+type Result[T any] struct {
+	Success bool `json:"success"`
+	Data    T    `json:"data"`
+}
+
+type FilterResult[T any] struct {
+	Success bool         `json:"success"`
+	Data    map[string]T `json:"data"`
+}
+
+func Get[T any](data []byte, filter string) (map[string]*T, error) {
+	if filter == "" {
+		return getAll[T](data)
+	}
+
+	return getFilter[T](data, filter)
+}
+
 // UnmarshalJSON decodes a JSON response of an HTTP GET call to the appdetails endpoint
-// in the Steam store, as a store.AppDetailsResponse object.
+// in the Steam store, as a map[string]pb.Data, linking appids to pb.Data objects.
 //
 // The underlying call is the following:
 // GET https://store.steampowered.com/api/appdetails/?appids={comma_separated_app_ids}&cc={country_code}
-func UnmarshalJSON(data []byte) (*store.AppDetailsResponse, error) {
+func UnmarshalJSON(data []byte) (map[string]*pb.Data, error) {
 	if len(data) == 0 {
 		return nil, ErrEmptyData
 	}
 
-	response := &store.AppDetailsResponse{}
-
-	if err := protojson.Unmarshal(addWrapper(data), response); err != nil {
-		return nil, err
-	}
-
-	return response, nil
+	return Get[pb.Data](data, "")
 }
 
 func addWrapper(data []byte) []byte {
@@ -59,4 +70,60 @@ func addWrapper(data []byte) []byte {
 	copy(buf[n:], wrapperTail)
 
 	return buf
+}
+
+func getAll[T any](data []byte) (map[string]*T, error) {
+	response := &map[string]Result[T]{}
+
+	if err := json.Unmarshal(data, response); err != nil {
+		return nil, err
+	}
+
+	output := make(map[string]*T, len(*response))
+
+	for id, priceData := range *response {
+		res := new(T)
+
+		buf, err := json.Marshal(priceData)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = json.Unmarshal(buf, res); err != nil {
+			return nil, err
+		}
+
+		output[id] = res
+	}
+
+	return output, nil
+}
+
+func getFilter[T any](data []byte, filter string) (map[string]*T, error) {
+	response := &map[string]FilterResult[T]{}
+
+	if err := json.Unmarshal(data, response); err != nil {
+		return nil, err
+	}
+
+	output := make(map[string]*T, len(*response))
+
+	for id, filteredDataRaw := range *response {
+		if filteredData, ok := filteredDataRaw.Data[filter]; ok {
+			res := new(T)
+
+			buf, err := json.Marshal(filteredData)
+			if err != nil {
+				return nil, err
+			}
+
+			if err = json.Unmarshal(buf, res); err != nil {
+				return nil, err
+			}
+
+			output[id] = res
+		}
+	}
+
+	return output, nil
 }
