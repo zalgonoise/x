@@ -23,7 +23,9 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 	country := fs.String("country", "", "country code (2-character-long)")
 	filter := fs.String("filter", "", "object query filter")
 
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return err, 1
+	}
 
 	if *ids == "" {
 		return errEmptyID, 1
