@@ -8,7 +8,7 @@ import (
 	"log/slog"
 
 	"github.com/zalgonoise/x/steam"
-	"github.com/zalgonoise/x/steam/cmd/steam/filters"
+	"github.com/zalgonoise/x/steam/cmd/steam/print"
 	"github.com/zalgonoise/x/steam/cmd/steam/query"
 )
 
@@ -40,28 +40,22 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return err, 1
 	}
 
-	if p, ok := filters.ValidPrinters[*filter]; ok {
-		p(ctx, logger, buf)
+	if printer, ok := print.ValidPrinters[*filter]; ok {
+		printer(ctx, logger, buf)
 
 		return nil, 0
 	}
 
-	data, err := steam.UnmarshalJSON(buf)
+	data, err := steam.GetData(buf)
 	if err != nil {
 		return err, 1
 	}
 
-	details := data.GetAppDetails()
-	logger.InfoContext(ctx, "received app details",
-		slog.Int("num_results", len(details)),
-	)
-
-	for appID, appDetails := range details {
+	for appID, appDetails := range data {
 		logger.InfoContext(ctx, "describing app listing",
-			slog.Bool("status", appDetails.GetSuccess()),
 			slog.String("app_id", appID),
-			slog.String("name", appDetails.GetData().GetName()),
-			slog.String("current_price", appDetails.GetData().GetPriceOverview().GetFinalFormatted()),
+			slog.String("name", appDetails.GetName()),
+			slog.String("current_price", appDetails.GetPriceOverview().GetFinalFormatted()),
 		)
 	}
 
