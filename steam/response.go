@@ -7,10 +7,6 @@ import (
 )
 
 const (
-	headerMatcher = `{"app`
-	wrapperHead   = `{"app_details":`
-	wrapperTail   = `}`
-
 	errDomain = "x/steam"
 
 	ErrEmpty = errs.Kind("empty")
@@ -42,6 +38,10 @@ type FilterResult[T any] struct {
 // The underlying call is the following:
 // GET https://store.steampowered.com/api/appdetails/?appids={comma_separated_app_ids}&cc={country_code}
 func Get[T any](data []byte, filter string) (map[string]*T, error) {
+	if len(data) == 0 {
+		return nil, ErrEmptyData
+	}
+
 	if filter == "" {
 		return getAll[T](data)
 	}
