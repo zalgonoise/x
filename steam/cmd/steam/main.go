@@ -6,11 +6,13 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/zalgonoise/x/steam/cmd/steam/alert"
 	"github.com/zalgonoise/x/steam/cmd/steam/store"
 )
 
 const (
 	storeOp = "store"
+	alertOp = "alert"
 )
 
 var (
@@ -39,6 +41,8 @@ func run(logger *slog.Logger) (error, int) {
 	switch os.Args[1] {
 	case storeOp:
 		return store.Exec(ctx, logger, os.Args[2:])
+	case alertOp:
+		return alert.Exec(ctx, logger, os.Args[2:])
 	default:
 		return errInvalidOp, 1
 	}
