@@ -32,7 +32,9 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 	url := fs.String("url", "", "webhook target URL")
 	target := fs.Int("target_discount", 50, "target discount percent")
 
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return err, 1
+	}
 
 	if *ids == "" {
 		return errEmptyID, 1
