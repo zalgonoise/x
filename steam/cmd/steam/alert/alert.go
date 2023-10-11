@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"log/slog"
 
-	"github.com/zalgonoise/x/steam/cmd/steam/filters"
+	"github.com/zalgonoise/x/steam"
 	"github.com/zalgonoise/x/steam/cmd/steam/query"
 )
 
@@ -61,14 +62,16 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return err, 1
 	}
 
-	priceOverview, err := filters.GetPriceOverview(buf)
+	priceOverview, err := steam.GetPriceOverview(buf)
 	if err != nil {
 		return err, 1
 	}
 
+	fmt.Println(string(buf), priceOverview)
+
 	// eval against target
 	for appID, data := range priceOverview {
-		if discount := data.GetData().GetPriceOverview().GetDiscountPercent(); int(discount) >= *target {
+		if discount := data.DiscountPercent; int(discount) >= *target {
 			continue
 		}
 
