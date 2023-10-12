@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	ErrEmptyURL = errs.New(errDomain, ErrEmpty, ErrURL)
+	ErrEmptyURL = errs.WithDomain(errDomain, ErrEmpty, ErrURL)
 )
 
 type Webhook interface {
