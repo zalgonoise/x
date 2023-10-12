@@ -2,10 +2,12 @@ package webhook
 
 import (
 	"context"
-	"github.com/switchupcb/dasgo/v10/dasgo"
 	"io"
 	"log/slog"
 	"net/http"
+	"os"
+
+	"github.com/switchupcb/dasgo/v10/dasgo"
 )
 
 type webhookWithLogs struct {
@@ -13,10 +15,31 @@ type webhookWithLogs struct {
 	logger *slog.Logger
 }
 
-func (w webhookWithLogs) Execute(ctx context.Context, content *dasgo.ExecuteWebhook) (res *http.Response, err error) {
+func (w webhookWithLogs) Execute(ctx context.Context, text string) (res *http.Response, err error) {
+	w.logger.InfoContext(ctx, "executing webhook", slog.String("request_text", text))
+
+	res, err = w.w.Execute(ctx, text)
+
+	attrs := getResponseAttrs(res)
+
+	if err != nil {
+		w.logger.WarnContext(ctx, "webhook execution resulted in an error",
+			slog.String("error", err.Error()),
+			attrs,
+		)
+
+		return res, err
+	}
+
+	w.logger.InfoContext(ctx, "webhook execution succeeded", attrs)
+
+	return res, nil
+}
+
+func (w webhookWithLogs) ExecuteContent(ctx context.Context, content *dasgo.ExecuteWebhook) (res *http.Response, err error) {
 	w.logger.InfoContext(ctx, "executing webhook", slog.Any("request", content))
 
-	res, err = w.w.Execute(ctx, content)
+	res, err = w.w.ExecuteContent(ctx, content)
 
 	attrs := getResponseAttrs(res)
 
@@ -58,17 +81,20 @@ func getResponseAttrs(res *http.Response) slog.Attr {
 	return slog.Group("response", attrs...)
 }
 
-func withLogs(w Webhook, logger *slog.Logger) Webhook {
+func withLogs(w Webhook, handler slog.Handler) Webhook {
 	if w == nil {
 		return nil
 	}
 
-	if logger == nil {
-		return w
+	if handler == nil {
+		return webhookWithLogs{
+			w:      w,
+			logger: slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		}
 	}
 
 	return webhookWithLogs{
 		w:      w,
-		logger: logger,
+		logger: slog.New(handler),
 	}
 }

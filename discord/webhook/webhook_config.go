@@ -1,15 +1,16 @@
 package webhook
 
 import (
-	"github.com/zalgonoise/x/cfg"
 	"log/slog"
 	"time"
+
+	"github.com/zalgonoise/x/cfg"
 )
 
 type Config struct {
 	timeout time.Duration
 
-	logger *slog.Logger
+	handler slog.Handler
 }
 
 func WithTimeout(timeout time.Duration) cfg.Option[Config] {
@@ -22,7 +23,15 @@ func WithTimeout(timeout time.Duration) cfg.Option[Config] {
 
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
-		config.logger = logger
+		config.handler = logger.Handler()
+
+		return config
+	})
+}
+
+func WithLogHandler(handler slog.Handler) cfg.Option[Config] {
+	return cfg.Register(func(config Config) Config {
+		config.handler = handler
 
 		return config
 	})

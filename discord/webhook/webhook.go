@@ -21,23 +21,18 @@ const (
 
 	errDomain = errs.Domain("x/discord/webhook")
 
-	ErrEmpty   = errs.Kind("empty")
-	ErrInvalid = errs.Kind("invalid")
+	ErrEmpty = errs.Kind("empty")
 
-	ErrID    = errs.Entity("ID")
-	ErrToken = errs.Entity("token")
-	ErrURL   = errs.Entity("URL")
+	ErrURL = errs.Entity("URL")
 )
 
 var (
-	ErrEmptyID    = errs.New(errDomain, ErrEmpty, ErrID)
-	ErrEmptyToken = errs.New(errDomain, ErrEmpty, ErrToken)
-	ErrEmptyURL   = errs.New(errDomain, ErrEmpty, ErrURL)
-	ErrInvalidURL = errs.New(errDomain, ErrInvalid, ErrURL)
+	ErrEmptyURL = errs.New(errDomain, ErrEmpty, ErrURL)
 )
 
 type Webhook interface {
-	Execute(ctx context.Context, content *dasgo.ExecuteWebhook) (res *http.Response, err error)
+	Execute(ctx context.Context, text string) (res *http.Response, err error)
+	ExecuteContent(ctx context.Context, content *dasgo.ExecuteWebhook) (res *http.Response, err error)
 }
 
 type webhook struct {
@@ -47,7 +42,44 @@ type webhook struct {
 	timeout time.Duration
 }
 
-func (w webhook) Execute(ctx context.Context, content *dasgo.ExecuteWebhook) (res *http.Response, err error) {
+func (w webhook) Execute(ctx context.Context, text string) (res *http.Response, err error) {
+	buf, err := json.Marshal(&dasgo.ExecuteWebhook{
+		Content: &text,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	client := http.Client{
+		Transport: http.DefaultTransport,
+		Timeout:   w.timeout,
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf(webhookExecuteURLFormat, baseURL, w.id, w.token),
+		bytes.NewReader(buf))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Accept", "application/json")
+
+	res, err = client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode > 399 {
+		return res, fmt.Errorf("HTTP request failed: status %s", res.Status)
+	}
+
+	return res, nil
+}
+
+func (w webhook) ExecuteContent(ctx context.Context, content *dasgo.ExecuteWebhook) (res *http.Response, err error) {
 	buf, err := json.Marshal(content)
 	if err != nil {
 		return nil, err
@@ -97,21 +129,22 @@ func Extract(url string) (id, token string, err error) {
 	return "", "", fmt.Errorf("invalid URL: %s", url)
 }
 
-func New(id, token string, options ...cfg.Option[Config]) (Webhook, error) {
-	if id == "" {
-		return noOpWebhook{}, ErrEmptyID
+func New(url string, options ...cfg.Option[Config]) (Webhook, error) {
+	if url == "" {
+		return noOpWebhook{}, ErrEmptyURL
 	}
 
-	if token == "" {
-		return noOpWebhook{}, ErrEmptyToken
+	id, token, err := Extract(url)
+	if err != nil {
+		return noOpWebhook{}, err
 	}
 
 	config := cfg.New(options...)
 
 	w := newWebhook(id, token, config)
 
-	if config.logger != nil {
-		w = withLogs(w, config.logger)
+	if config.handler != nil {
+		w = withLogs(w, config.handler)
 	}
 
 	return w, nil
@@ -131,6 +164,10 @@ func newWebhook(id, token string, config Config) Webhook {
 
 type noOpWebhook struct{}
 
-func (noOpWebhook) Execute(context.Context, *dasgo.ExecuteWebhook) (res *http.Response, err error) {
+func (noOpWebhook) Execute(context.Context, string) (res *http.Response, err error) {
+	return nil, nil
+}
+
+func (noOpWebhook) ExecuteContent(context.Context, *dasgo.ExecuteWebhook) (res *http.Response, err error) {
 	return nil, nil
 }
