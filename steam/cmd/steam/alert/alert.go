@@ -35,8 +35,8 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 
 	ids := fs.String("ids", "", "comma-separated list of app ID values")
 	country := fs.String("country", "", "country code (2-character-long)")
-	platform := fs.String("platform", "logger", "target platform where to post (logger; slack)")
-	url := fs.String("url", "", "webhook target URL (platform: slack)")
+	platform := fs.String("platform", "logger", "target platform where to post (logger; slack; discord)")
+	url := fs.String("url", "", "webhook target URL (platform: slack; discord)")
 	targetDiscount := fs.Int("target_discount", 50, "target discount percent")
 
 	if err := fs.Parse(args); err != nil {
