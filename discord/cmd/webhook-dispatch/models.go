@@ -44,12 +44,7 @@ func (m Models) Execute(ctx context.Context) error {
 }
 
 func (m Models) exec(ctx context.Context, reqs []*dasgo.ExecuteWebhook) error {
-	id, token, err := webhook.Extract(m.config.WebhookURL)
-	if err != nil {
-		return err
-	}
-
-	h, err := webhook.New(id, token, webhook.WithLogger(m.logger))
+	h, err := webhook.New(m.config.WebhookURL, webhook.WithLogger(m.logger))
 	if err != nil {
 		return err
 	}
@@ -58,7 +53,7 @@ func (m Models) exec(ctx context.Context, reqs []*dasgo.ExecuteWebhook) error {
 	defer cancel()
 
 	for idx := range reqs {
-		res, execErr := h.Execute(execCtx, reqs[idx])
+		res, execErr := h.ExecuteContent(execCtx, reqs[idx])
 
 		if execErr != nil {
 			if res != nil && res.Body != nil {
