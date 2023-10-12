@@ -79,7 +79,7 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 	// eval against target
 	for appID, data := range priceOverview {
 		if discount := data.DiscountPercent; int(discount) <= *targetDiscount {
-			logger.DebugContext(ctx, "discount isn't low enough",
+			logger.InfoContext(ctx, "discount isn't low enough",
 				slog.String("appID", appID),
 				slog.String("final_price", data.GetFinalFormatted()),
 				slog.Int("cur_discount_percent", int(data.GetDiscountPercent())),
