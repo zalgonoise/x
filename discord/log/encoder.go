@@ -2,9 +2,10 @@ package log
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/switchupcb/dasgo/v10/dasgo"
 	"github.com/zalgonoise/x/pluslog/httplog"
-	"strings"
 )
 
 type Encoder struct {
@@ -30,8 +31,10 @@ func New(e httplog.Encoder) httplog.Encoder {
 }
 
 func JSON(indent bool) httplog.Encoder {
-	return MarshalJSON{
-		indent: indent,
+	return Encoder{
+		e: MarshalJSON{
+			indent: indent,
+		},
 	}
 }
 
