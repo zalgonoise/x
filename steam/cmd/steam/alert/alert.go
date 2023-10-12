@@ -24,7 +24,6 @@ const (
 
 var (
 	errEmptyID          = errors.New("empty app ID")
-	errEmptyPlatform    = errors.New("empty platform")
 	errInvalidPlatform  = errors.New("invalid platform")
 	errEmptyURL         = errors.New("empty webhook URL")
 	errEmptyTargetPrice = errors.New("empty target price")
