@@ -6,7 +6,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/switchupcb/dasgo/v10 v10.0.0-20221206085309-6335a3c15f52
 	github.com/zalgonoise/x/cfg v0.0.0-20230914182321-1749fe42581a
-	github.com/zalgonoise/x/errs v0.0.0-20230914182321-1749fe42581a
+	github.com/zalgonoise/x/errs v0.0.0-20231012144811-a36026f1f503
 	github.com/zalgonoise/x/pluslog v0.0.0-20230914231232-76b61b0eca4f
 	gopkg.in/yaml.v3 v3.0.1
 )
