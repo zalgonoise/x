@@ -76,8 +76,6 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return err, 1
 	}
 
-	fmt.Println(string(buf), priceOverview)
-
 	// eval against target
 	for appID, data := range priceOverview {
 		if discount := data.DiscountPercent; int(discount) <= *targetDiscount {
