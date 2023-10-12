@@ -3,8 +3,8 @@ module github.com/zalgonoise/x/steam
 go 1.21.2
 
 require (
-	github.com/zalgonoise/x/discord v0.0.0-20231012152953-f8ef0d860228
-	github.com/zalgonoise/x/errs v0.0.0-20231011161158-f11510c78ab6
+	github.com/zalgonoise/x/discord v0.0.0-20231012154055-3f1e93caecbc
+	github.com/zalgonoise/x/errs v0.0.0-20231012144811-a36026f1f503
 	github.com/zalgonoise/x/slack v0.0.0-20231012144811-a36026f1f503
 	google.golang.org/protobuf v1.31.0
 )
