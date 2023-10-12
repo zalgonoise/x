@@ -8,6 +8,7 @@ require (
 	github.com/zalgonoise/x/cfg v0.0.0-20230914182321-1749fe42581a
 	github.com/zalgonoise/x/errs v0.0.0-20230914182321-1749fe42581a
 	github.com/zalgonoise/x/pluslog v0.0.0-20230914231232-76b61b0eca4f
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -15,5 +16,4 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	go.opentelemetry.io/otel v1.18.0 // indirect
 	go.opentelemetry.io/otel/trace v1.18.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
