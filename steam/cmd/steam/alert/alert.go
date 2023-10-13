@@ -58,8 +58,20 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return errEmptyURL, 1
 	}
 
-	// get appdetail with filter
-	storeURL := query.NewURL(*ids, *country, priceFilter)
+	if err := QueryPrices(ctx, logger, *ids, *country, *platform, *url, *targetDiscount); err != nil {
+		return err, 1
+	}
+
+	return nil, 0
+}
+
+func QueryPrices(
+	ctx context.Context,
+	logger *slog.Logger,
+	ids, country, platform, url string,
+	targetDiscount int,
+) error {
+	storeURL := query.NewURL(ids, country, priceFilter)
 
 	res, err := query.NewRequest(ctx, storeURL)
 
@@ -67,37 +79,45 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err, 1
+		return err
 	}
 
 	priceOverview, err := steam.GetPriceOverview(buf)
 	if err != nil {
-		return err, 1
+		return err
 	}
 
 	// eval against target
+	return EvaluatePrices(ctx, logger, platform, url, targetDiscount, priceOverview)
+}
+
+func EvaluatePrices(
+	ctx context.Context, logger *slog.Logger,
+	platform, url string, targetDiscount int,
+	priceOverview map[string]*store.PriceOverview,
+) error {
 	for appID, data := range priceOverview {
-		if discount := data.DiscountPercent; int(discount) <= *targetDiscount {
+		if discount := data.DiscountPercent; int(discount) <= targetDiscount {
 			logger.InfoContext(ctx, "discount isn't low enough",
 				slog.String("appID", appID),
 				slog.String("final_price", data.GetFinalFormatted()),
 				slog.Int("cur_discount_percent", int(data.GetDiscountPercent())),
-				slog.Int("target_discount_percent", *targetDiscount),
+				slog.Int("target_discount_percent", targetDiscount),
 			)
 
 			continue
 		}
 
 		// exec webhook if current price is lower or equal to discount ratio
-		if err = sendMessage(ctx, logger, *platform, *url, appID, data); err != nil {
-			return err, 1
+		if err := SendMessage(ctx, logger, platform, url, appID, data); err != nil {
+			return err
 		}
 	}
 
-	return nil, 0
+	return nil
 }
 
-func sendMessage(
+func SendMessage(
 	ctx context.Context, logger *slog.Logger,
 	platform, url, appID string, data *store.PriceOverview,
 ) error {
