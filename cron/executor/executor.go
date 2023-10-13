@@ -23,9 +23,9 @@ const (
 )
 
 var (
-	ErrEmptyRunnerList = errs.New(errDomain, ErrEmpty, ErrRunnerList)
-	ErrEmptyScheduler  = errs.New(errDomain, ErrEmpty, ErrScheduler)
-	ErrEmptySelector   = errs.New(errDomain, ErrEmpty, ErrSelector)
+	ErrEmptyRunnerList = errs.WithDomain(errDomain, ErrEmpty, ErrRunnerList)
+	ErrEmptyScheduler  = errs.WithDomain(errDomain, ErrEmpty, ErrScheduler)
+	ErrEmptySelector   = errs.WithDomain(errDomain, ErrEmpty, ErrSelector)
 )
 
 type Runner interface {
