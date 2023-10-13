@@ -33,15 +33,15 @@ const (
 )
 
 var (
-	ErrInvalidNumNodes     = errs.New(errDomain, ErrInvalid, ErrNumNodes)
-	ErrInvalidNodeType     = errs.New(errDomain, ErrInvalid, ErrNodeType)
-	ErrInvalidNumEdges     = errs.New(errDomain, ErrInvalid, ErrNumEdges)
-	ErrInvalidFrequency    = errs.New(errDomain, ErrInvalid, ErrFrequency)
-	ErrUnsupportedAlphanum = errs.New(errDomain, ErrUnsupported, ErrAlphanum)
-	ErrOutOfBoundsAlphanum = errs.New(errDomain, ErrOutOfBounds, ErrAlphanum)
-	ErrEmptyAlphanum       = errs.New(errDomain, ErrEmpty, ErrAlphanum)
-	ErrInvalidAlphanum     = errs.New(errDomain, ErrInvalid, ErrAlphanum)
-	ErrInvalidScheduler    = errs.New(errDomain, ErrInvalid, ErrScheduler)
+	ErrInvalidNumNodes     = errs.WithDomain(errDomain, ErrInvalid, ErrNumNodes)
+	ErrInvalidNodeType     = errs.WithDomain(errDomain, ErrInvalid, ErrNodeType)
+	ErrInvalidNumEdges     = errs.WithDomain(errDomain, ErrInvalid, ErrNumEdges)
+	ErrInvalidFrequency    = errs.WithDomain(errDomain, ErrInvalid, ErrFrequency)
+	ErrUnsupportedAlphanum = errs.WithDomain(errDomain, ErrUnsupported, ErrAlphanum)
+	ErrOutOfBoundsAlphanum = errs.WithDomain(errDomain, ErrOutOfBounds, ErrAlphanum)
+	ErrEmptyAlphanum       = errs.WithDomain(errDomain, ErrEmpty, ErrAlphanum)
+	ErrInvalidAlphanum     = errs.WithDomain(errDomain, ErrInvalid, ErrAlphanum)
+	ErrInvalidScheduler    = errs.WithDomain(errDomain, ErrInvalid, ErrScheduler)
 
 	monthsList = []string{
 		0:  "",
