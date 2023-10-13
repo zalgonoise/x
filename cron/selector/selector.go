@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	ErrEmptyExecutorsList = errs.New(errSelectorDomain, ErrEmpty, ErrExecutorsList)
+	ErrEmptyExecutorsList = errs.WithDomain(errSelectorDomain, ErrEmpty, ErrExecutorsList)
 )
 
 type Selector interface {
