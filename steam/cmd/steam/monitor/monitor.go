@@ -10,11 +10,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/zalgonoise/x/steam/cmd/steam/alert"
+
 	"github.com/zalgonoise/x/cron"
 	"github.com/zalgonoise/x/cron/executor"
 	"github.com/zalgonoise/x/cron/schedule"
 	"github.com/zalgonoise/x/cron/selector"
-	"github.com/zalgonoise/x/steam/cmd/steam/alert"
 )
 
 const defaultSchedule = "0 10 * * *"
