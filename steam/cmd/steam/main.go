@@ -8,6 +8,7 @@ import (
 
 	"github.com/zalgonoise/x/steam/cmd/steam/alert"
 	"github.com/zalgonoise/x/steam/cmd/steam/monitor"
+	"github.com/zalgonoise/x/steam/cmd/steam/search"
 	"github.com/zalgonoise/x/steam/cmd/steam/store"
 )
 
@@ -15,6 +16,7 @@ const (
 	storeOp   = "store"
 	alertOp   = "alert"
 	monitorOp = "monitor"
+	searchOp  = "search"
 )
 
 var (
@@ -47,6 +49,8 @@ func run(logger *slog.Logger) (error, int) {
 		return alert.Exec(ctx, logger, os.Args[2:])
 	case monitorOp:
 		return monitor.Exec(ctx, logger, os.Args[2:])
+	case searchOp:
+		return search.Exec(ctx, logger, os.Args[2:])
 	default:
 		return errInvalidOp, 1
 	}
