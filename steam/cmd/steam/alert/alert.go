@@ -109,7 +109,7 @@ func EvaluatePrices(
 		}
 
 		// exec webhook if current price is lower or equal to discount ratio
-		if err := SendMessage(ctx, logger, platform, url, appID, data); err != nil {
+		if err := SendMessage(ctx, logger, platform, url, OnSale(appID, data)); err != nil {
 			return err
 		}
 	}
@@ -119,11 +119,11 @@ func EvaluatePrices(
 
 func SendMessage(
 	ctx context.Context, logger *slog.Logger,
-	platform, url, appID string, data *store.PriceOverview,
+	platform, url, payload string,
 ) error {
 	switch strings.ToLower(platform) {
 	case "logger":
-		logger.InfoContext(ctx, textAlert(appID, data))
+		logger.InfoContext(ctx, payload)
 
 		return nil
 	case "slack":
@@ -132,7 +132,7 @@ func SendMessage(
 			return err
 		}
 
-		if _, err = w.Execute(ctx, textAlert(appID, data)); err != nil {
+		if _, err = w.Execute(ctx, payload); err != nil {
 			return err
 		}
 
@@ -142,7 +142,7 @@ func SendMessage(
 		if err != nil {
 			return err
 		}
-		if _, err = w.Execute(ctx, textAlert(appID, data)); err != nil {
+		if _, err = w.Execute(ctx, payload); err != nil {
 			return err
 		}
 
@@ -152,7 +152,7 @@ func SendMessage(
 	}
 }
 
-func textAlert(appID string, data *store.PriceOverview) string {
+func OnSale(appID string, data *store.PriceOverview) string {
 	return fmt.Sprintf(
 		`Woah! The app %s is currently with a %d percent discount!!
 
@@ -163,6 +163,39 @@ Check it out at: %s/%s`,
 		appID,
 		data.GetDiscountPercent(),
 		data.GetInitialFormatted(),
+		data.GetFinalFormatted(),
+		productBaseURL,
+		appID,
+	)
+}
+
+func StillOnSale(appID string, data *store.PriceOverview) string {
+	return fmt.Sprintf(
+		`What!? The app %s is still with a %d percent discount!!
+
+	Initial price: %s
+	Current price: %s
+
+Check it out at: %s/%s`,
+		appID,
+		data.GetDiscountPercent(),
+		data.GetInitialFormatted(),
+		data.GetFinalFormatted(),
+		productBaseURL,
+		appID,
+	)
+}
+
+func OffSale(appID string, data *store.PriceOverview) string {
+	return fmt.Sprintf(
+		`Shoot! The app %s is no longer on sale... Better luck next time!
+
+	Current discount: %d%
+	Current price: %s
+
+Check it out at: %s/%s`,
+		appID,
+		data.GetDiscountPercent(),
 		data.GetFinalFormatted(),
 		productBaseURL,
 		appID,
