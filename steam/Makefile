@@ -30,3 +30,8 @@ protobreaking: proto/buf.lock bin/protoc-gen-buf-breaking ## Compares your curre
 generate-protoc: ## Generates code from protobuf files
 generate-protoc:  proto/buf.lock bin/protoc-gen-go bin/protoc-gen-go-grpc bin/protoc-gen-validate
 	PATH=$(PWD)/bin:$$PATH buf generate
+
+
+apps-list-get:
+	go run ./scripts/appslist-renew
+	go run ./scripts/appslist-rebuild-db
