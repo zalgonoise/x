@@ -35,6 +35,7 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 	url := fs.String("url", "", "webhook target URL (platform: slack; discord)")
 	targetDiscount := fs.Int("target_discount", 50, "target discount percent")
 	cronSchedule := fs.String("schedule", defaultSchedule, fmt.Sprintf("schedule frequency to query for discounts, as a cron schedule string (default: %s)", defaultSchedule))
+	interval := fs.Int("interval", 0, "suspend alerts for on-sale products for # days, before alerting again")
 
 	if err := fs.Parse(args); err != nil {
 		return err, 1
@@ -64,16 +65,26 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		*cronSchedule = defaultSchedule
 	}
 
-	return runCron(ctx, logger, *cronSchedule, *ids, *country, *platform, *url, *targetDiscount)
+	return runCron(ctx, logger, *cronSchedule, *ids, *country, *platform, *url, *targetDiscount, *interval)
 }
 
 func runCron(
 	ctx context.Context, logger *slog.Logger,
 	cronSchedule, ids, country, platform, url string,
-	targetDiscount int,
+	targetDiscount, interval int,
 ) (error, int) {
-	runner := func(execCtx context.Context) error {
+	var r executor.Runner = executor.Runnable(func(execCtx context.Context) error {
 		return alert.QueryPrices(execCtx, logger, ids, country, platform, url, targetDiscount)
+	})
+
+	if interval > 0 {
+		r = newRunner(logger, request{
+			ids:            ids,
+			country:        country,
+			platform:       platform,
+			url:            url,
+			targetDiscount: targetDiscount,
+		}, interval)
 	}
 
 	s, err := schedule.New(schedule.WithSchedule(cronSchedule))
@@ -84,7 +95,7 @@ func runCron(
 	e, err := executor.New(
 		"steam_discount_monitor",
 		executor.WithScheduler(s),
-		executor.WithRunners(executor.Runnable(runner)),
+		executor.WithRunners(r),
 		executor.WithLogs(logger),
 	)
 	if err != nil {
