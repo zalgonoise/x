@@ -49,11 +49,17 @@ func (e ExecutorWithTrace) ID() string {
 
 func executorWithTrace(e Executor, tracer trace.Tracer) Executor {
 	if e == nil {
-		return noOpExecutable{}
+		return noOpExecutor{}
 	}
 
 	if tracer == nil {
 		return e
+	}
+
+	if withTrace, ok := e.(ExecutorWithTrace); ok {
+		withTrace.tracer = tracer
+
+		return withTrace
 	}
 
 	return ExecutorWithTrace{

@@ -73,8 +73,8 @@ func (e Executable) Exec(ctx context.Context) error {
 
 		case <-timer.C:
 			// avoid executing before it's time, as it may trigger repeated runs
-			if pretriggerDuration := next.Sub(time.Now()); pretriggerDuration > 0 {
-				time.Sleep(pretriggerDuration + 100*time.Millisecond)
+			if preTriggerDuration := next.Sub(time.Now()); preTriggerDuration > 0 {
+				time.Sleep(preTriggerDuration + 100*time.Millisecond)
 			}
 
 			runnerErrs := make([]error, 0, len(e.runners))
@@ -99,15 +99,15 @@ func New(id string, options ...cfg.Option[Config]) (Executor, error) {
 
 	exec, err := newExecutable(id, config)
 	if err != nil {
-		return noOpExecutable{}, err
+		return noOpExecutor{}, err
 	}
 
 	if config.metrics != nil {
 		exec = executorWithMetrics(exec, config.metrics)
 	}
 
-	if config.logger != nil {
-		exec = executorWithLogs(exec, config.logger)
+	if config.handler != nil {
+		exec = executorWithLogs(exec, config.handler)
 	}
 
 	if config.tracer != nil {
@@ -124,11 +124,11 @@ func newExecutable(id string, config Config) (Executor, error) {
 	}
 
 	if len(config.runners) == 0 {
-		return noOpExecutable{}, ErrEmptyRunnerList
+		return noOpExecutor{}, ErrEmptyRunnerList
 	}
 
 	if config.scheduler == nil && config.cronString == "" {
-		return noOpExecutable{}, ErrEmptyScheduler
+		return noOpExecutor{}, ErrEmptyScheduler
 	}
 
 	var sched schedule.Scheduler
@@ -137,7 +137,7 @@ func newExecutable(id string, config Config) (Executor, error) {
 	if config.cronString != "" {
 		cron, err := schedule.New(schedule.WithSchedule(config.cronString))
 		if err != nil {
-			return noOpExecutable{}, err
+			return noOpExecutor{}, err
 		}
 
 		sched = cron
@@ -153,7 +153,7 @@ func newExecutable(id string, config Config) (Executor, error) {
 	if config.loc != nil && sched != nil {
 		cron, err := schedule.From(sched, schedule.WithLocation(config.loc))
 		if err != nil {
-			return noOpExecutable{}, err
+			return noOpExecutor{}, err
 		}
 
 		sched = cron
@@ -167,16 +167,20 @@ func newExecutable(id string, config Config) (Executor, error) {
 	}, nil
 }
 
-type noOpExecutable struct{}
+func NoOp() Executor {
+	return noOpExecutor{}
+}
 
-func (e noOpExecutable) Exec(_ context.Context) error {
+type noOpExecutor struct{}
+
+func (e noOpExecutor) Exec(_ context.Context) error {
 	return nil
 }
 
-func (e noOpExecutable) Next(_ context.Context) (t time.Time) {
+func (e noOpExecutor) Next(_ context.Context) (t time.Time) {
 	return t
 }
 
-func (e noOpExecutable) ID() string {
+func (e noOpExecutor) ID() string {
 	return ""
 }

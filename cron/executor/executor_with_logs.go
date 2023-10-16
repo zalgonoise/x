@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"log/slog"
+	"os"
 	"time"
 )
 
@@ -39,17 +40,23 @@ func (e ExecutorWithLogs) ID() string {
 	return e.e.ID()
 }
 
-func executorWithLogs(e Executor, logger *slog.Logger) Executor {
+func executorWithLogs(e Executor, handler slog.Handler) Executor {
 	if e == nil {
-		return noOpExecutable{}
+		return noOpExecutor{}
 	}
 
-	if logger == nil {
-		return e
+	if handler == nil {
+		handler = slog.NewTextHandler(os.Stderr, nil)
+	}
+
+	if withLogs, ok := e.(ExecutorWithLogs); ok {
+		withLogs.logger = slog.New(handler)
+
+		return withLogs
 	}
 
 	return ExecutorWithLogs{
 		e:      e,
-		logger: logger,
+		logger: slog.New(handler),
 	}
 }

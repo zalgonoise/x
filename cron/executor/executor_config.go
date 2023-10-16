@@ -13,19 +13,20 @@ type Config struct {
 	scheduler  schedule.Scheduler
 	cronString string
 	loc        *time.Location
-	runners    []Runner
 
-	logger  *slog.Logger
+	runners []Runner
+
+	handler slog.Handler
 	metrics ExecutorMetrics
 	tracer  trace.Tracer
 }
 
 func WithRunners(runners ...Runner) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
-		if len(runners) == 0 {
-			return config
-		}
+	if len(runners) == 0 {
+		return cfg.NoOp[Config]{}
+	}
 
+	return cfg.Register(func(config Config) Config {
 		if len(config.runners) == 0 {
 			config.runners = runners
 
@@ -39,6 +40,10 @@ func WithRunners(runners ...Runner) cfg.Option[Config] {
 }
 
 func WithScheduler(sched schedule.Scheduler) cfg.Option[Config] {
+	if sched == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.scheduler = sched
 
@@ -47,6 +52,10 @@ func WithScheduler(sched schedule.Scheduler) cfg.Option[Config] {
 }
 
 func WithSchedule(cronString string) cfg.Option[Config] {
+	if cronString == "" {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.cronString = cronString
 
@@ -55,6 +64,10 @@ func WithSchedule(cronString string) cfg.Option[Config] {
 }
 
 func WithLocation(loc *time.Location) cfg.Option[Config] {
+	if loc == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.loc = loc
 
@@ -63,6 +76,10 @@ func WithLocation(loc *time.Location) cfg.Option[Config] {
 }
 
 func WithMetrics(m ExecutorMetrics) cfg.Option[Config] {
+	if m == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.metrics = m
 
@@ -70,15 +87,35 @@ func WithMetrics(m ExecutorMetrics) cfg.Option[Config] {
 	})
 }
 
-func WithLogs(logger *slog.Logger) cfg.Option[Config] {
+func WithLogger(logger *slog.Logger) cfg.Option[Config] {
+	if logger == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
-		config.logger = logger
+		config.handler = logger.Handler()
+
+		return config
+	})
+}
+
+func WithLogHandler(handler slog.Handler) cfg.Option[Config] {
+	if handler == nil {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register(func(config Config) Config {
+		config.handler = handler
 
 		return config
 	})
 }
 
 func WithTrace(tracer trace.Tracer) cfg.Option[Config] {
+	if tracer == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.tracer = tracer
 

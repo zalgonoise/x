@@ -46,11 +46,17 @@ func (e ExecutorWithMetrics) ID() string {
 
 func executorWithMetrics(e Executor, m ExecutorMetrics) Executor {
 	if e == nil {
-		return noOpExecutable{}
+		return noOpExecutor{}
 	}
 
 	if m == nil {
 		return e
+	}
+
+	if withMetrics, ok := e.(ExecutorWithMetrics); ok {
+		withMetrics.m = m
+
+		return withMetrics
 	}
 
 	return ExecutorWithMetrics{
