@@ -19,6 +19,10 @@ const (
 	searchOp  = "search"
 )
 
+var allOperations = []string{
+	storeOp, alertOp, monitorOp, searchOp,
+}
+
 var (
 	errNoOp      = errors.New("undefined operation")
 	errInvalidOp = errors.New("invalid operation")
@@ -36,10 +40,19 @@ func main() {
 	os.Exit(code)
 }
 
+func printHelp(ctx context.Context, logger *slog.Logger, err error) (error, int) {
+	logger.InfoContext(ctx, "please use one of the supported operations",
+		slog.Any("operations", allOperations),
+		slog.String("error", err.Error()),
+	)
+
+	return nil, 1
+}
+
 func run(logger *slog.Logger) (error, int) {
 	ctx := context.Background()
 	if len(os.Args) <= 1 {
-		return errNoOp, 1
+		return printHelp(ctx, logger, errNoOp)
 	}
 
 	switch os.Args[1] {
@@ -52,6 +65,6 @@ func run(logger *slog.Logger) (error, int) {
 	case searchOp:
 		return search.Exec(ctx, logger, os.Args[2:])
 	default:
-		return errInvalidOp, 1
+		return printHelp(ctx, logger, errInvalidOp)
 	}
 }
