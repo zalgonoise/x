@@ -14,6 +14,10 @@ type Config struct {
 }
 
 func WithTimeout(dur time.Duration) cfg.Option[Config] {
+	if dur < 0 {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.timeout = dur
 
@@ -22,6 +26,10 @@ func WithTimeout(dur time.Duration) cfg.Option[Config] {
 }
 
 func WithBasicAuth(username, password string) cfg.Option[Config] {
+	if username == "" && password == "" {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.username = username
 		config.password = password
