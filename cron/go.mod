@@ -7,7 +7,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7
 	github.com/zalgonoise/parse v0.0.0-20230205181257-0ceebea8442c
-	github.com/zalgonoise/x/cfg v0.0.0-20230903162410-168ccab82d02
+	github.com/zalgonoise/x/cfg v0.0.0-20231016155006-7941b5718dcf
 	github.com/zalgonoise/x/errs v0.0.0-20231012154310-c6fd6eb0575b
 	go.opentelemetry.io/otel v1.18.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.18.0
