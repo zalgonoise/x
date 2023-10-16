@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"log/slog"
+	"os"
 	"time"
 )
 
@@ -19,17 +20,23 @@ func (s SchedulerWithLogs) Next(ctx context.Context, now time.Time) time.Time {
 	return next
 }
 
-func withLogs(s Scheduler, logger *slog.Logger) Scheduler {
+func schedulerWithLogs(s Scheduler, handler slog.Handler) Scheduler {
 	if s == nil {
 		return noOpScheduler{}
 	}
 
-	if logger == nil {
-		return s
+	if handler == nil {
+		handler = slog.NewTextHandler(os.Stderr, nil)
+	}
+
+	if withLogs, ok := s.(SchedulerWithLogs); ok {
+		withLogs.logger = slog.New(handler)
+
+		return withLogs
 	}
 
 	return SchedulerWithLogs{
 		s:      s,
-		logger: logger,
+		logger: slog.New(handler),
 	}
 }

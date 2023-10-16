@@ -35,15 +35,15 @@ func New(options ...cfg.Option[SchedulerConfig]) (Scheduler, error) {
 	}
 
 	if config.metrics != nil {
-		cron = withMetrics(cron, config.metrics)
+		cron = schedulerWithMetrics(cron, config.metrics)
 	}
 
-	if config.logger != nil {
-		cron = withLogs(cron, config.logger)
+	if config.handler != nil {
+		cron = schedulerWithLogs(cron, config.handler)
 	}
 
 	if config.tracer != nil {
-		cron = withTrace(cron, config.tracer)
+		cron = schedulerWithTrace(cron, config.tracer)
 	}
 
 	return cron, nil
@@ -114,6 +114,10 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 	}
 
 	return weekdayTime
+}
+
+func NoOp() Scheduler {
+	return noOpScheduler{}
 }
 
 type noOpScheduler struct{}

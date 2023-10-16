@@ -24,13 +24,19 @@ func (s SchedulerWithTrace) Next(ctx context.Context, now time.Time) time.Time {
 	return next
 }
 
-func withTrace(s Scheduler, tracer trace.Tracer) Scheduler {
+func schedulerWithTrace(s Scheduler, tracer trace.Tracer) Scheduler {
 	if s == nil {
 		return noOpScheduler{}
 	}
 
 	if tracer == nil {
 		return s
+	}
+
+	if withTrace, ok := s.(SchedulerWithTrace); ok {
+		withTrace.tracer = tracer
+
+		return withTrace
 	}
 
 	return SchedulerWithTrace{

@@ -20,13 +20,19 @@ func (s SchedulerWithMetrics) Next(ctx context.Context, now time.Time) time.Time
 	return s.s.Next(ctx, now)
 }
 
-func withMetrics(s Scheduler, m Metrics) Scheduler {
+func schedulerWithMetrics(s Scheduler, m Metrics) Scheduler {
 	if s == nil {
 		return noOpScheduler{}
 	}
 
 	if m == nil {
 		return s
+	}
+
+	if withMetrics, ok := s.(SchedulerWithMetrics); ok {
+		withMetrics.m = m
+
+		return withMetrics
 	}
 
 	return SchedulerWithMetrics{
