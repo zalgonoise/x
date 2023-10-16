@@ -84,8 +84,8 @@ func New(options ...cfg.Option[Config]) (Selector, error) {
 		sel = selectorWithMetrics(sel, config.metrics)
 	}
 
-	if config.logger != nil {
-		sel = selectorWithLogs(sel, config.logger)
+	if config.handler != nil {
+		sel = selectorWithLogs(sel, config.handler)
 	}
 
 	if config.tracer != nil {
@@ -103,6 +103,10 @@ func newSelector(config Config) (Selector, error) {
 	return selector{
 		exec: config.exec,
 	}, nil
+}
+
+func NoOp() Selector {
+	return noOpSelector{}
 }
 
 type noOpSelector struct{}

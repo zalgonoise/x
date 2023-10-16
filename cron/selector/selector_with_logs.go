@@ -3,6 +3,7 @@ package selector
 import (
 	"context"
 	"log/slog"
+	"os"
 )
 
 type SelectorWithLogs struct {
@@ -22,17 +23,23 @@ func (s SelectorWithLogs) Next(ctx context.Context) error {
 	return nil
 }
 
-func selectorWithLogs(s Selector, logger *slog.Logger) Selector {
+func selectorWithLogs(s Selector, handler slog.Handler) Selector {
 	if s == nil {
 		return noOpSelector{}
 	}
 
-	if logger == nil {
-		return s
+	if handler == nil {
+		handler = slog.NewTextHandler(os.Stderr, nil)
+	}
+
+	if withLogs, ok := s.(SelectorWithLogs); ok {
+		withLogs.logger = slog.New(handler)
+
+		return withLogs
 	}
 
 	return SelectorWithLogs{
 		s:      s,
-		logger: logger,
+		logger: slog.New(handler),
 	}
 }

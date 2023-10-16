@@ -35,6 +35,12 @@ func selectorWithMetrics(s Selector, m Metrics) Selector {
 		return s
 	}
 
+	if withMetrics, ok := s.(SelectorWithMetrics); ok {
+		withMetrics.m = m
+
+		return withMetrics
+	}
+
 	return SelectorWithMetrics{
 		s: s,
 		m: m,

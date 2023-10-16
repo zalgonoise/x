@@ -11,17 +11,17 @@ import (
 type Config struct {
 	exec []executor.Executor
 
-	logger  *slog.Logger
+	handler slog.Handler
 	metrics Metrics
 	tracer  trace.Tracer
 }
 
 func WithExecutors(executors ...executor.Executor) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
-		if len(executors) == 0 {
-			return config
-		}
+	if len(executors) == 0 {
+		return cfg.NoOp[Config]{}
+	}
 
+	return cfg.Register(func(config Config) Config {
 		if len(config.exec) == 0 {
 			config.exec = executors
 
@@ -35,6 +35,10 @@ func WithExecutors(executors ...executor.Executor) cfg.Option[Config] {
 }
 
 func WithMetrics(m Metrics) cfg.Option[Config] {
+	if m == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.metrics = m
 
@@ -42,15 +46,35 @@ func WithMetrics(m Metrics) cfg.Option[Config] {
 	})
 }
 
-func WithLogs(logger *slog.Logger) cfg.Option[Config] {
+func WithLogger(logger *slog.Logger) cfg.Option[Config] {
+	if logger == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
-		config.logger = logger
+		config.handler = logger.Handler()
+
+		return config
+	})
+}
+
+func WithLogHandler(handler slog.Handler) cfg.Option[Config] {
+	if handler == nil {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register(func(config Config) Config {
+		config.handler = handler
 
 		return config
 	})
 }
 
 func WithTrace(tracer trace.Tracer) cfg.Option[Config] {
+	if tracer == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.tracer = tracer
 

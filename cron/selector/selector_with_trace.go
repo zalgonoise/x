@@ -35,6 +35,12 @@ func selectorWithTrace(s Selector, tracer trace.Tracer) Selector {
 		return s
 	}
 
+	if withTrace, ok := s.(SelectorWithTrace); ok {
+		withTrace.tracer = tracer
+
+		return withTrace
+	}
+
 	return SelectorWithTrace{
 		s:      s,
 		tracer: tracer,
