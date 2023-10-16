@@ -21,6 +21,10 @@ func ViaPrometheus() cfg.Option[Config] {
 }
 
 func WithPort(port int) cfg.Option[Config] {
+	if port < 0 {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.serverPort = port
 

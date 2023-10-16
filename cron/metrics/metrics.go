@@ -15,7 +15,6 @@ const (
 	traceIDKey = "trace_id"
 )
 
-// TODO: remove; reference
 type Metrics interface {
 	IncSchedulerNextCalls()
 	IncSelectorSelectCalls()

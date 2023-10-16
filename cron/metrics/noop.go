@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+func NoOp() Metrics {
+	return noOpMetrics{}
+}
+
 type noOpMetrics struct{}
 
 func (noOpMetrics) IncSchedulerNextCalls()                                    {}
