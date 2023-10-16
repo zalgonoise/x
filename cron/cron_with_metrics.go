@@ -30,6 +30,12 @@ func cronWithMetrics(r Runtime, m Metrics) Runtime {
 		return r
 	}
 
+	if withMetrics, ok := r.(CronWithMetrics); ok {
+		withMetrics.m = m
+
+		return withMetrics
+	}
+
 	return CronWithMetrics{
 		r: r,
 		m: m,

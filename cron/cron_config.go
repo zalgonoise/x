@@ -4,7 +4,6 @@ import (
 	"log/slog"
 
 	"github.com/zalgonoise/x/cfg"
-	"github.com/zalgonoise/x/cron/selector"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -14,23 +13,18 @@ const (
 )
 
 type Config struct {
-	sel           selector.Selector
 	errBufferSize int
 
-	logger  *slog.Logger
+	handler slog.Handler
 	metrics Metrics
 	tracer  trace.Tracer
 }
 
-func WithSelector(sel selector.Selector) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
-		config.sel = sel
-
-		return config
-	})
-}
-
 func WithErrorBufferSize(size int) cfg.Option[Config] {
+	if size < 0 {
+		size = defaultBufferSize
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.errBufferSize = size
 
@@ -39,6 +33,10 @@ func WithErrorBufferSize(size int) cfg.Option[Config] {
 }
 
 func WithMetrics(m Metrics) cfg.Option[Config] {
+	if m == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.metrics = m
 
@@ -46,15 +44,35 @@ func WithMetrics(m Metrics) cfg.Option[Config] {
 	})
 }
 
-func WithLogs(logger *slog.Logger) cfg.Option[Config] {
+func WithLogger(logger *slog.Logger) cfg.Option[Config] {
+	if logger == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
-		config.logger = logger
+		config.handler = logger.Handler()
+
+		return config
+	})
+}
+
+func WithLogHandler(handler slog.Handler) cfg.Option[Config] {
+	if handler == nil {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register(func(config Config) Config {
+		config.handler = handler
 
 		return config
 	})
 }
 
 func WithTrace(tracer trace.Tracer) cfg.Option[Config] {
+	if tracer == nil {
+		return cfg.NoOp[Config]{}
+	}
+
 	return cfg.Register(func(config Config) Config {
 		config.tracer = tracer
 

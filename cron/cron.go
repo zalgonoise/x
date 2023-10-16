@@ -43,10 +43,10 @@ func (r runtime) Err() <-chan error {
 	return r.err
 }
 
-func New(options ...cfg.Option[Config]) (Runtime, error) {
+func Run(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) {
 	config := cfg.New(options...)
 
-	cron, err := newRuntime(config)
+	cron, err := newRuntime(sel, config)
 	if err != nil {
 		return noOpRuntime{}, err
 	}
@@ -55,8 +55,8 @@ func New(options ...cfg.Option[Config]) (Runtime, error) {
 		cron = cronWithMetrics(cron, config.metrics)
 	}
 
-	if config.logger != nil {
-		cron = cronWithLogs(cron, config.logger)
+	if config.handler != nil {
+		cron = cronWithLogs(cron, config.handler)
 	}
 
 	if config.tracer != nil {
@@ -66,9 +66,9 @@ func New(options ...cfg.Option[Config]) (Runtime, error) {
 	return cron, nil
 }
 
-func newRuntime(config Config) (Runtime, error) {
+func newRuntime(sel selector.Selector, config Config) (Runtime, error) {
 	// validate input
-	if config.sel == nil {
+	if sel == nil {
 		return noOpRuntime{}, executor.ErrEmptySelector
 	}
 
@@ -78,9 +78,13 @@ func newRuntime(config Config) (Runtime, error) {
 	}
 
 	return runtime{
-		sel: config.sel,
+		sel: sel,
 		err: make(chan error, size),
 	}, nil
+}
+
+func NoOp() Runtime {
+	return noOpRuntime{}
 }
 
 type noOpRuntime struct{}

@@ -33,6 +33,12 @@ func cronWithTrace(r Runtime, tracer trace.Tracer) Runtime {
 		return r
 	}
 
+	if withTrace, ok := r.(CronWithTrace); ok {
+		withTrace.tracer = tracer
+
+		return withTrace
+	}
+
 	return CronWithTrace{
 		r:      r,
 		tracer: tracer,

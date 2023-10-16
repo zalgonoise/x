@@ -3,6 +3,7 @@ package cron
 import (
 	"context"
 	"log/slog"
+	"os"
 )
 
 type CronWithLogs struct {
@@ -20,17 +21,23 @@ func (c CronWithLogs) Err() <-chan error {
 	return c.r.Err()
 }
 
-func cronWithLogs(r Runtime, logger *slog.Logger) Runtime {
+func cronWithLogs(r Runtime, handler slog.Handler) Runtime {
 	if r == nil {
 		return noOpRuntime{}
 	}
 
-	if logger == nil {
-		return r
+	if handler == nil {
+		handler = slog.NewTextHandler(os.Stderr, nil)
+	}
+
+	if withLogs, ok := r.(CronWithLogs); ok {
+		withLogs.logger = slog.New(handler)
+
+		return withLogs
 	}
 
 	return CronWithLogs{
 		r:      r,
-		logger: logger,
+		logger: slog.New(handler),
 	}
 }
