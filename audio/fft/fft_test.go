@@ -6,10 +6,10 @@ import (
 	"time"
 
 	dspfft "github.com/mjibson/go-dsp/fft"
+	"github.com/zalgonoise/x/audio/encoding/wav"
 
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav"
 )
 
 // BenchmarkHypotenuse compares three approaches to calculating the hypotenuse using Go's standard library,
