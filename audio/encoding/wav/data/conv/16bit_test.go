@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/zalgonoise/x/audio/wav/data"
-	"github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/data/internal/testdata/pcm"
+	"github.com/zalgonoise/x/audio/encoding/wav/data"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/internal/testdata/pcm"
 )
 
 func BenchmarkChunk16bit(b *testing.B) {

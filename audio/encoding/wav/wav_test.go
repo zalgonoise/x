@@ -8,11 +8,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/data/filters"
-	dataheader "github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/header"
+	wav2 "github.com/zalgonoise/x/audio/encoding/wav"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
+	dataheader "github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 )
 
 //go:embed data/internal/testdata/amen_kick/*
@@ -110,9 +109,9 @@ func BenchmarkWav(b *testing.B) {
 	}
 
 	for _, tc := range td[:4] { // mono 44.1kHz 8bit to 32bit
-		var loadedWav *wav.Wav
+		var loadedWav *wav2.Wav
 
-		loadedWav, err = wav.Decode(tc.data)
+		loadedWav, err = wav2.Decode(tc.data)
 		if err != nil {
 			b.Error(err)
 			return
@@ -121,12 +120,12 @@ func BenchmarkWav(b *testing.B) {
 		b.Run(
 			"Decode", func(b *testing.B) {
 				var (
-					w   *wav.Wav
+					w   *wav2.Wav
 					err error
 				)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					w, err = wav.Decode(tc.data)
+					w, err = wav2.Decode(tc.data)
 					if err != nil {
 						b.Error(err)
 					}
@@ -149,12 +148,12 @@ func BenchmarkWav(b *testing.B) {
 		b.Run(
 			"Write", func(b *testing.B) {
 				var (
-					w   *wav.Wav
+					w   *wav2.Wav
 					err error
 				)
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					w = new(wav.Wav)
+					w = new(wav2.Wav)
 					_, err = w.Write(tc.data)
 					if err != nil {
 						b.Error(err)
@@ -198,7 +197,7 @@ func TestNewWav(t *testing.T) {
 		4, 0, // BlockAlign
 		16, 0, // BitsPerSample
 	}
-	w, err := wav.New(44100, 16, 2, 1)
+	w, err := wav2.New(44100, 16, 2, 1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -223,7 +222,7 @@ func TestWavDecodeEncode(t *testing.T) {
 	}
 
 	for idx, test := range testdata {
-		w, err := wav.Decode(test.data)
+		w, err := wav2.Decode(test.data)
 		if err != nil {
 			t.Errorf("decoding error on index %d: %v", idx, err)
 			continue
@@ -240,7 +239,7 @@ func TestWavDecodeEncode(t *testing.T) {
 			}
 		}
 
-		newWav, err := wav.Decode(buf)
+		newWav, err := wav2.Decode(buf)
 		if err != nil {
 			t.Errorf("2nd-pass decoding error on index %d: %v", idx, err)
 			continue
@@ -269,7 +268,7 @@ func TestWavOutputCompare(t *testing.T) {
 	}
 
 	for idx, test := range testdata {
-		w := new(wav.Wav)
+		w := new(wav2.Wav)
 		_, err := w.Write(test.data)
 		if err != nil {
 			t.Error(err)
@@ -292,7 +291,7 @@ func TestWavWriteRead(t *testing.T) {
 	}
 
 	for idx, test := range testdata {
-		w := new(wav.Wav)
+		w := new(wav2.Wav)
 		_, err := w.Write(test.data)
 		if err != nil {
 			t.Errorf("decoding error on index %d: %v", idx, err)
@@ -315,7 +314,7 @@ func TestWavWriteRead(t *testing.T) {
 			}
 		}
 
-		newWav := new(wav.Wav)
+		newWav := new(wav2.Wav)
 		_, err = newWav.Write(buf)
 		if err != nil {
 			t.Errorf("2nd-pass decoding error on index %d: %v", idx, err)
@@ -352,7 +351,7 @@ func TestWavSegmentedWrite(t *testing.T) {
 	}
 
 	for idx, test := range testdata {
-		w := new(wav.Wav)
+		w := new(wav2.Wav)
 
 		_, err := w.Write(test.data[:36])
 		if err != nil {
@@ -398,7 +397,7 @@ func TestWav_WriteProcessRead(t *testing.T) {
 
 	for idx, test := range td {
 		// Write
-		w := new(wav.Wav)
+		w := new(wav2.Wav)
 		_, err = w.Write(test.data)
 		require.NoError(t, err)
 
@@ -415,7 +414,7 @@ func TestWav_WriteProcessRead(t *testing.T) {
 		require.Equal(t, buf, test.data)
 
 		// Write read bytes
-		newWav := new(wav.Wav)
+		newWav := new(wav2.Wav)
 		_, err = newWav.Write(buf)
 		require.NoError(t, err)
 
@@ -435,7 +434,7 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 	require.NoError(b, err)
 
 	for _, test := range testdata[:4] {
-		w := new(wav.Wav)
+		w := new(wav2.Wav)
 		buf := make([]byte, len(test.data))
 
 		b.Run("All", func(b *testing.B) {
@@ -497,7 +496,7 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 		b.Run("Read", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
-				w = new(wav.Wav)
+				w = new(wav2.Wav)
 				// Write once
 				_, err = w.Write(test.data)
 				if err != nil {
@@ -524,14 +523,14 @@ func TestStream(t *testing.T) {
 	t.Run("WriteAndRead", func(t *testing.T) {
 		for idx, test := range td {
 			var size = 64
-			var cfg = &wav.StreamConfig{
-				Size: wav.SizeConfig{
+			var cfg = &wav2.StreamConfig{
+				Size: wav2.SizeConfig{
 					Size: size,
 				},
 			}
 
 			// Write
-			w := wav.NewStream(cfg, func(h *header.Header, data []float64) error {
+			w := wav2.NewStream(cfg, func(h *header.Header, data []float64) error {
 				return nil
 			})
 
@@ -556,14 +555,14 @@ func TestStream(t *testing.T) {
 	t.Run("ReadFromAndRead", func(t *testing.T) {
 		for idx, test := range td {
 			var size = 64
-			var cfg = &wav.StreamConfig{
-				Size: wav.SizeConfig{
+			var cfg = &wav2.StreamConfig{
+				Size: wav2.SizeConfig{
 					Size: size,
 				},
 			}
 
 			// Write
-			w := wav.NewStream(cfg, func(h *header.Header, data []float64) error {
+			w := wav2.NewStream(cfg, func(h *header.Header, data []float64) error {
 				return nil
 			})
 

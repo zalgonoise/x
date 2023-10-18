@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	wav2 "github.com/zalgonoise/x/audio/encoding/wav"
+	stream2 "github.com/zalgonoise/x/audio/encoding/wav/stream"
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/stream"
 )
 
 //go:embed internal/testdata/2khz.wav
@@ -27,10 +27,10 @@ var sine8 []byte
 //go:embed internal/testdata/16khz.wav
 var sine16 []byte
 
-func newSine(freq int) (*wav.Wav, error) {
+func newSine(freq int) (*wav2.Wav, error) {
 	// create a sine wave 16 bit depth, 44.1kHz rate, mono,
 	// 5 second duration. Pass audio bytes into a new bytes.Buffer
-	sine, err := wav.New(44100, 16, 1, 1)
+	sine, err := wav2.New(44100, 16, 1, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +58,10 @@ func TestWavBuffer(t *testing.T) {
 
 			// create a new stream using the bytes.Buffer as an io.Reader
 			// half a second ratio (expect 11 entries), with a max values filter
-			w := stream.New(buf).
+			w := stream2.New(buf).
 				Ratio(0.5).
 				WithFilter(
-					stream.MaxValues(maxCh),
+					stream2.MaxValues(maxCh),
 				)
 
 			// stream the audio using the context and an err channel
@@ -141,9 +141,9 @@ func TestWavBuffer(t *testing.T) {
 					}()
 
 					// create a new stream using the bytes.Buffer as an io.Reader
-					w := stream.New(buf).
+					w := stream2.New(buf).
 						WithFilter(
-							stream.FFTOnThreshold(fft.Block1024, 10, maxCh),
+							stream2.FFTOnThreshold(fft.Block1024, 10, maxCh),
 						)
 
 					// stream the audio using the context and an err channel
@@ -202,7 +202,7 @@ func TestWavBuffer(t *testing.T) {
 		}()
 
 		// create a new stream using the bytes.Buffer as an io.Reader
-		w := stream.New(buf)
+		w := stream2.New(buf)
 
 		// stream the audio using the context and an err channel
 		errCh := make(chan error)
@@ -216,10 +216,10 @@ func TestWavBuffer(t *testing.T) {
 		// it's surely a deadline reached error, as the test took too long
 		select {
 		case err := <-errCh:
-			if errors.Is(err, wav.ErrInvalid) && errors.Is(err, wav.ErrHeader) {
+			if errors.Is(err, wav2.ErrInvalid) && errors.Is(err, wav2.ErrHeader) {
 				return
 			}
-			t.Errorf("unexpected error: wanted %v ; got %v", wav.ErrInvalidHeader, err)
+			t.Errorf("unexpected error: wanted %v ; got %v", wav2.ErrInvalidHeader, err)
 			return
 		case <-ctx.Done():
 			err := ctx.Err()

@@ -4,10 +4,10 @@ import (
 	"io"
 	"time"
 
+	data2 "github.com/zalgonoise/x/audio/encoding/wav/data"
+	datah "github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav/data"
-	datah "github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 const (
@@ -50,7 +50,7 @@ type Chunk interface {
 	// Generate creates a wave of the given form, frequency and duration within this Chunk
 	Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration)
 	// Apply transforms the floating-point audio data with each FilterFunc in `filters`
-	Apply(filters ...data.FilterFunc)
+	Apply(filters ...data2.FilterFunc)
 }
 
 // NewChunk is a factory for Chunk interfaces.
@@ -66,7 +66,7 @@ type Chunk interface {
 // due to the way that Go handles a slice of a type and its conversions to a different type
 func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
 	if h != nil && string(h.Subchunk2ID[:]) == datah.JunkIDString {
-		return data.NewJunkChunk(h)
+		return data2.NewJunkChunk(h)
 	}
 
 	switch format {
@@ -75,14 +75,14 @@ func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
 	case header.PCMFormat:
 		switch bitDepth {
 		case 0:
-			return data.NewJunkChunk(h)
+			return data2.NewJunkChunk(h)
 		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-			return data.NewPCMDataChunk(bitDepth, h)
+			return data2.NewPCMDataChunk(bitDepth, h)
 		default:
 			return nil
 		}
 	case header.FloatFormat:
-		return data.NewFloatDataChunk(bitDepth, h)
+		return data2.NewFloatDataChunk(bitDepth, h)
 	default:
 		return nil
 	}
@@ -90,7 +90,7 @@ func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
 
 func NewRingChunk(h *datah.Header, bitDepth, format uint16, size int, proc func([]float64) error) Chunk {
 	if h != nil && string(h.Subchunk2ID[:]) == datah.JunkIDString {
-		return data.NewJunkChunk(h)
+		return data2.NewJunkChunk(h)
 	}
 
 	switch format {
@@ -99,14 +99,14 @@ func NewRingChunk(h *datah.Header, bitDepth, format uint16, size int, proc func(
 	case header.PCMFormat:
 		switch bitDepth {
 		case 0:
-			return data.NewJunkChunk(h)
+			return data2.NewJunkChunk(h)
 		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-			return data.NewPCMDataRing(bitDepth, h, size, proc)
+			return data2.NewPCMDataRing(bitDepth, h, size, proc)
 		default:
 			return nil
 		}
 	case header.FloatFormat:
-		return data.NewFloatDataRing(bitDepth, h, size, proc)
+		return data2.NewFloatDataRing(bitDepth, h, size, proc)
 	default:
 		return nil
 	}

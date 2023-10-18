@@ -7,8 +7,8 @@ import (
 	"io"
 	"time"
 
-	dataheader "github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/header"
+	dataheader "github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 )
 
 // ProcessFunc describes a function that processes a portion of the audio buffer

@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zalgonoise/x/audio/wav/data/filters"
-
+	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 func TestJunkChunk(t *testing.T) {

@@ -4,8 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/zalgonoise/x/audio/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 )
 
 func TestNew(t *testing.T) {

@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/zalgonoise/gbuf"
+	conv2 "github.com/zalgonoise/x/audio/encoding/wav/data/conv"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav/data/conv"
-	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 const (
@@ -219,28 +219,28 @@ func NewPCMDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.PCM8Bit{},
+			Converter:   conv2.PCM8Bit{},
 			byteSize:    size8,
 		}
 	case bitDepth16:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.PCM16Bit{},
+			Converter:   conv2.PCM16Bit{},
 			byteSize:    size16,
 		}
 	case bitDepth24:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.PCM24Bit{},
+			Converter:   conv2.PCM24Bit{},
 			byteSize:    size24,
 		}
 	case bitDepth32:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv.PCM32Bit{},
+			Converter:   conv2.PCM32Bit{},
 			byteSize:    size32,
 		}
 	default:
@@ -260,14 +260,14 @@ func NewFloatDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth64,
-			Converter:   conv.Float64{},
+			Converter:   conv2.Float64{},
 			byteSize:    int(bitDepth) / byteSize,
 		}
 	default:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth32,
-			Converter:   conv.Float32{},
+			Converter:   conv2.Float32{},
 			byteSize:    size32,
 		}
 	}

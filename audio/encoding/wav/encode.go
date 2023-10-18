@@ -3,8 +3,8 @@ package wav
 import (
 	"bytes"
 
-	dataheader "github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/header"
+	dataheader "github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 )
 
 // Read implements the io.Reader interface

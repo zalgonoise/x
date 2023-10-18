@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/zalgonoise/gio"
+	wav2 "github.com/zalgonoise/x/audio/encoding/wav"
+	datah "github.com/zalgonoise/x/audio/encoding/wav/data/header"
 
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/fft/window"
-	"github.com/zalgonoise/x/audio/wav"
-	datah "github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 // StreamFilter is a pluggable function that will scan, analyze, process
@@ -163,7 +163,7 @@ func Flush(dst []byte) StreamFilter {
 	return func(w *Wav, raw []byte) error {
 		n := copy(dst, raw)
 		if n != len(raw) {
-			return wav.ErrShortDataBuffer
+			return wav2.ErrShortDataBuffer
 		}
 		return nil
 	}
@@ -177,7 +177,7 @@ func FlushTo(writer io.Writer) StreamFilter {
 			return err
 		}
 		if n != len(raw) {
-			return wav.ErrShortDataBuffer
+			return wav2.ErrShortDataBuffer
 		}
 		return nil
 	}
@@ -269,9 +269,9 @@ func FlushToFileFor(name string, dur time.Duration) StreamFilter {
 
 // FlushCh creates a new Wav object for the input data and sends it to
 // the input wav.Wav channel `ch`
-func FlushCh(ch chan<- *wav.Wav) StreamFilter {
+func FlushCh(ch chan<- *wav2.Wav) StreamFilter {
 	return func(w *Wav, raw []byte) error {
-		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels, w.Header.AudioFormat)
+		wav, err := wav2.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels, w.Header.AudioFormat)
 		if err != nil {
 			return err
 		}
@@ -286,9 +286,9 @@ func FlushCh(ch chan<- *wav.Wav) StreamFilter {
 // recording from the WavBuffer reader for `dur` duration.
 //
 // When done, it sends the created Wav to the input Wav channel `ch`
-func FlushChFor(ch chan<- *wav.Wav, dur time.Duration) StreamFilter {
+func FlushChFor(ch chan<- *wav2.Wav, dur time.Duration) StreamFilter {
 	return func(w *Wav, raw []byte) error {
-		wav, err := wav.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels, w.Header.AudioFormat)
+		wav, err := wav2.New(w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels, w.Header.AudioFormat)
 		if err != nil {
 			return err
 		}

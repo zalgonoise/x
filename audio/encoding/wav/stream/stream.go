@@ -4,12 +4,10 @@ import (
 	"context"
 	"io"
 
-	"github.com/zalgonoise/x/audio/wav"
-
 	"github.com/zalgonoise/gbuf"
-
-	dataheader "github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav"
+	dataheader "github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 )
 
 const minBufferSize = 16

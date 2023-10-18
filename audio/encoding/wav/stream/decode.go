@@ -1,9 +1,9 @@
 package stream
 
 import (
-	"github.com/zalgonoise/x/audio/wav"
-	datah "github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav"
+	datah "github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 )
 
 func (w *Wav) parseHeader(buf []byte) error {

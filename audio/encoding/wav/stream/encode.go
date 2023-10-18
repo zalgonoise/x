@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav"
 )
 
 const baseBufferSize = 4

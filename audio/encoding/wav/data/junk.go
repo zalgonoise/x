@@ -4,8 +4,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 // JunkChunk is a DataChunk used for storing "junk"-ID subchunk data

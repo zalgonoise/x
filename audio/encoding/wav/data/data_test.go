@@ -2,15 +2,16 @@ package data
 
 import (
 	"bytes"
-	"github.com/zalgonoise/x/audio/wav/data/filters"
-	"github.com/zalgonoise/x/audio/wav/data/internal/testdata/pcm"
 	"testing"
 	"time"
+
+	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/internal/testdata/pcm"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 func TestDataChunk(t *testing.T) {

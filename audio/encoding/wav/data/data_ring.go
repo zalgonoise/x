@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/zalgonoise/gbuf"
+	conv2 "github.com/zalgonoise/x/audio/encoding/wav/data/conv"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav/data/conv"
-	"github.com/zalgonoise/x/audio/wav/data/header"
 )
 
 const minRingSize = 64
@@ -124,7 +124,7 @@ func NewPCMDataRing(bitDepth uint16, h *header.Header, size int, proc func([]flo
 			ChunkHeader: h,
 			Data:        gbuf.NewRingFilter[float64](size, proc),
 			Depth:       bitDepth,
-			Converter:   conv.PCM8Bit{},
+			Converter:   conv2.PCM8Bit{},
 			byteSize:    size8,
 		}
 	case bitDepth16:
@@ -132,7 +132,7 @@ func NewPCMDataRing(bitDepth uint16, h *header.Header, size int, proc func([]flo
 			ChunkHeader: h,
 			Data:        gbuf.NewRingFilter[float64](size/(int(bitDepth)/byteSize), proc),
 			Depth:       bitDepth,
-			Converter:   conv.PCM16Bit{},
+			Converter:   conv2.PCM16Bit{},
 			byteSize:    size16,
 		}
 	case bitDepth24:
@@ -140,7 +140,7 @@ func NewPCMDataRing(bitDepth uint16, h *header.Header, size int, proc func([]flo
 			ChunkHeader: h,
 			Data:        gbuf.NewRingFilter[float64](size/(int(bitDepth)/byteSize), proc),
 			Depth:       bitDepth,
-			Converter:   conv.PCM24Bit{},
+			Converter:   conv2.PCM24Bit{},
 			byteSize:    size24,
 		}
 	case bitDepth32:
@@ -148,7 +148,7 @@ func NewPCMDataRing(bitDepth uint16, h *header.Header, size int, proc func([]flo
 			ChunkHeader: h,
 			Data:        gbuf.NewRingFilter[float64](size/(int(bitDepth)/byteSize), proc),
 			Depth:       bitDepth,
-			Converter:   conv.PCM32Bit{},
+			Converter:   conv2.PCM32Bit{},
 			byteSize:    size32,
 		}
 	default:
@@ -173,7 +173,7 @@ func NewFloatDataRing(bitDepth uint16, h *header.Header, size int, proc func([]f
 			ChunkHeader: h,
 			Data:        gbuf.NewRingFilter[float64](size/(int(bitDepth)/byteSize), proc),
 			Depth:       bitDepth64,
-			Converter:   conv.Float64{},
+			Converter:   conv2.Float64{},
 			byteSize:    int(bitDepth) / byteSize,
 		}
 	default:
@@ -181,7 +181,7 @@ func NewFloatDataRing(bitDepth uint16, h *header.Header, size int, proc func([]f
 			ChunkHeader: h,
 			Data:        gbuf.NewRingFilter[float64](size/(int(bitDepth)/byteSize), proc),
 			Depth:       bitDepth32,
-			Converter:   conv.Float32{},
+			Converter:   conv2.Float32{},
 			byteSize:    size32,
 		}
 	}

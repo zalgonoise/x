@@ -4,17 +4,17 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/zalgonoise/x/audio/wav/data"
-	"github.com/zalgonoise/x/audio/wav/data/header"
-	"github.com/zalgonoise/x/audio/wav/data/internal/testdata/pcm"
+	"github.com/zalgonoise/x/audio/encoding/wav/data"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/internal/testdata/pcm"
 )
 
-func BenchmarkChunk24bit(b *testing.B) {
+func BenchmarkChunk32bit(b *testing.B) {
 	b.Run(
 		"Parse", func(b *testing.B) {
 			b.Run(
 				"NewBuffer", func(b *testing.B) {
-					h, err := header.From(pcm.Test24bitHeader)
+					h, err := header.From(pcm.Test32bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
@@ -23,25 +23,25 @@ func BenchmarkChunk24bit(b *testing.B) {
 					var chunk *data.DataChunk
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						chunk = data.NewPCMDataChunk(bitDepth24, h)
-						chunk.Parse(pcm.Test24bitPCM)
+						chunk = data.NewPCMDataChunk(bitDepth32, h)
+						chunk.Parse(pcm.Test32bitPCM)
 					}
 					_ = chunk
 				},
 			)
 			b.Run(
 				"Append", func(b *testing.B) {
-					h, err := header.From(pcm.Test24bitHeader)
+					h, err := header.From(pcm.Test32bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
 					}
 
-					var chunk = data.NewPCMDataChunk(bitDepth24, h)
-					chunk.Parse(pcm.Test24bitPCM)
+					var chunk = data.NewPCMDataChunk(bitDepth32, h)
+					chunk.Parse(pcm.Test32bitPCM)
 					b.ResetTimer()
 					for i := 0; i < b.N; i++ {
-						chunk.Parse(pcm.Test24bitPCM)
+						chunk.Parse(pcm.Test32bitPCM)
 					}
 					_ = chunk
 				},
@@ -50,17 +50,17 @@ func BenchmarkChunk24bit(b *testing.B) {
 	)
 	b.Run(
 		"Generate", func(b *testing.B) {
-			h, err := header.From(pcm.Test24bitHeader)
+			h, err := header.From(pcm.Test32bitHeader)
 			if err != nil {
 				b.Error(err)
 				return
 			}
 
 			var (
-				chunk = data.NewPCMDataChunk(bitDepth24, h)
+				chunk = data.NewPCMDataChunk(bitDepth32, h)
 				buf   []byte
 			)
-			chunk.Parse(pcm.Test24bitPCM)
+			chunk.Parse(pcm.Test32bitPCM)
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
@@ -71,13 +71,13 @@ func BenchmarkChunk24bit(b *testing.B) {
 	)
 }
 
-func Test24bitHeader(t *testing.T) {
-	h, err := header.From(pcm.Test24bitHeader)
+func Test32bitHeader(t *testing.T) {
+	h, err := header.From(pcm.Test32bitHeader)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	chunk := data.NewPCMDataChunk(bitDepth24, h)
+	chunk := data.NewPCMDataChunk(bitDepth32, h)
 
 	if output := chunk.Header(); !reflect.DeepEqual(*h, *output) {
 		t.Errorf("output mismatch error: wanted %+v ; got %+v", *h, *output)

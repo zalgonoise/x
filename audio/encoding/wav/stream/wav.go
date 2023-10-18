@@ -1,12 +1,12 @@
 package stream
 
 import (
-	"github.com/zalgonoise/x/audio/wav/header"
 	"io"
 
-	"github.com/zalgonoise/gbuf"
+	"github.com/zalgonoise/x/audio/encoding/wav"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 
-	"github.com/zalgonoise/x/audio/wav"
+	"github.com/zalgonoise/gbuf"
 )
 
 // Wav is just like a wav.Wav, but it's designed to support WAV audio streams

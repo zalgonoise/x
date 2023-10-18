@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	header2 "github.com/zalgonoise/x/audio/encoding/wav/header"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 // Wav describes the structure of WAV-encoded audio data, containing
@@ -16,7 +16,7 @@ import (
 // also "junk"), and also a Data reference that is used as a pointer to the
 // currently active (PCM data) chunk
 type Wav struct {
-	Header *header.Header
+	Header *header2.Header
 	Chunks []Chunk
 	Data   Chunk
 
@@ -34,7 +34,7 @@ type Wav struct {
 // The returned Wav object will have its header set in every field except for
 // `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
 func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Wav, error) {
-	h, err := header.New(sampleRate, bitDepth, numChannels, format)
+	h, err := header2.New(sampleRate, bitDepth, numChannels, format)
 	if err != nil {
 		return nil, err
 	}
@@ -49,12 +49,12 @@ func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Wav, error) 
 //
 // The returned Wav object will have its header set in every field except for
 // `ChunkSize`, and both the `Wav.Chunks` and `Wav.Data` elements set to a blank data chunk
-func FromHeader(head *header.Header) (*Wav, error) {
+func FromHeader(head *header2.Header) (*Wav, error) {
 	if head == nil {
 		return nil, ErrMissingHeader
 	}
 
-	if err := header.Validate(head); err != nil {
+	if err := header2.Validate(head); err != nil {
 		return nil, err
 	}
 
