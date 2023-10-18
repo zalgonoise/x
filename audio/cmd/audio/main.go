@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zalgonoise/x/audio/encoding/wav/header"
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
@@ -120,12 +119,12 @@ func newExporter(ctx context.Context, config *Config, logHandler slog.Handler) (
 
 		exporter, err = prom.ToProm(port, exporterOpts...)
 		if err != nil {
-			return audio.NoOpExporter[*header.Header](), err
+			return audio.NoOpExporter(), err
 		}
 	default:
 		exporter, err = stdout.ToLogger(exporterOpts...)
 		if err != nil {
-			return audio.NoOpExporter[*header.Header](), err
+			return audio.NoOpExporter(), err
 		}
 	}
 
