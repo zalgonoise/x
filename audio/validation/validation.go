@@ -1,52 +1,92 @@
 package validation
 
-import "errors"
+import (
+	"errors"
+)
 
 // Validator is an interface for any type that validates (the contents of) type T. It contains a single
 // method, Validate, that returns an error if there is invalid or unset data in the input data structure.
 type Validator[T any] interface {
 	// Validate verifies if the input data structure contains invalid or missing data, returning an error if so.
-	Validate(T) error
+	Validate(value T) error
 }
 
-// checker is a type of Validator that validates a data structure from a single or multiple validation functions
-type checker[T any] []func(T) error
+type Func[T any] func(T) error
 
-// Validate implements the Validator interface
-//
-// It executes the underlying functions in the Group v on the input data of type T, returning the errors that it finds.
-//
-// If the checker doesn't find any errors, it will return nil. If it finds one error, it will return the first item of
-// an error slice it creates internally. If the call raises multiple errors, they are all collected in such slice,
-// joined together (with errors.Join) and then returned to the caller as a single error.
-func (v checker[T]) Validate(data T) error {
-	if len(v) == 1 {
-		return v[0](data)
-	}
+func (fn Func[T]) Validate(value T) error {
+	return fn(value)
+}
 
-	errs := make([]error, 0, len(v))
+type multiValidator[T any] struct {
+	validators []Validator[T]
+}
 
-	for i := range v {
-		if err := v[i](data); err != nil {
+func (v multiValidator[T]) Validate(value T) error {
+	errs := make([]error, 0, len(v.validators))
+
+	for i := range v.validators {
+		if err := v.validators[i].Validate(value); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
-	switch len(errs) {
+	return errors.Join(errs...)
+}
+
+func New[T any](validators ...func(T) error) Validator[T] {
+	switch len(validators) {
 	case 0:
-		return nil
+		return noOpValidator[T]{}
 	case 1:
-		return errs[0]
-	default:
-		return errors.Join(errs...)
+		return Func[T](validators[0])
+	}
+
+	c := make([]Validator[T], 0, len(validators))
+
+	for i := range validators {
+		if validators[i] == nil {
+			continue
+		}
+
+		c = append(c, Func[T](validators[i]))
+
+	}
+
+	return &multiValidator[T]{
+		validators: c,
 	}
 }
 
-// Register returns the input validation function or set of validation functions as a Validator of type T.
-func Register[T any](validators ...func(T) error) Validator[T] {
-	if len(validators) == 0 {
-		return nil
+func Join[T any](validators ...Validator[T]) Validator[T] {
+	switch len(validators) {
+	case 0:
+		return NoOp[T]()
+	case 1:
+		return validators[0]
 	}
 
-	return checker[T](validators)
+	c := make([]Validator[T], 0, len(validators))
+
+	for i := range validators {
+		switch v := validators[i].(type) {
+		case nil:
+			continue
+		case multiValidator[T]:
+			c = append(c, v.validators...)
+		default:
+			c = append(c, v)
+		}
+	}
+
+	return &multiValidator[T]{
+		validators: c,
+	}
 }
+
+func NoOp[T any]() Validator[T] {
+	return noOpValidator[T]{}
+}
+
+type noOpValidator[T any] struct{}
+
+func (noOpValidator[T]) Validate(T) error { return nil }
