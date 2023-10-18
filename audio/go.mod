@@ -29,4 +29,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-require github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0
+require (
+	github.com/zalgonoise/gio v0.0.0-20230218185031-8677e096e5b0 // indirect
+	github.com/zalgonoise/x/errs v0.0.0-20231018172333-6a19f39849c8
+)
