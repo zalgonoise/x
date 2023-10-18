@@ -28,7 +28,7 @@ var (
 	ErrEmptyAddress    = errs.WithDomain(consumerDomain, ErrEmpty, ErrAddress)
 	ErrInvalidProtocol = errs.WithDomain(consumerDomain, ErrInvalid, ErrProtocol)
 
-	configValidator = validation.Register[Config](validateTarget)
+	configValidator = validation.New(validateTarget)
 	defaultConfig   = Config{
 		timeout: defaultConnTimeout,
 	}
