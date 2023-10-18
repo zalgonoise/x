@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/zalgonoise/gbuf"
-	conv2 "github.com/zalgonoise/x/audio/encoding/wav/data/conv"
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 
+	"github.com/zalgonoise/x/audio/encoding/wav/data/conv"
 	"github.com/zalgonoise/x/audio/osc"
 )
 
@@ -36,7 +35,7 @@ type Converter interface {
 
 // DataChunk is a general-purpose chunk for audio data
 type DataChunk struct {
-	ChunkHeader *header.Header
+	ChunkHeader *Header
 	Data        []float64
 	Depth       uint16
 	Converter   Converter
@@ -152,7 +151,7 @@ func (d *DataChunk) Bytes() []byte {
 }
 
 // Header returns the ChunkHeader of the DataChunk
-func (d *DataChunk) Header() *header.Header {
+func (d *DataChunk) Header() *Header {
 	if d.ChunkHeader.Subchunk2Size == 0 {
 		d.ChunkHeader.Subchunk2Size = uint32(len(d.Data) * (int(d.Depth) / 8))
 	}
@@ -209,9 +208,9 @@ func (d *DataChunk) Apply(filters ...FilterFunc) {
 
 // NewPCMDataChunk creates a PCM DataChunk with the appropriate Converter, from the input
 // `bitDepth` and `subchunk`
-func NewPCMDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
+func NewPCMDataChunk(bitDepth uint16, h *Header) *DataChunk {
 	if h == nil {
-		h = header.NewData()
+		h = NewData()
 	}
 
 	switch bitDepth {
@@ -219,28 +218,28 @@ func NewPCMDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv2.PCM8Bit{},
+			Converter:   conv.PCM8Bit{},
 			byteSize:    size8,
 		}
 	case bitDepth16:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv2.PCM16Bit{},
+			Converter:   conv.PCM16Bit{},
 			byteSize:    size16,
 		}
 	case bitDepth24:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv2.PCM24Bit{},
+			Converter:   conv.PCM24Bit{},
 			byteSize:    size24,
 		}
 	case bitDepth32:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth,
-			Converter:   conv2.PCM32Bit{},
+			Converter:   conv.PCM32Bit{},
 			byteSize:    size32,
 		}
 	default:
@@ -250,9 +249,9 @@ func NewPCMDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 
 // NewFloatDataChunk creates a 32-bit Float DataChunk with the appropriate Converter, from the input
 // `bitDepth` and `subchunk`
-func NewFloatDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
+func NewFloatDataChunk(bitDepth uint16, h *Header) *DataChunk {
 	if h == nil {
-		h = header.NewData()
+		h = NewData()
 	}
 
 	switch bitDepth {
@@ -260,14 +259,14 @@ func NewFloatDataChunk(bitDepth uint16, h *header.Header) *DataChunk {
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth64,
-			Converter:   conv2.Float64{},
+			Converter:   conv.Float64{},
 			byteSize:    int(bitDepth) / byteSize,
 		}
 	default:
 		return &DataChunk{
 			ChunkHeader: h,
 			Depth:       bitDepth32,
-			Converter:   conv2.Float32{},
+			Converter:   conv.Float32{},
 			byteSize:    size32,
 		}
 	}

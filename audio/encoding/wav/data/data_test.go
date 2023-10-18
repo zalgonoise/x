@@ -5,12 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
-	"github.com/zalgonoise/x/audio/encoding/wav/data/internal/testdata/pcm"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/internal/testdata/pcm"
 	"github.com/zalgonoise/x/audio/osc"
 )
 
@@ -47,7 +45,7 @@ func TestDataChunk(t *testing.T) {
 		},
 	} {
 		t.Run(class.name, func(t *testing.T) {
-			h, err := header.From(class.header)
+			h, err := From(class.header)
 			require.NoError(t, err)
 
 			for _, testcase := range []struct {
@@ -243,7 +241,7 @@ func TestDataRing(t *testing.T) {
 		},
 	} {
 		t.Run(class.name, func(t *testing.T) {
-			h, err := header.From(class.header)
+			h, err := From(class.header)
 			require.NoError(t, err)
 
 			for _, testcase := range []struct {

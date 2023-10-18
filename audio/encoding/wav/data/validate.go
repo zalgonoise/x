@@ -1,8 +1,9 @@
 package data
 
 import (
-	"github.com/zalgonoise/x/audio/validation"
 	"github.com/zalgonoise/x/errs"
+
+	"github.com/zalgonoise/x/audio/validation"
 )
 
 const (

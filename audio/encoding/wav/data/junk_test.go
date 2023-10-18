@@ -6,16 +6,16 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 	"github.com/zalgonoise/x/audio/osc"
 )
 
 func TestJunkChunk(t *testing.T) {
 	var err error
 	input := []byte("some junk data")
-	h := &header.Header{
-		Subchunk2ID:   header.Junk,
+	h := &Header{
+		Subchunk2ID:   Junk,
 		Subchunk2Size: 14,
 	}
 	bitDepth := 0

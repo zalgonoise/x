@@ -4,13 +4,12 @@ import (
 	"io"
 	"time"
 
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 	"github.com/zalgonoise/x/audio/osc"
 )
 
 // JunkChunk is a DataChunk used for storing "junk"-ID subchunk data
 type JunkChunk struct {
-	ChunkHeader *header.Header
+	ChunkHeader *Header
 	Data        []byte
 	Depth       uint16
 
@@ -84,7 +83,7 @@ func (d *JunkChunk) Bytes() []byte {
 }
 
 // Header returns the ChunkHeader of the DataChunk
-func (d *JunkChunk) Header() *header.Header { return d.ChunkHeader }
+func (d *JunkChunk) Header() *Header { return d.ChunkHeader }
 
 // BitDepth returns the bit depth of the DataChunk
 func (d *JunkChunk) BitDepth() uint16 { return d.Depth }
@@ -109,9 +108,9 @@ func (d *JunkChunk) Generate(_ osc.Type, _, _ int, _ time.Duration) {}
 func (d *JunkChunk) Apply(_ ...FilterFunc) {}
 
 // NewJunkChunk creates a JunkChunk with the input `subchunk` ChunkHeader, or with a default one if nil
-func NewJunkChunk(h *header.Header) *JunkChunk {
+func NewJunkChunk(h *Header) *JunkChunk {
 	if h == nil {
-		h = header.NewJunk()
+		h = NewJunk()
 	}
 
 	return &JunkChunk{
