@@ -6,8 +6,7 @@ import (
 	"io"
 	"time"
 
-	dataheader "github.com/zalgonoise/x/audio/encoding/wav/data/header"
-	"github.com/zalgonoise/x/audio/encoding/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 )
 
 // ByteRate calculates the byte rate of a certain signal from its header metadata
@@ -145,9 +144,9 @@ func (w *Stream) Write(buf []byte) (n int, err error) {
 
 // Head returns the Stream's Wav.Header, or it will set it from consuming the first header.Size bytes
 // from the input io.Reader.
-func (w *Stream) Head(r io.Reader) (*header.Header, error) {
+func (w *Stream) Head(r io.Reader) (*Header, error) {
 	if w.Header == nil {
-		h := new(header.Header)
+		h := new(Header)
 
 		if _, err := h.ReadFrom(r); err != nil {
 			return nil, err
@@ -170,7 +169,7 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 	var num int64
 
 	if w.Header == nil {
-		w.Header = new(header.Header)
+		w.Header = new(Header)
 
 		if num, err = w.Header.ReadFrom(r); err != nil {
 			return n, err
@@ -183,7 +182,7 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 	w.checkSize()
 
 	for w.Data == nil {
-		h := new(dataheader.Header)
+		h := new(header.Header)
 
 		if num, err = h.ReadFrom(r); err != nil {
 			return n, err
@@ -251,7 +250,7 @@ func (w *Stream) decode() (n int, err error) {
 
 		// header is required beyond this point, as w.head.BitsPerSample is necessary
 		if w.Header == nil {
-			return n, ErrMissingHeader
+			return n, ErrEmptyHeader
 		}
 	}
 
@@ -274,19 +273,19 @@ func (w *Stream) decode() (n int, err error) {
 
 func (w *Stream) decodeNewSubChunk(n int) (int, error) {
 	// try to read subchunk headers
-	if w.buf.Len() > dataheader.Size {
+	if w.buf.Len() > header.Size {
 		var (
 			err            error
-			subchunk       *dataheader.Header
-			subchunkBuffer = make([]byte, dataheader.Size)
+			subchunk       *header.Header
+			subchunkBuffer = make([]byte, header.Size)
 		)
 
 		if _, err = w.buf.Read(subchunkBuffer); err != nil {
 			return n, err
 		}
 
-		if subchunk, err = dataheader.From(subchunkBuffer); err == nil {
-			n += dataheader.Size
+		if subchunk, err = header.From(subchunkBuffer); err == nil {
+			n += header.Size
 
 			chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
 				return w.proc(w.Header, data)
@@ -366,16 +365,16 @@ func (w *Stream) Bytes() []byte {
 func (w *Stream) encode() {
 	var (
 		n    int
-		size = header.Size
+		size = Size
 	)
 
 	for i := range w.Chunks {
-		if w.Chunks[i].Header().Subchunk2ID == dataheader.Junk {
-			size += dataheader.Size + int(w.Chunks[i].Header().Subchunk2Size)
+		if w.Chunks[i].Header().Subchunk2ID == header.Junk {
+			size += header.Size + int(w.Chunks[i].Header().Subchunk2Size)
 			continue
 		}
 
-		size += dataheader.Size + w.Size
+		size += header.Size + w.Size
 	}
 
 	if w.Header.ChunkSize == 0 {
@@ -383,8 +382,8 @@ func (w *Stream) encode() {
 	}
 
 	buf := make([]byte, size)
-	_, _ = w.Header.Read(buf[n : n+header.Size])
-	n += header.Size
+	_, _ = w.Header.Read(buf[n : n+Size])
+	n += Size
 
 	for i := range w.Chunks {
 		var (
@@ -392,12 +391,12 @@ func (w *Stream) encode() {
 			chunkSize   = int(chunkHeader.Subchunk2Size)
 		)
 
-		if w.Chunks[i].Header().Subchunk2ID == dataheader.Data && w.Size < chunkSize {
+		if w.Chunks[i].Header().Subchunk2ID == header.Data && w.Size < chunkSize {
 			chunkSize = w.Size
 		}
 
-		_, _ = chunkHeader.Read(buf[n : n+dataheader.Size])
-		n += dataheader.Size
+		_, _ = chunkHeader.Read(buf[n : n+header.Size])
+		n += header.Size
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
 		n += chunkSize
 	}

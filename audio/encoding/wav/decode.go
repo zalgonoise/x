@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	dataheader "github.com/zalgonoise/x/audio/encoding/wav/data/header"
-	"github.com/zalgonoise/x/audio/encoding/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 )
 
 const dataSubchunkID = "data"
@@ -48,7 +47,7 @@ func (w *Wav) ReadFrom(r io.Reader) (n int64, err error) {
 	var num int64
 
 	if w.Header == nil {
-		w.Header = new(header.Header)
+		w.Header = new(Header)
 	}
 
 	if num, err = w.Header.ReadFrom(r); err != nil {
@@ -58,7 +57,7 @@ func (w *Wav) ReadFrom(r io.Reader) (n int64, err error) {
 	n += num
 
 	for w.Data == nil {
-		h := new(dataheader.Header)
+		h := new(header.Header)
 
 		if num, err = h.ReadFrom(r); err != nil {
 			return n, err
@@ -87,7 +86,7 @@ func (w *Wav) ReadFrom(r io.Reader) (n int64, err error) {
 // with that data returning a pointer to one, and an error if the buffer is too
 // short, or if the data is invalid.
 func Decode(buf []byte) (w *Wav, err error) {
-	if len(buf) < header.Size {
+	if len(buf) < Size {
 		return nil, ErrShortDataBuffer
 	}
 
@@ -110,7 +109,7 @@ func (w *Wav) decode() (n int, err error) {
 
 		// header is required beyond this point, as w.head.BitsPerSample is necessary
 		if w.Header == nil {
-			return n, ErrMissingHeader
+			return n, ErrEmptyHeader
 		}
 	}
 
@@ -129,11 +128,11 @@ func (w *Wav) decode() (n int, err error) {
 }
 
 func (w *Wav) decodeHeader() (n int, err error) {
-	if w.buf.Len() < header.Size {
+	if w.buf.Len() < Size {
 		return 0, ErrShortDataBuffer
 	}
 
-	w.Header = new(header.Header)
+	w.Header = new(Header)
 
 	num, err := w.Header.ReadFrom(w.buf)
 	return int(num), err
@@ -141,19 +140,19 @@ func (w *Wav) decodeHeader() (n int, err error) {
 
 func (w *Wav) decodeNewSubChunk(n int) (int, error) {
 	// try to read subchunk headers
-	if w.buf.Len() > dataheader.Size {
+	if w.buf.Len() > header.Size {
 		var (
 			err            error
-			subchunk       *dataheader.Header
-			subchunkBuffer = make([]byte, dataheader.Size)
+			subchunk       *header.Header
+			subchunkBuffer = make([]byte, header.Size)
 		)
 
 		if _, err = w.buf.Read(subchunkBuffer); err != nil {
 			return n, err
 		}
 
-		if subchunk, err = dataheader.From(subchunkBuffer); err == nil {
-			n += dataheader.Size
+		if subchunk, err = header.From(subchunkBuffer); err == nil {
+			n += header.Size
 			chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
 			if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
 				w.Data = chunk

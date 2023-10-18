@@ -3,8 +3,7 @@ package wav
 import (
 	"bytes"
 
-	dataheader "github.com/zalgonoise/x/audio/encoding/wav/data/header"
-	"github.com/zalgonoise/x/audio/encoding/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 )
 
 // Read implements the io.Reader interface
@@ -36,11 +35,11 @@ func (w *Wav) Bytes() []byte {
 func (w *Wav) encode() {
 	var (
 		n    int
-		size = header.Size
+		size = Size
 	)
 
 	for i := range w.Chunks {
-		size += dataheader.Size + int(w.Chunks[i].Header().Subchunk2Size)
+		size += header.Size + int(w.Chunks[i].Header().Subchunk2Size)
 	}
 
 	if w.Header.ChunkSize == 0 {
@@ -48,8 +47,8 @@ func (w *Wav) encode() {
 	}
 
 	buf := make([]byte, size)
-	_, _ = w.Header.Read(buf[n : n+header.Size])
-	n += header.Size
+	_, _ = w.Header.Read(buf[n : n+Size])
+	n += Size
 
 	for i := range w.Chunks {
 		var (
@@ -57,8 +56,8 @@ func (w *Wav) encode() {
 			chunkSize   = int(chunkHeader.Subchunk2Size)
 		)
 
-		_, _ = chunkHeader.Read(buf[n : n+dataheader.Size])
-		n += dataheader.Size
+		_, _ = chunkHeader.Read(buf[n : n+header.Size])
+		n += header.Size
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
 		n += chunkSize
 	}

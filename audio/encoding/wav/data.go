@@ -4,9 +4,8 @@ import (
 	"io"
 	"time"
 
-	data2 "github.com/zalgonoise/x/audio/encoding/wav/data"
-	datah "github.com/zalgonoise/x/audio/encoding/wav/data/header"
-	"github.com/zalgonoise/x/audio/encoding/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 	"github.com/zalgonoise/x/audio/osc"
 )
 
@@ -38,7 +37,7 @@ type Chunk interface {
 	// Bytes will return a slice of bytes with the encoded PCM buffer
 	Bytes() []byte
 	// Header returns the ChunkHeader of the Chunk
-	Header() *datah.Header
+	Header() *header.Header
 	// BitDepth returns the bit depth of the Chunk
 	BitDepth() uint16
 	// Reset clears the data stored in the Chunk
@@ -50,7 +49,7 @@ type Chunk interface {
 	// Generate creates a wave of the given form, frequency and duration within this Chunk
 	Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration)
 	// Apply transforms the floating-point audio data with each FilterFunc in `filters`
-	Apply(filters ...data2.FilterFunc)
+	Apply(filters ...data.FilterFunc)
 }
 
 // NewChunk is a factory for Chunk interfaces.
@@ -64,49 +63,49 @@ type Chunk interface {
 // Note: I wanted a cleaner approach to this using generics and type constraints,
 // but I was getting nowhere meaningful; and ended up breaking at a certain point
 // due to the way that Go handles a slice of a type and its conversions to a different type
-func NewChunk(h *datah.Header, bitDepth, format uint16) Chunk {
-	if h != nil && string(h.Subchunk2ID[:]) == datah.JunkIDString {
-		return data2.NewJunkChunk(h)
+func NewChunk(h *header.Header, bitDepth, format uint16) Chunk {
+	if h != nil && string(h.Subchunk2ID[:]) == header.JunkIDString {
+		return data.NewJunkChunk(h)
 	}
 
 	switch format {
-	case header.UnsetFormat:
+	case UnsetFormat:
 		fallthrough
-	case header.PCMFormat:
+	case PCMFormat:
 		switch bitDepth {
 		case 0:
-			return data2.NewJunkChunk(h)
+			return data.NewJunkChunk(h)
 		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-			return data2.NewPCMDataChunk(bitDepth, h)
+			return data.NewPCMDataChunk(bitDepth, h)
 		default:
 			return nil
 		}
-	case header.FloatFormat:
-		return data2.NewFloatDataChunk(bitDepth, h)
+	case FloatFormat:
+		return data.NewFloatDataChunk(bitDepth, h)
 	default:
 		return nil
 	}
 }
 
-func NewRingChunk(h *datah.Header, bitDepth, format uint16, size int, proc func([]float64) error) Chunk {
-	if h != nil && string(h.Subchunk2ID[:]) == datah.JunkIDString {
-		return data2.NewJunkChunk(h)
+func NewRingChunk(h *header.Header, bitDepth, format uint16, size int, proc func([]float64) error) Chunk {
+	if h != nil && string(h.Subchunk2ID[:]) == header.JunkIDString {
+		return data.NewJunkChunk(h)
 	}
 
 	switch format {
-	case header.UnsetFormat:
+	case UnsetFormat:
 		fallthrough
-	case header.PCMFormat:
+	case PCMFormat:
 		switch bitDepth {
 		case 0:
-			return data2.NewJunkChunk(h)
+			return data.NewJunkChunk(h)
 		case bitDepth8, bitDepth16, bitDepth24, bitDepth32:
-			return data2.NewPCMDataRing(bitDepth, h, size, proc)
+			return data.NewPCMDataRing(bitDepth, h, size, proc)
 		default:
 			return nil
 		}
-	case header.FloatFormat:
-		return data2.NewFloatDataRing(bitDepth, h, size, proc)
+	case FloatFormat:
+		return data.NewFloatDataRing(bitDepth, h, size, proc)
 	default:
 		return nil
 	}
