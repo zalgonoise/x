@@ -1,9 +1,11 @@
-package header
+package wav
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/zalgonoise/x/audio/validation"
+	"github.com/zalgonoise/x/errs"
 )
 
 const (
@@ -34,6 +36,31 @@ const (
 	FloatFormat
 )
 
+const (
+	ErrDomain = errs.Domain("audio/wav")
+
+	ErrShort   = errs.Kind("short")
+	ErrEmpty   = errs.Kind("missing")
+	ErrInvalid = errs.Kind("invalid")
+
+	ErrNumChannels = errs.Entity("number of channels")
+	ErrSampleRate  = errs.Entity("sample rate")
+	ErrBitDepth    = errs.Entity("bit depth")
+	ErrHeader      = errs.Entity("WAV header")
+	ErrAudioFormat = errs.Entity("audio format")
+	ErrDataBuffer  = errs.Entity("data buffer")
+)
+
+var (
+	ErrEmptyHeader        = errs.WithDomain(ErrDomain, ErrEmpty, ErrHeader)
+	ErrInvalidNumChannels = errs.WithDomain(ErrDomain, ErrInvalid, ErrNumChannels)
+	ErrInvalidSampleRate  = errs.WithDomain(ErrDomain, ErrInvalid, ErrSampleRate)
+	ErrInvalidBitDepth    = errs.WithDomain(ErrDomain, ErrInvalid, ErrBitDepth)
+	ErrInvalidHeader      = errs.WithDomain(ErrDomain, ErrInvalid, ErrHeader)
+	ErrInvalidAudioFormat = errs.WithDomain(ErrDomain, ErrInvalid, ErrAudioFormat)
+	ErrShortDataBuffer    = errs.WithDomain(ErrDomain, ErrShort, ErrDataBuffer)
+)
+
 var headerValidator = validation.Register[*Header](
 	validateChunkID,
 	validateFormat,
@@ -42,6 +69,26 @@ var headerValidator = validation.Register[*Header](
 	validateNumChannels,
 	validateAudioFormat,
 )
+
+// ValidateHeader verifies that the input Header `h` is not nil and that it is valid
+func ValidateHeader(h *Header) error {
+	if h == nil {
+		return ErrEmptyHeader
+	}
+
+	return headerValidator.Validate(h)
+}
+
+// Check confirms whether the input bytes are likely to be a header
+// with the least operations possible
+func Check(buf []byte) bool {
+	if len(buf) < Size {
+		return false
+	}
+
+	return bytes.Equal(buf[:chunkIDEnd], defaultChunkID[:]) &&
+		bytes.Equal(buf[formatOffset:subChunkIDEnd], formatAndSubchunkID)
+}
 
 func validateChunkID(h *Header) error {
 	if string(h.ChunkID[:]) != string(defaultChunkID[:]) {
@@ -93,13 +140,4 @@ func validateAudioFormat(h *Header) error {
 	default:
 		return fmt.Errorf("%w: AudioFormat %d", ErrInvalidAudioFormat, h.AudioFormat)
 	}
-}
-
-// Validate verifies that the input Header `h` is not nil and that it is valid
-func Validate(h *Header) error {
-	if h == nil {
-		return ErrEmptyHeader
-	}
-
-	return headerValidator.Validate(h)
 }

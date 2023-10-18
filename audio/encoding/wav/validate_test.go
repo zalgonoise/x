@@ -1,99 +1,99 @@
-package header_test
+package wav_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	header2 "github.com/zalgonoise/x/audio/encoding/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav"
 )
 
 func TestValidate(t *testing.T) {
-	h, err := header2.New(
+	h, err := wav.NewHeader(
 		sampleRate, bitDepth, numChannels, audioFormat,
 	)
 	require.NoError(t, err)
 
 	for _, testcase := range []struct {
 		name  string
-		input func() *header2.Header
+		input func() *wav.Header
 		err   error
 	}{
 		{
 			name: "Valid",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				return h
 			},
 		},
 		{
 			name: "Invalid/NilHeader",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				return nil
 			},
-			err: header2.ErrEmptyHeader,
+			err: wav.ErrEmptyHeader,
 		},
 		{
 			name: "Invalid/ChunkID",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.ChunkID = [4]byte{0, 0, 0, 0}
 				return &newHeader
 			},
-			err: header2.ErrInvalidHeader,
+			err: wav.ErrInvalidHeader,
 		},
 		{
 			name: "Invalid/Format",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.Format = [4]byte{0, 0, 0, 0}
 				return &newHeader
 			},
-			err: header2.ErrInvalidHeader,
+			err: wav.ErrInvalidHeader,
 		},
 		{
 			name: "Invalid/SampleRate",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.SampleRate = 3000
 				return &newHeader
 			},
-			err: header2.ErrInvalidSampleRate,
+			err: wav.ErrInvalidSampleRate,
 		},
 		{
 			name: "Invalid/BitDepth",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.BitsPerSample = 4
 				return &newHeader
 			},
-			err: header2.ErrInvalidBitDepth,
+			err: wav.ErrInvalidBitDepth,
 		},
 		{
 			name: "Invalid/NumChannels",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.NumChannels = 5
 				return &newHeader
 			},
-			err: header2.ErrInvalidNumChannels,
+			err: wav.ErrInvalidNumChannels,
 		},
 		{
 			name: "Invalid/AudioFormat",
-			input: func() *header2.Header {
+			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.AudioFormat = 2
 				return &newHeader
 			},
-			err: header2.ErrInvalidAudioFormat,
+			err: wav.ErrInvalidAudioFormat,
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			err = header2.Validate(testcase.input())
+			err = wav.ValidateHeader(testcase.input())
 
 			require.ErrorIs(t, err, testcase.err)
 		})
