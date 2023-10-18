@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zalgonoise/x/audio/errs"
+	"github.com/zalgonoise/x/errs"
+
 	"github.com/zalgonoise/x/audio/fft"
 )
 
@@ -18,8 +19,8 @@ const (
 )
 
 var (
-	ErrNilEmitter    = errs.New(errDomain, ErrNil, ErrEmitter)
-	ErrNilCollectors = errs.New(errDomain, ErrNil, ErrCollectors)
+	ErrNilEmitter    = errs.WithDomain(errDomain, ErrNil, ErrEmitter)
+	ErrNilCollectors = errs.WithDomain(errDomain, ErrNil, ErrCollectors)
 )
 
 type exporter struct {
