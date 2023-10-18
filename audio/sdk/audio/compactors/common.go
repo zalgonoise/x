@@ -4,7 +4,8 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/zalgonoise/x/audio/errs"
+	"github.com/zalgonoise/x/errs"
+
 	"github.com/zalgonoise/x/audio/fft"
 )
 
@@ -17,7 +18,7 @@ const (
 )
 
 var (
-	ErrEmptyValueSet = errs.New(errDomain, ErrEmpty, ErrValueSet)
+	ErrEmptyValueSet = errs.WithDomain(errDomain, ErrEmpty, ErrValueSet)
 )
 
 // Number is a type constraint that only accepts any type of integer or floating-point number
