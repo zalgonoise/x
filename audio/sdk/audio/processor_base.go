@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/zalgonoise/x/audio/errs"
+	"github.com/zalgonoise/x/errs"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 // ErrHaltSignal is a sentinel error for when an OS signal is emitted, to halt or stop the application's runtime
-var ErrHaltSignal = errs.New(errDomain, ErrHalt, ErrSignal)
+var ErrHaltSignal = errs.WithDomain(errDomain, ErrHalt, ErrSignal)
 
 type processor struct {
 	streamExporter StreamExporter
