@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
@@ -18,7 +19,6 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters/stdout"
 	"github.com/zalgonoise/x/audio/sdk/audio/processors"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
-	"github.com/zalgonoise/x/audio/wav/header"
 	"github.com/zalgonoise/x/cfg"
 )
 
