@@ -1,9 +1,9 @@
 package processors
 
 import (
+	"github.com/zalgonoise/x/audio/encoding/wav"
+	"github.com/zalgonoise/x/audio/encoding/wav/header"
 	"github.com/zalgonoise/x/audio/sdk/audio"
-	"github.com/zalgonoise/x/audio/wav"
-	"github.com/zalgonoise/x/audio/wav/header"
 )
 
 func PCM(e ...audio.Exporter) audio.Processor {
