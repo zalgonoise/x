@@ -212,8 +212,8 @@ github.com/zalgonoise/x/cfg v0.0.0-20231003165159-0dc91b07b01b h1:PvPKB2lkLZHygm
 github.com/zalgonoise/x/cfg v0.0.0-20231003165159-0dc91b07b01b/go.mod h1:TLAH/vhUedknjEPPEsKtBIfaHRy5Gnx9YvWMYnZ7Hkk=
 github.com/zalgonoise/x/errs v0.0.0-20231018172333-6a19f39849c8 h1:STfaEoWD3zrLotLboDUHbcqQTNPCMhqrWSDrfSE87xg=
 github.com/zalgonoise/x/errs v0.0.0-20231018172333-6a19f39849c8/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
-github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37 h1:ze8BJDCpc/MBfUI3IGeHV0XFC8YoVmSWw6q8buEeNlM=
-github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37/go.mod h1:8FJE6g42HqjHLVszmfbt6M25Rl5FdIKg93w+ob7bFWw=
+github.com/zalgonoise/x/ptr v0.0.0-20231018220611-e631e6c49c74 h1:LWR/aJlW4FOKZbPlNX8pmI8UlmZT31m+Trag5HLvNO4=
+github.com/zalgonoise/x/ptr v0.0.0-20231018220611-e631e6c49c74/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=

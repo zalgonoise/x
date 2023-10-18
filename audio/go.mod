@@ -11,7 +11,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/zalgonoise/gbuf v1.0.1
 	github.com/zalgonoise/x/cfg v0.0.0-20231003165159-0dc91b07b01b
-	github.com/zalgonoise/x/ptr v0.0.0-20230304145914-a7c49879da37
+	github.com/zalgonoise/x/ptr v0.0.0-20231018220611-e631e6c49c74
 )
 
 require (
