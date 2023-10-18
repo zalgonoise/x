@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/zalgonoise/x/audio/encoding/wav/header"
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters"
@@ -65,7 +64,7 @@ func ToProm(port int, options ...cfg.Option[exporters.Config]) (audio.Exporter, 
 
 	reg, err := newRegistry(e)
 	if err != nil {
-		return audio.NoOpExporter[*header.Header](), err
+		return audio.NoOpExporter(), err
 	}
 
 	e.server = newServer(port, reg)
