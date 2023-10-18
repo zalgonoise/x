@@ -1,10 +1,10 @@
-package header_test
+package wav_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	header2 "github.com/zalgonoise/x/audio/encoding/wav/header"
+	"github.com/zalgonoise/x/audio/encoding/wav"
 )
 
 const (
@@ -22,7 +22,7 @@ var (
 
 func TestNew(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		_, err := header2.New(sampleRate, bitDepth, numChannels, audioFormat)
+		_, err := wav.New(sampleRate, bitDepth, numChannels, audioFormat)
 
 		require.NoError(t, err)
 	})
@@ -30,13 +30,13 @@ func TestNew(t *testing.T) {
 
 func TestHeader_Read(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		h := &header2.Header{
+		h := &wav.Header{
 			ChunkID:       defaultChunkID,
 			ChunkSize:     0,
 			Format:        defaultFormat,
 			Subchunk1ID:   defaultSubchunk1ID,
 			Subchunk1Size: 16,
-			AudioFormat:   (uint16)(header2.PCMFormat),
+			AudioFormat:   (uint16)(wav.PCMFormat),
 			NumChannels:   numChannels,
 			SampleRate:    sampleRate,
 			ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
@@ -58,12 +58,12 @@ func TestHeader_Read(t *testing.T) {
 			16, 0, // BitsPerSample
 		}
 
-		out := make([]byte, header2.Size)
+		out := make([]byte, wav.Size)
 
 		n, err := h.Read(out)
 
 		require.NoError(t, err)
-		require.Equal(t, header2.Size, n)
+		require.Equal(t, wav.Size, n)
 		require.Equal(t, wants, out)
 	})
 }
@@ -84,13 +84,13 @@ func TestHeader_Write(t *testing.T) {
 			16, 0, // BitsPerSample
 		}
 
-		wants := &header2.Header{
+		wants := &wav.Header{
 			ChunkID:       defaultChunkID,
 			ChunkSize:     0,
 			Format:        defaultFormat,
 			Subchunk1ID:   defaultSubchunk1ID,
 			Subchunk1Size: 16,
-			AudioFormat:   (uint16)(header2.PCMFormat),
+			AudioFormat:   (uint16)(wav.PCMFormat),
 			NumChannels:   numChannels,
 			SampleRate:    sampleRate,
 			ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
@@ -98,24 +98,24 @@ func TestHeader_Write(t *testing.T) {
 			BitsPerSample: bitDepth,
 		}
 
-		h := new(header2.Header)
+		h := new(wav.Header)
 
 		n, err := h.Write(input)
 		require.NoError(t, err)
-		require.Equal(t, header2.Size, n)
+		require.Equal(t, wav.Size, n)
 		require.Equal(t, wants, h)
 	})
 }
 
 func TestHeader_Bytes(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		h := &header2.Header{
+		h := &wav.Header{
 			ChunkID:       defaultChunkID,
 			ChunkSize:     0,
 			Format:        defaultFormat,
 			Subchunk1ID:   defaultSubchunk1ID,
 			Subchunk1Size: 16,
-			AudioFormat:   (uint16)(header2.PCMFormat),
+			AudioFormat:   (uint16)(wav.PCMFormat),
 			NumChannels:   numChannels,
 			SampleRate:    sampleRate,
 			ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
@@ -159,13 +159,13 @@ func TestHeader_From(t *testing.T) {
 			16, 0, // BitsPerSample
 		}
 
-		wants := &header2.Header{
+		wants := &wav.Header{
 			ChunkID:       defaultChunkID,
 			ChunkSize:     0,
 			Format:        defaultFormat,
 			Subchunk1ID:   defaultSubchunk1ID,
 			Subchunk1Size: 16,
-			AudioFormat:   header2.PCMFormat,
+			AudioFormat:   wav.PCMFormat,
 			NumChannels:   numChannels,
 			SampleRate:    sampleRate,
 			ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
@@ -173,7 +173,7 @@ func TestHeader_From(t *testing.T) {
 			BitsPerSample: bitDepth,
 		}
 
-		h, err := header2.From(input)
+		h, err := wav.HeaderFrom(input)
 		require.NoError(t, err)
 		require.Equal(t, wants, h)
 	})
@@ -181,13 +181,13 @@ func TestHeader_From(t *testing.T) {
 
 func BenchmarkHeader_ReadWrite(b *testing.B) {
 	b.Run("Read", func(b *testing.B) {
-		h := &header2.Header{
+		h := &wav.Header{
 			ChunkID:       defaultChunkID,
 			ChunkSize:     0,
 			Format:        defaultFormat,
 			Subchunk1ID:   defaultSubchunk1ID,
 			Subchunk1Size: 16,
-			AudioFormat:   (uint16)(header2.PCMFormat),
+			AudioFormat:   (uint16)(wav.PCMFormat),
 			NumChannels:   numChannels,
 			SampleRate:    sampleRate,
 			ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
@@ -195,7 +195,7 @@ func BenchmarkHeader_ReadWrite(b *testing.B) {
 			BitsPerSample: bitDepth,
 		}
 
-		out := make([]byte, header2.Size)
+		out := make([]byte, wav.Size)
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
@@ -222,7 +222,7 @@ func BenchmarkHeader_ReadWrite(b *testing.B) {
 			16, 0, // BitsPerSample
 		}
 
-		h := new(header2.Header)
+		h := new(wav.Header)
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, err := h.Write(input)

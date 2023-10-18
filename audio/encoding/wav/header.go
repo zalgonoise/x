@@ -1,4 +1,4 @@
-package header
+package wav
 
 import (
 	"encoding/binary"
@@ -41,9 +41,9 @@ type Header struct {
 	BitsPerSample uint16  // 35-36 little endian (2 bytes)
 }
 
-// From extracts a WAV Header from an input slice of bytes; returning a
+// HeaderFrom extracts a WAV Header from an input slice of bytes; returning a
 // pointer to a Header, and an error if the data is invalid
-func From(buf []byte) (h *Header, err error) {
+func HeaderFrom(buf []byte) (h *Header, err error) {
 	h = new(Header)
 
 	if _, err = h.Write(buf); err != nil {
@@ -53,10 +53,10 @@ func From(buf []byte) (h *Header, err error) {
 	return h, nil
 }
 
-// New creates a Header from the input sampleRate, bitDepth, numChannels and format.
+// NewHeader creates a Header from the input sampleRate, bitDepth, numChannels and format.
 //
 // This call also validates the generated header in the returned error
-func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Header, error) {
+func NewHeader(sampleRate uint32, bitDepth, numChannels, format uint16) (*Header, error) {
 	h := &Header{
 		ChunkID:       defaultChunkID,
 		ChunkSize:     0,
@@ -71,7 +71,7 @@ func New(sampleRate uint32, bitDepth, numChannels, format uint16) (*Header, erro
 		BitsPerSample: bitDepth,
 	}
 
-	return h, Validate(h)
+	return h, ValidateHeader(h)
 }
 
 // Write implements the io.Writer interface
@@ -95,7 +95,7 @@ func (h *Header) Write(buf []byte) (n int, err error) {
 	h.BlockAlign = binary.LittleEndian.Uint16(buf[32:34])
 	h.BitsPerSample = binary.LittleEndian.Uint16(buf[34:36])
 
-	return len(buf), Validate(h)
+	return Size, ValidateHeader(h)
 }
 
 // ReadFrom implements the io.ReaderFrom interface
