@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/fft/window"
 	"github.com/zalgonoise/x/audio/osc"
-	"github.com/zalgonoise/x/audio/wav"
 )
 
 func TestTriangle(t *testing.T) {
