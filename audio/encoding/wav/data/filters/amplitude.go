@@ -1,5 +1,7 @@
 package filters
 
+// TODO: move to a different package outside of audio/encoding/wav/data
+
 // Amplify will transform the signal's intensity according tto the input ratio.
 //
 // Clipping (cutting off the floating point audio data at +1.0 and -1.0) may occur

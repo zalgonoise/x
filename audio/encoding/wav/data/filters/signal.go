@@ -1,5 +1,7 @@
 package filters
 
+// TODO: move to a different package outside of audio/encoding/wav/data
+
 // Add sums two signals together, repeating the pattern in `signal` if shorter than the
 // audio buffer
 func Add(signal []float64) func([]float64) {
