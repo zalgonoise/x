@@ -14,12 +14,12 @@ const (
 	size64 = 8
 )
 
-func convert[F, T BitDepthTypes, FS ~[]F, TS ~[]T](from FS, fn func(F) T) TS {
-	out := make([]T, len(from))
+func convert[From, To BitDepthTypes, FromSlice ~[]From](from FromSlice, fn func(From) To) []To {
+	to := make([]To, len(from))
 	for i := range from {
-		out[i] = fn(from[i])
+		to[i] = fn(from[i])
 	}
-	return out
+	return to
 }
 
 func copy24to32(b []byte) []byte {
