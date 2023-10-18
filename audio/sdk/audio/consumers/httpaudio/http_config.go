@@ -4,9 +4,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zalgonoise/x/audio/errs"
-	"github.com/zalgonoise/x/audio/validation"
 	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/x/errs"
+
+	"github.com/zalgonoise/x/audio/validation"
 )
 
 const (
@@ -24,8 +25,8 @@ const (
 )
 
 var (
-	ErrEmptyAddress    = errs.New(consumerDomain, ErrEmpty, ErrAddress)
-	ErrInvalidProtocol = errs.New(consumerDomain, ErrInvalid, ErrProtocol)
+	ErrEmptyAddress    = errs.WithDomain(consumerDomain, ErrEmpty, ErrAddress)
+	ErrInvalidProtocol = errs.WithDomain(consumerDomain, ErrInvalid, ErrProtocol)
 
 	configValidator = validation.Register[Config](validateTarget)
 	defaultConfig   = Config{
