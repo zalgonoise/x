@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/zalgonoise/x/audio/encoding/wav/data"
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 	"github.com/zalgonoise/x/audio/encoding/wav/data/internal/testdata/pcm"
 )
 
@@ -14,7 +13,7 @@ func BenchmarkChunk32bit(b *testing.B) {
 		"Parse", func(b *testing.B) {
 			b.Run(
 				"NewBuffer", func(b *testing.B) {
-					h, err := header.From(pcm.Test32bitHeader)
+					h, err := data.From(pcm.Test32bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
@@ -31,7 +30,7 @@ func BenchmarkChunk32bit(b *testing.B) {
 			)
 			b.Run(
 				"Append", func(b *testing.B) {
-					h, err := header.From(pcm.Test32bitHeader)
+					h, err := data.From(pcm.Test32bitHeader)
 					if err != nil {
 						b.Error(err)
 						return
@@ -50,7 +49,7 @@ func BenchmarkChunk32bit(b *testing.B) {
 	)
 	b.Run(
 		"Generate", func(b *testing.B) {
-			h, err := header.From(pcm.Test32bitHeader)
+			h, err := data.From(pcm.Test32bitHeader)
 			if err != nil {
 				b.Error(err)
 				return
@@ -72,7 +71,7 @@ func BenchmarkChunk32bit(b *testing.B) {
 }
 
 func Test32bitHeader(t *testing.T) {
-	h, err := header.From(pcm.Test32bitHeader)
+	h, err := data.From(pcm.Test32bitHeader)
 	if err != nil {
 		t.Error(err)
 		return
