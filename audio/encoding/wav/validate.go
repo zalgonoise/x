@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/zalgonoise/x/audio/validation"
 	"github.com/zalgonoise/x/errs"
+
+	"github.com/zalgonoise/x/audio/validation"
 )
 
 const (

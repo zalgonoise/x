@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data"
 )
 
 // ByteRate calculates the byte rate of a certain signal from its header metadata
@@ -182,7 +182,7 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 	w.checkSize()
 
 	for w.Data == nil {
-		h := new(header.Header)
+		h := new(data.Header)
 
 		if num, err = h.ReadFrom(r); err != nil {
 			return n, err
@@ -273,19 +273,19 @@ func (w *Stream) decode() (n int, err error) {
 
 func (w *Stream) decodeNewSubChunk(n int) (int, error) {
 	// try to read subchunk headers
-	if w.buf.Len() > header.Size {
+	if w.buf.Len() > data.Size {
 		var (
 			err            error
-			subchunk       *header.Header
-			subchunkBuffer = make([]byte, header.Size)
+			subchunk       *data.Header
+			subchunkBuffer = make([]byte, data.Size)
 		)
 
 		if _, err = w.buf.Read(subchunkBuffer); err != nil {
 			return n, err
 		}
 
-		if subchunk, err = header.From(subchunkBuffer); err == nil {
-			n += header.Size
+		if subchunk, err = data.From(subchunkBuffer); err == nil {
+			n += data.Size
 
 			chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
 				return w.proc(w.Header, data)
@@ -369,12 +369,12 @@ func (w *Stream) encode() {
 	)
 
 	for i := range w.Chunks {
-		if w.Chunks[i].Header().Subchunk2ID == header.Junk {
-			size += header.Size + int(w.Chunks[i].Header().Subchunk2Size)
+		if w.Chunks[i].Header().Subchunk2ID == data.Junk {
+			size += data.Size + int(w.Chunks[i].Header().Subchunk2Size)
 			continue
 		}
 
-		size += header.Size + w.Size
+		size += data.Size + w.Size
 	}
 
 	if w.Header.ChunkSize == 0 {
@@ -391,12 +391,12 @@ func (w *Stream) encode() {
 			chunkSize   = int(chunkHeader.Subchunk2Size)
 		)
 
-		if w.Chunks[i].Header().Subchunk2ID == header.Data && w.Size < chunkSize {
+		if w.Chunks[i].Header().Subchunk2ID == data.Data && w.Size < chunkSize {
 			chunkSize = w.Size
 		}
 
-		_, _ = chunkHeader.Read(buf[n : n+header.Size])
-		n += header.Size
+		_, _ = chunkHeader.Read(buf[n : n+data.Size])
+		n += data.Size
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
 		n += chunkSize
 	}

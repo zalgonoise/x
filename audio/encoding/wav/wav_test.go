@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	"github.com/zalgonoise/x/audio/encoding/wav"
+	"github.com/zalgonoise/x/audio/encoding/wav/data"
 	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 )
 
 //go:embed data/internal/testdata/amen_kick/*
@@ -536,7 +537,7 @@ func TestStream(t *testing.T) {
 			_, err = w.Write(test.data)
 			require.NoError(t, err, "index", idx)
 
-			headerBytes := int(wav.Size + header.Size + w.Chunks[0].Header().Subchunk2Size + header.Size)
+			headerBytes := int(wav.Size + data.Size + w.Chunks[0].Header().Subchunk2Size + data.Size)
 
 			// 24bit will have a different size
 			if w.Size != size {
@@ -570,7 +571,7 @@ func TestStream(t *testing.T) {
 
 			require.NoError(t, err, "index", idx)
 
-			headerBytes := int(wav.Size + header.Size + w.Chunks[0].Header().Subchunk2Size + header.Size)
+			headerBytes := int(wav.Size + data.Size + w.Chunks[0].Header().Subchunk2Size + data.Size)
 
 			// 24bit will have a different size
 			if w.Size != size {

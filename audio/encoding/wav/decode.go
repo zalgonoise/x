@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
+	"github.com/zalgonoise/x/audio/encoding/wav/data"
 )
 
 const dataSubchunkID = "data"
@@ -57,7 +57,7 @@ func (w *Wav) ReadFrom(r io.Reader) (n int64, err error) {
 	n += num
 
 	for w.Data == nil {
-		h := new(header.Header)
+		h := new(data.Header)
 
 		if num, err = h.ReadFrom(r); err != nil {
 			return n, err
@@ -140,19 +140,19 @@ func (w *Wav) decodeHeader() (n int, err error) {
 
 func (w *Wav) decodeNewSubChunk(n int) (int, error) {
 	// try to read subchunk headers
-	if w.buf.Len() > header.Size {
+	if w.buf.Len() > data.Size {
 		var (
 			err            error
-			subchunk       *header.Header
-			subchunkBuffer = make([]byte, header.Size)
+			subchunk       *data.Header
+			subchunkBuffer = make([]byte, data.Size)
 		)
 
 		if _, err = w.buf.Read(subchunkBuffer); err != nil {
 			return n, err
 		}
 
-		if subchunk, err = header.From(subchunkBuffer); err == nil {
-			n += header.Size
+		if subchunk, err = data.From(subchunkBuffer); err == nil {
+			n += data.Size
 			chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
 			if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
 				w.Data = chunk

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/zalgonoise/x/audio/encoding/wav/data"
-	"github.com/zalgonoise/x/audio/encoding/wav/data/header"
 	"github.com/zalgonoise/x/audio/osc"
 )
 
@@ -37,7 +36,7 @@ type Chunk interface {
 	// Bytes will return a slice of bytes with the encoded PCM buffer
 	Bytes() []byte
 	// Header returns the ChunkHeader of the Chunk
-	Header() *header.Header
+	Header() *data.Header
 	// BitDepth returns the bit depth of the Chunk
 	BitDepth() uint16
 	// Reset clears the data stored in the Chunk
@@ -63,8 +62,8 @@ type Chunk interface {
 // Note: I wanted a cleaner approach to this using generics and type constraints,
 // but I was getting nowhere meaningful; and ended up breaking at a certain point
 // due to the way that Go handles a slice of a type and its conversions to a different type
-func NewChunk(h *header.Header, bitDepth, format uint16) Chunk {
-	if h != nil && string(h.Subchunk2ID[:]) == header.JunkIDString {
+func NewChunk(h *data.Header, bitDepth, format uint16) Chunk {
+	if h != nil && string(h.Subchunk2ID[:]) == data.JunkIDString {
 		return data.NewJunkChunk(h)
 	}
 
@@ -87,8 +86,8 @@ func NewChunk(h *header.Header, bitDepth, format uint16) Chunk {
 	}
 }
 
-func NewRingChunk(h *header.Header, bitDepth, format uint16, size int, proc func([]float64) error) Chunk {
-	if h != nil && string(h.Subchunk2ID[:]) == header.JunkIDString {
+func NewRingChunk(h *data.Header, bitDepth, format uint16, size int, proc func([]float64) error) Chunk {
+	if h != nil && string(h.Subchunk2ID[:]) == data.JunkIDString {
 		return data.NewJunkChunk(h)
 	}
 
