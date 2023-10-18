@@ -77,11 +77,11 @@ func (d *DataRing) Float() []float64 {
 }
 
 func (d *DataRing) Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration) {
-	max := d.Data.Cap()
+	maximum := d.Data.Cap()
 	size := int(float64(sampleRate) * float64(dur) / float64(time.Second))
 
-	if size > max {
-		size = max
+	if size > maximum {
+		size = maximum
 	}
 
 	buf := make([]float64, size)
