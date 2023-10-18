@@ -2,7 +2,7 @@ module github.com/zalgonoise/x/audio
 
 go 1.21.0
 
-toolchain go1.21.1
+toolchain go1.21.3
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0
