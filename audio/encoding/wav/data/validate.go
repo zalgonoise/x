@@ -26,7 +26,7 @@ var (
 	ErrShortBuffer           = errs.WithDomain(ErrDomain, ErrShort, ErrBuffer)
 )
 
-var headerValidator = validation.New(validateHeaderSubChunkID)
+var headerValidator = validation.NewValidator(validateHeaderSubChunkID)
 
 func validateHeaderSubChunkID(h *Header) error {
 	switch string(h.Subchunk2ID[:]) {
