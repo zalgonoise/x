@@ -17,15 +17,12 @@ const (
 
 	consumerDomain = errs.Domain("audio/sdk/audio/consumers/httpaudio")
 
-	ErrEmpty   = errs.Kind("empty")
 	ErrInvalid = errs.Kind("invalid")
 
-	ErrAddress  = errs.Entity("address")
 	ErrProtocol = errs.Entity("protocol")
 )
 
 var (
-	ErrEmptyAddress    = errs.WithDomain(consumerDomain, ErrEmpty, ErrAddress)
 	ErrInvalidProtocol = errs.WithDomain(consumerDomain, ErrInvalid, ErrProtocol)
 
 	configValidator = validation.NewValidator(validateTarget)
