@@ -2,7 +2,9 @@ package fts
 
 import (
 	"context"
+	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -201,6 +203,117 @@ func TestIndex_SearchBytes(t *testing.T) {
 			}
 
 			ids := make([]int, 0, len(res))
+			for i := range res {
+				ids = append(ids, res[i].Key)
+			}
+
+			require.NoError(t, index.Delete(context.Background(), ids...))
+
+			require.Equal(t, testcase.wants, res)
+			require.NoError(t, index.Shutdown(context.Background()))
+		})
+	}
+}
+
+func TestIndex_SearchSQLTypes(t *testing.T) {
+	time1 := time.Date(2023, 10, 22, 14, 0, 0, 0, time.UTC).Unix()
+	time2 := time.Date(2023, 10, 21, 14, 0, 0, 0, time.UTC).Unix()
+	time3 := time.Date(2023, 10, 20, 14, 0, 0, 0, time.UTC).Unix()
+	time4 := time.Date(2023, 10, 19, 14, 0, 0, 0, time.UTC).Unix()
+	time5 := time.Date(2023, 10, 18, 14, 0, 0, 0, time.UTC).Unix()
+	time6 := time.Date(2023, 10, 17, 14, 0, 0, 0, time.UTC).Unix()
+	time7 := time.Date(2023, 10, 16, 14, 0, 0, 0, time.UTC).Unix()
+
+	for _, testcase := range []struct {
+		name  string
+		attrs []Attribute[sql.NullInt64, sql.NullString]
+		query sql.NullString
+		wants []Attribute[sql.NullInt64, sql.NullString]
+		err   error
+	}{
+		{
+			name: "Success/OneResult",
+			attrs: []Attribute[sql.NullInt64, sql.NullString]{
+				{Key: sql.NullInt64{Valid: true, Int64: time1}, Value: sql.NullString{Valid: true, String: "some data"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time2}, Value: sql.NullString{Valid: true, String: "struck gold"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time3}, Value: sql.NullString{Valid: true, String: "some kind of copper"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time4}, Value: sql.NullString{Valid: true, String: "probably bronze"}},
+			},
+			query: sql.NullString{Valid: true, String: "gold"},
+			wants: []Attribute[sql.NullInt64, sql.NullString]{
+				{Key: sql.NullInt64{Valid: true, Int64: time2}, Value: sql.NullString{Valid: true, String: "struck gold"}},
+			},
+		},
+		{
+			name: "Success/ThreeResults",
+			attrs: []Attribute[sql.NullInt64, sql.NullString]{
+				{Key: sql.NullInt64{Valid: true, Int64: time1}, Value: sql.NullString{Valid: true, String: "some data"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time2}, Value: sql.NullString{Valid: true, String: "struck gold"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time3}, Value: sql.NullString{Valid: true, String: "some kind of copper"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time4}, Value: sql.NullString{Valid: true, String: "probably bronze"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time5}, Value: sql.NullString{Valid: true, String: "just chips"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time6}, Value: sql.NullString{Valid: true, String: "good ol' gold plate"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time7}, Value: sql.NullString{Valid: true, String: "gol-- gol-- gold!!"}},
+			},
+			query: sql.NullString{Valid: true, String: "gold"},
+			wants: []Attribute[sql.NullInt64, sql.NullString]{
+				{Key: sql.NullInt64{Valid: true, Int64: time2}, Value: sql.NullString{Valid: true, String: "struck gold"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time6}, Value: sql.NullString{Valid: true, String: "good ol' gold plate"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time7}, Value: sql.NullString{Valid: true, String: "gol-- gol-- gold!!"}},
+			},
+		},
+		{
+			name: "Success/ThreeResultsWithExpression",
+			attrs: []Attribute[sql.NullInt64, sql.NullString]{
+				{Key: sql.NullInt64{Valid: true, Int64: time1}, Value: sql.NullString{Valid: true, String: "some data"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time2}, Value: sql.NullString{Valid: true, String: "struck gold"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time3}, Value: sql.NullString{Valid: true, String: "some kind of copper"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time4}, Value: sql.NullString{Valid: true, String: "probably bronze"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time5}, Value: sql.NullString{Valid: true, String: "just chips"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time6}, Value: sql.NullString{Valid: true, String: "good ol' golden plate"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time7}, Value: sql.NullString{Valid: true, String: "gol-- gol-- gold!!"}},
+			},
+			query: sql.NullString{Valid: true, String: "gold*"},
+			wants: []Attribute[sql.NullInt64, sql.NullString]{
+				{Key: sql.NullInt64{Valid: true, Int64: time2}, Value: sql.NullString{Valid: true, String: "struck gold"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time6}, Value: sql.NullString{Valid: true, String: "good ol' golden plate"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time7}, Value: sql.NullString{Valid: true, String: "gol-- gol-- gold!!"}},
+			},
+		},
+		{
+			name: "Fail/NoResults",
+			attrs: []Attribute[sql.NullInt64, sql.NullString]{
+				{Key: sql.NullInt64{Valid: true, Int64: time1}, Value: sql.NullString{Valid: true, String: "some data"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time3}, Value: sql.NullString{Valid: true, String: "some kind of copper"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time4}, Value: sql.NullString{Valid: true, String: "probably bronze"}},
+				{Key: sql.NullInt64{Valid: true, Int64: time5}, Value: sql.NullString{Valid: true, String: "just chips"}},
+			},
+			query: sql.NullString{Valid: true, String: "gold"},
+			err:   ErrNotFoundKeyword,
+		},
+		{
+			name:  "Fail/NoInput",
+			attrs: []Attribute[sql.NullInt64, sql.NullString]{},
+			query: sql.NullString{Valid: true, String: "gold"},
+			err:   ErrZeroAttributes,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			index, err := NewIndex[sql.NullInt64, sql.NullString]("", testcase.attrs...)
+			if err != nil {
+				require.ErrorIs(t, err, testcase.err)
+
+				return
+			}
+
+			res, err := index.Search(context.Background(), testcase.query)
+			if err != nil {
+				require.ErrorIs(t, err, testcase.err)
+
+				return
+			}
+
+			ids := make([]sql.NullInt64, 0, len(res))
 			for i := range res {
 				ids = append(ids, res[i].Key)
 			}
