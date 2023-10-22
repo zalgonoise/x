@@ -24,7 +24,8 @@ type Metrics struct {
 	server *http.Server
 }
 
-func New(port int) (m *Metrics, err error) {
+// New creates a new Prometheus Metrics instance, with its HTTP server registered on the input port.
+func New(port int) (*Metrics, error) {
 	if port < 0 {
 		port = 0
 	}
@@ -33,7 +34,7 @@ func New(port int) (m *Metrics, err error) {
 
 	reg, err := promMetrics.Registry()
 	if err != nil {
-		return m, err
+		return nil, err
 	}
 
 	promMetrics.server = newServer(port, reg)

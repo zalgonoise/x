@@ -9,14 +9,18 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// IncSearchesTotal increases the total count of search requests.
 func (m *Metrics) IncSearchesTotal() {
 	m.searchesTotal.Inc()
 }
 
+// IncSearchesFailed increases the total count of failed search requests.
 func (m *Metrics) IncSearchesFailed() {
 	m.searchesFailed.Inc()
 }
 
+// ObserveSearchLatency observes the latency in handling a search request, registering an exemplar with this
+// latency if the input context carries a valid span.
 func (m *Metrics) ObserveSearchLatency(ctx context.Context, dur time.Duration) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		m.searchesLatency.(prometheus.ExemplarObserver).ObserveWithExemplar(dur.Seconds(), prometheus.Labels{
@@ -29,14 +33,18 @@ func (m *Metrics) ObserveSearchLatency(ctx context.Context, dur time.Duration) {
 	m.searchesLatency.Observe(dur.Seconds())
 }
 
+// IncInsertsTotal increases the total count of insert requests.
 func (m *Metrics) IncInsertsTotal() {
 	m.insertsTotal.Inc()
 }
 
+// IncInsertsFailed increases the total count of failed insert requests.
 func (m *Metrics) IncInsertsFailed() {
 	m.insertsFailed.Inc()
 }
 
+// ObserveInsertLatency observes the latency in handling an insert request, registering an exemplar with this
+// latency if the input context carries a valid span.
 func (m *Metrics) ObserveInsertLatency(ctx context.Context, dur time.Duration) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		m.insertsLatency.(prometheus.ExemplarObserver).ObserveWithExemplar(dur.Seconds(), prometheus.Labels{
@@ -49,14 +57,18 @@ func (m *Metrics) ObserveInsertLatency(ctx context.Context, dur time.Duration) {
 	m.insertsLatency.Observe(dur.Seconds())
 }
 
+// IncDeletesTotal increases the total count of delete requests.
 func (m *Metrics) IncDeletesTotal() {
 	m.deletesTotal.Inc()
 }
 
+// IncDeletesFailed increases the total count of failed delete requests.
 func (m *Metrics) IncDeletesFailed() {
 	m.deletesFailed.Inc()
 }
 
+// ObserveDeleteLatency observes the latency in handling a delete request, registering an exemplar with this
+// latency if the input context carries a valid span.
 func (m *Metrics) ObserveDeleteLatency(ctx context.Context, dur time.Duration) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		m.deletesLatency.(prometheus.ExemplarObserver).ObserveWithExemplar(dur.Seconds(), prometheus.Labels{
@@ -69,6 +81,10 @@ func (m *Metrics) ObserveDeleteLatency(ctx context.Context, dur time.Duration) {
 	m.deletesLatency.Observe(dur.Seconds())
 }
 
+// Registry returns a prometheus.Registry with all set-up collectors for this instance.
+//
+// The default collectors include the Go collector, the process collector, and the different requests collectors
+// as implemented in Metrics.
 func (m *Metrics) Registry() (reg *prometheus.Registry, err error) {
 	reg = prometheus.NewRegistry()
 
@@ -89,6 +105,7 @@ func (m *Metrics) Registry() (reg *prometheus.Registry, err error) {
 	return reg, nil
 }
 
+// Shutdown gracefully shuts down the Metrics HTTP server
 func (m *Metrics) Shutdown(ctx context.Context) error {
 	if m.server == nil {
 		return nil
