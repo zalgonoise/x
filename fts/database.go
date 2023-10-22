@@ -21,10 +21,7 @@ SELECT EXISTS(SELECT 1 FROM sqlite_master
 
 	createTableQuery = `
 CREATE VIRTUAL TABLE fulltext_search 
-	USING FTS5(
-		id, 
-		val
-	);
+	USING FTS5(id, val);
 `
 
 	insertValueQuery = `
@@ -37,8 +34,7 @@ SELECT * FROM fulltext_search(?);
 `
 
 	deleteQuery = `
-DELETE 
-	FROM fulltext_search
+DELETE FROM fulltext_search
 	WHERE id MATCH ?;
 `
 )
