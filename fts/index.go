@@ -46,8 +46,8 @@ type Index[K SQLType, V SQLType] struct {
 //
 // This call returns an error if the underlying SQL query fails, if scanning for the results fails, or an
 // ErrNotFoundKeyword error if there are zero results from the query.
-func (i *Index[K, V]) Search(ctx context.Context, value V) (res []Attribute[K, V], err error) {
-	rows, err := i.db.QueryContext(ctx, searchQuery, value)
+func (i *Index[K, V]) Search(ctx context.Context, searchTerm V) (res []Attribute[K, V], err error) {
+	rows, err := i.db.QueryContext(ctx, searchQuery, searchTerm)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (i *Index[K, V]) Search(ctx context.Context, value V) (res []Attribute[K, V
 	}
 
 	if len(res) == 0 {
-		return nil, fmt.Errorf("%w: %v", ErrNotFoundKeyword, value)
+		return nil, fmt.Errorf("%w: %v", ErrNotFoundKeyword, searchTerm)
 	}
 
 	return res, nil
