@@ -30,7 +30,7 @@ INSERT INTO fulltext_search (id, val)
 `
 
 	searchQuery = `
-SELECT * FROM fulltext_search(?);
+SELECT id, val FROM fulltext_search(?);
 `
 
 	deleteQuery = `
