@@ -13,12 +13,16 @@ import (
 
 const ServiceName = "full-text-search"
 
+// Tracer returns a trace.Tracer for this (full-text search) service.
 func Tracer() trace.Tracer {
 	return otel.GetTracerProvider().Tracer(ServiceName)
 }
 
 type ShutdownFunc func(err context.Context) error
 
+// Init registers a new tracer for this service, that exports its spans to the input trace.SpanExporter.
+//
+// This call returns the TracerProvider's shutdown function, and an error if raised.
 func Init(ctx context.Context, traceExporter sdktrace.SpanExporter) (ShutdownFunc, error) {
 	res, err := resource.New(ctx,
 		resource.WithAttributes(semconv.ServiceName(ServiceName)),

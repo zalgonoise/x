@@ -13,6 +13,9 @@ import (
 
 const defaultTimeout = 15 * time.Second
 
+// GRPCExporter creates a trace.SpanExporter that pushes spans to a tracing backend via gRPC.
+//
+// This call takes in a URI string to the tracing backend, and returns the trace.SpanExporter and an error if raised.
 func GRPCExporter(ctx context.Context, uri string) (sdktrace.SpanExporter, error) {
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
