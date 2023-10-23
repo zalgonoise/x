@@ -19,6 +19,8 @@ type SpanContextHandler struct {
 	handler    slog.Handler
 }
 
+// NewSpanContextHandler creates a slog.Handler that is able to register the trace and span ID from the
+// input context when logging a given event.
 func NewSpanContextHandler(opts ...cfg.Option[Config]) slog.Handler {
 	config := cfg.New(opts...)
 
