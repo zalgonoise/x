@@ -16,7 +16,7 @@ func main() {
 
 	logger.InfoContext(ctx, "rebuilding local apps list database")
 
-	if _, err := apps.NewRepository(apps.WithURI(topLevelURI)); err != nil {
+	if _, err := apps.NewIndexer(topLevelURI, logger); err != nil {
 		logger.ErrorContext(ctx, "failed to setup database", slog.String("error", err.Error()))
 
 		return
