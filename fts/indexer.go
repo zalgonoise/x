@@ -1,6 +1,10 @@
 package fts
 
-import "context"
+import (
+	"context"
+
+	"github.com/zalgonoise/x/cfg"
+)
 
 // Indexer describes the actions that a full-text search index should expose. It is declared as an
 // interface so that a no-op implementation and observability decorators can be used interchangeably
@@ -40,4 +44,39 @@ type Indexer[K SQLType, V SQLType] interface {
 
 	// Shutdown gracefully closes the Indexer.
 	Shutdown(ctx context.Context) error
+}
+
+// New creates an Indexer with the input Attribute and configuration options.
+//
+// This function allows creating an Index that is intended to be decorated with a logger, metrics and / or tracing.
+func New[K SQLType, V SQLType](attributes []Attribute[K, V], opts ...cfg.Option[Config]) (Indexer[K, V], error) {
+	if len(attributes) == 0 {
+		return NoOp[K, V](), ErrZeroAttributes
+	}
+
+	config := cfg.New[Config](opts...)
+
+	var (
+		indexer Indexer[K, V]
+		err     error
+	)
+
+	indexer, err = NewIndex[K, V](config.uri, attributes...)
+	if err != nil {
+		return NoOp[K, V](), err
+	}
+
+	if config.logHandler != nil {
+		indexer = IndexerWithLogs(indexer, config.logHandler)
+	}
+
+	if config.metrics != nil {
+		indexer = IndexerWithMetrics(indexer, config.metrics)
+	}
+
+	if config.tracer != nil {
+		indexer = IndexerWithTrace(indexer, config.tracer)
+	}
+
+	return indexer, nil
 }
