@@ -28,7 +28,7 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 		return errEmptyName, 1
 	}
 
-	r, err := apps.NewRepository(apps.WithURI(*dbURI))
+	r, err := apps.NewIndexer(*dbURI, logger)
 	if err != nil {
 		return err, 1
 	}
@@ -39,7 +39,10 @@ func Exec(ctx context.Context, logger *slog.Logger, args []string) (error, int) 
 	}
 
 	for i := range results {
-		logger.InfoContext(ctx, fmt.Sprintf("result #%d", i), slog.String("name", results[i].Name), slog.Int("app_id", int(results[i].AppID)))
+		logger.InfoContext(ctx, fmt.Sprintf("result #%d", i),
+			slog.String("name", results[i].Value),
+			slog.Int("app_id", int(results[i].Key)),
+		)
 	}
 
 	return nil, 0
