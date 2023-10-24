@@ -97,6 +97,18 @@ or its interface constructor [`fts.New()`](./indexer.go#L52); however, only the 
 a logger, metrics and / or tracing in one-go. Regardless, when successful, both are an 
 [`*fts.Index[K fts.SQLType, V fts.SQLType]`](./index.go#L40) type.
 
+##### Options
+
+If you choose to create an `Indexer`, you're free to add some configuration options, as described below:
+
+|                    Function                     |                                 Input type                                 |                                                  Description                                                  |
+|:-----------------------------------------------:|:--------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------:|
+|    [`fts.WithURI`](./indexer_config.go#L22)     |                                  `string`                                  | Sets a path URI when connecting to the SQLite database, as a means to persist the database in the filesystem. |
+|   [`fts.WithLogger`](./indexer_config.go#L30)   |            [`*slog.Logger`](https://pkg.go.dev/log/slog#Logger)            |                               Decorates the Indexer with the input slog.Logger.                               |
+| [`fts.WithLogHandler`](./indexer_config.go#L40) |           [`slog.Handler`](https://pkg.go.dev/log/slog#Handler)            |                    Decorates the Indexer with a slog.Logger, using the input slog.Handler.                    |
+|  [`fts.WithMetrics`](./indexer_config.go#L49)   |               [`fts.Metrics`](./indexer_with_metrics.go#L11)               |                            Decorates the Indexer with the input Metrics instance.                             |
+|   [`fts.WithTrace`](./indexer_config.go#L58)    | [`trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) |                              Decorates the Indexer with the input trace.Tracer.                               |
+
 Below is an example where an in-memory index with a logger is created with some attributes, and is also searched on:
 
 ```go
