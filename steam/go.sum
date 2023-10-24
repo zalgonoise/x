@@ -60,6 +60,8 @@ github.com/zalgonoise/x/errs v0.0.0-20231020165722-0f2482f6e4ba h1:PysImRf5VVGSj
 github.com/zalgonoise/x/errs v0.0.0-20231020165722-0f2482f6e4ba/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/fts v0.0.0-20231023203253-88bd2edd8b40 h1:AOvL1PRotixPksTtygN0ra9dV2j6XXvUlm9LO+bZe38=
 github.com/zalgonoise/x/fts v0.0.0-20231023203253-88bd2edd8b40/go.mod h1:BZ6bso2WkafcwrRO5jYb7gLBqixv9rQldJm4tw9Gn+c=
+github.com/zalgonoise/x/fts v0.0.0-20231024183831-13dc8d1dc34e h1:f4TPazqftu937n0fXAcsgW9edkBw0T/xJQ/7qJeWmJw=
+github.com/zalgonoise/x/fts v0.0.0-20231024183831-13dc8d1dc34e/go.mod h1:BZ6bso2WkafcwrRO5jYb7gLBqixv9rQldJm4tw9Gn+c=
 github.com/zalgonoise/x/pluslog v0.0.0-20230914231232-76b61b0eca4f h1:tv4GtAee4g3RnbPNdCczaScQIkUyFxG+q4RDE8Jx5F0=
 github.com/zalgonoise/x/pluslog v0.0.0-20230914231232-76b61b0eca4f/go.mod h1:LmYmjmMnzN0rL5C/9mO8IYWxxzTlkVNDODXPz9dOw/s=
 github.com/zalgonoise/x/ptr v0.0.0-20231023203253-88bd2edd8b40 h1:ZUHdbpMSqF0NfwAoFSwZkjQCO7s42aGrF1neDzOnrlA=

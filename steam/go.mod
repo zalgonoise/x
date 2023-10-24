@@ -6,7 +6,7 @@ require (
 	github.com/zalgonoise/x/cron v0.0.0-20231014154522-b0a2130b3903
 	github.com/zalgonoise/x/discord v0.0.0-20231014154522-b0a2130b3903
 	github.com/zalgonoise/x/errs v0.0.0-20231020165722-0f2482f6e4ba
-	github.com/zalgonoise/x/fts v0.0.0-20231023203253-88bd2edd8b40
+	github.com/zalgonoise/x/fts v0.0.0-20231024183831-13dc8d1dc34e
 	github.com/zalgonoise/x/ptr v0.0.0-20231023203253-88bd2edd8b40
 	github.com/zalgonoise/x/slack v0.0.0-20231014154522-b0a2130b3903
 	google.golang.org/protobuf v1.31.0
