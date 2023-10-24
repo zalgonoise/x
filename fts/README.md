@@ -30,7 +30,7 @@ ________
 
 ### Motivation
 
-While exploring the (Steam HTTP API)[http://github.com/zalgonoise/x/tree/master/steam], I've decided to create an 
+While exploring the [Steam HTTP API](http://github.com/zalgonoise/x/tree/master/steam), I've decided to create an 
 alerting system (with webhooks) for when a certain product was on sale, with a desired discount (-% off). 
 
 In itself, that isn't much despite my complaints on handling the HTTP responses from Steam; however I was having an 
