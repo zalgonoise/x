@@ -50,10 +50,6 @@ type Indexer[K SQLType, V SQLType] interface {
 //
 // This function allows creating an Index that is intended to be decorated with a logger, metrics and / or tracing.
 func New[K SQLType, V SQLType](attributes []Attribute[K, V], opts ...cfg.Option[Config]) (Indexer[K, V], error) {
-	if len(attributes) == 0 {
-		return NoOp[K, V](), ErrZeroAttributes
-	}
-
 	config := cfg.New[Config](opts...)
 
 	var (

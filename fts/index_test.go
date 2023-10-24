@@ -81,7 +81,7 @@ func TestIndex_SearchStrings(t *testing.T) {
 			name:  "Fail/NoInput",
 			attrs: []Attribute[int, string]{},
 			query: "gold",
-			err:   ErrZeroAttributes,
+			err:   ErrNotFoundKeyword,
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestIndex_SearchBytes(t *testing.T) {
 			name:  "Fail/NoInput",
 			attrs: []Attribute[int, []byte]{},
 			query: []byte("gold"),
-			err:   ErrZeroAttributes,
+			err:   ErrNotFoundKeyword,
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
@@ -295,7 +295,7 @@ func TestIndex_SearchSQLTypes(t *testing.T) {
 			name:  "Fail/NoInput",
 			attrs: []Attribute[sql.NullInt64, sql.NullString]{},
 			query: sql.NullString{Valid: true, String: "gold"},
-			err:   ErrZeroAttributes,
+			err:   ErrNotFoundKeyword,
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {

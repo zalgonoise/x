@@ -137,13 +137,8 @@ type Attribute[K SQLType, V SQLType] struct {
 // Otherwise, the URI is treated as a database URI and validated as an OS path. The latter option allows persistence
 // of the Index.
 //
-// An error is returned if no Attribute is provided, as a ErrZeroAttributes error; or if the database fails when
-// being open, initialized, and loaded with the input Attribute.
+// An error is returned if the database fails when being open, initialized, and loaded with the input Attribute.
 func NewIndex[K SQLType, V SQLType](uri string, attrs ...Attribute[K, V]) (*Index[K, V], error) {
-	if len(attrs) == 0 {
-		return nil, ErrZeroAttributes
-	}
-
 	db, err := open(uri)
 	if err != nil {
 		return nil, err
@@ -157,10 +152,12 @@ func NewIndex[K SQLType, V SQLType](uri string, attrs ...Attribute[K, V]) (*Inde
 		db: db,
 	}
 
-	if err = index.Insert(context.Background(), attrs...); err != nil {
-		closeErr := index.db.Close()
+	if len(attrs) > 0 {
+		if err = index.Insert(context.Background(), attrs...); err != nil {
+			closeErr := index.db.Close()
 
-		return nil, errors.Join(err, closeErr)
+			return nil, errors.Join(err, closeErr)
+		}
 	}
 
 	return index, nil
