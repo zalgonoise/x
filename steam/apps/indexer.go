@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/zalgonoise/x/fts"
+	"github.com/zalgonoise/fts"
 	"github.com/zalgonoise/x/ptr"
 	"github.com/zalgonoise/x/steam"
 )
