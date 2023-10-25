@@ -3,10 +3,10 @@ module github.com/zalgonoise/x/steam
 go 1.21.3
 
 require (
+	github.com/zalgonoise/fts v1.0.0
 	github.com/zalgonoise/x/cron v0.0.0-20231014154522-b0a2130b3903
 	github.com/zalgonoise/x/discord v0.0.0-20231014154522-b0a2130b3903
-	github.com/zalgonoise/x/errs v0.0.0-20231020165722-0f2482f6e4ba
-	github.com/zalgonoise/x/fts v0.0.0-20231024183831-13dc8d1dc34e
+	github.com/zalgonoise/x/errs v0.0.0-20231025191534-5b4e621b8e1d
 	github.com/zalgonoise/x/ptr v0.0.0-20231023203253-88bd2edd8b40
 	github.com/zalgonoise/x/slack v0.0.0-20231014154522-b0a2130b3903
 	google.golang.org/protobuf v1.31.0
@@ -31,7 +31,7 @@ require (
 	github.com/zalgonoise/gio v0.0.0-20221231224511-990149dd48ad // indirect
 	github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7 // indirect
 	github.com/zalgonoise/parse v0.0.0-20230205181257-0ceebea8442c // indirect
-	github.com/zalgonoise/x/cfg v0.0.0-20231022235546-537d0072988e // indirect
+	github.com/zalgonoise/x/cfg v0.0.0-20231024202136-100eb3521134 // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
