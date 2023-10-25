@@ -1,6 +1,6 @@
 ## FTS
 
-### _a SQLite-based full-text search engine  _
+### _a SQLite-based full-text search engine_
 
 _________
 
