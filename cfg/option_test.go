@@ -13,6 +13,10 @@ type testConfig struct {
 	ratio  float64
 }
 
+func nilOption() cfg.Option[testConfig] {
+	return cfg.Register[testConfig](nil)
+}
+
 func withTarget(target string) cfg.Option[testConfig] {
 	return cfg.Register(func(cfg testConfig) testConfig {
 		cfg.target = target
@@ -86,6 +90,32 @@ func TestNew(t *testing.T) {
 				dur:    time.Hour,
 				ratio:  0.7,
 			},
+		},
+		{
+			name: "WithNilOptions",
+			options: []cfg.Option[testConfig]{
+				withTarget("someTarget"),
+				nilOption(),
+				withDuration(time.Hour),
+				nilOption(),
+				withRatio(0.5),
+			},
+			wants: testConfig{
+				target: "someTarget",
+				dur:    time.Hour,
+				ratio:  0.5,
+			},
+		},
+		{
+			name: "OnlyNilOptions",
+			options: []cfg.Option[testConfig]{
+				nil,
+				nilOption(),
+				nil,
+				nilOption(),
+				nil,
+			},
+			wants: testConfig{},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
