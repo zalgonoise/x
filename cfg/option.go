@@ -6,22 +6,22 @@ type Option[T any] interface {
 	apply(config T) T
 }
 
-// ConfigFunc is a function type which implements the Option interface.
-type ConfigFunc[T any] func(T) T
+// OptionFunc is a function type which implements the Option interface.
+type OptionFunc[T any] func(T) T
 
-func (fn ConfigFunc[T]) apply(config T) T {
+func (fn OptionFunc[T]) apply(config T) T {
 	return fn(config)
 }
 
 // Register creates a new Option for a configuration data structure of type T.
 //
-// It simply sets the input function as a ConfigFunc type, if it isn't nil.
+// It simply sets the input function as a OptionFunc type, if it isn't nil.
 func Register[T any](fn func(T) T) Option[T] {
 	if fn == nil {
 		return NoOp[T]{}
 	}
 
-	return ConfigFunc[T](fn)
+	return OptionFunc[T](fn)
 }
 
 // New creates a new configuration data structure of type T and applies all
