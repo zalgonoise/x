@@ -9,10 +9,14 @@ import (
 	"github.com/zalgonoise/x/errs"
 )
 
-const defaultTimeout = 15 * time.Second
+const (
+	defaultTimeout = 15 * time.Second
+	defaultURL     = "https://github.com/"
+)
 
 var (
 	defaultConfig = Config{
+		url:     defaultURL,
 		timeout: defaultTimeout,
 	}
 )
@@ -41,8 +45,8 @@ func WithURL(url string) cfg.Option[Config] {
 		return cfg.NoOp[Config]{}
 	}
 
-	// register an option by declaring the returned function as a ConfigFunc type
-	return cfg.ConfigFunc[Config](func(config Config) Config {
+	// register an option by declaring the returned function as a OptionFunc type
+	return cfg.OptionFunc[Config](func(config Config) Config {
 		config.url = url
 
 		return config
