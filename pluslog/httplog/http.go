@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	ErrFailedHTTPRequest = errs.New(errDomain, ErrFailed, ErrHTTPRequest)
+	ErrFailedHTTPRequest = errs.WithDomain(errDomain, ErrFailed, ErrHTTPRequest)
 )
 
 type Encoder interface {
