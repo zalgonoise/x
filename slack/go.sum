@@ -4,10 +4,10 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/zalgonoise/x/cfg v0.0.0-20231011161158-f11510c78ab6 h1:L+WPNSqVUHkijpHNRA9bK6XUpWgI8wg4+mQw+E16/mI=
-github.com/zalgonoise/x/cfg v0.0.0-20231011161158-f11510c78ab6/go.mod h1:TLAH/vhUedknjEPPEsKtBIfaHRy5Gnx9YvWMYnZ7Hkk=
-github.com/zalgonoise/x/errs v0.0.0-20231011161158-f11510c78ab6 h1:Jk3GxtfepLZsBAxHDoz9vD5bJpTJKQ//PAxoOZT741Q=
-github.com/zalgonoise/x/errs v0.0.0-20231011161158-f11510c78ab6/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
+github.com/zalgonoise/cfg v1.0.0 h1:clcY7XrNtp6tkLycyDSSq72mmxXv08jJtfpiE5fKwR8=
+github.com/zalgonoise/cfg v1.0.0/go.mod h1:DQcS1/7atS+KAvDgA3DE0rFXsTWSV0/B8tbX7ZbqDog=
+github.com/zalgonoise/x/errs v0.0.0-20231028161929-130f85682aea h1:MaXBCNNnyF+kwxxgVy2v7x0X3f00rsgHGNTi5h1IAk4=
+github.com/zalgonoise/x/errs v0.0.0-20231028161929-130f85682aea/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
