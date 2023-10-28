@@ -3,7 +3,8 @@ package cron
 import (
 	"context"
 
-	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/cron/executor"
 	"github.com/zalgonoise/x/cron/selector"
 )
