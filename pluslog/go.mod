@@ -1,6 +1,8 @@
 module github.com/zalgonoise/x/pluslog
 
-go 1.21.1
+go 1.21.0
+
+toolchain go1.21.3
 
 require (
 	github.com/zalgonoise/cfg v1.0.0
