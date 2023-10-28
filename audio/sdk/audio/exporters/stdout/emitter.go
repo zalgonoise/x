@@ -4,10 +4,11 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters"
-	"github.com/zalgonoise/x/cfg"
 )
 
 const (
