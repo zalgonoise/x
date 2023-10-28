@@ -4,9 +4,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/zalgonoise/x/cfg"
-	"github.com/zalgonoise/x/cron/schedule"
+	"github.com/zalgonoise/cfg"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/zalgonoise/x/cron/schedule"
 )
 
 type Config struct {

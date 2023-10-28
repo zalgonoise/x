@@ -5,9 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/zalgonoise/x/cfg"
-	"github.com/zalgonoise/x/cron/schedule"
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/errs"
+
+	"github.com/zalgonoise/x/cron/schedule"
 )
 
 const (
