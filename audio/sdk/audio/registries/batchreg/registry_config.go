@@ -3,10 +3,11 @@ package batchreg
 import (
 	"time"
 
+	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
-	"github.com/zalgonoise/x/cfg"
 )
 
 const (

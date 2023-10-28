@@ -5,11 +5,12 @@ import (
 	"errors"
 	"time"
 
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/gbuf"
+
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
-	"github.com/zalgonoise/x/cfg"
 )
 
 type batchRegistry[T any] struct {
