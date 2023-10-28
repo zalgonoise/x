@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/zalgonoise/x/cfg"
 	"log/slog"
 	"net/http"
 	"runtime"
 	"time"
 
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/errs"
 )
 
