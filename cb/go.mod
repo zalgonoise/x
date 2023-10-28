@@ -4,7 +4,7 @@ go 1.21.3
 
 require (
 	github.com/stretchr/testify v1.8.4
-	github.com/zalgonoise/x/cfg v0.0.0-20231016220337-dc7553b9be3a
+	github.com/zalgonoise/cfg v1.0.0
 )
 
 require (
