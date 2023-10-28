@@ -2,6 +2,8 @@ module github.com/zalgonoise/x/cron
 
 go 1.21.0
 
+toolchain go1.21.3
+
 require (
 	github.com/prometheus/client_golang v1.17.0
 	github.com/stretchr/testify v1.8.4
