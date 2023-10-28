@@ -3,9 +3,10 @@ package selector
 import (
 	"log/slog"
 
-	"github.com/zalgonoise/x/cfg"
-	"github.com/zalgonoise/x/cron/executor"
+	"github.com/zalgonoise/cfg"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/zalgonoise/x/cron/executor"
 )
 
 type Config struct {
