@@ -3,7 +3,7 @@ package tracing
 import (
 	"time"
 
-	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/cfg"
 )
 
 type Config struct {
