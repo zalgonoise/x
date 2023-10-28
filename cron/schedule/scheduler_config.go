@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/parse"
-	"github.com/zalgonoise/x/cfg"
 	"go.opentelemetry.io/otel/trace"
 )
 

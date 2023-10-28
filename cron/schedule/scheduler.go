@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/parse"
-	"github.com/zalgonoise/x/cfg"
 )
 
 type resolver interface {
