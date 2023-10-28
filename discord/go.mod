@@ -1,6 +1,6 @@
 module github.com/zalgonoise/x/discord
 
-go 1.21.1
+go 1.21.0
 
 toolchain go1.21.3
 
@@ -8,8 +8,8 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/switchupcb/dasgo/v10 v10.0.0-20221206085309-6335a3c15f52
 	github.com/zalgonoise/cfg v1.0.0
-	github.com/zalgonoise/x/errs v0.0.0-20231027193431-dea234bed8d0
-	github.com/zalgonoise/x/pluslog v0.0.0-20231028161929-130f85682aea
+	github.com/zalgonoise/x/errs v0.0.0-20231028161929-130f85682aea
+	github.com/zalgonoise/x/pluslog v0.0.0-20231028162423-4ef0aef6e46b
 	gopkg.in/yaml.v3 v3.0.1
 )
 
