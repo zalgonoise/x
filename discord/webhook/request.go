@@ -2,7 +2,7 @@ package webhook
 
 import (
 	"github.com/switchupcb/dasgo/v10/dasgo"
-	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/cfg"
 )
 
 func Content(content string, options ...cfg.Option[Request]) *dasgo.ExecuteWebhook {

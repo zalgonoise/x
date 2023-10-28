@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/switchupcb/dasgo/v10/dasgo"
-	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/errs"
 )
 
