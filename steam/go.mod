@@ -1,6 +1,8 @@
 module github.com/zalgonoise/x/steam
 
-go 1.21.3
+go 1.21.0
+
+toolchain go1.21.3
 
 require (
 	github.com/zalgonoise/fts v1.0.0
