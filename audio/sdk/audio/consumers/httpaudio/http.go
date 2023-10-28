@@ -5,8 +5,9 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/sdk/audio"
-	"github.com/zalgonoise/x/cfg"
 )
 
 const (

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/errs"
 
 	"github.com/zalgonoise/x/audio/validation"
