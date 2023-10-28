@@ -1,12 +1,13 @@
 package exporters
 
 import (
+	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/extractors"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
-	"github.com/zalgonoise/x/cfg"
 )
 
 func NewExporter(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter, error) {
