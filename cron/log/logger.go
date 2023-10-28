@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/cfg"
 )
 
 func New(options ...cfg.Option[Config]) *slog.Logger {
