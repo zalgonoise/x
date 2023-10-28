@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/zalgonoise/x/cfg"
+	"github.com/zalgonoise/cfg"
 )
 
 const (

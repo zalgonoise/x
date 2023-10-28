@@ -1,6 +1,6 @@
 package metrics
 
-import "github.com/zalgonoise/x/cfg"
+import "github.com/zalgonoise/cfg"
 
 const (
 	metricsViaProm = iota
