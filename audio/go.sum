@@ -39,10 +39,10 @@ github.com/zalgonoise/gbuf v1.0.1 h1:I/IwY/O9qLixkMy1MsJsy3cMj+IM4EEu1d3qvrtwcRQ
 github.com/zalgonoise/gbuf v1.0.1/go.mod h1:Ura1k68eaqYimCmG2nFhStqp6zJvuKbmHrZoz3e/Rzc=
 github.com/zalgonoise/gio v1.0.0 h1:606Dam0m+WmHs/Er5CBOuVx7wE6hPU+eLIdIScohHRk=
 github.com/zalgonoise/gio v1.0.0/go.mod h1:nhc82H2KvRf8/28o3RGBnJM/k7NapcDGPegqGIOqATY=
-github.com/zalgonoise/x/errs v0.0.0-20231027193431-dea234bed8d0 h1:fD2r+P/Dp50dar0WSh7Xv9xe9dYv/nN8bUwokSdKd3c=
-github.com/zalgonoise/x/errs v0.0.0-20231027193431-dea234bed8d0/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
-github.com/zalgonoise/x/ptr v0.0.0-20231027193431-dea234bed8d0 h1:QcyIcJa2ISYVzp1Uhgz7RZsvPDb/3CO5UrRydYE9CA0=
-github.com/zalgonoise/x/ptr v0.0.0-20231027193431-dea234bed8d0/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
+github.com/zalgonoise/x/errs v0.0.0-20231028163844-9788f3b3b512 h1:q9NxwDu9lFcpf6B76/Vso5A4dZtDQ136lm6Uai8tYNU=
+github.com/zalgonoise/x/errs v0.0.0-20231028163844-9788f3b3b512/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
+github.com/zalgonoise/x/ptr v0.0.0-20231028163844-9788f3b3b512 h1:prQ295RWIUi9Xyzbj88WXUXR2OY+gA3Lj2dD9U3nZn0=
+github.com/zalgonoise/x/ptr v0.0.0-20231028163844-9788f3b3b512/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
 golang.org/x/sys v0.13.0 h1:Af8nKPmuFypiUBjVoU9V20FiaFXOcuZI21p0ycVYYGE=
 golang.org/x/sys v0.13.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
