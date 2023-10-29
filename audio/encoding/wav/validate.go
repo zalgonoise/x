@@ -62,7 +62,7 @@ var (
 	ErrShortDataBuffer    = errs.WithDomain(ErrDomain, ErrShort, ErrDataBuffer)
 )
 
-var headerValidator = validation.NewValidator(
+var headerValidator = validation.New(
 	validateChunkID,
 	validateFormat,
 	validateSampleRate,
