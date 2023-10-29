@@ -21,33 +21,11 @@ type Func[T any] func(T) error
 // It verifies if the input data structure contains invalid or missing data, returning an error if so, by calling the
 // inner Func with the input value.
 func (fn Func[T]) Validate(value T) error {
-	return fn(value)
-}
-
-// Funcs is a joined function type that complies with the Validator's Validate method signature.
-//
-// The Funcs type implements the Validator interface, through a Validate method calling on all the functions in the
-// slice.
-type Funcs[T any] []func(T) error
-
-// Validate implements the Validator interface.
-//
-// It verifies if the input data structure contains invalid or missing data, returning an error if so, by calling the
-// inner functions in the Funcs type, with the input value.
-func (fns Funcs[T]) Validate(value T) error {
-	errs := make([]error, 0, len(fns))
-
-	for i := range fns {
-		if fns[i] == nil {
-			continue
-		}
-
-		if err := fns[i](value); err != nil {
-			errs = append(errs, err)
-		}
+	if fn == nil {
+		return nil
 	}
 
-	return errors.Join(errs...)
+	return fn(value)
 }
 
 type multiValidator[T any] struct {
@@ -70,14 +48,16 @@ func (v multiValidator[T]) Validate(value T) error {
 	return errors.Join(errs...)
 }
 
-// NewValidator creates a Validator from the input slice of Func.
+// New creates a Validator from the input slice of Func.
 //
 // If the input slice contains no items, this call returns a NoOp Validator. If it only contains one function, it
 // will return it as a Func type, effectively as a Validator.
 //
 // If there are multiple functions in the input, a multi-Validator is created. This multi-Validator will contain all
 // non-nil validators from the input, that will work with the same input value in one go.
-func NewValidator[T any](validators ...func(T) error) Validator[T] {
+func New[T any](validators ...func(T) error) Validator[T] {
+	validators = nonNilFunc(validators)
+
 	switch len(validators) {
 	case 0:
 		return NoOp[T]()
@@ -85,25 +65,22 @@ func NewValidator[T any](validators ...func(T) error) Validator[T] {
 		return Func[T](validators[0])
 	}
 
-	c := make([]Validator[T], 0, len(validators))
+	mv := multiValidator[T]{
+		validators: make([]Validator[T], 0, len(validators)),
+	}
 
 	for i := range validators {
-		if validators[i] == nil {
-			continue
-		}
-
-		c = append(c, Func[T](validators[i]))
-
+		mv.validators = append(mv.validators, Func[T](validators[i]))
 	}
 
-	return &multiValidator[T]{
-		validators: c,
-	}
+	return mv
 }
 
-// Join gathers multiple Validator for the same type, joining them as a single Validator. It is similar to NewValidator,
+// Join gathers multiple Validator for the same type, joining them as a single Validator. It is similar to New,
 // but works exclusively with Validator types as input.
 func Join[T any](validators ...Validator[T]) Validator[T] {
+	validators = nonNilValidators(validators)
+
 	switch len(validators) {
 	case 0:
 		return NoOp[T]()
@@ -111,22 +88,20 @@ func Join[T any](validators ...Validator[T]) Validator[T] {
 		return validators[0]
 	}
 
-	c := make([]Validator[T], 0, len(validators))
+	mv := &multiValidator[T]{
+		validators: make([]Validator[T], 0, len(validators)),
+	}
 
 	for i := range validators {
 		switch v := validators[i].(type) {
-		case nil:
-			continue
 		case multiValidator[T]:
-			c = append(c, v.validators...)
+			mv.validators = append(mv.validators, v.validators...)
 		default:
-			c = append(c, v)
+			mv.validators = append(mv.validators, v)
 		}
 	}
 
-	return &multiValidator[T]{
-		validators: c,
-	}
+	return mv
 }
 
 // NoOp returns a no-op Validator.
@@ -140,3 +115,31 @@ type noOpValidator[T any] struct{}
 //
 // This is a no-op call and the returned error is always nil.
 func (noOpValidator[T]) Validate(T) error { return nil }
+
+func nonNilFunc[T any](validators []func(T) error) []func(T) error {
+	squash := make([]func(T) error, 0, len(validators))
+
+	for i := range validators {
+		if validators[i] == nil {
+			continue
+		}
+
+		squash = append(squash, validators[i])
+	}
+
+	return squash
+}
+
+func nonNilValidators[T any](validators []Validator[T]) []Validator[T] {
+	squash := make([]Validator[T], 0, len(validators))
+
+	for i := range validators {
+		if validators[i] == nil {
+			continue
+		}
+
+		squash = append(squash, validators[i])
+	}
+
+	return squash
+}

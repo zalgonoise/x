@@ -5,62 +5,40 @@ import (
 	"errors"
 )
 
-// ValidatorContext is an interface for any type that validates (the contents of) type T. It contains a single
+// ContextValidator is an interface for any type that validates (the contents of) type T. It contains a single
 // method, Validate, that returns an error if there is invalid or unexpectedly unset data in the input data structure
 // using a context.Context in its Validate call.
-type ValidatorContext[T any] interface {
+type ContextValidator[T any] interface {
 	// Validate verifies if the input data structure contains invalid or missing data, returning an error if so.
 	Validate(ctx context.Context, value T) error
 }
 
-// FuncContext is a function type that complies with the ValidatorContext's Validate method signature.
+// FuncContext is a function type that complies with the ContextValidator's Validate method signature.
 //
-// The FuncContext type implements the ValidatorContext interface, through a Validate method calling on itself.
+// The FuncContext type implements the ContextValidator interface, through a Validate method calling on itself.
 type FuncContext[T any] func(context.Context, T) error
 
-// Validate implements the ValidatorContext interface.
+// Validate implements the ContextValidator interface.
 //
 // It verifies if the input data structure contains invalid or missing data, returning an error if so, by calling the
 // inner FuncContext with the input value.
 func (fn FuncContext[T]) Validate(ctx context.Context, value T) error {
+	if fn == nil {
+		return nil
+	}
+
 	return fn(ctx, value)
 }
 
-// FuncsContext is a joined function type that complies with the Validator's Validate method signature.
-//
-// The FuncsContext type implements the ValidatorContext interface, through a Validate method calling on all the
-// functions in the slice.
-type FuncsContext[T any] []func(context.Context, T) error
-
-// Validate implements the Validator interface.
-//
-// It verifies if the input data structure contains invalid or missing data, returning an error if so, by calling the
-// inner functions in the FuncsContext type, with the input value.
-func (fns FuncsContext[T]) Validate(ctx context.Context, value T) error {
-	errs := make([]error, 0, len(fns))
-
-	for i := range fns {
-		if fns[i] == nil {
-			continue
-		}
-
-		if err := fns[i](ctx, value); err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	return errors.Join(errs...)
+type multiContextValidator[T any] struct {
+	validators []ContextValidator[T]
 }
 
-type multiValidatorContext[T any] struct {
-	validators []ValidatorContext[T]
-}
-
-// Validate implements the ValidatorContext interface.
+// Validate implements the ContextValidator interface.
 //
 // It verifies if the input data structure contains invalid or missing data, returning an error if so, by iterating
-// through all configured ValidatorContext, while calling their Validate method on the input value.
-func (v multiValidatorContext[T]) Validate(ctx context.Context, value T) error {
+// through all configured ContextValidator, while calling their Validate method on the input value.
+func (v multiContextValidator[T]) Validate(ctx context.Context, value T) error {
 	errs := make([]error, 0, len(v.validators))
 
 	for i := range v.validators {
@@ -72,14 +50,16 @@ func (v multiValidatorContext[T]) Validate(ctx context.Context, value T) error {
 	return errors.Join(errs...)
 }
 
-// NewValidatorContext creates a ValidatorContext from the input slice of FuncContext.
+// NewContext creates a ContextValidator from the input slice of FuncContext.
 //
-// If the input slice contains no items, this call returns a NoOpContext ValidatorContext. If it only contains one
-// function, it will return it as a FuncContext type, effectively as a ValidatorContext.
+// If the input slice contains no items, this call returns a NoOpContext ContextValidator. If it only contains one
+// function, it will return it as a FuncContext type, effectively as a ContextValidator.
 //
 // If there are multiple functions in the input, a multi-Validator is created. This multi-Validator will contain all
 // non-nil validators from the input, that will work with the same input value in one go.
-func NewValidatorContext[T any](validators ...func(context.Context, T) error) ValidatorContext[T] {
+func NewContext[T any](validators ...func(context.Context, T) error) ContextValidator[T] {
+	validators = nonNilFuncContext(validators)
+
 	switch len(validators) {
 	case 0:
 		return NoOpContext[T]()
@@ -87,25 +67,22 @@ func NewValidatorContext[T any](validators ...func(context.Context, T) error) Va
 		return FuncContext[T](validators[0])
 	}
 
-	c := make([]ValidatorContext[T], 0, len(validators))
+	mv := multiContextValidator[T]{
+		validators: make([]ContextValidator[T], 0, len(validators)),
+	}
 
 	for i := range validators {
-		if validators[i] == nil {
-			continue
-		}
-
-		c = append(c, FuncContext[T](validators[i]))
-
+		mv.validators = append(mv.validators, FuncContext[T](validators[i]))
 	}
 
-	return &multiValidatorContext[T]{
-		validators: c,
-	}
+	return mv
 }
 
-// JoinContext gathers multiple ValidatorContext for the same type, joining them as a single ValidatorContext.
-// It is similar to NewValidatorContext, but works exclusively with ValidatorContext types as input.
-func JoinContext[T any](validators ...ValidatorContext[T]) ValidatorContext[T] {
+// JoinContext gathers multiple ContextValidator for the same type, joining them as a single ContextValidator.
+// It is similar to NewContext, but works exclusively with ContextValidator types as input.
+func JoinContext[T any](validators ...ContextValidator[T]) ContextValidator[T] {
+	validators = nonNilContextValidator(validators)
+
 	switch len(validators) {
 	case 0:
 		return NoOpContext[T]()
@@ -113,32 +90,60 @@ func JoinContext[T any](validators ...ValidatorContext[T]) ValidatorContext[T] {
 		return validators[0]
 	}
 
-	c := make([]ValidatorContext[T], 0, len(validators))
+	mv := multiContextValidator[T]{
+		validators: make([]ContextValidator[T], 0, len(validators)),
+	}
 
 	for i := range validators {
 		switch v := validators[i].(type) {
 		case nil:
 			continue
-		case multiValidatorContext[T]:
-			c = append(c, v.validators...)
+		case multiContextValidator[T]:
+			mv.validators = append(mv.validators, v.validators...)
 		default:
-			c = append(c, v)
+			mv.validators = append(mv.validators, v)
 		}
 	}
 
-	return &multiValidatorContext[T]{
-		validators: c,
-	}
+	return mv
 }
 
-// NoOpContext returns a no-op ValidatorContext.
-func NoOpContext[T any]() ValidatorContext[T] {
-	return noOpValidatorContext[T]{}
+// NoOpContext returns a no-op ContextValidator.
+func NoOpContext[T any]() ContextValidator[T] {
+	return noOpContextValidator[T]{}
 }
 
-type noOpValidatorContext[T any] struct{}
+type noOpContextValidator[T any] struct{}
 
-// Validate implements the ValidatorContext interface.
+// Validate implements the ContextValidator interface.
 //
 // This is a no-op call and the returned error is always nil.
-func (noOpValidatorContext[T]) Validate(context.Context, T) error { return nil }
+func (noOpContextValidator[T]) Validate(context.Context, T) error { return nil }
+
+func nonNilFuncContext[T any](validators []func(context.Context, T) error) []func(context.Context, T) error {
+	squash := make([]func(context.Context, T) error, 0, len(validators))
+
+	for i := range validators {
+		if validators[i] == nil {
+			continue
+		}
+
+		squash = append(squash, validators[i])
+	}
+
+	return squash
+}
+
+func nonNilContextValidator[T any](validators []ContextValidator[T]) []ContextValidator[T] {
+	squash := make([]ContextValidator[T], 0, len(validators))
+
+	for i := range validators {
+		if validators[i] == nil {
+			continue
+		}
+
+		squash = append(squash, validators[i])
+	}
+
+	return squash
+}
