@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/zalgonoise/valigator"
 	"github.com/zalgonoise/x/errs"
-
-	"github.com/zalgonoise/x/audio/validation"
 )
 
 const (
@@ -62,7 +61,7 @@ var (
 	ErrShortDataBuffer    = errs.WithDomain(ErrDomain, ErrShort, ErrDataBuffer)
 )
 
-var headerValidator = validation.New(
+var headerValidator = valigator.New(
 	validateChunkID,
 	validateFormat,
 	validateSampleRate,
