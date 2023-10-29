@@ -1,9 +1,8 @@
 package data
 
 import (
+	"github.com/zalgonoise/valigator"
 	"github.com/zalgonoise/x/errs"
-
-	"github.com/zalgonoise/x/audio/validation"
 )
 
 const (
@@ -26,7 +25,7 @@ var (
 	ErrShortBuffer           = errs.WithDomain(ErrDomain, ErrShort, ErrBuffer)
 )
 
-var headerValidator = validation.New(validateHeaderSubChunkID)
+var headerValidator = valigator.New(validateHeaderSubChunkID)
 
 func validateHeaderSubChunkID(h *Header) error {
 	switch string(h.Subchunk2ID[:]) {
