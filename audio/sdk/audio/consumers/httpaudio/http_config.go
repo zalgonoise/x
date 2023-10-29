@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/valigator"
 	"github.com/zalgonoise/x/errs"
-
-	"github.com/zalgonoise/x/audio/validation"
 )
 
 const (
@@ -25,7 +24,7 @@ const (
 var (
 	ErrInvalidProtocol = errs.WithDomain(consumerDomain, ErrInvalid, ErrProtocol)
 
-	configValidator = validation.New(validateTarget)
+	configValidator = valigator.New(validateTarget)
 	defaultConfig   = Config{
 		timeout: defaultConnTimeout,
 	}
