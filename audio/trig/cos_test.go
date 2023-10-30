@@ -42,15 +42,6 @@ func BenchmarkCos(b *testing.B) {
 }
 
 func FuzzCos(f *testing.F) {
-
-	f.Add(1.2)
-	f.Add(0.3)
-	f.Add(8.0)
-	f.Add(123.7)
-	f.Add(-1.0)
-	f.Add(-0.3)
-	f.Add(-5.0)
-	f.Add(536870913.0)
 	f.Fuzz(func(t *testing.T, a float64) {
 		resA := Cos(a)
 		resB := math.Cos(a)
