@@ -3,6 +3,7 @@ package fft_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/zalgonoise/x/audio/fft"
 )
 
@@ -242,4 +243,16 @@ func BenchmarkConv(b *testing.B) {
 		}
 		_ = c
 	})
+}
+
+func TestToComplex(t *testing.T) {
+	floats := []float64{
+		1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8,
+	}
+	wants := []complex128{
+		1.1 + 0.0i, 1.2 + 0.0i, 1.3 + 0.0i, 1.4 + 0.0i,
+		1.5 + 0.0i, 1.6 + 0.0i, 1.7 + 0.0i, 1.8 + 0.0i,
+	}
+
+	require.Equal(t, wants, fft.ToComplex(floats))
 }
