@@ -123,6 +123,7 @@ func BenchmarkLog2(b *testing.B) {
 		}
 		_ = outputC
 	})
+
 	b.Run("GoDSPFFT", func(b *testing.B) {
 		var (
 			fn = func(v uint) uint {
@@ -141,9 +142,10 @@ func BenchmarkLog2(b *testing.B) {
 		}
 		_ = outputD
 	})
+
 	b.Run("Compare", func(b *testing.B) {
 		if outputA != outputB || outputA != outputC || outputA != outputD {
-			b.Errorf("output mismatch error: A: %d ; B: %d ; C: %d ; D: %d", outputA, outputB, outputC, outputD)
+			b.Errorf("output mismatch error: input: %d;  A: %d ; B: %d ; C: %d ; D: %d", input, outputA, outputB, outputC, outputD)
 		}
 	})
 }

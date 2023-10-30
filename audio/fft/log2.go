@@ -50,7 +50,7 @@ func Log2[T Log2Types](v T) T {
 
 func log2[T Log2Types](v T) T {
 	var r T
-	for ; v > 1; v >>= 1 {
+	for v >>= 1; v != 0; v >>= 1 {
 		r++
 	}
 
