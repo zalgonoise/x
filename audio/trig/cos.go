@@ -7,6 +7,10 @@ import (
 )
 
 // Cos is an attempt to improve the performance of the math.Cos implementation
+//
+// It will skip the checks for NaN and -/+Inf, so it should be perceived as an unsafe Sin / Cos approach.
+// So far, I couldn't find an issue with this approach in digital signal processing; although it would be
+// no longer used for audio DSP if that were to be the case
 func Cos(x float64) float64 {
 	// make argument positive
 	sign := false

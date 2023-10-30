@@ -17,7 +17,6 @@ const (
 	PI4A  = 7.85398125648498535156e-1  // 0x3fe921fb40000000, Pi/4 split into three parts
 	PI4B  = 3.77489470793079817668e-8  // 0x3e64442d00000000,
 	PI4C  = 2.69515142907905952645e-15 // 0x3ce8469898cc5170,
-
 )
 
 // sin coefficients
@@ -41,6 +40,10 @@ var _cos = [...]float64{
 }
 
 // Sin is an attempt to improve the performance of the math.Sin implementation
+//
+// It will skip the checks for NaN and -/+Inf, so it should be perceived as an unsafe Sin / Cos approach.
+// So far, I couldn't find an issue with this approach in digital signal processing; although it would be
+// no longer used for audio DSP if that were to be the case.
 func Sin(x float64) float64 {
 	// make argument positive but save the sign
 	sign := false
