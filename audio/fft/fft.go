@@ -6,12 +6,6 @@ import (
 	"github.com/zalgonoise/x/audio/fft/window"
 )
 
-var (
-	radix2Factors = map[int][]complex128{
-		4: {(1 + 0i), (0 - 1i), (-1 + 0i), (0 + 1i)},
-	}
-)
-
 const (
 	tau = 2 * math.Pi
 
@@ -102,7 +96,6 @@ func FFT(value []complex128) []complex128 {
 				temp[idx] = reorderIdx + factorized
 				temp[idx2] = reorderIdx - factorized
 			}
-
 		}
 
 		value, temp = temp, value

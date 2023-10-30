@@ -1,12 +1,16 @@
 package fft_test
 
 import (
+	"cmp"
 	"math"
+	"slices"
 	"testing"
 	"time"
 
 	dspfft "github.com/mjibson/go-dsp/fft"
+	"github.com/stretchr/testify/require"
 	"github.com/zalgonoise/x/audio/encoding/wav"
+	"github.com/zalgonoise/x/audio/fft/window"
 
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/osc"
@@ -138,13 +142,76 @@ func BenchmarkFFT(b *testing.B) {
 	})
 }
 
-func TestFFT(t *testing.T) {
+func TestApply(t *testing.T) {
 	sine, err := newSine(2000)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	var data = fft.ToComplex(sine.Data.Float())[:16]
-	t.Log(fft.FFT(data))
+	data := sine.Data.Float()
+	blockSize := 2048
+	sampleRate := 44100
+	windowBlock := window.Blackman2048
+	wantsFreq := 2002
+
+	spectrum := fft.Apply(
+		sampleRate,
+		data[:blockSize],
+		windowBlock,
+	)
+
+	slices.SortFunc(spectrum, func(a, b fft.FrequencyPower) int {
+		return cmp.Compare(b.Mag, a.Mag)
+	})
+
+	require.Equal(t, wantsFreq, spectrum[0].Freq)
+
+	for i := range spectrum[:5] {
+		t.Logf("freq: %v ; mag: %v", spectrum[i].Freq, spectrum[i].Mag)
+	}
+}
+
+func TestConvolution(t *testing.T) {
+	sine, err := newSine(2000)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	blockSize := 16
+	blockX := sine.Data.Float()[blockSize : blockSize*2]
+	blockY := sine.Data.Float()[blockSize*2 : blockSize*3]
+
+	convolution := fft.Convolve(fft.ToComplex(blockX), fft.ToComplex(blockY))
+
+	t.Log(convolution)
+}
+
+func BenchmarkApply(b *testing.B) {
+	sine, err := newSine(2000)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+
+	data := sine.Data.Float()
+	blockSize := 256
+	sampleRate := 44100
+	windowBlock := window.Blackman256
+
+	b.Run("2kSineFirstChunk", func(b *testing.B) {
+		var spectrum []fft.FrequencyPower
+		b.ResetTimer()
+
+		for i := 0; i < b.N; i++ {
+			spectrum = fft.Apply(
+				sampleRate,
+				data[:blockSize],
+				windowBlock,
+			)
+		}
+
+		_ = spectrum
+	})
 }
