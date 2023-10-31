@@ -7,12 +7,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type SelectorWithTrace struct {
+type withTrace struct {
 	s      Selector
 	tracer trace.Tracer
 }
 
-func (s SelectorWithTrace) Next(ctx context.Context) error {
+func (s withTrace) Next(ctx context.Context) error {
 	ctx, span := s.tracer.Start(ctx, "Selector.Select")
 	defer span.End()
 
@@ -35,13 +35,13 @@ func selectorWithTrace(s Selector, tracer trace.Tracer) Selector {
 		return s
 	}
 
-	if withTrace, ok := s.(SelectorWithTrace); ok {
-		withTrace.tracer = tracer
+	if traced, ok := s.(withTrace); ok {
+		traced.tracer = tracer
 
-		return withTrace
+		return traced
 	}
 
-	return SelectorWithTrace{
+	return withTrace{
 		s:      s,
 		tracer: tracer,
 	}
