@@ -93,7 +93,7 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 		return dayOfMonthTime
 	}
 
-	futureWeekday := dayOfMonthTime.Truncate(time.Hour * 24 * time.Duration(day))
+	futureWeekday := dayOfMonthTime.Truncate(time.Hour * 24)
 	nextWeekday := s.dayWeek.Resolve(int(futureWeekday.Weekday()))
 
 	if hour+nextHour > 24 {
