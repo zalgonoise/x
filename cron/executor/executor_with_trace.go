@@ -9,12 +9,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type ExecutorWithTrace struct {
+type withTrace struct {
 	e      Executor
 	tracer trace.Tracer
 }
 
-func (e ExecutorWithTrace) Exec(ctx context.Context) error {
+func (e withTrace) Exec(ctx context.Context) error {
 	ctx, span := e.tracer.Start(ctx, "Executor.Exec")
 	defer span.End()
 
@@ -29,7 +29,7 @@ func (e ExecutorWithTrace) Exec(ctx context.Context) error {
 	return err
 }
 
-func (e ExecutorWithTrace) Next(ctx context.Context) time.Time {
+func (e withTrace) Next(ctx context.Context) time.Time {
 	ctx, span := e.tracer.Start(ctx, "Executor.Next")
 	defer span.End()
 
@@ -43,7 +43,7 @@ func (e ExecutorWithTrace) Next(ctx context.Context) time.Time {
 	return next
 }
 
-func (e ExecutorWithTrace) ID() string {
+func (e withTrace) ID() string {
 	return e.e.ID()
 }
 
@@ -56,13 +56,13 @@ func executorWithTrace(e Executor, tracer trace.Tracer) Executor {
 		return e
 	}
 
-	if withTrace, ok := e.(ExecutorWithTrace); ok {
-		withTrace.tracer = tracer
+	if traced, ok := e.(withTrace); ok {
+		traced.tracer = tracer
 
-		return withTrace
+		return traced
 	}
 
-	return ExecutorWithTrace{
+	return withTrace{
 		e:      e,
 		tracer: tracer,
 	}
