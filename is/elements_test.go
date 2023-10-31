@@ -189,4 +189,48 @@ func TestEqualElements(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("ByteSlice", func(t *testing.T) {
+		for _, testcase := range []struct {
+			name     string
+			expected []byte
+			actual   []byte
+			fails    bool
+		}{
+			{
+				name:     "Success/Matching",
+				expected: []byte("some content"),
+				actual:   []byte("some content"),
+			},
+			{
+				name:     "Fail/Mismatching",
+				expected: []byte("some content"),
+				actual:   []byte("other content"),
+				fails:    true,
+			},
+			{
+				name:     "Fails/Empty",
+				expected: []byte("some content"),
+				actual:   []byte{},
+				fails:    true,
+			},
+			{
+				name:     "Fails/Nil",
+				expected: []byte("some content"),
+				actual:   nil,
+				fails:    true,
+			},
+		} {
+			t.Run(testcase.name, func(t *testing.T) {
+				tt := &testT{}
+
+				EqualElements(tt, testcase.expected, testcase.actual)
+
+				if tt.failCount > 0 && !testcase.fails {
+					t.Logf(tt.last)
+					t.Fail()
+				}
+			})
+		}
+	})
 }
