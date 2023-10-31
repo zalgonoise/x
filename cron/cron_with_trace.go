@@ -6,12 +6,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type CronWithTrace struct {
+type withTrace struct {
 	r      Runtime
 	tracer trace.Tracer
 }
 
-func (c CronWithTrace) Run(ctx context.Context) {
+func (c withTrace) Run(ctx context.Context) {
 	ctx, span := c.tracer.Start(ctx, "Runtime.Run")
 	defer span.End()
 
@@ -20,7 +20,7 @@ func (c CronWithTrace) Run(ctx context.Context) {
 	span.AddEvent("closing runtime")
 }
 
-func (c CronWithTrace) Err() <-chan error {
+func (c withTrace) Err() <-chan error {
 	return c.r.Err()
 }
 
@@ -33,13 +33,13 @@ func cronWithTrace(r Runtime, tracer trace.Tracer) Runtime {
 		return r
 	}
 
-	if withTrace, ok := r.(CronWithTrace); ok {
-		withTrace.tracer = tracer
+	if traced, ok := r.(withTrace); ok {
+		traced.tracer = tracer
 
-		return withTrace
+		return traced
 	}
 
-	return CronWithTrace{
+	return withTrace{
 		r:      r,
 		tracer: tracer,
 	}
