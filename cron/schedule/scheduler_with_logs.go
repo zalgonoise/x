@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-type SchedulerWithLogs struct {
+type withLogs struct {
 	s      Scheduler
 	logger *slog.Logger
 }
 
-func (s SchedulerWithLogs) Next(ctx context.Context, now time.Time) time.Time {
+func (s withLogs) Next(ctx context.Context, now time.Time) time.Time {
 	next := s.s.Next(ctx, now)
 
 	s.logger.InfoContext(ctx, "next job", slog.Time("at", next))
@@ -29,13 +29,13 @@ func schedulerWithLogs(s Scheduler, handler slog.Handler) Scheduler {
 		handler = slog.NewTextHandler(os.Stderr, nil)
 	}
 
-	if withLogs, ok := s.(SchedulerWithLogs); ok {
-		withLogs.logger = slog.New(handler)
+	if logs, ok := s.(withLogs); ok {
+		logs.logger = slog.New(handler)
 
-		return withLogs
+		return logs
 	}
 
-	return SchedulerWithLogs{
+	return withLogs{
 		s:      s,
 		logger: slog.New(handler),
 	}
