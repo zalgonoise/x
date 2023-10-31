@@ -18,7 +18,7 @@ type Config struct {
 	runners []Runner
 
 	handler slog.Handler
-	metrics ExecutorMetrics
+	metrics Metrics
 	tracer  trace.Tracer
 }
 
@@ -76,7 +76,7 @@ func WithLocation(loc *time.Location) cfg.Option[Config] {
 	})
 }
 
-func WithMetrics(m ExecutorMetrics) cfg.Option[Config] {
+func WithMetrics(m Metrics) cfg.Option[Config] {
 	if m == nil {
 		return cfg.NoOp[Config]{}
 	}
