@@ -32,19 +32,13 @@ var nilHandler = slog.Handler(nil)
 // configuration.
 func NewSpanContextHandler(handler slog.Handler, withSpanID bool) slog.Handler {
 	if handler == nil || handler == nilHandler {
-		handler = defaultHandler()
+		handler = slog.NewJSONHandler(os.Stderr, nil)
 	}
 
 	return &SpanContextHandler{
 		withSpanID: withSpanID,
 		handler:    handler,
 	}
-}
-
-func defaultHandler() slog.Handler {
-	return slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-		AddSource: true,
-	})
 }
 
 // Enabled reports whether the handler handles records at the given level.
