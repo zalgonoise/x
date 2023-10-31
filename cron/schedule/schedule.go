@@ -35,7 +35,7 @@ type stepSchedule struct {
 }
 
 func (s stepSchedule) Resolve(value int) int {
-	var offset int = -1
+	offset := -1
 
 	for i := range s.steps {
 		if offset == -1 {
