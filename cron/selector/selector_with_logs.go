@@ -6,12 +6,12 @@ import (
 	"os"
 )
 
-type SelectorWithLogs struct {
+type withLogs struct {
 	s      Selector
 	logger *slog.Logger
 }
 
-func (s SelectorWithLogs) Next(ctx context.Context) error {
+func (s withLogs) Next(ctx context.Context) error {
 	s.logger.InfoContext(ctx, "selecting the next task")
 
 	if err := s.s.Next(ctx); err != nil {
@@ -32,13 +32,13 @@ func selectorWithLogs(s Selector, handler slog.Handler) Selector {
 		handler = slog.NewTextHandler(os.Stderr, nil)
 	}
 
-	if withLogs, ok := s.(SelectorWithLogs); ok {
-		withLogs.logger = slog.New(handler)
+	if logs, ok := s.(withLogs); ok {
+		logs.logger = slog.New(handler)
 
-		return withLogs
+		return logs
 	}
 
-	return SelectorWithLogs{
+	return withLogs{
 		s:      s,
 		logger: slog.New(handler),
 	}
