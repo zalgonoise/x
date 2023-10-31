@@ -6,18 +6,18 @@ type Metrics interface {
 	IsUp(bool)
 }
 
-type CronWithMetrics struct {
+type withMetrics struct {
 	r Runtime
 	m Metrics
 }
 
-func (c CronWithMetrics) Run(ctx context.Context) {
+func (c withMetrics) Run(ctx context.Context) {
 	c.m.IsUp(true)
 	c.r.Run(ctx)
 	c.m.IsUp(false)
 }
 
-func (c CronWithMetrics) Err() <-chan error {
+func (c withMetrics) Err() <-chan error {
 	return c.r.Err()
 }
 
@@ -30,13 +30,13 @@ func cronWithMetrics(r Runtime, m Metrics) Runtime {
 		return r
 	}
 
-	if withMetrics, ok := r.(CronWithMetrics); ok {
-		withMetrics.m = m
+	if metrics, ok := r.(withMetrics); ok {
+		metrics.m = m
 
-		return withMetrics
+		return metrics
 	}
 
-	return CronWithMetrics{
+	return withMetrics{
 		r: r,
 		m: m,
 	}
