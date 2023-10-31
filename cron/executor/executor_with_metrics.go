@@ -5,19 +5,19 @@ import (
 	"time"
 )
 
-type ExecutorMetrics interface {
+type Metrics interface {
 	IncExecutorExecCalls(id string)
 	IncExecutorExecErrors(id string)
 	ObserveExecLatency(ctx context.Context, id string, dur time.Duration)
 	IncExecutorNextCalls(id string)
 }
 
-type ExecutorWithMetrics struct {
+type withMetrics struct {
 	e Executor
-	m ExecutorMetrics
+	m Metrics
 }
 
-func (e ExecutorWithMetrics) Exec(ctx context.Context) error {
+func (e withMetrics) Exec(ctx context.Context) error {
 	id := e.e.ID()
 	e.m.IncExecutorExecCalls(id)
 
@@ -34,17 +34,17 @@ func (e ExecutorWithMetrics) Exec(ctx context.Context) error {
 	return err
 }
 
-func (e ExecutorWithMetrics) Next(ctx context.Context) time.Time {
+func (e withMetrics) Next(ctx context.Context) time.Time {
 	e.m.IncExecutorNextCalls(e.e.ID())
 
 	return e.e.Next(ctx)
 }
 
-func (e ExecutorWithMetrics) ID() string {
+func (e withMetrics) ID() string {
 	return e.e.ID()
 }
 
-func executorWithMetrics(e Executor, m ExecutorMetrics) Executor {
+func executorWithMetrics(e Executor, m Metrics) Executor {
 	if e == nil {
 		return noOpExecutor{}
 	}
@@ -53,13 +53,13 @@ func executorWithMetrics(e Executor, m ExecutorMetrics) Executor {
 		return e
 	}
 
-	if withMetrics, ok := e.(ExecutorWithMetrics); ok {
-		withMetrics.m = m
+	if metrics, ok := e.(withMetrics); ok {
+		metrics.m = m
 
-		return withMetrics
+		return metrics
 	}
 
-	return ExecutorWithMetrics{
+	return withMetrics{
 		e: e,
 		m: m,
 	}
