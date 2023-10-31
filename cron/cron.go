@@ -29,7 +29,7 @@ func (r runtime) Run(ctx context.Context) {
 			if err := r.sel.Next(ctx); err != nil {
 				r.err <- err
 
-				// filled error buffer; avoid dead-lock
+				// filled error buffer; avoid deadlock
 				if len(r.err) == cap(r.err) {
 					close(r.err)
 
