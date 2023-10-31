@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-type ExecutorWithLogs struct {
+type withLogs struct {
 	e      Executor
 	logger *slog.Logger
 }
 
-func (e ExecutorWithLogs) Exec(ctx context.Context) error {
+func (e withLogs) Exec(ctx context.Context) error {
 	id := slog.String("id", e.e.ID())
 
 	e.logger.InfoContext(ctx, "executing task", id)
@@ -25,7 +25,7 @@ func (e ExecutorWithLogs) Exec(ctx context.Context) error {
 	return err
 }
 
-func (e ExecutorWithLogs) Next(ctx context.Context) time.Time {
+func (e withLogs) Next(ctx context.Context) time.Time {
 	next := e.e.Next(ctx)
 
 	e.logger.InfoContext(ctx, "next job",
@@ -36,7 +36,7 @@ func (e ExecutorWithLogs) Next(ctx context.Context) time.Time {
 	return next
 }
 
-func (e ExecutorWithLogs) ID() string {
+func (e withLogs) ID() string {
 	return e.e.ID()
 }
 
@@ -49,13 +49,13 @@ func executorWithLogs(e Executor, handler slog.Handler) Executor {
 		handler = slog.NewTextHandler(os.Stderr, nil)
 	}
 
-	if withLogs, ok := e.(ExecutorWithLogs); ok {
-		withLogs.logger = slog.New(handler)
+	if logs, ok := e.(withLogs); ok {
+		logs.logger = slog.New(handler)
 
-		return withLogs
+		return logs
 	}
 
-	return ExecutorWithLogs{
+	return withLogs{
 		e:      e,
 		logger: slog.New(handler),
 	}
