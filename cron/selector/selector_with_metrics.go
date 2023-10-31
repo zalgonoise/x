@@ -9,12 +9,12 @@ type Metrics interface {
 	IncSelectorSelectErrors()
 }
 
-type SelectorWithMetrics struct {
+type withMetrics struct {
 	s Selector
 	m Metrics
 }
 
-func (s SelectorWithMetrics) Next(ctx context.Context) error {
+func (s withMetrics) Next(ctx context.Context) error {
 	s.m.IncSelectorSelectCalls()
 
 	if err := s.s.Next(ctx); err != nil {
@@ -35,13 +35,13 @@ func selectorWithMetrics(s Selector, m Metrics) Selector {
 		return s
 	}
 
-	if withMetrics, ok := s.(SelectorWithMetrics); ok {
-		withMetrics.m = m
+	if metrics, ok := s.(withMetrics); ok {
+		metrics.m = m
 
-		return withMetrics
+		return metrics
 	}
 
-	return SelectorWithMetrics{
+	return withMetrics{
 		s: s,
 		m: m,
 	}
