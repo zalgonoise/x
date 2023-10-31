@@ -9,12 +9,12 @@ type Metrics interface {
 	IncSchedulerNextCalls()
 }
 
-type SchedulerWithMetrics struct {
+type withMetrics struct {
 	s Scheduler
 	m Metrics
 }
 
-func (s SchedulerWithMetrics) Next(ctx context.Context, now time.Time) time.Time {
+func (s withMetrics) Next(ctx context.Context, now time.Time) time.Time {
 	s.m.IncSchedulerNextCalls()
 
 	return s.s.Next(ctx, now)
@@ -29,13 +29,13 @@ func schedulerWithMetrics(s Scheduler, m Metrics) Scheduler {
 		return s
 	}
 
-	if withMetrics, ok := s.(SchedulerWithMetrics); ok {
-		withMetrics.m = m
+	if metrics, ok := s.(withMetrics); ok {
+		metrics.m = m
 
-		return withMetrics
+		return metrics
 	}
 
-	return SchedulerWithMetrics{
+	return withMetrics{
 		s: s,
 		m: m,
 	}
