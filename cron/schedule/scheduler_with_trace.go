@@ -8,12 +8,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type SchedulerWithTrace struct {
+type withTrace struct {
 	s      Scheduler
 	tracer trace.Tracer
 }
 
-func (s SchedulerWithTrace) Next(ctx context.Context, now time.Time) time.Time {
+func (s withTrace) Next(ctx context.Context, now time.Time) time.Time {
 	ctx, span := s.tracer.Start(ctx, "Scheduler.Next")
 	defer span.End()
 
@@ -33,13 +33,13 @@ func schedulerWithTrace(s Scheduler, tracer trace.Tracer) Scheduler {
 		return s
 	}
 
-	if withTrace, ok := s.(SchedulerWithTrace); ok {
-		withTrace.tracer = tracer
+	if traced, ok := s.(withTrace); ok {
+		traced.tracer = tracer
 
-		return withTrace
+		return traced
 	}
 
-	return SchedulerWithTrace{
+	return withTrace{
 		s:      s,
 		tracer: tracer,
 	}
