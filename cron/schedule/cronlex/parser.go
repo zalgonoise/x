@@ -1,49 +1,49 @@
-package schedule
+package cronlex
 
 import (
 	"github.com/zalgonoise/parse"
 )
 
-func initParse(t *parse.Tree[token, byte]) parse.ParseFn[token, byte] {
+func ParseFunc(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	switch t.Peek().Type {
-	case tokenAt:
+	case TokenAt:
 		return parseAt
-	case tokenStar:
+	case TokenStar:
 		return parseStar
-	case tokenAlphanum:
+	case TokenAlphaNum:
 		return parseAlphanum
-	case tokenEOF:
+	case TokenEOF:
 		return nil
 	default:
 		return nil
 	}
 }
 
-func parseAt(t *parse.Tree[token, byte]) parse.ParseFn[token, byte] {
+func parseAt(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	t.Node(t.Next())
 
 	switch t.Peek().Type {
-	case tokenAlphanum:
+	case TokenAlphaNum:
 		return parseAlphanum
 	default:
 		item := t.Next()
-		item.Type = tokenError
+		item.Type = TokenError
 		t.Set(t.Parent())
 
-		return initParse
+		return ParseFunc
 	}
 }
 
-func parseStar(t *parse.Tree[token, byte]) parse.ParseFn[token, byte] {
+func parseStar(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	t.Node(t.Next())
 
 	switch t.Peek().Type {
-	case tokenSpace:
+	case TokenSpace:
 		t.Set(t.Parent())
 		t.Next()
 
-		return initParse
-	case tokenSlash:
+		return ParseFunc
+	case TokenSlash:
 		return parseAlphanum
 	default:
 		t.Set(t.Parent())
@@ -52,37 +52,37 @@ func parseStar(t *parse.Tree[token, byte]) parse.ParseFn[token, byte] {
 	}
 }
 
-func parseAlphanumSymbols(t *parse.Tree[token, byte]) parse.ParseFn[token, byte] {
+func parseAlphanumSymbols(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	t.Node(t.Next())
 
 	switch t.Peek().Type {
-	case tokenAlphanum:
+	case TokenAlphaNum:
 		t.Node(t.Next())
 		t.Set(t.Parent().Parent)
 
 		return parseAlphanum
 	default:
 		item := t.Next()
-		item.Type = tokenError
+		item.Type = TokenError
 		t.Node(item)
 
-		return initParse
+		return ParseFunc
 	}
 }
 
-func parseAlphanum(t *parse.Tree[token, byte]) parse.ParseFn[token, byte] {
+func parseAlphanum(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	switch t.Peek().Type {
-	case tokenAlphanum:
+	case TokenAlphaNum:
 		t.Node(t.Next())
 
 		return parseAlphanum
-	case tokenComma, tokenDash, tokenSlash:
+	case TokenComma, TokenDash, TokenSlash:
 		return parseAlphanumSymbols
-	case tokenSpace:
+	case TokenSpace:
 		t.Set(t.Parent())
 		t.Next()
 
-		return initParse
+		return ParseFunc
 	}
 
 	return nil

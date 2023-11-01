@@ -1,27 +1,27 @@
-package schedule
+package cronlex
 
-type everytime struct{}
+type Everytime struct{}
 
-func (s everytime) Resolve(_ int) int {
+func (s Everytime) Resolve(_ int) int {
 	return 0
 }
 
-type fixedSchedule struct {
+type FixedSchedule struct {
 	maximum int
 	at      int
 }
 
-func (s fixedSchedule) Resolve(value int) int {
+func (s FixedSchedule) Resolve(value int) int {
 	return diff(value, s.at, s.at, s.maximum)
 }
 
-type rangeSchedule struct {
+type RangeSchedule struct {
 	maximum int
 	from    int
 	to      int
 }
 
-func (s rangeSchedule) Resolve(value int) int {
+func (s RangeSchedule) Resolve(value int) int {
 	if value > s.from && value < s.to {
 		return 0
 	}
@@ -29,12 +29,12 @@ func (s rangeSchedule) Resolve(value int) int {
 	return diff(value, s.from, s.to, s.maximum)
 }
 
-type stepSchedule struct {
+type StepSchedule struct {
 	maximum int
 	steps   []int
 }
 
-func (s stepSchedule) Resolve(value int) int {
+func (s StepSchedule) Resolve(value int) int {
 	offset := -1
 
 	for i := range s.steps {
@@ -60,8 +60,8 @@ func diff(value, from, to, maximum int) int {
 	return from - value
 }
 
-func newStepSchedule(from, to, maximum, frequency int) stepSchedule {
-	return stepSchedule{
+func newStepSchedule(from, to, maximum, frequency int) StepSchedule {
+	return StepSchedule{
 		maximum: maximum,
 		steps:   newValueRange(from, to, frequency),
 	}

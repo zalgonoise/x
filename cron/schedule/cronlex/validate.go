@@ -1,4 +1,4 @@
-package schedule
+package cronlex
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	errDomain = errs.Domain("x/cron")
+	errDomain = errs.Domain("x/cron/schedule/cronlex")
 
 	ErrEmpty       = errs.Kind("empty")
 	ErrInvalid     = errs.Kind("invalid")
@@ -81,7 +81,7 @@ var (
 	}
 )
 
-func validate(t *parse.Tree[token, byte]) error {
+func Validate(t *parse.Tree[Token, byte]) error {
 	nodes := t.List()
 
 	switch len(nodes) {
@@ -100,8 +100,8 @@ func validate(t *parse.Tree[token, byte]) error {
 	}
 }
 
-func validateOverride(node *parse.Node[token, byte]) error {
-	if node.Type != tokenAt {
+func validateOverride(node *parse.Node[Token, byte]) error {
+	if node.Type != TokenAt {
 		return fmt.Errorf("%w: %T -- %v", ErrInvalidNodeType, node.Type, node.Value)
 	}
 
@@ -162,9 +162,9 @@ func validateAlpha(value string, minimum, maximum int, valueList []string) error
 }
 
 func validateSymbols(
-	edges []*parse.Node[token, byte],
+	edges []*parse.Node[Token, byte],
 	maxEdges int,
-	validSymbols []token,
+	validSymbols []Token,
 	valueFunc func(string) error,
 ) error {
 	switch {
@@ -181,7 +181,7 @@ func validateSymbols(
 						return fmt.Errorf("%w: %d", ErrInvalidNumEdges, len(edges[i].Edges))
 					}
 
-					if edges[i].Edges[0].Type != tokenAlphanum {
+					if edges[i].Edges[0].Type != TokenAlphaNum {
 						return fmt.Errorf("%w: %T -- %v", ErrInvalidNodeType, edges[i].Edges[0].Type, edges[i].Edges[0].Value)
 					}
 
@@ -198,21 +198,21 @@ func validateSymbols(
 	}
 }
 
-func validateField(node *parse.Node[token, byte], maxEdges, minimum, maximum int, valueFunc func(string) error) error {
+func validateField(node *parse.Node[Token, byte], maxEdges, minimum, maximum int, valueFunc func(string) error) error {
 	switch node.Type {
-	case tokenStar:
+	case TokenStar:
 		// star is OK by itself -- check if there is a slash token
-		if err := validateSymbols(node.Edges, 1, []token{tokenSlash}, valueFunc); err != nil {
+		if err := validateSymbols(node.Edges, 1, []Token{TokenSlash}, valueFunc); err != nil {
 			return err
 		}
 
 		return nil
-	case tokenAlphanum:
+	case TokenAlphaNum:
 		if err := validateNumber(string(node.Value), minimum, maximum); err == nil {
 			return nil
 		}
 
-		if err := validateSymbols(node.Edges, maxEdges, []token{tokenSlash, tokenComma, tokenDash}, valueFunc); err != nil {
+		if err := validateSymbols(node.Edges, maxEdges, []Token{TokenSlash, TokenComma, TokenDash}, valueFunc); err != nil {
 			return err
 		}
 
@@ -222,7 +222,7 @@ func validateField(node *parse.Node[token, byte], maxEdges, minimum, maximum int
 	}
 }
 
-func validateMinutes(node *parse.Node[token, byte]) error {
+func validateMinutes(node *parse.Node[Token, byte]) error {
 	if err := validateField(node, 60, 0, 59, func(s string) error {
 		return validateNumber(s, 0, 59)
 	}); err != nil {
@@ -232,7 +232,7 @@ func validateMinutes(node *parse.Node[token, byte]) error {
 	return nil
 }
 
-func validateHours(node *parse.Node[token, byte]) error {
+func validateHours(node *parse.Node[Token, byte]) error {
 	if err := validateField(node, 24, 0, 23, func(s string) error {
 		return validateNumber(s, 0, 23)
 	}); err != nil {
@@ -242,7 +242,7 @@ func validateHours(node *parse.Node[token, byte]) error {
 	return nil
 }
 
-func validateMonthDays(node *parse.Node[token, byte]) error {
+func validateMonthDays(node *parse.Node[Token, byte]) error {
 	if err := validateField(node, 31, 1, 31, func(s string) error {
 		return validateNumber(s, 1, 31)
 	}); err != nil {
@@ -252,7 +252,7 @@ func validateMonthDays(node *parse.Node[token, byte]) error {
 	return nil
 }
 
-func validateMonths(node *parse.Node[token, byte]) error {
+func validateMonths(node *parse.Node[Token, byte]) error {
 	if err := validateField(node, 12, 1, 12, func(s string) error {
 		return validateAlpha(s, 1, 12, monthsList)
 	}); err != nil {
@@ -262,7 +262,7 @@ func validateMonths(node *parse.Node[token, byte]) error {
 	return nil
 }
 
-func validateWeekDays(node *parse.Node[token, byte]) error {
+func validateWeekDays(node *parse.Node[Token, byte]) error {
 	if err := validateField(node, 7, 0, 7, func(s string) error {
 		return validateAlpha(s, 0, 7, weekdaysList)
 	}); err != nil {

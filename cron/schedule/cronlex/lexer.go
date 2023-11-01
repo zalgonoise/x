@@ -1,32 +1,32 @@
-package schedule
+package cronlex
 
 import "github.com/zalgonoise/lex"
 
-func initState(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
+func StateFunc(l lex.Lexer[Token, byte]) lex.StateFn[Token, byte] {
 	switch l.Next() {
 	case '@':
-		l.Emit(tokenAt)
+		l.Emit(TokenAt)
 		return stateException
 	case '-':
-		l.Emit(tokenDash)
+		l.Emit(TokenDash)
 
-		return initState
+		return StateFunc
 	case ',':
-		l.Emit(tokenComma)
+		l.Emit(TokenComma)
 
-		return initState
+		return StateFunc
 	case '/':
-		l.Emit(tokenSlash)
+		l.Emit(TokenSlash)
 
-		return initState
+		return StateFunc
 	case '*':
-		l.Emit(tokenStar)
+		l.Emit(TokenStar)
 
-		return initState
+		return StateFunc
 	case ' ':
-		l.Emit(tokenSpace)
+		l.Emit(TokenSpace)
 
-		return initState
+		return StateFunc
 	case 0:
 		return nil
 	default:
@@ -34,7 +34,7 @@ func initState(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
 	}
 }
 
-func stateAlphanumeric(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
+func stateAlphanumeric(l lex.Lexer[Token, byte]) lex.StateFn[Token, byte] {
 	l.AcceptRun(func(item byte) bool {
 		switch {
 		case item >= '0' && item <= '9', item >= 'A' && item <= 'Z', item >= 'a' && item <= 'z':
@@ -50,21 +50,21 @@ func stateAlphanumeric(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
 			l.Next()
 		}
 
-		l.Emit(tokenAlphanum)
+		l.Emit(TokenAlphaNum)
 	}
 
 	switch l.Next() {
 	case '-', ',', '/', '*', ' ':
 		l.Prev()
 
-		return initState
+		return StateFunc
 	default:
-		l.Emit(tokenEOF)
+		l.Emit(TokenEOF)
 		return nil
 	}
 }
 
-func stateException(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
+func stateException(l lex.Lexer[Token, byte]) lex.StateFn[Token, byte] {
 	l.AcceptRun(func(item byte) bool {
 		switch {
 		case item >= 'A' && item <= 'Z', item >= 'a' && item <= 'z':
@@ -80,9 +80,9 @@ func stateException(l lex.Lexer[token, byte]) lex.StateFn[token, byte] {
 			l.Next()
 		}
 
-		l.Emit(tokenAlphanum)
+		l.Emit(TokenAlphaNum)
 	}
 
-	l.Emit(tokenEOF)
+	l.Emit(TokenEOF)
 	return nil
 }
