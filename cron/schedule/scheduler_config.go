@@ -5,9 +5,20 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
-	"github.com/zalgonoise/parse"
+	"github.com/zalgonoise/x/cron/schedule/cronlex"
+	"github.com/zalgonoise/x/errs"
 	"go.opentelemetry.io/otel/trace"
 )
+
+const (
+	errDomain = errs.Domain("x/cron/schedule")
+
+	ErrInvalid = errs.Kind("invalid")
+
+	ErrScheduler = errs.Entity("scheduler")
+)
+
+var ErrInvalidScheduler = errs.WithDomain(errDomain, ErrInvalid, ErrScheduler)
 
 type SchedulerConfig struct {
 	cronString string
@@ -106,12 +117,12 @@ func From(s Scheduler, options ...cfg.Option[SchedulerConfig]) (Scheduler, error
 	}
 
 	if config.cronString != "" {
-		cron, err := parse.Run([]byte(config.cronString), initState, initParse, process)
+		cron, err := cronlex.Parse(config.cronString)
 		if err != nil {
 			return s, err
 		}
 
-		out = cron
+		out.Schedule = cron
 
 		if sched.Loc != nil {
 			out.Loc = sched.Loc

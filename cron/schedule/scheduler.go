@@ -5,25 +5,16 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
-	"github.com/zalgonoise/parse"
+	"github.com/zalgonoise/x/cron/schedule/cronlex"
 )
-
-type resolver interface {
-	Resolve(value int) int
-}
 
 type Scheduler interface {
 	Next(ctx context.Context, now time.Time) time.Time
 }
 
 type CronSchedule struct {
-	Loc *time.Location
-
-	min      resolver
-	hour     resolver
-	dayMonth resolver
-	month    resolver
-	dayWeek  resolver
+	Loc      *time.Location
+	Schedule cronlex.Schedule
 }
 
 func New(options ...cfg.Option[SchedulerConfig]) (Scheduler, error) {
@@ -51,17 +42,15 @@ func New(options ...cfg.Option[SchedulerConfig]) (Scheduler, error) {
 
 func newScheduler(config SchedulerConfig) (Scheduler, error) {
 	// parse cron string
-	cron, err := parse.Run([]byte(config.cronString), initState, initParse, process)
+	sched, err := cronlex.Parse(config.cronString)
 	if err != nil {
 		return noOpScheduler{}, err
 	}
 
-	// set location if provided
-	if config.loc != nil {
-		cron.Loc = config.loc
-	}
-
-	return cron, nil
+	return CronSchedule{
+		Loc:      config.loc,
+		Schedule: sched,
+	}, nil
 }
 
 func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
@@ -69,10 +58,10 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 	hour := t.Hour()
 	minute := t.Minute()
 
-	nextMinute := s.min.Resolve(minute) + 1
-	nextHour := s.hour.Resolve(hour)
-	nextDay := s.dayMonth.Resolve(day)
-	nextMonth := s.month.Resolve(int(month))
+	nextMinute := s.Schedule.Min.Resolve(minute) + 1
+	nextHour := s.Schedule.Hour.Resolve(hour)
+	nextDay := s.Schedule.DayMonth.Resolve(day)
+	nextMonth := s.Schedule.Month.Resolve(int(month))
 
 	// time.Date automatically normalizes overflowing values in the context of dates
 	// (e.g. a result containing 27 hours is 3 AM on the next day)
@@ -86,12 +75,12 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 	)
 
 	// short circuit if unset or star '*'
-	if _, ok := (s.dayWeek).(everytime); s.dayWeek == nil || ok {
+	if _, ok := (s.Schedule.DayWeek).(cronlex.Everytime); s.Schedule.DayWeek == nil || ok {
 		return dayOfMonthTime
 	}
 
 	curWeekday := dayOfMonthTime.Weekday()
-	nextWeekday := s.dayWeek.Resolve(int(curWeekday))
+	nextWeekday := s.Schedule.DayWeek.Resolve(int(curWeekday))
 
 	weekdayTime := time.Date(
 		dayOfMonthTime.Year(),
