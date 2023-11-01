@@ -247,82 +247,74 @@ func getValueFromSymbol(
 }
 
 func processAlphanum(n *parse.Node[token, byte], minimum, maximum int, valueList []string) resolver {
-	atValue, ok := getValue(n, minimum, maximum, valueList)
+	value, ok := getValue(n, minimum, maximum, valueList)
 	if !ok {
 		return everytime{}
 	}
 
-	if atValue < minimum {
-		atValue = minimum
+	if value < minimum {
+		value = minimum
 	}
 
 	switch len(n.Edges) {
 	case 0:
 		return fixedSchedule{
 			maximum: maximum,
-			at:      atValue,
+			at:      value,
 		}
 	default:
+		// there is only one range in the set, do a range-schedule approach
+		if len(n.Edges) == 1 && n.Edges[0].Type == tokenDash {
+			if to, ok := getValueFromSymbol(n.Edges[0], minimum, maximum, valueList); ok {
+				return rangeSchedule{
+					maximum: maximum,
+					from:    value,
+					to:      to,
+				}
+			}
+
+			return everytime{}
+		}
+
 		stepValues := make([]int, 0, len(n.Edges)*2)
-		every := -1
-		rangeEnd := -1
+
+		// on a mixed scenario we walk through the edges and build a step-schedule out of the combinations provided
+		// for reference, tokenDash means a range, tokenSlash means a frequency and tokenComma carries the next value
+		//
+		// the value variable is reused for this purpose
 
 		for i := range n.Edges {
 			switch n.Edges[i].Type {
 			case tokenComma:
-				if value, ok := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); ok {
+				// don't leave the initial value dangling when changing tokens
+				if i == 0 {
 					stepValues = append(stepValues, value)
 				}
 
+				// it's OK to append the (child) value in a comma node
+				// even if the next node is a range or a frequency, the same value will be included and repeated values deleted
+				//
+				// this token also sets the `cur` variable in case the following token is a range or frequency
+				if v, ok := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); ok {
+					stepValues = append(stepValues, v)
+
+					value = v
+				}
+
 			case tokenDash:
-				if value, ok := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); ok {
-					rangeEnd = value
+				if to, ok := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); ok {
+					stepValues = append(stepValues, buildRange(value, to)...)
 				}
 
 			case tokenSlash:
-				if value, ok := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); ok {
-					every = value
+				if freq, ok := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); ok {
+					stepValues = append(stepValues, buildFreq(value, maximum, freq)...)
 				}
 			}
 		}
 
-		// handle step values only
-		if every == -1 && rangeEnd == -1 && len(stepValues) > 0 {
-			stepValues = append(stepValues, atValue)
-
-			slices.Sort(stepValues)
-			slices.Compact(stepValues)
-
-			return stepSchedule{
-				maximum: maximum,
-				steps:   stepValues,
-			}
-		}
-
-		// handle range only
-		if every == -1 && rangeEnd > 0 && len(stepValues) == 0 {
-			return rangeSchedule{
-				maximum: maximum,
-				from:    atValue,
-				to:      rangeEnd,
-			}
-		}
-
-		// set frequency if unset
-		if every < 0 {
-			every = 1
-		}
-
-		// set end if unset
-		if rangeEnd < 0 {
-			rangeEnd = maximum
-		}
-
-		stepValues = append(stepValues, newValueRange(atValue, rangeEnd, every)...)
-
-		// sort and remove duplicates
 		slices.Sort(stepValues)
-		slices.Compact(stepValues)
+		stepValues = slices.Compact(stepValues)
 
 		return stepSchedule{
 			maximum: maximum,
@@ -347,4 +339,22 @@ func processStar(n *parse.Node[token, byte], minimum, maximum int) resolver {
 	default:
 		return everytime{}
 	}
+}
+
+func buildRange(from, to int) []int {
+	out := make([]int, 0, to-from)
+	for i := from; i <= to; i++ {
+		out = append(out, i)
+	}
+
+	return out
+}
+
+func buildFreq(base, maximum, freq int) []int {
+	out := make([]int, 0, maximum-base/freq)
+	for i := base; i <= maximum; i += freq {
+		out = append(out, i)
+	}
+
+	return out
 }

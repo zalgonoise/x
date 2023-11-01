@@ -5,7 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zalgonoise/x/cron/log"
+	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/is"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestCronSchedule_Next(t *testing.T) {
@@ -35,10 +38,44 @@ func TestCronSchedule_Next(t *testing.T) {
 			input:      time.Date(2023, 10, 30, 22, 12, 43, 0, time.UTC),
 			wants:      time.Date(2023, 10, 31, 00, 0, 0, 0, time.UTC),
 		},
+		{
+			name:       "Success/WithWeekday/NoWeekendsAndWednesdays",
+			cronString: "0 0 * * 1,2,4,5",
+			input:      time.Date(2023, 10, 31, 22, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 11, 2, 00, 0, 0, 0, time.UTC),
+		},
+		{
+			name:       "Success/WithRangesAndSteps/NoWeekendsAndWednesdays",
+			cronString: "0 0 * * 1-2,4-5",
+			input:      time.Date(2023, 10, 31, 22, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 11, 2, 00, 0, 0, 0, time.UTC),
+		},
+		{
+			name:       "Success/WithRangesAndSteps/NoWeekendsAndWednesdays",
+			cronString: "0 0/3,2 * * 1-2,4-5",
+			input:      time.Date(2023, 10, 31, 22, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 11, 2, 00, 0, 0, 0, time.UTC),
+		},
+		{
+			name:       "Success/WithWeekday/NoWeekendsStepSchedule",
+			cronString: "0 0 * * 1,2,3,4,5",
+			input:      time.Date(2023, 10, 30, 22, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 10, 31, 00, 0, 0, 0, time.UTC),
+		},
+		{
+			name:       "Success/WithStepSchedule/Every3Hours",
+			cronString: "0 */3 * * *",
+			input:      time.Date(2023, 10, 30, 22, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 10, 31, 00, 0, 0, 0, time.UTC),
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			sched, err := New(
-				WithSchedule(testcase.cronString), WithLocation(time.UTC),
+				WithSchedule(testcase.cronString),
+				WithLocation(time.UTC),
+				WithLogHandler(log.NoOp()),
+				WithMetrics(metrics.NoOp()),
+				WithTrace(trace.NewNoopTracerProvider().Tracer("test")),
 			)
 			is.Empty(t, err)
 

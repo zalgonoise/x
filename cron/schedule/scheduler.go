@@ -65,7 +65,6 @@ func newScheduler(config SchedulerConfig) (Scheduler, error) {
 }
 
 func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
-	t = t.Truncate(time.Minute)
 	year, month, day := t.Date()
 	hour := t.Hour()
 	minute := t.Minute()
@@ -75,10 +74,8 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 	nextDay := s.dayMonth.Resolve(day)
 	nextMonth := s.month.Resolve(int(month))
 
-	if hour+nextHour > 24 {
-		nextDay--
-	}
-
+	// time.Date automatically normalizes overflowing values in the context of dates
+	// (e.g. a result containing 27 hours is 3 AM on the next day)
 	dayOfMonthTime := time.Date(
 		year,
 		month+time.Month(nextMonth),
@@ -93,25 +90,17 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 		return dayOfMonthTime
 	}
 
-	futureWeekday := dayOfMonthTime.Truncate(time.Hour * 24)
-	nextWeekday := s.dayWeek.Resolve(int(futureWeekday.Weekday()))
-
-	if hour+nextHour > 24 {
-		nextWeekday--
-	}
+	curWeekday := dayOfMonthTime.Weekday()
+	nextWeekday := s.dayWeek.Resolve(int(curWeekday))
 
 	weekdayTime := time.Date(
-		year,
-		month+time.Month(nextMonth),
-		futureWeekday.Day()+nextWeekday,
-		hour+nextHour,
-		minute+nextMinute,
+		dayOfMonthTime.Year(),
+		dayOfMonthTime.Month(),
+		dayOfMonthTime.Day()+nextWeekday,
+		dayOfMonthTime.Hour(),
+		dayOfMonthTime.Minute(),
 		0, 0, s.Loc,
 	)
-
-	if dayOfMonthTime.Before(weekdayTime) {
-		return dayOfMonthTime
-	}
 
 	return weekdayTime
 }
