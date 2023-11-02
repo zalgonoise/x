@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zalgonoise/parse"
+	"github.com/zalgonoise/x/cron/schedule/resolve"
 )
 
 type Resolver interface {
@@ -44,12 +45,12 @@ func ProcessFunc(t *parse.Tree[Token, byte]) (s Schedule, err error) {
 		}
 
 		// convert sundays as 7 into a 0
-		if r, ok := s.DayWeek.(StepSchedule); ok {
-			for i := range r.steps {
-				if r.steps[i] == 7 {
-					r.steps[i] = 0
+		if r, ok := s.DayWeek.(resolve.StepSchedule); ok {
+			for i := range r.Steps {
+				if r.Steps[i] == 7 {
+					r.Steps[i] = 0
 
-					slices.Sort(r.steps)
+					slices.Sort(r.Steps)
 					s.DayWeek = r
 				}
 			}
@@ -68,7 +69,7 @@ func buildMinutes(node *parse.Node[Token, byte]) Resolver {
 	case TokenAlphaNum:
 		return processAlphaNum(node, 0, 59, nil)
 	default:
-		return Everytime{}
+		return resolve.Everytime{}
 	}
 }
 
@@ -79,7 +80,7 @@ func buildHours(node *parse.Node[Token, byte]) Resolver {
 	case TokenAlphaNum:
 		return processAlphaNum(node, 0, 23, nil)
 	default:
-		return Everytime{}
+		return resolve.Everytime{}
 	}
 }
 
@@ -90,7 +91,7 @@ func buildMonthDays(node *parse.Node[Token, byte]) Resolver {
 	case TokenAlphaNum:
 		return processAlphaNum(node, 1, 31, nil)
 	default:
-		return Everytime{}
+		return resolve.Everytime{}
 	}
 }
 
@@ -101,7 +102,7 @@ func buildMonths(node *parse.Node[Token, byte]) Resolver {
 	case TokenAlphaNum:
 		return processAlphaNum(node, 1, 12, monthsList)
 	default:
-		return Everytime{}
+		return resolve.Everytime{}
 	}
 }
 
@@ -112,20 +113,20 @@ func buildWeekdays(node *parse.Node[Token, byte]) Resolver {
 	case TokenAlphaNum:
 		return processAlphaNum(node, 0, 7, weekdaysList)
 	default:
-		return Everytime{}
+		return resolve.Everytime{}
 	}
 }
 
 func defaultSchedule() Schedule {
 	return Schedule{
-		Min: FixedSchedule{
-			maximum: 59,
-			at:      0,
+		Min: resolve.FixedSchedule{
+			Max: 59,
+			At:  0,
 		},
-		Hour:     Everytime{},
-		DayMonth: Everytime{},
-		Month:    Everytime{},
-		DayWeek:  Everytime{},
+		Hour:     resolve.Everytime{},
+		DayMonth: resolve.Everytime{},
+		Month:    resolve.Everytime{},
+		DayWeek:  resolve.Everytime{},
 	}
 }
 
@@ -143,71 +144,71 @@ func buildException(node *parse.Node[Token, byte]) Schedule {
 			return defaultSchedule()
 		case 2: // daily
 			return Schedule{
-				Min: FixedSchedule{
-					maximum: 59,
-					at:      0,
+				Min: resolve.FixedSchedule{
+					Max: 59,
+					At:  0,
 				},
-				Hour: FixedSchedule{
-					maximum: 23,
-					at:      0,
+				Hour: resolve.FixedSchedule{
+					Max: 23,
+					At:  0,
 				},
-				DayMonth: Everytime{},
-				Month:    Everytime{},
-				DayWeek:  Everytime{},
+				DayMonth: resolve.Everytime{},
+				Month:    resolve.Everytime{},
+				DayWeek:  resolve.Everytime{},
 			}
 		case 3: // weekly
 			return Schedule{
-				Min: FixedSchedule{
-					maximum: 59,
-					at:      0,
+				Min: resolve.FixedSchedule{
+					Max: 59,
+					At:  0,
 				},
-				Hour: FixedSchedule{
-					maximum: 23,
-					at:      0,
+				Hour: resolve.FixedSchedule{
+					Max: 23,
+					At:  0,
 				},
-				DayMonth: Everytime{},
-				Month:    Everytime{},
-				DayWeek: FixedSchedule{
-					maximum: 6,
-					at:      0,
+				DayMonth: resolve.Everytime{},
+				Month:    resolve.Everytime{},
+				DayWeek: resolve.FixedSchedule{
+					Max: 6,
+					At:  0,
 				},
 			}
 		case 4: // monthly
 			return Schedule{
-				Min: FixedSchedule{
-					maximum: 59,
-					at:      0,
+				Min: resolve.FixedSchedule{
+					Max: 59,
+					At:  0,
 				},
-				Hour: FixedSchedule{
-					maximum: 23,
-					at:      0,
+				Hour: resolve.FixedSchedule{
+					Max: 23,
+					At:  0,
 				},
-				DayMonth: FixedSchedule{
-					maximum: 31,
-					at:      1,
+				DayMonth: resolve.FixedSchedule{
+					Max: 31,
+					At:  1,
 				},
-				Month:   Everytime{},
-				DayWeek: Everytime{},
+				Month:   resolve.Everytime{},
+				DayWeek: resolve.Everytime{},
 			}
 		case 5, 6: // yearly, annually
 			return Schedule{
-				Min: FixedSchedule{
-					maximum: 59,
-					at:      0,
+				Min: resolve.FixedSchedule{
+					Max: 59,
+					At:  0,
 				},
-				Hour: FixedSchedule{
-					maximum: 23,
-					at:      0,
+				Hour: resolve.FixedSchedule{
+					Max: 23,
+					At:  0,
 				},
-				DayMonth: FixedSchedule{
-					maximum: 31,
-					at:      1,
+				DayMonth: resolve.FixedSchedule{
+					Max: 31,
+					At:  1,
 				},
-				Month: FixedSchedule{
-					maximum: 12,
-					at:      1,
+				Month: resolve.FixedSchedule{
+					Max: 12,
+					At:  1,
 				},
-				DayWeek: Everytime{},
+				DayWeek: resolve.Everytime{},
 			}
 		}
 	}
@@ -258,7 +259,7 @@ func getValueFromSymbol(
 func processAlphaNum(n *parse.Node[Token, byte], minimum, maximum int, valueList []string) Resolver {
 	value, ok := getValue(n, minimum, maximum, valueList)
 	if !ok {
-		return Everytime{}
+		return resolve.Everytime{}
 	}
 
 	if value < minimum {
@@ -267,22 +268,22 @@ func processAlphaNum(n *parse.Node[Token, byte], minimum, maximum int, valueList
 
 	switch len(n.Edges) {
 	case 0:
-		return FixedSchedule{
-			maximum: maximum,
-			at:      value,
+		return resolve.FixedSchedule{
+			Max: maximum,
+			At:  value,
 		}
 	default:
 		// there is only one range in the set, do a range-schedule approach
 		if len(n.Edges) == 1 && n.Edges[0].Type == TokenDash {
 			if to, ok := getValueFromSymbol(n.Edges[0], minimum, maximum, valueList); ok {
-				return RangeSchedule{
-					maximum: maximum,
-					from:    value,
-					to:      to,
+				return resolve.RangeSchedule{
+					Max:  maximum,
+					From: value,
+					To:   to,
 				}
 			}
 
-			return Everytime{}
+			return resolve.Everytime{}
 		}
 
 		stepValues := make([]int, 0, len(n.Edges)*2)
@@ -325,9 +326,9 @@ func processAlphaNum(n *parse.Node[Token, byte], minimum, maximum int, valueList
 		slices.Sort(stepValues)
 		stepValues = slices.Compact(stepValues)
 
-		return StepSchedule{
-			maximum: maximum,
-			steps:   stepValues,
+		return resolve.StepSchedule{
+			Max:   maximum,
+			Steps: stepValues,
 		}
 	}
 }
@@ -338,15 +339,15 @@ func processStar(n *parse.Node[Token, byte], minimum, maximum int) Resolver {
 		if n.Edges[0].Type == TokenSlash && len(n.Edges[0].Edges) == 1 {
 			stepValue, err := strconv.Atoi(string(n.Edges[0].Edges[0].Value))
 			if err != nil {
-				return Everytime{}
+				return resolve.Everytime{}
 			}
 
-			return newStepSchedule(minimum, maximum, maximum, stepValue)
+			return resolve.NewStepSchedule(minimum, maximum, maximum, stepValue)
 		}
 
 		fallthrough
 	default:
-		return Everytime{}
+		return resolve.Everytime{}
 	}
 }
 
