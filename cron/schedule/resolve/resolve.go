@@ -1,4 +1,4 @@
-package cronlex
+package resolve
 
 type Everytime struct{}
 
@@ -7,44 +7,44 @@ func (s Everytime) Resolve(_ int) int {
 }
 
 type FixedSchedule struct {
-	maximum int
-	at      int
+	Max int
+	At  int
 }
 
 func (s FixedSchedule) Resolve(value int) int {
-	return diff(value, s.at, s.at, s.maximum)
+	return diff(value, s.At, s.At, s.Max)
 }
 
 type RangeSchedule struct {
-	maximum int
-	from    int
-	to      int
+	Max  int
+	From int
+	To   int
 }
 
 func (s RangeSchedule) Resolve(value int) int {
-	if value > s.from && value < s.to {
+	if value > s.From && value < s.To {
 		return 0
 	}
 
-	return diff(value, s.from, s.to, s.maximum)
+	return diff(value, s.From, s.To, s.Max)
 }
 
 type StepSchedule struct {
-	maximum int
-	steps   []int
+	Max   int
+	Steps []int
 }
 
 func (s StepSchedule) Resolve(value int) int {
 	offset := -1
 
-	for i := range s.steps {
+	for i := range s.Steps {
 		if offset == -1 {
-			offset = diff(value, s.steps[i], s.steps[i], s.maximum)
+			offset = diff(value, s.Steps[i], s.Steps[i], s.Max)
 
 			continue
 		}
 
-		if n := diff(value, s.steps[i], s.steps[i], s.maximum); n < offset {
+		if n := diff(value, s.Steps[i], s.Steps[i], s.Max); n < offset {
 			offset = n
 		}
 	}
@@ -60,10 +60,10 @@ func diff(value, from, to, maximum int) int {
 	return from - value
 }
 
-func newStepSchedule(from, to, maximum, frequency int) StepSchedule {
+func NewStepSchedule(from, to, maximum, frequency int) StepSchedule {
 	return StepSchedule{
-		maximum: maximum,
-		steps:   newValueRange(from, to, frequency),
+		Max:   maximum,
+		Steps: newValueRange(from, to, frequency),
 	}
 }
 
