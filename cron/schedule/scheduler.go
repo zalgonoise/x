@@ -6,6 +6,7 @@ import (
 
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cron/schedule/cronlex"
+	"github.com/zalgonoise/x/cron/schedule/resolve"
 )
 
 type Scheduler interface {
@@ -75,7 +76,7 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 	)
 
 	// short circuit if unset or star '*'
-	if _, ok := (s.Schedule.DayWeek).(cronlex.Everytime); s.Schedule.DayWeek == nil || ok {
+	if _, ok := (s.Schedule.DayWeek).(resolve.Everytime); s.Schedule.DayWeek == nil || ok {
 		return dayOfMonthTime
 	}
 
