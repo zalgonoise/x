@@ -22,6 +22,10 @@ type Schedule struct {
 }
 
 func Parse(cronString string) (s Schedule, err error) {
+	if err = validateCharacters(cronString); err != nil {
+		return s, err
+	}
+
 	return parse.Run([]byte(cronString), StateFunc, ParseFunc, ProcessFunc)
 }
 
