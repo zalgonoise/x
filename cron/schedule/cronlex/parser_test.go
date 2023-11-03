@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zalgonoise/parse"
 	"github.com/zalgonoise/x/cron/schedule/resolve"
 )
 
@@ -389,9 +388,27 @@ func TestParser(t *testing.T) {
 				DayWeek: resolve.Everytime{},
 			},
 		},
+		{
+			name:  "Fail/TooManyTokens",
+			input: "* * * * * *",
+			wants: Schedule{},
+			err:   ErrInvalidNumNodes,
+		},
+		{
+			name:  "Fail/InvalidOverride",
+			input: "@take-a-guess",
+			wants: Schedule{},
+			err:   ErrInvalidFrequency,
+		},
+		{
+			name:  "Fail/InvalidAlphaNum",
+			input: "* * * * 0-!",
+			wants: Schedule{},
+			err:   ErrInvalidCharacter,
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			cron, err := parse.Run([]byte(testcase.input), StateFunc, ParseFunc, ProcessFunc)
+			cron, err := Parse(testcase.input)
 
 			require.ErrorIs(t, err, testcase.err)
 			require.Equal(t, testcase.wants, cron)
