@@ -23,13 +23,13 @@ const (
 	ErrNumEdges  = errs.Entity("number of edges")
 	ErrFrequency = errs.Entity("frequency")
 	ErrAlphanum  = errs.Entity("alphanumeric value")
+	ErrCharacter = errs.Entity("character")
 
 	ErrMinutes   = errs.Entity("minutes value")
 	ErrHours     = errs.Entity("hours value")
 	ErrMonthDays = errs.Entity("days of the month value")
 	ErrMonths    = errs.Entity("month value")
 	ErrWeekDays  = errs.Entity("days of the week value")
-	ErrScheduler = errs.Entity("scheduler")
 )
 
 var (
@@ -41,7 +41,7 @@ var (
 	ErrOutOfBoundsAlphanum = errs.WithDomain(errDomain, ErrOutOfBounds, ErrAlphanum)
 	ErrEmptyAlphanum       = errs.WithDomain(errDomain, ErrEmpty, ErrAlphanum)
 	ErrInvalidAlphanum     = errs.WithDomain(errDomain, ErrInvalid, ErrAlphanum)
-	ErrInvalidScheduler    = errs.WithDomain(errDomain, ErrInvalid, ErrScheduler)
+	ErrInvalidCharacter    = errs.WithDomain(errDomain, ErrInvalid, ErrCharacter)
 
 	monthsList = []string{
 		0:  "",
@@ -80,6 +80,25 @@ var (
 		6: "YEARLY",
 	}
 )
+
+func validateCharacters(cronString string) error {
+	s := strings.ToLower(cronString)
+	for i := range s {
+		if (s[i] >= 'a' && s[i] <= 'z') ||
+			(s[i] >= '0' && s[i] <= '9') ||
+			s[i] == ' ' ||
+			s[i] == '*' ||
+			s[i] == ',' ||
+			s[i] == '/' ||
+			s[i] == '-' ||
+			s[i] == '@' {
+			continue
+		}
+		return fmt.Errorf("%w: %v -- %q", ErrInvalidCharacter, s[i], cronString)
+	}
+
+	return nil
+}
 
 func Validate(t *parse.Tree[Token, byte]) error {
 	nodes := t.List()
@@ -147,6 +166,8 @@ func validateAlpha(value string, minimum, maximum int, valueList []string) error
 	for i := range valueList {
 		if value == valueList[i] {
 			num = i
+
+			break
 		}
 	}
 
@@ -181,8 +202,13 @@ func validateSymbols(
 						return fmt.Errorf("%w: %d", ErrInvalidNumEdges, len(edges[i].Edges))
 					}
 
-					if edges[i].Edges[0].Type != TokenAlphaNum {
-						return fmt.Errorf("%w: %T -- %v", ErrInvalidNodeType, edges[i].Edges[0].Type, edges[i].Edges[0].Value)
+					switch edges[i].Edges[0].Type {
+					case TokenAlphaNum:
+					// ok state
+					case TokenError:
+						return fmt.Errorf("%w: %v -- %q", ErrInvalidAlphanum, edges[i].Edges[0].Type, string(edges[i].Edges[0].Value))
+					default:
+						return fmt.Errorf("%w: %v -- %q", ErrInvalidNodeType, edges[i].Edges[0].Type, string(edges[i].Edges[0].Value))
 					}
 
 					if err := valueFunc(string(edges[i].Edges[0].Value)); err != nil {
@@ -208,12 +234,23 @@ func validateField(node *parse.Node[Token, byte], maxEdges, minimum, maximum int
 
 		return nil
 	case TokenAlphaNum:
-		if err := validateNumber(string(node.Value), minimum, maximum); err == nil {
-			return nil
+		err := validateNumber(string(node.Value), minimum, maximum)
+		if err != nil {
 		}
 
-		if err := validateSymbols(node.Edges, maxEdges, []Token{TokenSlash, TokenComma, TokenDash}, valueFunc); err != nil {
+		if err := validateSymbols(node.Edges, maxEdges, []Token{TokenAlphaNum, TokenSlash, TokenComma, TokenDash}, valueFunc); err != nil {
 			return err
+		}
+
+		// check the values of the symbols, if any
+		if len(node.Edges) > 0 {
+			for i := range node.Edges {
+				for idx := range node.Edges[i].Edges {
+					if err := validateField(node.Edges[i].Edges[idx], maxEdges, minimum, maximum, valueFunc); err != nil {
+						return err
+					}
+				}
+			}
 		}
 
 		return nil
