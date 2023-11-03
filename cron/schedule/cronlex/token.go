@@ -13,3 +13,19 @@ const (
 	TokenAt
 	TokenSpace
 )
+
+var tokenStrings = [...]string{
+	"TokenEOF",
+	"TokenError",
+	"TokenAlphaNum",
+	"TokenStar",
+	"TokenComma",
+	"TokenDash",
+	"TokenSlash",
+	"TokenAt",
+	"TokenSpace",
+}
+
+func (t Token) String() string {
+	return tokenStrings[t]
+}
