@@ -198,6 +198,20 @@ func TestParser(t *testing.T) {
 			},
 		},
 		{
+			name:  "Success/Simple/SomeWeekdaysOnly",
+			input: "* * * * 0,1,2",
+			wants: Schedule{
+				Min:      resolve.Everytime{},
+				Hour:     resolve.Everytime{},
+				DayMonth: resolve.Everytime{},
+				Month:    resolve.Everytime{},
+				DayWeek: resolve.StepSchedule{
+					Max:   7,
+					Steps: []int{0, 1, 2},
+				},
+			},
+		},
+		{
 			name:  "Success/Simple/EveryWeekdayNumericLiteralSundayFirst",
 			input: "0 0 * * 0,1,2,3,4,5,6",
 			wants: Schedule{
