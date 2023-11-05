@@ -203,8 +203,6 @@ func validateSymbols(
 					// ok state
 					case TokenError:
 						return fmt.Errorf("%w: %v -- %q", ErrInvalidAlphanum, edges[i].Edges[0].Type, string(edges[i].Edges[0].Value))
-					default:
-						return fmt.Errorf("%w: %v -- %q", ErrInvalidNodeType, edges[i].Edges[0].Type, string(edges[i].Edges[0].Value))
 					}
 
 					if err := valueFunc(string(edges[i].Edges[0].Value)); err != nil {
