@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -112,6 +113,201 @@ func TestCronSchedule_Next(t *testing.T) {
 			next := sched.Next(context.Background(), testcase.input)
 
 			is.Equal(t, testcase.wants, next)
+		})
+	}
+}
+
+func TestConfig(t *testing.T) {
+	t.Run("WithLogger", func(t *testing.T) {
+		_, err := New(
+			WithSchedule("* * * * *"),
+			WithLocation(time.UTC),
+			WithLogger(slog.New(log.NoOp())),
+		)
+
+		is.Empty(t, err)
+	})
+
+	t.Run("AllEmptyOptions", func(t *testing.T) {
+		_, err := New(
+			WithSchedule(""),
+			WithLocation(nil),
+			WithLogger(nil),
+			WithLogHandler(nil),
+			WithMetrics(nil),
+			WithTrace(nil),
+		)
+
+		is.True(t, errors.Is(err, cronlex.ErrEmptyInput))
+	})
+}
+
+func TestSchedulerWithLogs(t *testing.T) {
+	for _, testcase := range []struct {
+		name           string
+		s              Scheduler
+		handler        slog.Handler
+		wants          Scheduler
+		defaultHandler bool
+	}{
+		{
+			name:  "NilScheduler",
+			wants: noOpScheduler{},
+		},
+		{
+			name: "NilHandler",
+			s:    noOpScheduler{},
+			wants: withLogs{
+				s: noOpScheduler{},
+			},
+			defaultHandler: true,
+		},
+		{
+			name:    "WithHandler",
+			s:       noOpScheduler{},
+			handler: log.NoOp(),
+			wants: withLogs{
+				s:      noOpScheduler{},
+				logger: slog.New(log.NoOp()),
+			},
+		},
+		{
+			name: "ReplaceHandler",
+			s: withLogs{
+				s: noOpScheduler{},
+			},
+			handler: log.NoOp(),
+			wants: withLogs{
+				s:      noOpScheduler{},
+				logger: slog.New(log.NoOp()),
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			s := schedulerWithLogs(testcase.s, testcase.handler)
+
+			switch sched := s.(type) {
+			case noOpScheduler:
+				is.Equal(t, testcase.wants, s)
+			case withLogs:
+				wants, ok := testcase.wants.(withLogs)
+				is.True(t, ok)
+
+				is.Equal(t, wants.s, sched.s)
+				if testcase.defaultHandler {
+					is.True(t, sched.logger.Handler() != nil)
+
+					return
+				}
+
+				is.Equal(t, wants.logger.Handler(), sched.logger.Handler())
+			}
+		})
+	}
+}
+
+func TestSchedulerWithMetrics(t *testing.T) {
+	for _, testcase := range []struct {
+		name  string
+		s     Scheduler
+		m     Metrics
+		wants Scheduler
+	}{
+		{
+			name:  "NilScheduler",
+			wants: noOpScheduler{},
+		},
+		{
+			name:  "NilMetrics",
+			s:     noOpScheduler{},
+			wants: noOpScheduler{},
+		},
+		{
+			name: "WithMetrics",
+			s:    noOpScheduler{},
+			m:    metrics.NoOp(),
+			wants: withMetrics{
+				s: noOpScheduler{},
+				m: metrics.NoOp(),
+			},
+		},
+		{
+			name: "ReplaceMetrics",
+			s: withMetrics{
+				s: noOpScheduler{},
+			},
+			m: metrics.NoOp(),
+			wants: withMetrics{
+				s: noOpScheduler{},
+				m: metrics.NoOp(),
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			s := schedulerWithMetrics(testcase.s, testcase.m)
+
+			switch sched := s.(type) {
+			case noOpScheduler:
+				is.Equal(t, testcase.wants, s)
+			case withMetrics:
+				wants, ok := testcase.wants.(withMetrics)
+				is.True(t, ok)
+				is.Equal(t, wants.s, sched.s)
+				is.Equal(t, wants.m, sched.m)
+			}
+		})
+	}
+}
+
+func TestSchedulerWithTrace(t *testing.T) {
+	for _, testcase := range []struct {
+		name   string
+		s      Scheduler
+		tracer trace.Tracer
+		wants  Scheduler
+	}{
+		{
+			name:  "NilScheduler",
+			wants: noOpScheduler{},
+		},
+		{
+			name:  "NilTracer",
+			s:     noOpScheduler{},
+			wants: noOpScheduler{},
+		},
+		{
+			name:   "WithTracer",
+			s:      noOpScheduler{},
+			tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			wants: withTrace{
+				s:      noOpScheduler{},
+				tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			},
+		},
+		{
+			name: "ReplaceTracer",
+			s: withTrace{
+				s: noOpScheduler{},
+			},
+			tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			wants: withTrace{
+				s:      noOpScheduler{},
+				tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			s := schedulerWithTrace(testcase.s, testcase.tracer)
+
+			switch sched := s.(type) {
+			case noOpScheduler:
+				is.Equal(t, testcase.wants, s)
+			case withTrace:
+				wants, ok := testcase.wants.(withTrace)
+				is.True(t, ok)
+				is.Equal(t, wants.s, sched.s)
+				is.Equal(t, wants.tracer, sched.tracer)
+			}
 		})
 	}
 }
