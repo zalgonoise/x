@@ -266,10 +266,6 @@ func processAlphaNum(n *parse.Node[Token, byte], minimum, maximum int, valueList
 		return resolve.Everytime{}
 	}
 
-	if value < minimum {
-		value = minimum
-	}
-
 	switch len(n.Edges) {
 	case 0:
 		return resolve.FixedSchedule{
@@ -356,6 +352,10 @@ func processStar(n *parse.Node[Token, byte], minimum, maximum int) Resolver {
 }
 
 func buildRange(from, to int) []int {
+	if to < from {
+		return []int{}
+	}
+
 	out := make([]int, 0, to-from)
 	for i := from; i <= to; i++ {
 		out = append(out, i)
@@ -365,6 +365,10 @@ func buildRange(from, to int) []int {
 }
 
 func buildFreq(base, maximum, freq int) []int {
+	if freq == 0 || base > maximum {
+		return []int{}
+	}
+
 	out := make([]int, 0, maximum-base/freq)
 	for i := base; i <= maximum; i += freq {
 		out = append(out, i)
