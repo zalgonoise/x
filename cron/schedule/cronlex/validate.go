@@ -18,6 +18,7 @@ const (
 	ErrUnsupported = errs.Kind("unsupported")
 	ErrOutOfBounds = errs.Kind("out-of-bounds")
 
+	ErrInput     = errs.Entity("input")
 	ErrNumNodes  = errs.Entity("number of nodes")
 	ErrNodeType  = errs.Entity("node type")
 	ErrNumEdges  = errs.Entity("number of edges")
@@ -33,6 +34,7 @@ const (
 )
 
 var (
+	ErrEmptyInput          = errs.WithDomain(errDomain, ErrEmpty, ErrInput)
 	ErrInvalidNumNodes     = errs.WithDomain(errDomain, ErrInvalid, ErrNumNodes)
 	ErrInvalidNodeType     = errs.WithDomain(errDomain, ErrInvalid, ErrNodeType)
 	ErrInvalidNumEdges     = errs.WithDomain(errDomain, ErrInvalid, ErrNumEdges)
@@ -81,10 +83,15 @@ var (
 	}
 )
 
-func validateCharacters(cronString string) error {
-	s := strings.ToLower(cronString)
+func validateCharacters(s string) error {
+	if s == "" {
+		return ErrEmptyInput
+	}
+
+	//s := strings.ToLower(cronString)
 	for i := range s {
 		if (s[i] >= 'a' && s[i] <= 'z') ||
+			(s[i] >= 'A' && s[i] <= 'Z') ||
 			(s[i] >= '0' && s[i] <= '9') ||
 			s[i] == ' ' ||
 			s[i] == '*' ||
@@ -94,7 +101,7 @@ func validateCharacters(cronString string) error {
 			s[i] == '@' {
 			continue
 		}
-		return fmt.Errorf("%w: %v -- %q", ErrInvalidCharacter, s[i], cronString)
+		return fmt.Errorf("%w: %v -- %q", ErrInvalidCharacter, s[i], s)
 	}
 
 	return nil
@@ -161,25 +168,14 @@ func validateAlpha(value string, minimum, maximum int, valueList []string) error
 	}
 
 	value = strings.ToUpper(value)
-	num := -1
 
 	for i := range valueList {
 		if value == valueList[i] {
-			num = i
-
-			break
+			return nil
 		}
 	}
 
-	if num == -1 {
-		return fmt.Errorf("%w: %s", ErrInvalidAlphanum, value)
-	}
-
-	if num < minimum || num > maximum {
-		return fmt.Errorf("%w [%d]: min: %d; max: %d", ErrOutOfBoundsAlphanum, num, minimum, maximum)
-	}
-
-	return nil
+	return fmt.Errorf("%w: %s", ErrInvalidAlphanum, value)
 }
 
 func validateSymbols(
