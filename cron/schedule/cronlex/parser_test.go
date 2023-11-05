@@ -1,6 +1,7 @@
 package cronlex
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -67,6 +68,21 @@ func TestParser(t *testing.T) {
 				DayWeek:  resolve.Everytime{},
 			},
 		},
+		{
+			name:  "Success/Range",
+			input: "0/3 * * * *",
+			wants: Schedule{
+				Min: resolve.StepSchedule{
+					Max:   59,
+					Steps: []int{0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57},
+				},
+				Hour:     resolve.Everytime{},
+				DayMonth: resolve.Everytime{},
+				Month:    resolve.Everytime{},
+				DayWeek:  resolve.Everytime{},
+			},
+		},
+
 		{
 			name:  "Success/Simple/EveryMinuteFrom0Through3",
 			input: "0-3 * * * *",
@@ -415,8 +431,62 @@ func TestParser(t *testing.T) {
 			err:   ErrInvalidFrequency,
 		},
 		{
-			name:  "Fail/InvalidAlphaNum",
+			name:  "Fail/InvalidCharacter",
 			input: "* * * * 0-!",
+			wants: Schedule{},
+			err:   ErrInvalidCharacter,
+		},
+		{
+			name:  "Fail/InvalidAlphaNum",
+			input: "* * * * 0//",
+			wants: Schedule{},
+			err:   ErrInvalidAlphanum,
+		},
+		{
+			name:  "Fail/OverrideInvalidNumEdges",
+			input: "@,",
+			wants: Schedule{},
+			err:   ErrInvalidNumEdges,
+		},
+		{
+			name:  "Fail/InvalidNumNodes/TooFew",
+			input: "-",
+			wants: Schedule{},
+			err:   ErrInvalidNumNodes,
+		},
+		{
+			name:  "Fail/UnsupportedAlphanumeric",
+			input: "*/A * * * *",
+			wants: Schedule{},
+			err:   ErrUnsupportedAlphanum,
+		},
+		{
+			name:  "Fail/InvalidNodeType",
+			input: "0/-3 * * * *",
+			wants: Schedule{},
+			err:   ErrInvalidNodeType,
+		},
+		{
+			name:  "Fail/OutOfBounds",
+			input: "0/64 * * * *",
+			wants: Schedule{},
+			err:   ErrOutOfBoundsAlphanum,
+		},
+		{
+			name:  "Fail/TooManyWeekdays",
+			input: "* * * * 0,1,2,3,4,5,6,7,8,9",
+			wants: Schedule{},
+			err:   ErrInvalidNumEdges,
+		},
+		{
+			name:  "Fail/TooManyWeekdays",
+			input: "",
+			wants: Schedule{},
+			err:   ErrEmptyInput,
+		},
+		{
+			name:  "Fail/SpecialCharacter",
+			input: "İ",
 			wants: Schedule{},
 			err:   ErrInvalidCharacter,
 		},
@@ -428,4 +498,20 @@ func TestParser(t *testing.T) {
 			require.Equal(t, testcase.wants, cron)
 		})
 	}
+}
+
+func FuzzParse(f *testing.F) {
+	f.Fuzz(func(t *testing.T, s string) {
+		_, err := Parse(s)
+
+		switch {
+		case err == nil, errors.Is(err, ErrInvalidNumNodes), errors.Is(err, ErrInvalidNodeType),
+			errors.Is(err, ErrInvalidNumEdges), errors.Is(err, ErrInvalidFrequency),
+			errors.Is(err, ErrUnsupportedAlphanum), errors.Is(err, ErrOutOfBoundsAlphanum),
+			errors.Is(err, ErrEmptyAlphanum), errors.Is(err, ErrInvalidAlphanum),
+			errors.Is(err, ErrInvalidCharacter), errors.Is(err, ErrEmptyInput):
+		default:
+			f.Errorf("unexpected error: %v -- input: %q", err, s)
+		}
+	})
 }
