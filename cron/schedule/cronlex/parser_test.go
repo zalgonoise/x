@@ -419,6 +419,12 @@ func TestParser(t *testing.T) {
 			},
 		},
 		{
+			name:  "Fail/InvalidMonth",
+			input: "* * * jan,jen,jin *",
+			wants: Schedule{},
+			err:   ErrInvalidAlphanum,
+		},
+		{
 			name:  "Fail/TooManyTokens",
 			input: "* * * * * *",
 			wants: Schedule{},
