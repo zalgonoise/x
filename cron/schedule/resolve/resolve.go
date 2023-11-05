@@ -68,6 +68,10 @@ func NewStepSchedule(from, to, maximum, frequency int) StepSchedule {
 }
 
 func newValueRange(from, to, frequency int) []int {
+	if frequency == 0 || from > to {
+		return []int{}
+	}
+
 	var r = make([]int, 0, to-from/frequency)
 
 	for i := from; i <= to; i += frequency {
