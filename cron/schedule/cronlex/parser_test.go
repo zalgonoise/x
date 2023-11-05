@@ -479,7 +479,7 @@ func TestParser(t *testing.T) {
 			err:   ErrInvalidNumEdges,
 		},
 		{
-			name:  "Fail/TooManyWeekdays",
+			name:  "Fail/EmptyInput",
 			input: "",
 			wants: Schedule{},
 			err:   ErrEmptyInput,
@@ -501,6 +501,41 @@ func TestParser(t *testing.T) {
 }
 
 func FuzzParse(f *testing.F) {
+	// load test strings as seeds
+	f.Add("* * * * *")
+	f.Add("0 * * * *")
+	f.Add("50 * * * *")
+	f.Add("*/3 * * * *")
+	f.Add("0/3 * * * *")
+	f.Add("0-3 * * * *")
+	f.Add("0-3,5,7 * * * *")
+	f.Add("0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59 * * * *")
+	f.Add("0 0-23 * * *")
+	f.Add("0 0 1-31 * *")
+	f.Add("0 0 1 1,2,3,4,5,6,7,8,9,10,11,12 *")
+	f.Add("0 0 1 jan,Feb,MAR,aPR,maY,JuN,JUl,AUG,sep,oct,nov,dec *")
+	f.Add("* * * * 0,1,2")
+	f.Add("0 0 * * 0,1,2,3,4,5,6")
+	f.Add("0 0 * * 1,2,3,4,5,6,7")
+	f.Add("0 0 * * sun,Mon,TUE,wED,thU,FrI,sAt")
+	f.Add("@reboot")
+	f.Add("@hourly")
+	f.Add("@daily")
+	f.Add("@weekly")
+	f.Add("@monthly")
+	f.Add("@annually")
+	f.Add("@yearly")
+	f.Add("* * * * * *")
+	f.Add("@take-a-guess")
+	f.Add("* * * * 0-!")
+	f.Add("* * * * 0//")
+	f.Add("@,")
+	f.Add("-")
+	f.Add("*/A * * * *")
+	f.Add("0/-3 * * * *")
+	f.Add("0/64 * * * *")
+	f.Add("* * * * 0,1,2,3,4,5,6,7,8,9")
+
 	f.Fuzz(func(t *testing.T, s string) {
 		_, err := Parse(s)
 
