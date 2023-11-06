@@ -4,18 +4,30 @@ import (
 	"context"
 
 	"github.com/zalgonoise/cfg"
-
-	"github.com/zalgonoise/x/cron/executor"
-	"github.com/zalgonoise/x/cron/selector"
+	"github.com/zalgonoise/x/errs"
 )
+
+const (
+	errDomain = errs.Domain("x/cron")
+
+	ErrEmpty = errs.Kind("empty")
+
+	ErrSelector = errs.Entity("task selector")
+)
+
+var ErrEmptySelector = errs.WithDomain(errDomain, ErrEmpty, ErrSelector)
 
 type Runtime interface {
 	Run(ctx context.Context)
 	Err() <-chan error
 }
 
+type Selector interface {
+	Next(ctx context.Context) error
+}
+
 type runtime struct {
-	sel selector.Selector
+	sel Selector
 
 	err chan error
 }
@@ -44,7 +56,7 @@ func (r runtime) Err() <-chan error {
 	return r.err
 }
 
-func Run(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) {
+func Run(sel Selector, options ...cfg.Option[Config]) (Runtime, error) {
 	config := cfg.New(options...)
 
 	cron, err := newRuntime(sel, config)
@@ -67,10 +79,10 @@ func Run(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) 
 	return cron, nil
 }
 
-func newRuntime(sel selector.Selector, config Config) (Runtime, error) {
+func newRuntime(sel Selector, config Config) (Runtime, error) {
 	// validate input
 	if sel == nil {
-		return noOpRuntime{}, executor.ErrEmptySelector
+		return noOpRuntime{}, ErrEmptySelector
 	}
 
 	size := config.errBufferSize
