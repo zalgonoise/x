@@ -12,21 +12,20 @@ import (
 )
 
 const (
-	defaultID = "cron.executor"
+	defaultID    = "cron.executor"
+	bufferPeriod = 100 * time.Millisecond
 
-	errDomain = errs.Domain("x/cron")
+	errDomain = errs.Domain("x/cron/executor")
 
 	ErrEmpty = errs.Kind("empty")
 
 	ErrRunnerList = errs.Entity("runners list")
 	ErrScheduler  = errs.Entity("scheduler")
-	ErrSelector   = errs.Entity("task selector")
 )
 
 var (
 	ErrEmptyRunnerList = errs.WithDomain(errDomain, ErrEmpty, ErrRunnerList)
 	ErrEmptyScheduler  = errs.WithDomain(errDomain, ErrEmpty, ErrScheduler)
-	ErrEmptySelector   = errs.WithDomain(errDomain, ErrEmpty, ErrSelector)
 )
 
 type Runner interface {
@@ -45,9 +44,13 @@ type Executor interface {
 	ID() string
 }
 
+type Scheduler interface {
+	Next(ctx context.Context, now time.Time) time.Time
+}
+
 type Executable struct {
 	id      string
-	cron    schedule.Scheduler
+	cron    Scheduler
 	runners []Runner
 }
 
@@ -75,7 +78,7 @@ func (e Executable) Exec(ctx context.Context) error {
 		case <-timer.C:
 			// avoid executing before it's time, as it may trigger repeated runs
 			if preTriggerDuration := next.Sub(time.Now()); preTriggerDuration > 0 {
-				time.Sleep(preTriggerDuration + 100*time.Millisecond)
+				time.Sleep(preTriggerDuration + bufferPeriod)
 			}
 
 			runnerErrs := make([]error, 0, len(e.runners))
@@ -132,32 +135,29 @@ func newExecutable(id string, config Config) (Executor, error) {
 		return noOpExecutor{}, ErrEmptyScheduler
 	}
 
-	var sched schedule.Scheduler
-
-	// create a new schedule from a string if provided explicitly
-	if config.cronString != "" {
-		cron, err := schedule.New(schedule.WithSchedule(config.cronString))
-		if err != nil {
-			return noOpExecutor{}, err
-		}
-
-		sched = cron
-	}
-
-	// replace the scheduler with the provided one always
-	if config.scheduler != nil {
+	var sched Scheduler
+	switch {
+	case config.scheduler != nil:
+		// scheduler is provided, ignore cron string and location
 		sched = config.scheduler
-	}
+	default:
+		// create a new scheduler from config
+		opts := make([]cfg.Option[schedule.SchedulerConfig], 0, 2)
 
-	// prioritize the provided location by setting it last, even if the options
-	// calls are not exactly optimized
-	if config.loc != nil && sched != nil {
-		cron, err := schedule.From(sched, schedule.WithLocation(config.loc))
+		if config.cronString != "" {
+			opts = append(opts, schedule.WithSchedule(config.cronString))
+		}
+
+		if config.loc != nil {
+			opts = append(opts, schedule.WithLocation(config.loc))
+		}
+
+		var err error
+
+		sched, err = schedule.New(opts...)
 		if err != nil {
 			return noOpExecutor{}, err
 		}
-
-		sched = cron
 	}
 
 	// return the object with the provided runners
