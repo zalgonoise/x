@@ -26,12 +26,18 @@ type Selector interface {
 	Next(ctx context.Context) error
 }
 
+type Executor interface {
+	Exec(ctx context.Context) error
+	Next(ctx context.Context) time.Time
+	ID() string
+}
+
 type selector struct {
-	exec []executor.Executor
+	exec []Executor
 }
 
 func (s selector) Next(ctx context.Context) error {
-	var exec executor.Executor
+	var exec Executor
 
 	switch len(s.exec) {
 	case 0:

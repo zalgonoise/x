@@ -5,19 +5,17 @@ import (
 
 	"github.com/zalgonoise/cfg"
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/zalgonoise/x/cron/executor"
 )
 
 type Config struct {
-	exec []executor.Executor
+	exec []Executor
 
 	handler slog.Handler
 	metrics Metrics
 	tracer  trace.Tracer
 }
 
-func WithExecutors(executors ...executor.Executor) cfg.Option[Config] {
+func WithExecutors(executors ...Executor) cfg.Option[Config] {
 	if len(executors) == 0 {
 		return cfg.NoOp[Config]{}
 	}
