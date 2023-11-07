@@ -48,6 +48,10 @@ func newScheduler(config SchedulerConfig) (Scheduler, error) {
 		return noOpScheduler{}, err
 	}
 
+	if config.loc == nil {
+		config.loc = time.Local
+	}
+
 	return CronSchedule{
 		Loc:      config.loc,
 		Schedule: sched,
