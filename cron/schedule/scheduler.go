@@ -9,6 +9,8 @@ import (
 	"github.com/zalgonoise/x/cron/schedule/resolve"
 )
 
+var fixedSeconds = resolve.FixedSchedule{Max: 59, At: 0}
+
 type Scheduler interface {
 	Next(ctx context.Context, now time.Time) time.Time
 }
@@ -62,8 +64,14 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 	year, month, day := t.Date()
 	hour := t.Hour()
 	minute := t.Minute()
+	second := t.Second() + 1
 
-	nextMinute := s.Schedule.Min.Resolve(minute) + 1
+	nextSecond := s.Schedule.Sec.Resolve(second)
+	if s.Schedule.Sec == fixedSeconds {
+		nextSecond++
+	}
+
+	nextMinute := s.Schedule.Min.Resolve(minute)
 	nextHour := s.Schedule.Hour.Resolve(hour)
 	nextDay := s.Schedule.DayMonth.Resolve(day)
 	nextMonth := s.Schedule.Month.Resolve(int(month))
@@ -76,7 +84,8 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 		day+nextDay,
 		hour+nextHour,
 		minute+nextMinute,
-		0, 0, s.Loc,
+		second+nextSecond,
+		0, s.Loc,
 	)
 
 	// short circuit if unset or star '*'
@@ -93,7 +102,8 @@ func (s CronSchedule) Next(_ context.Context, t time.Time) time.Time {
 		dayOfMonthTime.Day()+nextWeekday,
 		dayOfMonthTime.Hour(),
 		dayOfMonthTime.Minute(),
-		0, 0, s.Loc,
+		dayOfMonthTime.Second(),
+		0, s.Loc,
 	)
 
 	return weekdayTime
