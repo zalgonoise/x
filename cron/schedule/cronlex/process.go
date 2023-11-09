@@ -14,6 +14,7 @@ type Resolver interface {
 }
 
 type Schedule struct {
+	Sec      Resolver
 	Min      Resolver
 	Hour     Resolver
 	DayMonth Resolver
@@ -41,27 +42,48 @@ func ProcessFunc(t *parse.Tree[Token, byte]) (s Schedule, err error) {
 		return buildException(nodes[0]), nil
 	case 5:
 		s = Schedule{
+			Sec: resolve.FixedSchedule{
+				Max: 59,
+				At:  0,
+			},
 			Min:      buildMinutes(nodes[0]),
 			Hour:     buildHours(nodes[1]),
 			DayMonth: buildMonthDays(nodes[2]),
 			Month:    buildMonths(nodes[3]),
 			DayWeek:  buildWeekdays(nodes[4]),
 		}
+	case 6:
+		s = Schedule{
+			Sec:      buildSeconds(nodes[0]),
+			Min:      buildMinutes(nodes[1]),
+			Hour:     buildHours(nodes[2]),
+			DayMonth: buildMonthDays(nodes[3]),
+			Month:    buildMonths(nodes[4]),
+			DayWeek:  buildWeekdays(nodes[5]),
+		}
+	}
+	// convert sundays as 7 into a 0
+	if r, ok := s.DayWeek.(resolve.StepSchedule); ok {
+		for i := range r.Steps {
+			if r.Steps[i] == 7 {
+				r.Steps[i] = 0
 
-		// convert sundays as 7 into a 0
-		if r, ok := s.DayWeek.(resolve.StepSchedule); ok {
-			for i := range r.Steps {
-				if r.Steps[i] == 7 {
-					r.Steps[i] = 0
-
-					slices.Sort(r.Steps)
-					s.DayWeek = r
-				}
+				slices.Sort(r.Steps)
+				s.DayWeek = r
 			}
 		}
 	}
 
 	return s, nil
+}
+
+func buildSeconds(node *parse.Node[Token, byte]) Resolver {
+	switch node.Type {
+	case TokenStar:
+		return processStar(node, 0, 59)
+	default:
+		return processAlphaNum(node, 0, 59, nil)
+	}
 }
 
 func buildMinutes(node *parse.Node[Token, byte]) Resolver {
@@ -111,6 +133,10 @@ func buildWeekdays(node *parse.Node[Token, byte]) Resolver {
 
 func defaultSchedule() Schedule {
 	return Schedule{
+		Sec: resolve.FixedSchedule{
+			Max: 59,
+			At:  0,
+		},
 		Min: resolve.FixedSchedule{
 			Max: 59,
 			At:  0,
