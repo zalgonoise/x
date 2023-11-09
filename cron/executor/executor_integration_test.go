@@ -35,8 +35,8 @@ func TestExecutor(t *testing.T) {
 	runner1 := testRunner{v: 1, ch: values}
 	runner2 := testRunner{v: 2, ch: values}
 	runner3 := testRunner{v: 3, ch: values, err: testErr}
-	cron := "* * * * *"
-	defaultDur := 70 * time.Second
+	cron := "* * * * * *"
+	defaultDur := 1300 * time.Millisecond
 
 	for _, testcase := range []struct {
 		name    string
