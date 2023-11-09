@@ -238,11 +238,9 @@ func validateField(node *parse.Node[Token, byte], maxEdges, minimum, maximum int
 		return nil
 	case TokenAlphaNum:
 		err := validateNumber(string(node.Value), minimum, maximum)
-		if err != nil {
-		}
 
-		if err := validateSymbols(node.Edges, maxEdges, []Token{TokenAlphaNum, TokenSlash, TokenComma, TokenDash}, valueFunc); err != nil {
-			return err
+		if symbolErr := validateSymbols(node.Edges, maxEdges, []Token{TokenAlphaNum, TokenSlash, TokenComma, TokenDash}, valueFunc); symbolErr != nil {
+			return errors.Join(err, symbolErr)
 		}
 
 		// check the values of the symbols, if any
