@@ -160,28 +160,18 @@ func buildException(node *parse.Node[Token, byte]) Schedule {
 		return defaultSchedule()
 	case 2: // daily
 		return Schedule{
-			Min: resolve.FixedSchedule{
-				Max: 59,
-				At:  0,
-			},
-			Hour: resolve.FixedSchedule{
-				Max: 23,
-				At:  0,
-			},
+			Sec:      resolve.FixedSchedule{Max: 59, At: 0},
+			Min:      resolve.FixedSchedule{Max: 59, At: 0},
+			Hour:     resolve.FixedSchedule{Max: 23, At: 0},
 			DayMonth: resolve.Everytime{},
 			Month:    resolve.Everytime{},
 			DayWeek:  resolve.Everytime{},
 		}
 	case 3: // weekly
 		return Schedule{
-			Min: resolve.FixedSchedule{
-				Max: 59,
-				At:  0,
-			},
-			Hour: resolve.FixedSchedule{
-				Max: 23,
-				At:  0,
-			},
+			Sec:      resolve.FixedSchedule{Max: 59, At: 0},
+			Min:      resolve.FixedSchedule{Max: 59, At: 0},
+			Hour:     resolve.FixedSchedule{Max: 23, At: 0},
 			DayMonth: resolve.Everytime{},
 			Month:    resolve.Everytime{},
 			DayWeek: resolve.FixedSchedule{
@@ -191,40 +181,21 @@ func buildException(node *parse.Node[Token, byte]) Schedule {
 		}
 	case 4: // monthly
 		return Schedule{
-			Min: resolve.FixedSchedule{
-				Max: 59,
-				At:  0,
-			},
-			Hour: resolve.FixedSchedule{
-				Max: 23,
-				At:  0,
-			},
-			DayMonth: resolve.FixedSchedule{
-				Max: 31,
-				At:  1,
-			},
-			Month:   resolve.Everytime{},
-			DayWeek: resolve.Everytime{},
+			Sec:      resolve.FixedSchedule{Max: 59, At: 0},
+			Min:      resolve.FixedSchedule{Max: 59, At: 0},
+			Hour:     resolve.FixedSchedule{Max: 23, At: 0},
+			DayMonth: resolve.FixedSchedule{Max: 31, At: 1},
+			Month:    resolve.Everytime{},
+			DayWeek:  resolve.Everytime{},
 		}
 	case 5, 6: // yearly, annually
 		return Schedule{
-			Min: resolve.FixedSchedule{
-				Max: 59,
-				At:  0,
-			},
-			Hour: resolve.FixedSchedule{
-				Max: 23,
-				At:  0,
-			},
-			DayMonth: resolve.FixedSchedule{
-				Max: 31,
-				At:  1,
-			},
-			Month: resolve.FixedSchedule{
-				Max: 12,
-				At:  1,
-			},
-			DayWeek: resolve.Everytime{},
+			Sec:      resolve.FixedSchedule{Max: 59, At: 0},
+			Min:      resolve.FixedSchedule{Max: 59, At: 0},
+			Hour:     resolve.FixedSchedule{Max: 23, At: 0},
+			DayMonth: resolve.FixedSchedule{Max: 31, At: 1},
+			Month:    resolve.FixedSchedule{Max: 12, At: 1},
+			DayWeek:  resolve.Everytime{},
 		}
 	default:
 		// case 1 -- set as default behavior
