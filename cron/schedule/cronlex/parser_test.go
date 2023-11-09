@@ -19,6 +19,31 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/AllStar",
 			input: "* * * * *",
 			wants: Schedule{
+				Sec:      resolve.FixedSchedule{Max: 59, At: 0},
+				Min:      resolve.Everytime{},
+				Hour:     resolve.Everytime{},
+				DayMonth: resolve.Everytime{},
+				Month:    resolve.Everytime{},
+				DayWeek:  resolve.Everytime{},
+			},
+		},
+		{
+			name:  "Success/Simple/AllStarWithSeconds",
+			input: "* * * * * *",
+			wants: Schedule{
+				Sec:      resolve.Everytime{},
+				Min:      resolve.Everytime{},
+				Hour:     resolve.Everytime{},
+				DayMonth: resolve.Everytime{},
+				Month:    resolve.Everytime{},
+				DayWeek:  resolve.Everytime{},
+			},
+		},
+		{
+			name:  "Success/Simple/DefaultCronWithSeconds",
+			input: "0 * * * * *",
+			wants: Schedule{
+				Sec:      resolve.FixedSchedule{Max: 59, At: 0},
 				Min:      resolve.Everytime{},
 				Hour:     resolve.Everytime{},
 				DayMonth: resolve.Everytime{},
@@ -30,6 +55,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryMinuteZero",
 			input: "0 * * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -44,6 +70,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/LargeMinute",
 			input: "50 * * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  50,
@@ -58,6 +85,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/Every3rdMinute",
 			input: "*/3 * * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.StepSchedule{
 					Max:   59,
 					Steps: []int{0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57},
@@ -72,6 +100,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Range",
 			input: "0/3 * * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.StepSchedule{
 					Max:   59,
 					Steps: []int{0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57},
@@ -82,11 +111,11 @@ func TestParser(t *testing.T) {
 				DayWeek:  resolve.Everytime{},
 			},
 		},
-
 		{
 			name:  "Success/Simple/EveryMinuteFrom0Through3",
 			input: "0-3 * * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.RangeSchedule{
 					Max:  59,
 					From: 0,
@@ -102,6 +131,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryMinuteFrom0Through3And5And7",
 			input: "0-3,5,7 * * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.StepSchedule{
 					Max:   59,
 					Steps: []int{0, 1, 2, 3, 5, 7},
@@ -116,6 +146,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryMinuteLiteral",
 			input: "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59 * * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.StepSchedule{
 					Max: 59,
 					Steps: []int{
@@ -132,6 +163,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryHourRange",
 			input: "0 0-23 * * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -150,6 +182,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryDayRange",
 			input: "0 0 1-31 * *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -171,6 +204,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryMonthNumericLiteral",
 			input: "0 0 1 1,2,3,4,5,6,7,8,9,10,11,12 *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -194,6 +228,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryMonthStringLiteral",
 			input: "0 0 1 jan,Feb,MAR,aPR,maY,JuN,JUl,AUG,sep,oct,nov,dec *",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -217,6 +252,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/SomeWeekdaysOnly",
 			input: "* * * * 0,1,2",
 			wants: Schedule{
+				Sec:      resolve.FixedSchedule{Max: 59, At: 0},
 				Min:      resolve.Everytime{},
 				Hour:     resolve.Everytime{},
 				DayMonth: resolve.Everytime{},
@@ -231,6 +267,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryWeekdayNumericLiteralSundayFirst",
 			input: "0 0 * * 0,1,2,3,4,5,6",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -251,6 +288,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryWeekdayNumericLiteralSundayLast",
 			input: "0 0 * * 1,2,3,4,5,6,7",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -271,6 +309,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Simple/EveryWeekdayStringLiteral",
 			input: "0 0 * * sun,Mon,TUE,wED,thU,FrI,sAt",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -291,6 +330,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Overrides/reboot",
 			input: "@reboot",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -305,6 +345,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Overrides/hourly",
 			input: "@hourly",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -319,6 +360,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Overrides/daily",
 			input: "@daily",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -336,6 +378,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Overrides/weekly",
 			input: "@weekly",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -356,6 +399,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Overrides/monthly",
 			input: "@monthly",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -376,6 +420,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Overrides/annually",
 			input: "@annually",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -399,6 +444,7 @@ func TestParser(t *testing.T) {
 			name:  "Success/Overrides/yearly",
 			input: "@yearly",
 			wants: Schedule{
+				Sec: resolve.FixedSchedule{Max: 59, At: 0},
 				Min: resolve.FixedSchedule{
 					Max: 59,
 					At:  0,
@@ -426,7 +472,7 @@ func TestParser(t *testing.T) {
 		},
 		{
 			name:  "Fail/TooManyTokens",
-			input: "* * * * * *",
+			input: "* * * * * * *",
 			wants: Schedule{},
 			err:   ErrInvalidNumNodes,
 		},
