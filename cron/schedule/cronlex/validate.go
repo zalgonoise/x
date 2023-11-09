@@ -121,6 +121,15 @@ func Validate(t *parse.Tree[Token, byte]) error {
 			validateMonths(nodes[3]),
 			validateWeekDays(nodes[4]),
 		)
+	case 6:
+		return errors.Join(
+			validateSeconds(nodes[0]),
+			validateMinutes(nodes[1]),
+			validateHours(nodes[2]),
+			validateMonthDays(nodes[3]),
+			validateMonths(nodes[4]),
+			validateWeekDays(nodes[5]),
+		)
 	default:
 		return fmt.Errorf("%w: %d", ErrInvalidNumNodes, len(nodes))
 	}
@@ -251,6 +260,16 @@ func validateField(node *parse.Node[Token, byte], maxEdges, minimum, maximum int
 	default:
 		return fmt.Errorf("%w: %T -- %v", ErrInvalidNodeType, node.Type, node.Value)
 	}
+}
+
+func validateSeconds(node *parse.Node[Token, byte]) error {
+	if err := validateField(node, 60, 0, 59, func(s string) error {
+		return validateNumber(s, 0, 59)
+	}); err != nil {
+		return fmt.Errorf("%w (%w)", err, ErrMinutes)
+	}
+
+	return nil
 }
 
 func validateMinutes(node *parse.Node[Token, byte]) error {
