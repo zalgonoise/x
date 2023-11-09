@@ -82,7 +82,7 @@ func buildSeconds(node *parse.Node[Token, byte]) Resolver {
 	case TokenStar:
 		return processStar(node, 0, 59)
 	default:
-		return processAlphaNum(node, 0, 59, nil)
+		return processAlphaNum(node, 59, nil)
 	}
 }
 
@@ -91,7 +91,7 @@ func buildMinutes(node *parse.Node[Token, byte]) Resolver {
 	case TokenStar:
 		return processStar(node, 0, 59)
 	default:
-		return processAlphaNum(node, 0, 59, nil)
+		return processAlphaNum(node, 59, nil)
 	}
 }
 
@@ -100,7 +100,7 @@ func buildHours(node *parse.Node[Token, byte]) Resolver {
 	case TokenStar:
 		return processStar(node, 0, 23)
 	default:
-		return processAlphaNum(node, 0, 23, nil)
+		return processAlphaNum(node, 23, nil)
 	}
 }
 
@@ -109,7 +109,7 @@ func buildMonthDays(node *parse.Node[Token, byte]) Resolver {
 	case TokenStar:
 		return processStar(node, 1, 31)
 	default:
-		return processAlphaNum(node, 1, 31, nil)
+		return processAlphaNum(node, 31, nil)
 	}
 }
 
@@ -118,7 +118,7 @@ func buildMonths(node *parse.Node[Token, byte]) Resolver {
 	case TokenStar:
 		return processStar(node, 1, 12)
 	default:
-		return processAlphaNum(node, 1, 12, monthsList)
+		return processAlphaNum(node, 12, monthsList)
 	}
 }
 
@@ -127,20 +127,14 @@ func buildWeekdays(node *parse.Node[Token, byte]) Resolver {
 	case TokenStar:
 		return processStar(node, 0, 7)
 	default:
-		return processAlphaNum(node, 0, 7, weekdaysList)
+		return processAlphaNum(node, 7, weekdaysList)
 	}
 }
 
 func defaultSchedule() Schedule {
 	return Schedule{
-		Sec: resolve.FixedSchedule{
-			Max: 59,
-			At:  0,
-		},
-		Min: resolve.FixedSchedule{
-			Max: 59,
-			At:  0,
-		},
+		Sec:      resolve.FixedSchedule{Max: 59, At: 0},
+		Min:      resolve.FixedSchedule{Max: 59, At: 0},
 		Hour:     resolve.Everytime{},
 		DayMonth: resolve.Everytime{},
 		Month:    resolve.Everytime{},
@@ -153,7 +147,7 @@ func buildException(node *parse.Node[Token, byte]) Schedule {
 		return defaultSchedule()
 	}
 
-	value := getValue(node.Edges[0], 0, 6, exceptionsList)
+	value := getValue(node.Edges[0], exceptionsList)
 	switch value {
 	// TODO: implement reboot (case 0:)
 	case 0: // reboot
@@ -203,15 +197,12 @@ func buildException(node *parse.Node[Token, byte]) Schedule {
 	}
 }
 
-func getValue(
-	node *parse.Node[Token, byte], minimum, maximum int, valueList []string,
-) int {
+func getValue(node *parse.Node[Token, byte], valueList []string) int {
 	value := node.Value
 
 	// try to use the value as a number
 	if len(value) > 0 && value[0] >= '0' && value[0] <= '9' {
-		num, err := strconv.Atoi(string(value))
-		if err == nil {
+		if num, err := strconv.Atoi(string(value)); err == nil {
 			return num
 		}
 	}
@@ -233,18 +224,16 @@ func getValue(
 	return n
 }
 
-func getValueFromSymbol(
-	symbol *parse.Node[Token, byte], minimum, maximum int, valueList []string,
-) int {
+func getValueFromSymbol(symbol *parse.Node[Token, byte], valueList []string) int {
 	if len(symbol.Edges) == 1 {
-		return getValue(symbol.Edges[0], minimum, maximum, valueList)
+		return getValue(symbol.Edges[0], valueList)
 	}
 
 	return -1
 }
 
-func processAlphaNum(n *parse.Node[Token, byte], minimum, maximum int, valueList []string) Resolver {
-	value := getValue(n, minimum, maximum, valueList)
+func processAlphaNum(n *parse.Node[Token, byte], maximum int, valueList []string) Resolver {
+	value := getValue(n, valueList)
 
 	switch len(n.Edges) {
 	case 0:
@@ -258,7 +247,7 @@ func processAlphaNum(n *parse.Node[Token, byte], minimum, maximum int, valueList
 			return resolve.RangeSchedule{
 				Max:  maximum,
 				From: value,
-				To:   getValueFromSymbol(n.Edges[0], minimum, maximum, valueList),
+				To:   getValueFromSymbol(n.Edges[0], valueList),
 			}
 		}
 
@@ -281,19 +270,19 @@ func processAlphaNum(n *parse.Node[Token, byte], minimum, maximum int, valueList
 				// even if the next node is a range or a frequency, the same value will be included and repeated values deleted
 				//
 				// this Token also sets the `cur` variable in case the following Token is a range or frequency
-				if v := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); v >= 0 {
+				if v := getValueFromSymbol(n.Edges[i], valueList); v >= 0 {
 					stepValues = append(stepValues, v)
 
 					value = v
 				}
 
 			case TokenDash:
-				if to := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); to >= 0 {
+				if to := getValueFromSymbol(n.Edges[i], valueList); to >= 0 {
 					stepValues = append(stepValues, buildRange(value, to)...)
 				}
 
 			case TokenSlash:
-				if freq := getValueFromSymbol(n.Edges[i], minimum, maximum, valueList); freq >= 0 {
+				if freq := getValueFromSymbol(n.Edges[i], valueList); freq >= 0 {
 					stepValues = append(stepValues, buildFreq(value, maximum, freq)...)
 				}
 			}
