@@ -35,6 +35,10 @@ type Runner interface {
 type Runnable func(ctx context.Context) error
 
 func (r Runnable) Run(ctx context.Context) error {
+	if r == nil {
+		return nil
+	}
+
 	return r(ctx)
 }
 
@@ -71,9 +75,6 @@ func (e Executable) Exec(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-
-		case <-execCtx.Done():
-			return execCtx.Err()
 
 		case <-timer.C:
 			// avoid executing before it's time, as it may trigger repeated runs
