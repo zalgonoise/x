@@ -24,18 +24,41 @@ func TestCronSchedule_Next(t *testing.T) {
 		err        error
 	}{
 		{
+			name:       "Success/EverySecond",
+			cronString: "* * * * * *",
+			input:      time.Date(2023, 10, 30, 10, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 10, 30, 10, 12, 44, 0, time.UTC),
+		},
+		{
+			name:       "Success/EveryFifthSecond",
+			cronString: "*/5 * * * * *",
+			input:      time.Date(2023, 10, 30, 10, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 10, 30, 10, 12, 45, 0, time.UTC),
+		},
+		{
+			name:       "Success/EveryFifthSecondGoNext",
+			cronString: "*/5 * * * * *",
+			input:      time.Date(2023, 10, 30, 10, 12, 45, 0, time.UTC),
+			wants:      time.Date(2023, 10, 30, 10, 12, 50, 0, time.UTC),
+		},
+		{
+			name:       "Success/SecondsOddCombo",
+			cronString: "0/3,2 * * * * *",
+
+			input: time.Date(2023, 10, 30, 10, 12, 45, 0, time.UTC),
+			wants: time.Date(2023, 10, 30, 10, 12, 48, 0, time.UTC),
+		},
+		{
 			name:       "Success/EveryMinute",
 			cronString: "* * * * *",
-
-			input: time.Date(2023, 10, 30, 10, 12, 43, 0, time.UTC),
-			wants: time.Date(2023, 10, 30, 10, 13, 0, 0, time.UTC),
+			input:      time.Date(2023, 10, 30, 10, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 10, 30, 10, 13, 0, 0, time.UTC),
 		},
 		{
 			name:       "Success/OneHour",
 			cronString: "0 * * * *",
-
-			input: time.Date(2023, 10, 30, 10, 12, 43, 0, time.UTC),
-			wants: time.Date(2023, 10, 30, 11, 0, 0, 0, time.UTC),
+			input:      time.Date(2023, 10, 30, 10, 12, 43, 0, time.UTC),
+			wants:      time.Date(2023, 10, 30, 11, 0, 0, 0, time.UTC),
 		},
 		{
 			name:       "Success/OneDay/WithDayChange",
