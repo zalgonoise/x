@@ -9,9 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cron/executor"
 	"github.com/zalgonoise/x/cron/log"
 	"github.com/zalgonoise/x/cron/metrics"
+	"github.com/zalgonoise/x/cron/schedule"
 	"github.com/zalgonoise/x/is"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -29,12 +31,56 @@ func (r testRunner) Run(context.Context) error {
 	return r.err
 }
 
+func testRunnable(ch chan<- int, value int) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		ch <- value
+
+		return nil
+	}
+}
+
+func TestNewExecutor(t *testing.T) {
+	cron := "* * * * * *"
+	sched, err := schedule.New(schedule.WithSchedule(cron))
+	is.Empty(t, err)
+
+	for _, testcase := range []struct {
+		name string
+		id   string
+		opts []cfg.Option[executor.Config]
+		err  error
+	}{
+		{
+			name: "DefaultID",
+			opts: []cfg.Option[executor.Config]{
+				executor.WithSchedule(cron),
+				executor.WithRunners(testRunner{}),
+			},
+		},
+		{
+			name: "CustomScheduler",
+			opts: []cfg.Option[executor.Config]{
+				executor.WithScheduler(sched),
+				executor.WithRunners(testRunner{}),
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			_, err := executor.New(testcase.id, testcase.opts...)
+			t.Log(err)
+			is.True(t, errors.Is(err, testcase.err))
+		})
+	}
+}
+
 func TestExecutor(t *testing.T) {
 	testErr := errors.New("test error")
 	values := make(chan int)
 	runner1 := testRunner{v: 1, ch: values}
 	runner2 := testRunner{v: 2, ch: values}
 	runner3 := testRunner{v: 3, ch: values, err: testErr}
+	runnable := testRunnable(values, 4)
+
 	cron := "* * * * * *"
 	defaultDur := 1300 * time.Millisecond
 
@@ -58,6 +104,18 @@ func TestExecutor(t *testing.T) {
 			wants:   []int{1, 2},
 		},
 		{
+			name:    "TwoRunnersAndARunnable",
+			dur:     defaultDur,
+			runners: []executor.Runner{runner1, runner2, executor.Runnable(runnable)},
+			wants:   []int{1, 2, 4},
+		},
+		{
+			name:    "NilRunnable",
+			dur:     defaultDur,
+			runners: []executor.Runner{executor.Runnable(nil)},
+			wants:   []int{},
+		},
+		{
 			name:    "ErrorRunner",
 			dur:     defaultDur,
 			runners: []executor.Runner{runner3},
@@ -66,7 +124,6 @@ func TestExecutor(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-
 			exec, err := executor.New(testcase.name,
 				executor.WithSchedule(cron),
 				executor.WithLocation(time.Local),
@@ -83,15 +140,15 @@ func TestExecutor(t *testing.T) {
 
 			// run test for 1min 10sec
 			ctx, cancel := context.WithTimeout(context.Background(), testcase.dur)
-			defer cancel()
-
 			go func() {
+				defer cancel()
+
 				err = exec.Exec(ctx)
 				if err != nil {
 					is.True(t, errors.Is(err, testcase.err))
 				}
 
-				cancel()
+				_ = exec.Next(ctx)
 			}()
 
 			for {
