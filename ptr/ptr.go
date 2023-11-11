@@ -3,7 +3,7 @@ package ptr
 import "reflect"
 
 const (
-	maxDepth = 1024
+	maxDepth = 64
 )
 
 // From takes in a pointer to a type, and returns
