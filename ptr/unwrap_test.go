@@ -65,6 +65,12 @@ func TestUnwrap(t *testing.T) {
 			},
 			wants: testService{},
 		},
+		{
+			name:  "NilInput",
+			input: nil,
+			wants: testService{},
+			err:   ptr.ErrNilInput,
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			doer, err := ptr.Unwrap[testService](testcase.input)

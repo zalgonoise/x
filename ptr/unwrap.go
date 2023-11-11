@@ -5,7 +5,10 @@ import (
 	"unsafe"
 )
 
-var ErrMaxDepth = errors.New("maximum depth reached")
+var (
+	ErrNilInput = errors.New("nil input")
+	ErrMaxDepth = errors.New("maximum depth reached")
+)
 
 // Unwrap traverses nested data structures to find a given type, that is wrapped as the first
 // element of other (decorator) types.
@@ -31,6 +34,8 @@ func unwrap[T any](value any, iter int) (T, error) {
 	}
 
 	switch v := value.(type) {
+	case nil:
+		return *new(T), ErrNilInput
 	case T:
 		return v, nil
 	default:
