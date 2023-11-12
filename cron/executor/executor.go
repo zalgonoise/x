@@ -48,13 +48,9 @@ type Executor interface {
 	ID() string
 }
 
-type Scheduler interface {
-	Next(ctx context.Context, now time.Time) time.Time
-}
-
 type Executable struct {
 	id      string
-	cron    Scheduler
+	cron    schedule.Scheduler
 	runners []Runner
 }
 
@@ -136,7 +132,7 @@ func newExecutable(id string, config Config) (Executor, error) {
 		return noOpExecutor{}, ErrEmptyScheduler
 	}
 
-	var sched Scheduler
+	var sched schedule.Scheduler
 	switch {
 	case config.scheduler != nil:
 		// scheduler is provided, ignore cron string and location

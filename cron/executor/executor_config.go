@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/cron/schedule"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type Config struct {
-	scheduler  Scheduler
+	scheduler  schedule.Scheduler
 	cronString string
 	loc        *time.Location
 
@@ -38,7 +39,7 @@ func WithRunners(runners ...Runner) cfg.Option[Config] {
 	})
 }
 
-func WithScheduler(sched Scheduler) cfg.Option[Config] {
+func WithScheduler(sched schedule.Scheduler) cfg.Option[Config] {
 	if sched == nil {
 		return cfg.NoOp[Config]{}
 	}
