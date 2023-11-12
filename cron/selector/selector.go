@@ -52,31 +52,26 @@ func (s selector) Next(ctx context.Context) error {
 func (s selector) next(ctx context.Context) executor.Executor {
 	var (
 		nextTime time.Time
-		exec     executor.Executor
+		exec     = make([]executor.Executor, 0, len(s.exec))
 	)
 
 	for i := range s.exec {
 		t := s.exec[i].Next(ctx)
 
-		if i == 0 {
+		switch {
+		case i == 0:
 			nextTime = t
-			exec = s.exec[i]
-
-			continue
-		}
-
-		if t.Before(nextTime) {
+			exec = append(exec, s.exec[i])
+		case t.Before(nextTime):
 			nextTime = t
-			exec = s.exec[i]
-		}
-
-		if t.Equal(nextTime) {
-			me := executor.Multi(exec, s.exec[i])
-			exec = me
+			exec = make([]executor.Executor, 0, len(s.exec))
+			exec = append(exec, s.exec[i])
+		case t.Equal(nextTime):
+			exec = append(exec, s.exec[i])
 		}
 	}
 
-	return exec
+	return executor.Multi(exec...)
 }
 
 func New(options ...cfg.Option[Config]) (Selector, error) {
