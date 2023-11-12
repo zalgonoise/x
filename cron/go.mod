@@ -10,8 +10,8 @@ require (
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7
 	github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5
-	github.com/zalgonoise/x/errs v0.0.0-20231109222425-8275054b0667
-	github.com/zalgonoise/x/is v0.0.0-20231109222425-8275054b0667
+	github.com/zalgonoise/x/errs v0.0.0-20231111152101-e78dd34855c9
+	github.com/zalgonoise/x/is v0.0.0-20231111152101-e78dd34855c9
 	go.opentelemetry.io/otel v1.20.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0
 	go.opentelemetry.io/otel/sdk v1.20.0
