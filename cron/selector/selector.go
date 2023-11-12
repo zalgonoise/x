@@ -26,18 +26,12 @@ type Selector interface {
 	Next(ctx context.Context) error
 }
 
-type Executor interface {
-	Exec(ctx context.Context) error
-	Next(ctx context.Context) time.Time
-	ID() string
-}
-
 type selector struct {
-	exec []Executor
+	exec []executor.Executor
 }
 
 func (s selector) Next(ctx context.Context) error {
-	var exec Executor
+	var exec executor.Executor
 
 	switch len(s.exec) {
 	case 0:
@@ -58,7 +52,7 @@ func (s selector) Next(ctx context.Context) error {
 func (s selector) next(ctx context.Context) executor.Executor {
 	var (
 		nextTime time.Time
-		idx      int
+		exec     executor.Executor
 	)
 
 	for i := range s.exec {
@@ -66,17 +60,23 @@ func (s selector) next(ctx context.Context) executor.Executor {
 
 		if i == 0 {
 			nextTime = t
+			exec = s.exec[i]
 
 			continue
 		}
 
 		if t.Before(nextTime) {
 			nextTime = t
-			idx = i
+			exec = s.exec[i]
+		}
+
+		if t.Equal(nextTime) {
+			me := executor.Multi(exec, s.exec[i])
+			exec = me
 		}
 	}
 
-	return s.exec[idx]
+	return exec
 }
 
 func New(options ...cfg.Option[Config]) (Selector, error) {
