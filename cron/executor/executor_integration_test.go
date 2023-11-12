@@ -15,7 +15,7 @@ import (
 	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/cron/schedule"
 	"github.com/zalgonoise/x/is"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type testRunner struct {
@@ -131,24 +131,23 @@ func TestExecutor(t *testing.T) {
 				executor.WithMetrics(metrics.NoOp()),
 				executor.WithLogHandler(log.NoOp()),
 				executor.WithLogger(slog.New(log.NoOp())),
-				executor.WithTrace(trace.NewNoopTracerProvider().Tracer("test")),
+				executor.WithTrace(noop.NewTracerProvider().Tracer("test")),
 			)
 			is.Empty(t, err)
 			is.Equal(t, testcase.name, exec.ID())
 
 			results := make([]int, 0, len(testcase.wants))
 
-			// run test for 1min 10sec
 			ctx, cancel := context.WithTimeout(context.Background(), testcase.dur)
 			go func() {
 				defer cancel()
+
+				_ = exec.Next(ctx)
 
 				err = exec.Exec(ctx)
 				if err != nil {
 					is.True(t, errors.Is(err, testcase.err))
 				}
-
-				_ = exec.Next(ctx)
 			}()
 
 			for {

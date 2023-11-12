@@ -11,6 +11,7 @@ import (
 	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/is"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type testScheduler struct{}
@@ -127,7 +128,7 @@ func TestConfig(t *testing.T) {
 		{
 			name: "WithTrace/NoOp",
 			opts: []cfg.Option[Config]{
-				WithTrace(trace.NewNoopTracerProvider().Tracer("test")),
+				WithTrace(noop.NewTracerProvider().Tracer("test")),
 			},
 		},
 	} {
@@ -274,10 +275,10 @@ func TestExecutorWithTrace(t *testing.T) {
 		{
 			name:   "WithTracer",
 			e:      noOpExecutor{},
-			tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
 				e:      noOpExecutor{},
-				tracer: trace.NewNoopTracerProvider().Tracer("test"),
+				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 		{
@@ -285,10 +286,10 @@ func TestExecutorWithTrace(t *testing.T) {
 			e: withTrace{
 				e: noOpExecutor{},
 			},
-			tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
 				e:      noOpExecutor{},
-				tracer: trace.NewNoopTracerProvider().Tracer("test"),
+				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 	} {
@@ -309,9 +310,9 @@ func TestExecutorWithTrace(t *testing.T) {
 }
 
 func TestNoOp(t *testing.T) {
-	noop := NoOp()
+	noOp := NoOp()
 
-	is.Equal(t, time.Time{}, noop.Next(context.Background()))
-	is.Equal(t, "", noop.ID())
-	is.Empty(t, noop.Exec(context.Background()))
+	is.Equal(t, time.Time{}, noOp.Next(context.Background()))
+	is.Equal(t, "", noOp.ID())
+	is.Empty(t, noOp.Exec(context.Background()))
 }
