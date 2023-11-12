@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -46,12 +47,21 @@ func Multi(execs ...Executor) Executor {
 
 func (e multiExecutor) Exec(ctx context.Context) error {
 	errs := make([]error, 0, len(e.execs))
+	wg := &sync.WaitGroup{}
 
 	for i := range e.execs {
-		if err := e.execs[i].Exec(ctx); err != nil {
-			errs = append(errs, err)
-		}
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			if err := e.execs[i].Exec(ctx); err != nil {
+				errs = append(errs, err)
+			}
+		}()
 	}
+
+	wg.Wait()
 
 	return errors.Join(errs...)
 }
