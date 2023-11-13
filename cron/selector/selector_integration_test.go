@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
 	"slices"
 	"testing"
 	"time"
@@ -37,6 +39,8 @@ func testRunnable(ch chan<- int, value int) func(ctx context.Context) error {
 }
 
 func TestSelector(t *testing.T) {
+	h := slog.NewJSONHandler(os.Stderr, nil)
+
 	//testErr := errors.New("test error")
 	values := make(chan int)
 	runner1 := testRunner{v: 1, ch: values}
@@ -73,15 +77,15 @@ func TestSelector(t *testing.T) {
 			dur:   2100 * time.Millisecond,
 			wants: []int{1, 2},
 		},
-		//{
-		//	name: "TwoExecsOffsetFrequency",
-		//	execMap: map[string][]executor.Runner{
-		//		cron:      {runner1},
-		//		twoMinOdd: {runner2},
-		//	},
-		//	dur:   2500 * time.Millisecond,
-		//	wants: []int{1, 1, 2},
-		//},
+		{
+			name: "TwoExecsOffsetFrequency",
+			execMap: map[string][]executor.Runner{
+				cron:      {runner1},
+				twoMinOdd: {runner2},
+			},
+			dur:   2100 * time.Millisecond,
+			wants: []int{1, 1, 2},
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			results := make([]int, 0, len(testcase.wants))
@@ -93,6 +97,7 @@ func TestSelector(t *testing.T) {
 					executor.WithSchedule(cronString),
 					executor.WithLocation(time.Local),
 					executor.WithRunners(runners...),
+					executor.WithLogHandler(h),
 				)
 				is.Empty(t, err)
 
@@ -102,6 +107,7 @@ func TestSelector(t *testing.T) {
 
 			sel, err := selector.New(
 				selector.WithExecutors(execs...),
+				selector.WithLogHandler(h),
 			)
 
 			is.Empty(t, err)
@@ -111,6 +117,12 @@ func TestSelector(t *testing.T) {
 				defer cancel()
 
 				for {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
+
 					err = sel.Next(ctx)
 					if err != nil {
 						is.True(t, errors.Is(err, testcase.err) || errors.Is(err, context.DeadlineExceeded))
@@ -134,6 +146,8 @@ func TestSelector(t *testing.T) {
 
 					return
 				case v := <-values:
+					t.Log("received", v)
+
 					results = append(results, v)
 				}
 			}
