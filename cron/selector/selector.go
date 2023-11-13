@@ -42,11 +42,7 @@ func (s selector) Next(ctx context.Context) error {
 		exec = s.next(ctx)
 	}
 
-	if err := exec.Exec(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return exec.Exec(ctx)
 }
 
 func (s selector) next(ctx context.Context) executor.Executor {
