@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/cron/selector"
 	"github.com/zalgonoise/x/errs"
 )
 
@@ -22,12 +23,8 @@ type Runtime interface {
 	Err() <-chan error
 }
 
-type Selector interface {
-	Next(ctx context.Context) error
-}
-
 type runtime struct {
-	sel Selector
+	sel selector.Selector
 
 	err chan error
 }
@@ -56,7 +53,7 @@ func (r runtime) Err() <-chan error {
 	return r.err
 }
 
-func Run(sel Selector, options ...cfg.Option[Config]) (Runtime, error) {
+func Run(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) {
 	config := cfg.New(options...)
 
 	cron, err := newRuntime(sel, config)
@@ -79,7 +76,7 @@ func Run(sel Selector, options ...cfg.Option[Config]) (Runtime, error) {
 	return cron, nil
 }
 
-func newRuntime(sel Selector, config Config) (Runtime, error) {
+func newRuntime(sel selector.Selector, config Config) (Runtime, error) {
 	// validate input
 	if sel == nil {
 		return noOpRuntime{}, ErrEmptySelector
