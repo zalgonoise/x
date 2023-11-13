@@ -211,7 +211,7 @@ func TestExecutorWithMetrics(t *testing.T) {
 		wants Executor
 	}{
 		{
-			name:  "NilExcutor",
+			name:  "NilExecutor",
 			wants: noOpExecutor{},
 		},
 		{
@@ -241,11 +241,11 @@ func TestExecutorWithMetrics(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := executorWithMetrics(testcase.e, testcase.m)
+			e := executorWithMetrics(testcase.e, testcase.m)
 
-			switch sched := s.(type) {
+			switch sched := e.(type) {
 			case noOpExecutor:
-				is.Equal(t, testcase.wants, s)
+				is.Equal(t, testcase.wants, e)
 			case withMetrics:
 				wants, ok := testcase.wants.(withMetrics)
 				is.True(t, ok)
@@ -264,7 +264,7 @@ func TestExecutorWithTrace(t *testing.T) {
 		wants  Executor
 	}{
 		{
-			name:  "NilScheduler",
+			name:  "NilExecutor",
 			wants: noOpExecutor{},
 		},
 		{
@@ -294,11 +294,11 @@ func TestExecutorWithTrace(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := executorWithTrace(testcase.e, testcase.tracer)
+			e := executorWithTrace(testcase.e, testcase.tracer)
 
-			switch sched := s.(type) {
+			switch sched := e.(type) {
 			case noOpExecutor:
-				is.Equal(t, testcase.wants, s)
+				is.Equal(t, testcase.wants, e)
 			case withTrace:
 				wants, ok := testcase.wants.(withTrace)
 				is.True(t, ok)
