@@ -3,59 +3,21 @@ package executor
 import (
 	"context"
 	"errors"
-	"strings"
 	"sync"
-	"time"
 )
 
-type multiExecutor struct {
-	execs []Executor
-}
-
-func Multi(execs ...Executor) Executor {
-	switch len(execs) {
-	case 0:
-		return NoOp()
-	case 1:
-		return execs[0]
-	}
-
-	e := make([]Executor, 0, len(execs))
-
-	for i := range execs {
-		switch v := execs[i].(type) {
-		case nil:
-			continue
-		case Executable:
-			e = append(e, v)
-		case multiExecutor:
-			e = append(e, v.execs...)
-		}
-	}
-
-	switch len(e) {
-	case 0:
-		return NoOp()
-	case 1:
-		return e[0]
-	default:
-		return multiExecutor{
-			execs: e,
-		}
-	}
-}
-
-func (e multiExecutor) Exec(ctx context.Context) error {
-	errs := make([]error, 0, len(e.execs))
+func Multi(ctx context.Context, execs ...Executor) error {
+	errs := make([]error, 0, len(execs))
 	wg := &sync.WaitGroup{}
 
-	for i := range e.execs {
-		wg.Add(1)
+	for i := range execs {
+		i := i
 
+		wg.Add(1)
 		go func() {
 			defer wg.Done()
 
-			if err := e.execs[i].Exec(ctx); err != nil {
+			if err := execs[i].Exec(ctx); err != nil {
 				errs = append(errs, err)
 			}
 		}()
@@ -64,22 +26,4 @@ func (e multiExecutor) Exec(ctx context.Context) error {
 	wg.Wait()
 
 	return errors.Join(errs...)
-}
-
-func (e multiExecutor) Next(ctx context.Context) time.Time {
-	return e.execs[0].Next(ctx)
-}
-
-func (e multiExecutor) ID() string {
-	sb := &strings.Builder{}
-
-	for i := range e.execs {
-		if i > 0 {
-			sb.WriteByte(':')
-		}
-
-		sb.WriteString(e.execs[i].ID())
-	}
-
-	return sb.String()
 }
