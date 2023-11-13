@@ -11,6 +11,8 @@ import (
 )
 
 const (
+	minStepDuration = 50 * time.Millisecond
+
 	errSelectorDomain = errs.Domain("x/cron/selector")
 
 	ErrEmpty = errs.Kind("empty")
@@ -31,43 +33,50 @@ type selector struct {
 }
 
 func (s selector) Next(ctx context.Context) error {
-	var exec executor.Executor
+	// minStepDuration ensures that each execution is locked to the seconds mark and
+	// a runner is not executed more than once per trigger.
+	defer time.Sleep(minStepDuration)
 
 	switch len(s.exec) {
 	case 0:
 		return ErrEmptyExecutorsList
 	case 1:
-		exec = s.exec[0]
+		return s.exec[0].Exec(ctx)
 	default:
-		exec = s.next(ctx)
+		return executor.Multi(ctx, s.next(ctx)...)
 	}
-
-	return exec.Exec(ctx)
 }
 
-func (s selector) next(ctx context.Context) executor.Executor {
+func (s selector) next(ctx context.Context) []executor.Executor {
 	var (
-		nextTime time.Time
-		exec     = make([]executor.Executor, 0, len(s.exec))
+		next time.Duration
+		exec = make([]executor.Executor, 0, len(s.exec))
+		now  = time.Now()
 	)
 
 	for i := range s.exec {
-		t := s.exec[i].Next(ctx)
+		t := s.exec[i].Next(ctx).Sub(now)
 
 		switch {
 		case i == 0:
-			nextTime = t
+			next = t
 			exec = append(exec, s.exec[i])
-		case t.Before(nextTime):
-			nextTime = t
+
+			continue
+		case t == next:
+			exec = append(exec, s.exec[i])
+
+			continue
+		case t < next:
+			next = t
 			exec = make([]executor.Executor, 0, len(s.exec))
 			exec = append(exec, s.exec[i])
-		case t.Equal(nextTime):
-			exec = append(exec, s.exec[i])
+
+			continue
 		}
 	}
 
-	return executor.Multi(exec...)
+	return exec
 }
 
 func New(options ...cfg.Option[Config]) (Selector, error) {
