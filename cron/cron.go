@@ -53,7 +53,7 @@ func (r runtime) Err() <-chan error {
 	return r.err
 }
 
-func Run(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) {
+func New(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) {
 	config := cfg.New(options...)
 
 	cron, err := newRuntime(sel, config)
