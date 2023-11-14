@@ -309,11 +309,10 @@ func processStar(n *parse.Node[Token, byte], minimum, maximum int) Resolver {
 
 			return resolve.NewStepSchedule(minimum, maximum, maximum, stepValue)
 		}
-
-		fallthrough
 	default:
-		return resolve.Everytime{}
 	}
+
+	return resolve.Everytime{}
 }
 
 func buildRange(from, to int) []int {
