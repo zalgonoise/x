@@ -14,8 +14,10 @@ import (
 
 	"github.com/zalgonoise/x/cron"
 	"github.com/zalgonoise/x/cron/executor"
+	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/cron/selector"
 	"github.com/zalgonoise/x/is"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type testRunner struct {
@@ -115,6 +117,8 @@ func TestCron(t *testing.T) {
 			c, err := cron.New(sel,
 				cron.WithLogHandler(h),
 				cron.WithErrorBufferSize(5),
+				cron.WithMetrics(metrics.NoOp()),
+				cron.WithTrace(noop.NewTracerProvider().Tracer("test")),
 			)
 			is.Empty(t, err)
 
