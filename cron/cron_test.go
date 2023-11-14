@@ -2,6 +2,7 @@ package cron
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"testing"
 
@@ -275,4 +276,9 @@ func TestNoOp(t *testing.T) {
 
 	noOp.Run(context.Background())
 	is.Empty(t, noOp.Err())
+}
+
+func TestNew_NilSelector(t *testing.T) {
+	_, err := New(nil)
+	is.True(t, errors.Is(err, ErrEmptySelector))
 }
