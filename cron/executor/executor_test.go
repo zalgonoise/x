@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cron/log"
 	"github.com/zalgonoise/x/cron/metrics"
+	"github.com/zalgonoise/x/cron/schedule/cronlex"
 	"github.com/zalgonoise/x/is"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -315,4 +317,42 @@ func TestNoOp(t *testing.T) {
 	is.Equal(t, time.Time{}, noOp.Next(context.Background()))
 	is.Equal(t, "", noOp.ID())
 	is.Empty(t, noOp.Exec(context.Background()))
+}
+
+func TestNew(t *testing.T) {
+	cronString := "@nope"
+	r := Runnable(func(ctx context.Context) error {
+		return nil
+	})
+
+	for _, testcase := range []struct {
+		name string
+		conf []cfg.Option[Config]
+		err  error
+	}{
+		{
+			name: "NoRunners",
+			err:  ErrEmptyRunnerList,
+		},
+		{
+			name: "NoSchedulerOrCronString",
+			conf: []cfg.Option[Config]{
+				WithRunners(r),
+			},
+			err: ErrEmptyScheduler,
+		},
+		{
+			name: "InvalidCronString",
+			conf: []cfg.Option[Config]{
+				WithRunners(r),
+				WithSchedule(cronString),
+			},
+			err: cronlex.ErrInvalidFrequency,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			_, err := New(testcase.name, testcase.conf...)
+			is.True(t, errors.Is(err, testcase.err))
+		})
+	}
 }
