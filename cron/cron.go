@@ -37,13 +37,6 @@ func (r runtime) Run(ctx context.Context) {
 		default:
 			if err := r.sel.Next(ctx); err != nil {
 				r.err <- err
-
-				// filled error buffer; avoid deadlock
-				if len(r.err) == cap(r.err) {
-					close(r.err)
-
-					return
-				}
 			}
 		}
 	}
