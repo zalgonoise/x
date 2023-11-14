@@ -33,23 +33,14 @@ func (r testRunner) Run(context.Context) error {
 	return r.err
 }
 
-func testRunnable(ch chan<- int, value int) func(ctx context.Context) error {
-	return func(ctx context.Context) error {
-		ch <- value
-
-		return nil
-	}
-}
-
 func TestCron(t *testing.T) {
 	h := slog.NewJSONHandler(os.Stderr, nil)
 
-	//testErr := errors.New("test error")
+	testErr := errors.New("test error")
 	values := make(chan int)
 	runner1 := testRunner{v: 1, ch: values}
 	runner2 := testRunner{v: 2, ch: values}
-	//runner3 := testRunner{v: 3, ch: values, err: testErr}
-	//runnable := testRunnable(values, 4)
+	runner3 := testRunner{v: 3, ch: values, err: testErr}
 
 	cronString := "* * * * * *"
 	twoMinEven := "0/2 * * * * *"
@@ -89,6 +80,15 @@ func TestCron(t *testing.T) {
 			dur:   2100 * time.Millisecond,
 			wants: []int{1, 1, 2},
 		},
+		{
+			name: "OneExecWithError",
+			execMap: map[string][]executor.Runner{
+				cronString: {runner3},
+			},
+			dur:   defaultDur,
+			wants: []int{3},
+			err:   testErr,
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			results := make([]int, 0, len(testcase.wants))
@@ -125,6 +125,8 @@ func TestCron(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), testcase.dur)
 			defer cancel()
 
+			errCh := c.Err()
+
 			go c.Run(ctx)
 
 			for {
@@ -140,6 +142,8 @@ func TestCron(t *testing.T) {
 					is.EqualElements(t, testcase.wants, results)
 
 					return
+				case err = <-errCh:
+					is.True(t, errors.Is(err, testcase.err))
 				case v := <-values:
 					t.Log("received", v)
 
@@ -147,5 +151,60 @@ func TestCron(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestFillErrorBuffer(t *testing.T) {
+	h := slog.NewJSONHandler(os.Stderr, nil)
+	testErr := errors.New("test error")
+	values := make(chan int)
+	runner1 := testRunner{v: 1, ch: values, err: testErr}
+	dur := 2100 * time.Millisecond
+	results := make([]int, 0, 2)
+	wants := []int{1, 1}
+
+	exec, err := executor.New("test_exec",
+		executor.WithSchedule("* * * * * *"),
+		executor.WithLocation(time.Local),
+		executor.WithRunners(runner1),
+		executor.WithLogHandler(h),
+	)
+	is.Empty(t, err)
+
+	sel, err := selector.New(
+		selector.WithExecutors(exec),
+		selector.WithLogHandler(h),
+	)
+	is.Empty(t, err)
+
+	c, err := cron.New(sel,
+		cron.WithLogHandler(h),
+		cron.WithErrorBufferSize(0),
+		cron.WithMetrics(metrics.NoOp()),
+		cron.WithTrace(noop.NewTracerProvider().Tracer("test")),
+	)
+	is.Empty(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), dur)
+	defer cancel()
+
+	//_ = c.Err()
+
+	go c.Run(ctx)
+
+	for {
+		select {
+		case <-ctx.Done():
+			slices.Sort(results)
+			is.EqualElements(t, wants, results)
+
+			return
+		//case err = <-errCh:
+		//	is.True(t, errors.Is(err, testErr))
+		case v := <-values:
+			t.Log("received", v)
+
+			results = append(results, v)
+		}
 	}
 }
