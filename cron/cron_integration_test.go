@@ -112,7 +112,7 @@ func TestCron(t *testing.T) {
 			)
 			is.Empty(t, err)
 
-			c, err := cron.Run(sel,
+			c, err := cron.New(sel,
 				cron.WithLogHandler(h),
 				cron.WithErrorBufferSize(5),
 			)
