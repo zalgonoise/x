@@ -598,7 +598,7 @@ func FuzzParse(f *testing.F) {
 			errors.Is(err, ErrEmptyAlphanum), errors.Is(err, ErrInvalidAlphanum),
 			errors.Is(err, ErrInvalidCharacter), errors.Is(err, ErrEmptyInput):
 		default:
-			f.Errorf("unexpected error: %v -- input: %q", err, s)
+			t.Errorf("unexpected error: %v -- input: %q", err, s)
 		}
 	})
 }
