@@ -41,17 +41,14 @@ func testRunnable(ch chan<- int, value int) func(ctx context.Context) error {
 func TestSelector(t *testing.T) {
 	h := slog.NewJSONHandler(os.Stderr, nil)
 
-	//testErr := errors.New("test error")
 	values := make(chan int)
 	runner1 := testRunner{v: 1, ch: values}
 	runner2 := testRunner{v: 2, ch: values}
-	//runner3 := testRunner{v: 3, ch: values, err: testErr}
-	//runnable := testRunnable(values, 4)
 
 	cron := "* * * * * *"
 	twoMinEven := "0/2 * * * * *"
 	twoMinOdd := "1/2 * * * * *"
-	defaultDur := 1100 * time.Millisecond
+	defaultDur := 2100 * time.Millisecond
 
 	for _, testcase := range []struct {
 		name    string
@@ -66,7 +63,7 @@ func TestSelector(t *testing.T) {
 				cron: {runner1, runner2},
 			},
 			dur:   defaultDur,
-			wants: []int{1, 2},
+			wants: []int{1, 1, 2, 2},
 		},
 		{
 			name: "TwoExecsTwoRunners",
@@ -74,8 +71,8 @@ func TestSelector(t *testing.T) {
 				twoMinEven: {runner1},
 				twoMinOdd:  {runner2},
 			},
-			dur:   2100 * time.Millisecond,
-			wants: []int{1, 2},
+			dur:   defaultDur * 2,
+			wants: []int{1, 1, 2, 2},
 		},
 		{
 			name: "TwoExecsOffsetFrequency",
@@ -83,7 +80,7 @@ func TestSelector(t *testing.T) {
 				cron:      {runner1},
 				twoMinOdd: {runner2},
 			},
-			dur:   2100 * time.Millisecond,
+			dur:   defaultDur,
 			wants: []int{1, 1, 2},
 		},
 	} {
@@ -113,7 +110,8 @@ func TestSelector(t *testing.T) {
 			is.Empty(t, err)
 
 			ctx, cancel := context.WithTimeout(context.Background(), testcase.dur)
-			go func() {
+
+			go func(t *testing.T, err error) {
 				defer cancel()
 
 				for {
@@ -123,14 +121,12 @@ func TestSelector(t *testing.T) {
 					default:
 					}
 
-					err = sel.Next(ctx)
-					if err != nil {
-						is.True(t, errors.Is(err, testcase.err) || errors.Is(err, context.DeadlineExceeded))
-
-						return
+					selErr := sel.Next(ctx)
+					if !errors.Is(selErr, err) && !errors.Is(selErr, context.DeadlineExceeded) {
+						t.Error(selErr)
 					}
 				}
-			}()
+			}(t, testcase.err)
 
 			for {
 				select {
