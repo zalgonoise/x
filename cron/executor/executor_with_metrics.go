@@ -25,7 +25,7 @@ func (e withMetrics) Exec(ctx context.Context) error {
 
 	err := e.e.Exec(ctx)
 
-	e.m.ObserveExecLatency(ctx, id, time.Now().Sub(before))
+	e.m.ObserveExecLatency(ctx, id, time.Since(before))
 
 	if err != nil {
 		e.m.IncExecutorExecErrors(id)
