@@ -12,6 +12,7 @@ import (
 	"github.com/zalgonoise/x/cron/schedule/cronlex"
 	"github.com/zalgonoise/x/is"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestCronSchedule_Next(t *testing.T) {
@@ -123,7 +124,7 @@ func TestCronSchedule_Next(t *testing.T) {
 				WithLocation(time.UTC),
 				WithLogHandler(log.NoOp()),
 				WithMetrics(metrics.NoOp()),
-				WithTrace(trace.NewNoopTracerProvider().Tracer("test")),
+				WithTrace(noop.NewTracerProvider().Tracer("test")),
 			)
 			if testcase.err != nil {
 				is.True(t, errors.Is(err, testcase.err))
@@ -301,10 +302,10 @@ func TestSchedulerWithTrace(t *testing.T) {
 		{
 			name:   "WithTracer",
 			s:      noOpScheduler{},
-			tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
 				s:      noOpScheduler{},
-				tracer: trace.NewNoopTracerProvider().Tracer("test"),
+				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 		{
@@ -312,10 +313,10 @@ func TestSchedulerWithTrace(t *testing.T) {
 			s: withTrace{
 				s: noOpScheduler{},
 			},
-			tracer: trace.NewNoopTracerProvider().Tracer("test"),
+			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
 				s:      noOpScheduler{},
-				tracer: trace.NewNoopTracerProvider().Tracer("test"),
+				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 	} {
@@ -336,7 +337,7 @@ func TestSchedulerWithTrace(t *testing.T) {
 }
 
 func TestNoOp(t *testing.T) {
-	noop := NoOp()
+	noOp := NoOp()
 
-	is.Equal(t, time.Time{}, noop.Next(context.Background(), time.Now()))
+	is.Equal(t, time.Time{}, noOp.Next(context.Background(), time.Now()))
 }
