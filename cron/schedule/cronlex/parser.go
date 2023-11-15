@@ -28,7 +28,7 @@ func parseAt(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	default:
 		item := t.Next()
 		item.Type = TokenError
-		t.Set(t.Parent())
+		_ = t.Set(t.Parent())
 
 		return ParseFunc
 	}
@@ -39,14 +39,14 @@ func parseStar(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 
 	switch t.Peek().Type {
 	case TokenSpace:
-		t.Set(t.Parent())
+		_ = t.Set(t.Parent())
 		t.Next()
 
 		return ParseFunc
 	case TokenSlash:
 		return parseAlphanum
 	default:
-		t.Set(t.Parent())
+		_ = t.Set(t.Parent())
 
 		return nil
 	}
@@ -58,7 +58,7 @@ func parseAlphanumSymbols(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte]
 	switch t.Peek().Type {
 	case TokenAlphaNum:
 		t.Node(t.Next())
-		t.Set(t.Parent().Parent)
+		_ = t.Set(t.Parent().Parent)
 
 		return parseAlphanum
 	default:
@@ -79,7 +79,7 @@ func parseAlphanum(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	case TokenComma, TokenDash, TokenSlash:
 		return parseAlphanumSymbols
 	case TokenSpace:
-		t.Set(t.Parent())
+		_ = t.Set(t.Parent())
 		t.Next()
 
 		return ParseFunc
