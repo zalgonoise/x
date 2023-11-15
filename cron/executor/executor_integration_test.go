@@ -139,16 +139,14 @@ func TestExecutor(t *testing.T) {
 			results := make([]int, 0, len(testcase.wants))
 
 			ctx, cancel := context.WithTimeout(context.Background(), testcase.dur)
-			go func() {
+			go func(t *testing.T, err error) {
 				defer cancel()
 
 				_ = exec.Next(ctx)
 
-				err = exec.Exec(ctx)
-				if err != nil {
-					is.True(t, errors.Is(err, testcase.err))
-				}
-			}()
+				execErr := exec.Exec(ctx)
+				is.True(t, errors.Is(execErr, err))
+			}(t, testcase.err)
 
 			for {
 				select {
