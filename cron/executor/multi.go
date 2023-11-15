@@ -8,6 +8,8 @@ import (
 
 func Multi(ctx context.Context, execs ...Executor) error {
 	errs := make([]error, 0, len(execs))
+
+	mu := &sync.Mutex{}
 	wg := &sync.WaitGroup{}
 
 	for i := range execs {
@@ -18,7 +20,9 @@ func Multi(ctx context.Context, execs ...Executor) error {
 			defer wg.Done()
 
 			if err := execs[i].Exec(ctx); err != nil {
+				mu.Lock()
 				errs = append(errs, err)
+				mu.Unlock()
 			}
 		}()
 	}
