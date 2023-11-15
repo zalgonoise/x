@@ -74,7 +74,7 @@ func (e Executable) Exec(ctx context.Context) error {
 
 		case <-timer.C:
 			// avoid executing before it's time, as it may trigger repeated runs
-			if preTriggerDuration := time.Now().Sub(next); preTriggerDuration > 0 {
+			if preTriggerDuration := time.Since(next); preTriggerDuration > 0 {
 				time.Sleep(preTriggerDuration + bufferPeriod)
 			}
 
