@@ -72,8 +72,8 @@ _______
 
 _TBD_
 
-Another working example is the [Steam CLI app]() mentioned in the [Motivation](#motivation) section above. This 
-application exposes some commands, one of them being 
+Another working example is the [Steam CLI app](https://github.com/zalgonoise/x/tree/master/steam) mentioned in the 
+[Motivation](#motivation) section above. This application exposes some commands, one of them being 
 [`monitor`](https://github.com/zalgonoise/x/blob/master/steam/cmd/steam/monitor/monitor.go). This file provides some 
 insight on how the cron service is set up from a `main.go` / script-like approach.
 
