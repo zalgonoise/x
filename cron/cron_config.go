@@ -4,6 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/cron/executor"
+	"github.com/zalgonoise/x/cron/selector"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -18,6 +20,48 @@ type Config struct {
 	handler slog.Handler
 	metrics Metrics
 	tracer  trace.Tracer
+	sel     selector.Selector
+	execs   []executor.Executor
+}
+
+func WithSelector(sel selector.Selector) cfg.Option[Config] {
+	if sel == nil || sel == selector.NoOp() {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register(func(config Config) Config {
+		config.sel = sel
+
+		return config
+	})
+}
+
+func WithJob(id, cronString string, runners ...executor.Runner) cfg.Option[Config] {
+	if len(runners) == 0 {
+		return cfg.NoOp[Config]{}
+	}
+
+	if id == "" {
+		id = cronString
+	}
+
+	exec, err := executor.New(id,
+		executor.WithSchedule(cronString),
+		executor.WithRunners(runners...),
+	)
+	if err != nil {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register(func(config Config) Config {
+		if config.execs == nil {
+			config.execs = make([]executor.Executor, 0, 64)
+		}
+
+		config.execs = append(config.execs, exec)
+
+		return config
+	})
 }
 
 func WithErrorBufferSize(size int) cfg.Option[Config] {
