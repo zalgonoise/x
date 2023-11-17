@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/cron/executor"
 	"github.com/zalgonoise/x/cron/log"
 	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/is"
@@ -281,4 +282,96 @@ func TestNoOp(t *testing.T) {
 func TestNew_NilSelector(t *testing.T) {
 	_, err := New(nil)
 	is.True(t, errors.Is(err, ErrEmptySelector))
+}
+
+func TestNewWithJob(t *testing.T) {
+	runner1 := executor.Runnable(func(ctx context.Context) error {
+		return nil
+	})
+	runner2 := executor.Runnable(func(ctx context.Context) error {
+		return nil
+	})
+
+	type job struct {
+		id         string
+		cronString string
+		runners    []executor.Runner
+	}
+
+	for _, testcase := range []struct {
+		name string
+		jobs []job
+		err  error
+	}{
+		{
+			name: "Success/SingleRunner",
+			jobs: []job{{
+				id:         "ok-job",
+				cronString: "* * * * * *",
+				runners:    []executor.Runner{runner1},
+			}},
+		},
+		{
+			name: "Success/MultiRunner",
+			jobs: []job{{
+				id:         "ok-job",
+				cronString: "* * * * * *",
+				runners:    []executor.Runner{runner1, runner2},
+			}},
+		},
+		{
+			name: "Success/NoID/MultiRunner",
+			jobs: []job{{
+				cronString: "* * * * * *",
+				runners:    []executor.Runner{runner1, runner2},
+			}},
+		},
+		{
+			name: "Success/MultiJob/MultiRunner",
+			jobs: []job{
+				{
+					id:         "seconds",
+					cronString: "* * * * * *",
+					runners:    []executor.Runner{runner1},
+				},
+				{
+					id:         "minutes",
+					cronString: "* * * * *",
+					runners:    []executor.Runner{runner2},
+				},
+			},
+		},
+		{
+			name: "Fail/NoCronString",
+			jobs: []job{{
+				id:      "ok-job",
+				runners: []executor.Runner{runner1, runner2},
+			}},
+			err: ErrEmptySelector,
+		},
+		{
+			name: "Fail/NoRunners",
+			jobs: []job{{
+				id:         "ok-job",
+				cronString: "* * * * * *",
+			}},
+			err: ErrEmptySelector,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			jobs := make([]cfg.Option[Config], 0, len(testcase.jobs))
+
+			for i := range testcase.jobs {
+				jobs = append(jobs, WithJob(
+					testcase.jobs[i].id,
+					testcase.jobs[i].cronString,
+					testcase.jobs[i].runners...,
+				))
+			}
+
+			_, err := New(jobs...)
+			t.Log(err)
+			is.True(t, errors.Is(err, testcase.err))
+		})
+	}
 }
