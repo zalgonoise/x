@@ -46,12 +46,12 @@ func (r runtime) Err() <-chan error {
 	return r.err
 }
 
-func New(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) {
+func New(options ...cfg.Option[Config]) (Runtime, error) {
 	config := cfg.New(options...)
 
-	cron, err := newRuntime(sel, config)
+	cron, err := newRuntime(config)
 	if err != nil {
-		return noOpRuntime{}, err
+		return noOpRuntime{}, errs.Join(ErrEmptySelector, err)
 	}
 
 	if config.metrics != nil {
@@ -69,10 +69,15 @@ func New(sel selector.Selector, options ...cfg.Option[Config]) (Runtime, error) 
 	return cron, nil
 }
 
-func newRuntime(sel selector.Selector, config Config) (Runtime, error) {
+func newRuntime(config Config) (Runtime, error) {
 	// validate input
-	if sel == nil {
-		return noOpRuntime{}, ErrEmptySelector
+	if config.sel == nil {
+		sel, err := selector.New(selector.WithExecutors(config.execs...))
+		if err != nil {
+			return NoOp(), err
+		}
+
+		config.sel = sel
 	}
 
 	size := config.errBufferSize
@@ -81,7 +86,7 @@ func newRuntime(sel selector.Selector, config Config) (Runtime, error) {
 	}
 
 	return runtime{
-		sel: sel,
+		sel: config.sel,
 		err: make(chan error, size),
 	}, nil
 }
