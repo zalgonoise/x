@@ -114,7 +114,8 @@ func TestCron(t *testing.T) {
 			)
 			is.Empty(t, err)
 
-			c, err := cron.New(sel,
+			c, err := cron.New(
+				cron.WithSelector(sel),
 				cron.WithLogHandler(h),
 				cron.WithErrorBufferSize(5),
 				cron.WithMetrics(metrics.NoOp()),
@@ -177,7 +178,8 @@ func TestFillErrorBuffer(t *testing.T) {
 	)
 	is.Empty(t, err)
 
-	c, err := cron.New(sel,
+	c, err := cron.New(
+		cron.WithSelector(sel),
 		cron.WithLogHandler(h),
 		cron.WithErrorBufferSize(0),
 		cron.WithMetrics(metrics.NoOp()),
@@ -188,7 +190,7 @@ func TestFillErrorBuffer(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), dur)
 	defer cancel()
 
-	//_ = c.Err()
+	errCh := c.Err()
 
 	go c.Run(ctx)
 
@@ -199,8 +201,8 @@ func TestFillErrorBuffer(t *testing.T) {
 			is.EqualElements(t, wants, results)
 
 			return
-		//case err = <-errCh:
-		//	is.True(t, errors.Is(err, testErr))
+		case err = <-errCh:
+			is.True(t, errors.Is(err, testErr))
 		case v := <-values:
 			t.Log("received", v)
 
