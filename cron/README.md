@@ -58,6 +58,103 @@ _______
 
 ### Usage
 
+Using `cron` is as layered and modular as you want it to be. This chapter describes how to use the library effectively.
+
+#### Getting `cron`
+
+You're able to fetch `cron` as a Go module by importing it in your project and running `go mod tidy`:
+
+```go
+package main
+
+import (
+	"fmt"
+	"context"
+	
+	"github.com/zalgonoise/x/cron"
+	"github.com/zalgonoise/x/cron/executor"
+)
+
+func main() {
+	fn := func(context.Context) error {
+		fmt.Println("done!")
+
+		return nil
+	}
+	
+	c, err := cron.New(cron.WithJob("my-job", "* * * * *", executor.Runnable(fn)))
+	// ...
+}
+```
+_______
+
+
+#### Cron Runtime
+
+The runtime is the component that will control (like the name implies) how the module runs -- that is, controlling the 
+flow of job selection and execution. The runtime will allow being executed as a goroutine, as its `Runtime.Run` method 
+has no returns, and errors are channeled via its `Runtime.Err` method (which returns an error channel). The actual 
+runtime of the cron is still managed with a `context.Context` that is provided when calling `Runtime.Run` -- which can 
+impose a cancellation or timeout strategy.
+
+Just like the simple example above, creating a cron runtime starts with the `cron.New` constructor function.
+
+This function only has [a variadic parameter for `cfg.Option[cron.Config]`](./cron.go#L49). This allows full modularity
+on the way you build your cron runtime, to be as simple or as detailed as you want it to be -- provided that it complies 
+with the minimum requirements to create one.
+
+```go
+func New(options ...cfg.Option[Config]) (Runtime, error)
+```
+
+While the minimum requirements to create a cron runtime is to supply either a 
+[`selector.Selector`](./selector/selector.go#L27) or a (set of) [`executor.Runner`](./executor/executor.go#L31). The 
+latter can be supplied as an [`executor.Runnable`](./executor/executor.go#L35).
+
+Below is a table with all the options available for creating a cron runtime:
+
+|                   Function                    |                                       Input Parameters                                       |                                                        Description                                                         |
+|:---------------------------------------------:|:--------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|
+|    [`WithSelector`](./cron_config.go#L31)     |                    [`sel selector.Selector`](./selector/selector.go#L27)                     |                                Configures the `Runtime` with the input `selector.Selector`.                                |
+|       [`WithJob`](./cron_config.go#L53)       | `id string`, `cronString string`, [`runners ...executor.Runner`](./executor/executor.go#L31) | Adds a new `executor.Executor` to the `Runtime` configuration from the input ID, cron string and set of `executor.Runner`. |
+| [`WithErrorBufferSize`](./cron_config.go#L83) |                                          `size int`                                          |             Defines the capacity of the error channel that the `Runtime` exposes in its `Runtime.Err` method.              |
+|     [`WithMetrics`](./cron_config.go#L96)     |                        [`m cron.Metrics`](./cron_with_metrics.go#L5)                         |                                  Decorates the `Runtime` with the input metrics registry.                                  |
+|     [`WithLogger`](./cron_config.go#L109)     |                 [`logger *slog.Logger`](https://pkg.go.dev/log/slog#Logger)                  |                                       Decorates the `Runtime` with the input logger.                                       |
+|   [`WithLogHandler`](./cron_config.go#L122)   |                [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)                 |                              Decorates the Runtime with logging using the input log handler.                               |
+|     [`WithTrace`](./cron_config.go#L135)      |      [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer)       |                                     Decorates the Runtime with the input trace.Tracer.                                     |
+
+The simplest possible cron runtime could be the result of a call to `cron.New` with a single `cron.WithJob` option. This
+creates all the components that a cron runtime needs with the most minimal setup. It creates the underlying selector and 
+executors.
+
+_______
+
+#### Cron Selector
+
+_TBD_
+
+_______
+
+#### Cron Executor
+
+_TBD_
+
+_______
+
+#### Cron Schedule
+
+_TBD_
+
+_______
+
+##### Schedule Resolver
+
+_TBD_
+
+_______
+
+##### Schedule Parser
+
 _TBD_
 
 _______
