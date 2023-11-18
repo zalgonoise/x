@@ -30,14 +30,6 @@ func (r testRunner) Run(context.Context) error {
 	return r.err
 }
 
-func testRunnable(ch chan<- int, value int) func(ctx context.Context) error {
-	return func(ctx context.Context) error {
-		ch <- value
-
-		return nil
-	}
-}
-
 func TestSelector(t *testing.T) {
 	h := slog.NewJSONHandler(os.Stderr, nil)
 

@@ -3,8 +3,10 @@ package selector
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cron/executor"
@@ -100,6 +102,11 @@ func TestConfig(t *testing.T) {
 }
 
 func TestSelectorWithLogs(t *testing.T) {
+	h := slog.NewJSONHandler(io.Discard, nil)
+	s := &selector{
+		exec: []executor.Executor{executor.NoOp()},
+	}
+
 	for _, testcase := range []struct {
 		name           string
 		s              Selector
@@ -112,38 +119,55 @@ func TestSelectorWithLogs(t *testing.T) {
 			wants: noOpSelector{},
 		},
 		{
+			name:  "NoOpSelector",
+			s:     noOpSelector{},
+			wants: noOpSelector{},
+		},
+		{
 			name: "NilHandler",
-			s:    noOpSelector{},
+			s:    s,
 			wants: withLogs{
-				s: noOpSelector{},
+				s: s,
 			},
 			defaultHandler: true,
 		},
 		{
 			name:    "WithHandler",
-			s:       noOpSelector{},
+			s:       s,
+			handler: h,
+			wants: withLogs{
+				s:      s,
+				logger: slog.New(h),
+			},
+		},
+		{
+			name:    "WithNoOpHandler",
+			s:       s,
 			handler: log.NoOp(),
 			wants: withLogs{
-				s:      noOpSelector{},
-				logger: slog.New(log.NoOp()),
+				s: s,
 			},
+			defaultHandler: true,
 		},
 		{
 			name: "ReplaceHandler",
 			s: withLogs{
-				s: noOpSelector{},
+				s: s,
 			},
-			handler: log.NoOp(),
+			handler: h,
 			wants: withLogs{
-				s:      noOpSelector{},
-				logger: slog.New(log.NoOp()),
+				s:      s,
+				logger: slog.New(h),
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := selectorWithLogs(testcase.s, testcase.handler)
+			s := AddLogs(testcase.s, testcase.handler)
 
-			_ = s.Next(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = s.Next(ctx)
 
 			switch exec := s.(type) {
 			case noOpSelector:
@@ -165,7 +189,23 @@ func TestSelectorWithLogs(t *testing.T) {
 	}
 }
 
+type testMetrics struct{}
+
+func (testMetrics) IncSelectorSelectCalls()  {}
+func (testMetrics) IncSelectorSelectErrors() {}
+
+type testExecutor struct{}
+
+func (testExecutor) Exec(ctx context.Context) error     { return ctx.Err() }
+func (testExecutor) Next(context.Context) (t time.Time) { return t }
+func (testExecutor) ID() string                         { return "" }
+
 func TestSelectorWithMetrics(t *testing.T) {
+	m := testMetrics{}
+	s := &selector{
+		exec: []executor.Executor{testExecutor{}},
+	}
+
 	for _, testcase := range []struct {
 		name  string
 		s     Selector
@@ -177,35 +217,49 @@ func TestSelectorWithMetrics(t *testing.T) {
 			wants: noOpSelector{},
 		},
 		{
-			name:  "NilMetrics",
+			name:  "NoOpSelector",
 			s:     noOpSelector{},
 			wants: noOpSelector{},
 		},
 		{
+			name:  "NilMetrics",
+			s:     s,
+			wants: s,
+		},
+		{
+			name:  "NoOpMetrics",
+			s:     s,
+			m:     metrics.NoOp(),
+			wants: s,
+		},
+		{
 			name: "WithMetrics",
-			s:    noOpSelector{},
-			m:    metrics.NoOp(),
+			s:    s,
+			m:    m,
 			wants: withMetrics{
-				s: noOpSelector{},
-				m: metrics.NoOp(),
+				s: s,
+				m: m,
 			},
 		},
 		{
 			name: "ReplaceMetrics",
 			s: withMetrics{
-				s: noOpSelector{},
+				s: s,
 			},
-			m: metrics.NoOp(),
+			m: m,
 			wants: withMetrics{
-				s: noOpSelector{},
-				m: metrics.NoOp(),
+				s: s,
+				m: m,
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := selectorWithMetrics(testcase.s, testcase.m)
+			s := AddMetrics(testcase.s, testcase.m)
 
-			_ = s.Next(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = s.Next(ctx)
 
 			switch sched := s.(type) {
 			case noOpSelector:
@@ -216,11 +270,18 @@ func TestSelectorWithMetrics(t *testing.T) {
 				is.Equal(t, wants.s, sched.s)
 				is.Equal(t, wants.m, sched.m)
 			}
+
+			cancel()
+			_ = s.Next(ctx)
 		})
 	}
 }
 
 func TestSelectorWithTrace(t *testing.T) {
+	s := &selector{
+		exec: []executor.Executor{executor.NoOp()},
+	}
+
 	for _, testcase := range []struct {
 		name   string
 		s      Selector
@@ -232,35 +293,43 @@ func TestSelectorWithTrace(t *testing.T) {
 			wants: noOpSelector{},
 		},
 		{
-			name:  "NilTracer",
+			name:  "NoOpSelector",
 			s:     noOpSelector{},
 			wants: noOpSelector{},
 		},
 		{
+			name:  "NilTracer",
+			s:     s,
+			wants: s,
+		},
+		{
 			name:   "WithTracer",
-			s:      noOpSelector{},
+			s:      s,
 			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
-				s:      noOpSelector{},
+				s:      s,
 				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 		{
 			name: "ReplaceTracer",
 			s: withTrace{
-				s: noOpSelector{},
+				s: s,
 			},
 			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
-				s:      noOpSelector{},
+				s:      s,
 				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := selectorWithTrace(testcase.s, testcase.tracer)
+			s := AddTraces(testcase.s, testcase.tracer)
 
-			_ = s.Next(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = s.Next(ctx)
 
 			switch sched := s.(type) {
 			case noOpSelector:
