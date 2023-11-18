@@ -92,15 +92,15 @@ func New(options ...cfg.Option[Config]) (Runtime, error) {
 	}
 
 	if config.metrics != nil {
-		cron = cronWithMetrics(cron, config.metrics)
+		cron = AddMetrics(cron, config.metrics)
 	}
 
 	if config.handler != nil {
-		cron = cronWithLogs(cron, config.handler)
+		cron = AddLogs(cron, config.handler)
 	}
 
 	if config.tracer != nil {
-		cron = cronWithTrace(cron, config.tracer)
+		cron = AddTraces(cron, config.tracer)
 	}
 
 	return cron, nil
