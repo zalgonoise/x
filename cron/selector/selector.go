@@ -20,11 +20,30 @@ const (
 	ErrExecutorsList = errs.Entity("executors list")
 )
 
-var (
-	ErrEmptyExecutorsList = errs.WithDomain(errSelectorDomain, ErrEmpty, ErrExecutorsList)
-)
+var ErrEmptyExecutorsList = errs.WithDomain(errSelectorDomain, ErrEmpty, ErrExecutorsList)
 
+// Selector describes the capabilities of a cron selector, which picks up the next job to execute (out of a set of
+// executor.Executor)
+//
+// Implementations of Selector must focus on the logic within its only method, Next, that will set the strategy to
+// picking up the following job to run. The default implementation looks for the nearest job (in time) to execute, with
+// support for multiple executions in one-go.
+//
+// Custom implementations could, for example, check for preconditions, run clean-up jobs, and more.
+//
+// The runtime of a Selector depends on the input context.Context when calling its Next method, as it can be used to
+// signal cancellation or used for timeouts.
 type Selector interface {
+	// Next picks up the following scheduled job to execute from its configured (set of) executor.Executor, and
+	// calls its Exec method.
+	//
+	// This call also imposes a minimum step duration of 50ms, to ensure that early-runs are not executed twice due to the
+	// nature of using clocks in Go. This sleep is deferred to come in after the actual execution of the job.
+	//
+	// The Selector allows multiple executor.Executor to be configured, and multiple executor.Executor can share similar
+	// execution times. If that is the case, the executor is launched in an executor.Multi call.
+	//
+	// The error returned from a Next call is the error raised by the executor.Executor's Exec call.
 	Next(ctx context.Context) error
 }
 
@@ -32,6 +51,16 @@ type selector struct {
 	exec []executor.Executor
 }
 
+// Next picks up the following scheduled job to execute from its configured (set of) executor.Executor, and
+// calls its Exec method.
+//
+// This call also imposes a minimum step duration of 50ms, to ensure that early-runs are not executed twice due to the
+// nature of using clocks in Go. This sleep is deferred to come in after the actual execution of the job.
+//
+// The Selector allows multiple executor.Executor to be configured, and multiple executor.Executor can share similar
+// execution times. If that is the case, the executor is launched in an executor.Multi call.
+//
+// The error returned from a Next call is the error raised by the executor.Executor's Exec call.
 func (s selector) Next(ctx context.Context) error {
 	// minStepDuration ensures that each execution is locked to the seconds mark and
 	// a runner is not executed more than once per trigger.
@@ -79,6 +108,10 @@ func (s selector) next(ctx context.Context) []executor.Executor {
 	return exec
 }
 
+// New creates a Selector with the input cfg.Option(s), also returning an error if raised.
+//
+// Creating a Selector requires at least one executor.Executor, which can be added through the WithExecutors option. To
+// allow this configuration to be variadic as well, it is served as a cfg.Option.
 func New(options ...cfg.Option[Config]) (Selector, error) {
 	config := cfg.New(options...)
 
@@ -88,15 +121,15 @@ func New(options ...cfg.Option[Config]) (Selector, error) {
 	}
 
 	if config.metrics != nil {
-		sel = selectorWithMetrics(sel, config.metrics)
+		sel = AddMetrics(sel, config.metrics)
 	}
 
 	if config.handler != nil {
-		sel = selectorWithLogs(sel, config.handler)
+		sel = AddLogs(sel, config.handler)
 	}
 
 	if config.tracer != nil {
-		sel = selectorWithTrace(sel, config.tracer)
+		sel = AddTraces(sel, config.tracer)
 	}
 
 	return sel, nil
@@ -112,12 +145,17 @@ func newSelector(config Config) (Selector, error) {
 	}, nil
 }
 
+// NoOp returns a no-op Selector
 func NoOp() Selector {
 	return noOpSelector{}
 }
 
 type noOpSelector struct{}
 
-func (noOpSelector) Next(_ context.Context) error {
+// Next picks up the following scheduled job to execute from its configured (set of) executor.Executor, and
+// calls its Exec method.
+//
+// However, this is a no-op call, it has no effect and the returned error is always nil.
+func (noOpSelector) Next(context.Context) error {
 	return nil
 }
