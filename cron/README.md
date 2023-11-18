@@ -92,24 +92,23 @@ _______
 #### Cron Runtime
 
 The runtime is the component that will control (like the name implies) how the module runs -- that is, controlling the 
-flow of job selection and execution. The runtime will allow being executed as a goroutine, as its `Runtime.Run` method 
-has no returns, and errors are channeled via its `Runtime.Err` method (which returns an error channel). The actual 
-runtime of the cron is still managed with a `context.Context` that is provided when calling `Runtime.Run` -- which can 
-impose a cancellation or timeout strategy.
+flow of job selection and execution. The runtime will allow cron to be executed as a goroutine, as its `Runtime.Run` 
+method has no returns, and errors are channeled via its `Runtime.Err` method (which returns an error channel). The 
+actual runtime of the cron is still managed with a `context.Context` that is provided when calling `Runtime.Run` -- 
+which can impose a cancellation or timeout strategy.
 
 Just like the simple example above, creating a cron runtime starts with the `cron.New` constructor function.
 
 This function only has [a variadic parameter for `cfg.Option[cron.Config]`](./cron.go#L49). This allows full modularity
 on the way you build your cron runtime, to be as simple or as detailed as you want it to be -- provided that it complies 
-with the minimum requirements to create one.
+with the minimum requirements to create one; to supply either:
+- a [`selector.Selector`](./selector/selector.go#L27) 
+- or, a (set of) [`executor.Runner`](./executor/executor.go#L31). This can be supplied as 
+[`executor.Runnable`](./executor/executor.go#L35) as well.
 
 ```go
 func New(options ...cfg.Option[Config]) (Runtime, error)
 ```
-
-While the minimum requirements to create a cron runtime is to supply either a 
-[`selector.Selector`](./selector/selector.go#L27) or a (set of) [`executor.Runner`](./executor/executor.go#L31). The 
-latter can be supplied as an [`executor.Runnable`](./executor/executor.go#L35).
 
 Below is a table with all the options available for creating a cron runtime:
 
@@ -126,6 +125,11 @@ Below is a table with all the options available for creating a cron runtime:
 The simplest possible cron runtime could be the result of a call to `cron.New` with a single `cron.WithJob` option. This
 creates all the components that a cron runtime needs with the most minimal setup. It creates the underlying selector and 
 executors.
+
+Otherwise, the caller must use the `cron.WithSelector` option, and configure a 
+[`selector.Selector`](./selector/selector.go#L27) manually when doing so. This results in more _boilerplate_ to get the
+runtime set up, but provides deeper control on how the cron should be composed. The next chapter covers what is a
+[`selector.Selector`](./selector/selector.go#L27) and how to create one.
 
 _______
 
