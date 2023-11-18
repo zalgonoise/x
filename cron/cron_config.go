@@ -24,6 +24,10 @@ type Config struct {
 	execs   []executor.Executor
 }
 
+// WithSelector configures the Runtime with the input selector.Selector.
+//
+// This call returns a cfg.NoOp cfg.Option if the input selector.Selector is nil, or if it is a
+// selector.NoOp type.
 func WithSelector(sel selector.Selector) cfg.Option[Config] {
 	if sel == nil || sel == selector.NoOp() {
 		return cfg.NoOp[Config]{}
@@ -36,6 +40,16 @@ func WithSelector(sel selector.Selector) cfg.Option[Config] {
 	})
 }
 
+// WithJob adds a new executor.Executor to the Runtime configuration from the input ID, cron string and
+// set of executor.Runner.
+//
+// This call returns a cfg.NoOp cfg.Option if no executor.Runner is provided, or if creating the executor.Executor
+// fails (e.g. due to an invalid cron string).
+//
+// The gathered executor.Executor are then injected into a new selector.Selector that the Runtime will use.
+//
+// Note: this call is only valid if when creating a new Runtime via the New function, no WithSelector option is
+// supplied; only WithJob. A call to New supports multiple WithJob cfg.Option.
 func WithJob(id, cronString string, runners ...executor.Runner) cfg.Option[Config] {
 	if len(runners) == 0 {
 		return cfg.NoOp[Config]{}
@@ -64,6 +78,8 @@ func WithJob(id, cronString string, runners ...executor.Runner) cfg.Option[Confi
 	})
 }
 
+// WithErrorBufferSize defines the capacity of the error channel that the Runtime exposes in
+// its Runtime.Err method.
 func WithErrorBufferSize(size int) cfg.Option[Config] {
 	if size < 0 {
 		size = defaultBufferSize
@@ -76,6 +92,7 @@ func WithErrorBufferSize(size int) cfg.Option[Config] {
 	})
 }
 
+// WithMetrics decorates the Runtime with the input metrics registry.
 func WithMetrics(m Metrics) cfg.Option[Config] {
 	if m == nil {
 		return cfg.NoOp[Config]{}
@@ -88,6 +105,7 @@ func WithMetrics(m Metrics) cfg.Option[Config] {
 	})
 }
 
+// WithLogger decorates the Runtime with the input logger.
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
 	if logger == nil {
 		return cfg.NoOp[Config]{}
@@ -100,6 +118,7 @@ func WithLogger(logger *slog.Logger) cfg.Option[Config] {
 	})
 }
 
+// WithLogHandler decorates the Runtime with logging using the input log handler.
 func WithLogHandler(handler slog.Handler) cfg.Option[Config] {
 	if handler == nil {
 		return cfg.NoOp[Config]{}
@@ -112,6 +131,7 @@ func WithLogHandler(handler slog.Handler) cfg.Option[Config] {
 	})
 }
 
+// WithTrace decorates the Runtime with the input trace.Tracer.
 func WithTrace(tracer trace.Tracer) cfg.Option[Config] {
 	if tracer == nil {
 		return cfg.NoOp[Config]{}
