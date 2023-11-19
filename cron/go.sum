@@ -597,6 +597,8 @@ github.com/zalgonoise/x/errs v0.0.0-20231111152101-e78dd34855c9 h1:ybM7f3jVizZcW
 github.com/zalgonoise/x/errs v0.0.0-20231111152101-e78dd34855c9/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/is v0.0.0-20231111152101-e78dd34855c9 h1:T5vOvDU82/a9YvwWFjWqRLK9pXNIm09sPa1Gu5higuA=
 github.com/zalgonoise/x/is v0.0.0-20231111152101-e78dd34855c9/go.mod h1:WvtGhofqpjEMLhn+qkpHVcBPBuIrC5vx6nwsa7mEqTU=
+github.com/zalgonoise/x/ptr v0.0.0-20231118135520-010332cc062a h1:FuPTTpvjM4Q6tFBUQSA51PD5FJ2vF4n2phHRk7xW4Fg=
+github.com/zalgonoise/x/ptr v0.0.0-20231118135520-010332cc062a/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
 gitlab.com/bosi/decorder v0.4.1 h1:VdsdfxhstabyhZovHafFw+9eJ6eU0d2CkFNJcZz/NU4=
 gitlab.com/bosi/decorder v0.4.1/go.mod h1:jecSqWUew6Yle1pCr2eLWTensJMmsxHsBwt+PVbkAqA=
 go-simpler.org/assert v0.6.0 h1:QxSrXa4oRuo/1eHMXSBFHKvJIpWABayzKldqZyugG7E=
