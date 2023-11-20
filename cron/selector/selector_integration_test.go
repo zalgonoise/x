@@ -13,8 +13,10 @@ import (
 	"time"
 
 	"github.com/zalgonoise/x/cron/executor"
+	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/cron/selector"
 	"github.com/zalgonoise/x/is"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type testRunner struct {
@@ -107,6 +109,7 @@ func TestSelector(t *testing.T) {
 			sel, err := selector.New(
 				selector.WithExecutors(execs...),
 				selector.WithLogHandler(h),
+				selector.WithBlock(),
 			)
 
 			is.Empty(t, err)
@@ -158,14 +161,14 @@ func TestNonBlocking(t *testing.T) {
 	h := slog.NewJSONHandler(os.Stderr, nil)
 	testErr := errors.New("test error")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
 	exec, err := executor.New("test",
 		executor.WithSchedule(cronString),
 		executor.WithLocation(time.Local),
 		executor.WithRunners(executor.Runnable(func(ctx context.Context) error {
-			<-time.After(1100 * time.Millisecond)
+			<-time.After(100 * time.Millisecond)
 
 			return testErr
 		})),
@@ -176,6 +179,9 @@ func TestNonBlocking(t *testing.T) {
 	sel, err := selector.New(
 		selector.WithExecutors(exec),
 		selector.WithLogHandler(h),
+		selector.WithMetrics(metrics.NoOp()),
+		selector.WithTrace(noop.NewTracerProvider().Tracer("test")),
+		selector.WithTimeout(70*time.Millisecond),
 	)
 	is.Empty(t, err)
 
