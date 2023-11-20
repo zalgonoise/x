@@ -45,7 +45,7 @@ func TestCron(t *testing.T) {
 	cronString := "* * * * * *"
 	twoMinEven := "0/2 * * * * *"
 	twoMinOdd := "1/2 * * * * *"
-	defaultDur := 1100 * time.Millisecond
+	defaultDur := 1005 * time.Millisecond
 
 	for _, testcase := range []struct {
 		name    string
