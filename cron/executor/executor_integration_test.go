@@ -82,7 +82,7 @@ func TestExecutor(t *testing.T) {
 	runnable := testRunnable(values, 4)
 
 	cron := "* * * * * *"
-	defaultDur := 1300 * time.Millisecond
+	defaultDur := 1010 * time.Millisecond
 
 	for _, testcase := range []struct {
 		name    string
