@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/zalgonoise/x/cron/log"
 	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/cron/schedule/cronlex"
+	"github.com/zalgonoise/x/cron/schedule/resolve"
 	"github.com/zalgonoise/x/is"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -167,6 +169,19 @@ func TestConfig(t *testing.T) {
 }
 
 func TestSchedulerWithLogs(t *testing.T) {
+	h := slog.NewJSONHandler(io.Discard, nil)
+	s := CronSchedule{
+		Loc: time.Local,
+		Schedule: cronlex.Schedule{
+			Sec:      resolve.Everytime{},
+			Min:      resolve.Everytime{},
+			Hour:     resolve.Everytime{},
+			DayMonth: resolve.Everytime{},
+			Month:    resolve.Everytime{},
+			DayWeek:  resolve.Everytime{},
+		},
+	}
+
 	for _, testcase := range []struct {
 		name           string
 		s              Scheduler
@@ -179,39 +194,58 @@ func TestSchedulerWithLogs(t *testing.T) {
 			wants: noOpScheduler{},
 		},
 		{
+			name:  "NoOpScheduler",
+			s:     noOpScheduler{},
+			wants: noOpScheduler{},
+		},
+		{
 			name: "NilHandler",
-			s:    noOpScheduler{},
+			s:    s,
 			wants: withLogs{
-				s: noOpScheduler{},
+				s: s,
 			},
 			defaultHandler: true,
 		},
 		{
 			name:    "WithHandler",
-			s:       noOpScheduler{},
+			s:       s,
+			handler: h,
+			wants: withLogs{
+				s:      s,
+				logger: slog.New(h),
+			},
+		},
+		{
+			name:    "NoOpHandler",
+			s:       s,
 			handler: log.NoOp(),
 			wants: withLogs{
-				s:      noOpScheduler{},
-				logger: slog.New(log.NoOp()),
+				s: s,
 			},
+			defaultHandler: true,
 		},
 		{
 			name: "ReplaceHandler",
 			s: withLogs{
-				s: noOpScheduler{},
+				s: s,
 			},
-			handler: log.NoOp(),
+			handler: h,
 			wants: withLogs{
-				s:      noOpScheduler{},
-				logger: slog.New(log.NoOp()),
+				s:      s,
+				logger: slog.New(h),
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := schedulerWithLogs(testcase.s, testcase.handler)
+			s := AddLogs(testcase.s, testcase.handler)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = s.Next(ctx, time.Time{})
 
 			switch sched := s.(type) {
-			case noOpScheduler:
+			case CronSchedule, noOpScheduler:
 				is.Equal(t, testcase.wants, s)
 			case withLogs:
 				wants, ok := testcase.wants.(withLogs)
@@ -230,7 +264,24 @@ func TestSchedulerWithLogs(t *testing.T) {
 	}
 }
 
+type testMetrics struct{}
+
+func (testMetrics) IncSchedulerNextCalls() {}
+
 func TestSchedulerWithMetrics(t *testing.T) {
+	m := testMetrics{}
+	s := CronSchedule{
+		Loc: time.Local,
+		Schedule: cronlex.Schedule{
+			Sec:      resolve.Everytime{},
+			Min:      resolve.Everytime{},
+			Hour:     resolve.Everytime{},
+			DayMonth: resolve.Everytime{},
+			Month:    resolve.Everytime{},
+			DayWeek:  resolve.Everytime{},
+		},
+	}
+
 	for _, testcase := range []struct {
 		name  string
 		s     Scheduler
@@ -242,33 +293,49 @@ func TestSchedulerWithMetrics(t *testing.T) {
 			wants: noOpScheduler{},
 		},
 		{
-			name:  "NilMetrics",
+			name:  "NoOpScheduler",
 			s:     noOpScheduler{},
 			wants: noOpScheduler{},
 		},
 		{
+			name:  "NilMetrics",
+			s:     s,
+			wants: s,
+		},
+		{
 			name: "WithMetrics",
-			s:    noOpScheduler{},
-			m:    metrics.NoOp(),
+			s:    s,
+			m:    m,
 			wants: withMetrics{
-				s: noOpScheduler{},
-				m: metrics.NoOp(),
+				s: s,
+				m: m,
 			},
+		},
+		{
+			name:  "NoOpMetrics",
+			s:     s,
+			m:     metrics.NoOp(),
+			wants: s,
 		},
 		{
 			name: "ReplaceMetrics",
 			s: withMetrics{
-				s: noOpScheduler{},
+				s: s,
 			},
-			m: metrics.NoOp(),
+			m: m,
 			wants: withMetrics{
-				s: noOpScheduler{},
-				m: metrics.NoOp(),
+				s: s,
+				m: m,
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := schedulerWithMetrics(testcase.s, testcase.m)
+			s := AddMetrics(testcase.s, testcase.m)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = s.Next(ctx, time.Time{})
 
 			switch sched := s.(type) {
 			case noOpScheduler:
@@ -284,6 +351,18 @@ func TestSchedulerWithMetrics(t *testing.T) {
 }
 
 func TestSchedulerWithTrace(t *testing.T) {
+	s := CronSchedule{
+		Loc: time.Local,
+		Schedule: cronlex.Schedule{
+			Sec:      resolve.Everytime{},
+			Min:      resolve.Everytime{},
+			Hour:     resolve.Everytime{},
+			DayMonth: resolve.Everytime{},
+			Month:    resolve.Everytime{},
+			DayWeek:  resolve.Everytime{},
+		},
+	}
+
 	for _, testcase := range []struct {
 		name   string
 		s      Scheduler
@@ -295,33 +374,43 @@ func TestSchedulerWithTrace(t *testing.T) {
 			wants: noOpScheduler{},
 		},
 		{
-			name:  "NilTracer",
+			name:  "NoOpScheduler",
 			s:     noOpScheduler{},
 			wants: noOpScheduler{},
 		},
 		{
+			name:  "NilTracer",
+			s:     s,
+			wants: s,
+		},
+		{
 			name:   "WithTracer",
-			s:      noOpScheduler{},
+			s:      s,
 			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
-				s:      noOpScheduler{},
+				s:      s,
 				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 		{
 			name: "ReplaceTracer",
 			s: withTrace{
-				s: noOpScheduler{},
+				s: s,
 			},
 			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
-				s:      noOpScheduler{},
+				s:      s,
 				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			s := schedulerWithTrace(testcase.s, testcase.tracer)
+			s := AddTraces(testcase.s, testcase.tracer)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = s.Next(ctx, time.Time{})
 
 			switch sched := s.(type) {
 			case noOpScheduler:
