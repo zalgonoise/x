@@ -6,7 +6,9 @@ import (
 	"github.com/zalgonoise/x/cron/metrics"
 )
 
+// Metrics describes the actions that register Runtime-related metrics.
 type Metrics interface {
+	// IsUp signals whether the Runtime is running or not.
 	IsUp(bool)
 }
 
