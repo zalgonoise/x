@@ -152,3 +152,48 @@ func TestSelector(t *testing.T) {
 		})
 	}
 }
+
+func TestNonBlocking(t *testing.T) {
+	cronString := "* * * * * *"
+	h := slog.NewJSONHandler(os.Stderr, nil)
+	testErr := errors.New("test error")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	exec, err := executor.New("test",
+		executor.WithSchedule(cronString),
+		executor.WithLocation(time.Local),
+		executor.WithRunners(executor.Runnable(func(ctx context.Context) error {
+			<-time.After(1100 * time.Millisecond)
+
+			return testErr
+		})),
+		executor.WithLogHandler(h),
+	)
+	is.Empty(t, err)
+
+	sel, err := selector.New(
+		selector.WithExecutors(exec),
+		selector.WithLogHandler(h),
+	)
+	is.Empty(t, err)
+
+	errCh := make(chan error)
+
+	go func() {
+		errCh <- sel.Next(ctx)
+	}()
+
+	select {
+	case <-ctx.Done():
+		t.Error("context timeout with no error return")
+
+		return
+	case err = <-errCh:
+		// error must be empty on this channel, but should be logged from the goroutine shortly after
+		is.Empty(t, err)
+	}
+
+	<-ctx.Done()
+}
