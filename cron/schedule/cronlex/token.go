@@ -1,5 +1,6 @@
 package cronlex
 
+// Token represents a unique type to mark lexemes in groups.
 type Token uint8
 
 const (
@@ -26,6 +27,7 @@ var tokenStrings = [...]string{
 	"TokenSpace",
 }
 
+// String implements the fmt.Stringer interface.
 func (t Token) String() string {
 	return tokenStrings[t]
 }
