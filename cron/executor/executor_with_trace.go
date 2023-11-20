@@ -14,6 +14,11 @@ type withTrace struct {
 	tracer trace.Tracer
 }
 
+// Exec runs the task when on its scheduled time.
+//
+// For this, Exec leverages the Executor's underlying schedule.Scheduler to retrieve the job's next execution time,
+// waits for it, and calls Runner.Run on each configured Runner. All raised errors are joined and returned at the end
+// of this call.
 func (e withTrace) Exec(ctx context.Context) error {
 	ctx, span := e.tracer.Start(ctx, "Executor.Exec")
 	defer span.End()
@@ -29,6 +34,7 @@ func (e withTrace) Exec(ctx context.Context) error {
 	return err
 }
 
+// Next calls the Executor's underlying schedule.Scheduler Next method.
 func (e withTrace) Next(ctx context.Context) time.Time {
 	ctx, span := e.tracer.Start(ctx, "Executor.Next")
 	defer span.End()
@@ -43,13 +49,23 @@ func (e withTrace) Next(ctx context.Context) time.Time {
 	return next
 }
 
+// ID returns this Executor's ID.
 func (e withTrace) ID() string {
 	return e.e.ID()
 }
 
-func executorWithTrace(e Executor, tracer trace.Tracer) Executor {
-	if e == nil {
-		return noOpExecutor{}
+// AddTraces decorates the input Executor with tracing, using the input trace.Tracer.
+//
+// If the input Executor is nil or a no-op Executor, a no-op Executor is returned. If the input trace.Tracer is nil,
+// then the input Executor is returned as-is.
+//
+// If the input Executor is already a Executor with tracing, then this Executor with tracing is returned with the new
+// trace.Tracer configured in place of the former.
+//
+// Otherwise, the Executor is decorated with tracing within a custom type that implements Executor.
+func AddTraces(e Executor, tracer trace.Tracer) Executor {
+	if e == nil || e == NoOp() {
+		return NoOp()
 	}
 
 	if tracer == nil {
