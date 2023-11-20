@@ -53,6 +53,37 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "WithBlock",
+			opts: []cfg.Option[Config]{
+				WithBlock(),
+			},
+		},
+		{
+			name: "WithTimeout/Negative",
+			opts: []cfg.Option[Config]{
+				WithTimeout(-3),
+			},
+		},
+		{
+			name: "WithTimeout/Zero",
+			opts: []cfg.Option[Config]{
+				WithTimeout(0),
+			},
+		},
+		{
+			name: "WithTimeout/BelowMin",
+			opts: []cfg.Option[Config]{
+				WithTimeout(30 * time.Millisecond),
+			},
+		},
+
+		{
+			name: "WithTimeout/OK",
+			opts: []cfg.Option[Config]{
+				WithTimeout(100 * time.Millisecond),
+			},
+		},
+		{
 			name: "WithMetrics/NilMetrics",
 			opts: []cfg.Option[Config]{
 				WithMetrics(nil),
