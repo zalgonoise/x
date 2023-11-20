@@ -2,6 +2,7 @@ package selector
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cron/executor"
@@ -9,8 +10,9 @@ import (
 )
 
 type Config struct {
-	exec  []executor.Executor
-	block bool
+	exec    []executor.Executor
+	block   bool
+	timeout time.Duration
 
 	handler slog.Handler
 	metrics Metrics
@@ -58,6 +60,23 @@ func WithExecutors(executors ...executor.Executor) cfg.Option[Config] {
 func WithBlock() cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.block = true
+
+		return config
+	})
+}
+
+// WithTimeout configures a (non-blocking) Selector to wait a certain duration before detaching of the executable task,
+// before continuing to select the next one.
+//
+// By default, the local context timeout is set to one second. Any negative or zero duration values result in a cfg.NoOp
+// cfg.Option being returned.
+func WithTimeout(dur time.Duration) cfg.Option[Config] {
+	if dur <= 0 {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register(func(config Config) Config {
+		config.timeout = dur
 
 		return config
 	})
