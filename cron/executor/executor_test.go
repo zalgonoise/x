@@ -3,6 +3,7 @@ package executor
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"testing"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cron/log"
 	"github.com/zalgonoise/x/cron/metrics"
+	"github.com/zalgonoise/x/cron/schedule"
 	"github.com/zalgonoise/x/cron/schedule/cronlex"
 	"github.com/zalgonoise/x/is"
 	"go.opentelemetry.io/otel/trace"
@@ -34,6 +36,12 @@ func TestConfig(t *testing.T) {
 			name: "WithRunners/NoRunners",
 			opts: []cfg.Option[Config]{
 				WithRunners(),
+			},
+		},
+		{
+			name: "WithRunners/NilRunner",
+			opts: []cfg.Option[Config]{
+				WithRunners(nil),
 			},
 		},
 		{
@@ -141,6 +149,18 @@ func TestConfig(t *testing.T) {
 }
 
 func TestExecutorWithLogs(t *testing.T) {
+	h := slog.NewJSONHandler(io.Discard, nil)
+	s, err := schedule.New(schedule.WithSchedule("* * * * * *"))
+	is.Empty(t, err)
+
+	e := &Executable{
+		id:   "test",
+		cron: s,
+		runners: []Runner{Runnable(func(ctx context.Context) error {
+			return ctx.Err()
+		})},
+	}
+
 	for _, testcase := range []struct {
 		name           string
 		e              Executor
@@ -153,39 +173,60 @@ func TestExecutorWithLogs(t *testing.T) {
 			wants: noOpExecutor{},
 		},
 		{
+			name:  "NoOpExecutor",
+			e:     noOpExecutor{},
+			wants: noOpExecutor{},
+		},
+		{
 			name: "NilHandler",
-			e:    noOpExecutor{},
+			e:    e,
 			wants: withLogs{
-				e: noOpExecutor{},
+				e: e,
 			},
 			defaultHandler: true,
 		},
 		{
 			name:    "WithHandler",
-			e:       noOpExecutor{},
+			e:       e,
+			handler: h,
+			wants: withLogs{
+				e:      e,
+				logger: slog.New(h),
+			},
+		},
+		{
+			name:    "WithNoOpHandler",
+			e:       e,
 			handler: log.NoOp(),
 			wants: withLogs{
-				e:      noOpExecutor{},
-				logger: slog.New(log.NoOp()),
+				e: e,
 			},
+			defaultHandler: true,
 		},
 		{
 			name: "ReplaceHandler",
 			e: withLogs{
-				e: noOpExecutor{},
+				e: e,
 			},
-			handler: log.NoOp(),
+			handler: h,
 			wants: withLogs{
-				e:      noOpExecutor{},
-				logger: slog.New(log.NoOp()),
+				e:      e,
+				logger: slog.New(h),
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			e := executorWithLogs(testcase.e, testcase.handler)
+			e := AddLogs(testcase.e, testcase.handler)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = e.ID()
+			_ = e.Next(ctx)
+			_ = e.Exec(ctx)
 
 			switch exec := e.(type) {
-			case noOpExecutor:
+			case noOpExecutor, Executable:
 				is.Equal(t, testcase.wants, e)
 			case withLogs:
 				wants, ok := testcase.wants.(withLogs)
@@ -205,7 +246,26 @@ func TestExecutorWithLogs(t *testing.T) {
 	}
 }
 
+type testMetrics struct{}
+
+func (testMetrics) IncExecutorExecCalls(string)                               {}
+func (testMetrics) IncExecutorExecErrors(string)                              {}
+func (testMetrics) ObserveExecLatency(context.Context, string, time.Duration) {}
+func (testMetrics) IncExecutorNextCalls(string)                               {}
+
 func TestExecutorWithMetrics(t *testing.T) {
+	m := testMetrics{}
+	s, err := schedule.New(schedule.WithSchedule("* * * * * *"))
+	is.Empty(t, err)
+
+	e := &Executable{
+		id:   "test",
+		cron: s,
+		runners: []Runner{Runnable(func(ctx context.Context) error {
+			return ctx.Err()
+		})},
+	}
+
 	for _, testcase := range []struct {
 		name  string
 		e     Executor
@@ -217,33 +277,51 @@ func TestExecutorWithMetrics(t *testing.T) {
 			wants: noOpExecutor{},
 		},
 		{
-			name:  "NilMetrics",
+			name:  "NoOpExecutor",
 			e:     noOpExecutor{},
 			wants: noOpExecutor{},
 		},
 		{
+			name:  "NilMetrics",
+			e:     e,
+			wants: e,
+		},
+		{
 			name: "WithMetrics",
-			e:    noOpExecutor{},
-			m:    metrics.NoOp(),
+			e:    e,
+			m:    m,
 			wants: withMetrics{
-				e: noOpExecutor{},
-				m: metrics.NoOp(),
+				e: e,
+				m: m,
 			},
+		},
+		{
+			name:  "NoOpMetrics",
+			e:     e,
+			m:     metrics.NoOp(),
+			wants: e,
 		},
 		{
 			name: "ReplaceMetrics",
 			e: withMetrics{
-				e: noOpExecutor{},
+				e: e,
 			},
-			m: metrics.NoOp(),
+			m: m,
 			wants: withMetrics{
-				e: noOpExecutor{},
-				m: metrics.NoOp(),
+				e: e,
+				m: m,
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			e := executorWithMetrics(testcase.e, testcase.m)
+			e := AddMetrics(testcase.e, testcase.m)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = e.ID()
+			_ = e.Next(ctx)
+			_ = e.Exec(ctx)
 
 			switch sched := e.(type) {
 			case noOpExecutor:
@@ -259,6 +337,17 @@ func TestExecutorWithMetrics(t *testing.T) {
 }
 
 func TestExecutorWithTrace(t *testing.T) {
+	s, err := schedule.New(schedule.WithSchedule("* * * * * *"))
+	is.Empty(t, err)
+
+	e := &Executable{
+		id:   "test",
+		cron: s,
+		runners: []Runner{Runnable(func(ctx context.Context) error {
+			return ctx.Err()
+		})},
+	}
+
 	for _, testcase := range []struct {
 		name   string
 		e      Executor
@@ -270,33 +359,45 @@ func TestExecutorWithTrace(t *testing.T) {
 			wants: noOpExecutor{},
 		},
 		{
-			name:  "NilTracer",
+			name:  "NoOpExecutor",
 			e:     noOpExecutor{},
 			wants: noOpExecutor{},
 		},
 		{
+			name:  "NilTracer",
+			e:     e,
+			wants: e,
+		},
+		{
 			name:   "WithTracer",
-			e:      noOpExecutor{},
+			e:      e,
 			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
-				e:      noOpExecutor{},
+				e:      e,
 				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 		{
 			name: "ReplaceTracer",
 			e: withTrace{
-				e: noOpExecutor{},
+				e: e,
 			},
 			tracer: noop.NewTracerProvider().Tracer("test"),
 			wants: withTrace{
-				e:      noOpExecutor{},
+				e:      e,
 				tracer: noop.NewTracerProvider().Tracer("test"),
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			e := executorWithTrace(testcase.e, testcase.tracer)
+			e := AddTraces(testcase.e, testcase.tracer)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+			defer cancel()
+
+			_ = e.ID()
+			_ = e.Next(ctx)
+			_ = e.Exec(ctx)
 
 			switch sched := e.(type) {
 			case noOpExecutor:
