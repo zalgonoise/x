@@ -6,8 +6,11 @@ import (
 	"github.com/zalgonoise/x/cron/metrics"
 )
 
+// Metrics describes the actions that register Selector-related metrics.
 type Metrics interface {
+	// IncSelectorSelectCalls increases the count of Select calls, by the Selector.
 	IncSelectorSelectCalls()
+	// IncSelectorSelectErrors increases the count of Select call errors, by the Selector.
 	IncSelectorSelectErrors()
 }
 
