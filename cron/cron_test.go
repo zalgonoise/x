@@ -295,6 +295,11 @@ func TestRuntimeWithTrace(t *testing.T) {
 			wants: noOpRuntime{},
 		},
 		{
+			name:  "NoOpRuntime",
+			r:     noOpRuntime{},
+			wants: noOpRuntime{},
+		},
+		{
 			name:  "NilTracer",
 			r:     r,
 			wants: r,
