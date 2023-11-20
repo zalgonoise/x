@@ -100,12 +100,12 @@ is provided when calling [`Runtime.Run`](./cron.go#L60) -- which can impose a ca
 Just like the simple example above, creating a cron runtime starts with the 
 [`cron.New` constructor function](./cron.go#L86).
 
-This function only has [a variadic parameter for `cfg.Option[cron.Config]`](./cron.go#L49). This allows full modularity
+This function only has [a variadic parameter for `cfg.Option[cron.Config]`](./cron.go#L86). This allows full modularity
 on the way you build your cron runtime, to be as simple or as detailed as you want it to be -- provided that it complies 
 with the minimum requirements to create one; to supply either:
-- a [`selector.Selector`](./selector/selector.go#L27) 
-- or, a (set of) [`executor.Runner`](./executor/executor.go#L31). This can be supplied as 
-[`executor.Runnable`](./executor/executor.go#L35) as well.
+- a [`selector.Selector`](./selector/selector.go#L36) 
+- or, a (set of) [`executor.Runner`](./executor/executor.go#L40). This can be supplied as 
+[`executor.Runnable`](./executor/executor.go#L53) as well.
 
 ```go
 func New(options ...cfg.Option[Config]) (Runtime, error)
@@ -115,34 +115,94 @@ Below is a table with all the options available for creating a cron runtime:
 
 |                   Function                    |                                       Input Parameters                                       |                                                                                               Description                                                                                               |
 |:---------------------------------------------:|:--------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|    [`WithSelector`](./cron_config.go#L31)     |                    [`sel selector.Selector`](./selector/selector.go#L27)                     |                                               Configures the [`Runtime`](./cron.go#L33) with the input [`selector.Selector`](./selector/selector.go#L27).                                               |
-|       [`WithJob`](./cron_config.go#L53)       | `id string`, `cronString string`, [`runners ...executor.Runner`](./executor/executor.go#L31) | Adds a new [`executor.Executor`](./executor/executor.go#L45) to the [`Runtime`](./cron.go#L33) configuration from the input ID, cron string and set of [`executor.Runner`](./executor/executor.go#L31). |
+|    [`WithSelector`](./cron_config.go#L31)     |                    [`sel selector.Selector`](./selector/selector.go#L36)                     |                                               Configures the [`Runtime`](./cron.go#L33) with the input [`selector.Selector`](./selector/selector.go#L36).                                               |
+|       [`WithJob`](./cron_config.go#L53)       | `id string`, `cronString string`, [`runners ...executor.Runner`](./executor/executor.go#L40) | Adds a new [`executor.Executor`](./executor/executor.go#L84) to the [`Runtime`](./cron.go#L33) configuration from the input ID, cron string and set of [`executor.Runner`](./executor/executor.go#L40). |
 | [`WithErrorBufferSize`](./cron_config.go#L83) |                                          `size int`                                          |                                   Defines the capacity of the error channel that the [`Runtime`](./cron.go#L33) exposes in its [`Runtime.Err`](./cron.go#L77) method.                                   |
-|     [`WithMetrics`](./cron_config.go#L96)     |                        [`m cron.Metrics`](./cron_with_metrics.go#L5)                         |                                                                Decorates the [`Runtime`](./cron.go#L33) with the input metrics registry.                                                                |
+|     [`WithMetrics`](./cron_config.go#L96)     |                        [`m cron.Metrics`](./cron_with_metrics.go#L10)                        |                                                                Decorates the [`Runtime`](./cron.go#L33) with the input metrics registry.                                                                |
 |     [`WithLogger`](./cron_config.go#L109)     |                 [`logger *slog.Logger`](https://pkg.go.dev/log/slog#Logger)                  |                                                                     Decorates the [`Runtime`](./cron.go#L33) with the input logger.                                                                     |
-|   [`WithLogHandler`](./cron_config.go#L122)   |                [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)                 |                                                                     Decorates the Runtime with logging using the input log handler.                                                                     |
-|     [`WithTrace`](./cron_config.go#L135)      |      [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer)       |                                                                           Decorates the Runtime with the input trace.Tracer.                                                                            |
+|   [`WithLogHandler`](./cron_config.go#L122)   |                [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)                 |                                                           Decorates the [`Runtime`](./cron.go#L33) with logging using the input log handler.                                                            |
+|     [`WithTrace`](./cron_config.go#L135)      |      [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer)       |                                                                  Decorates the [`Runtime`](./cron.go#L33) with the input trace.Tracer.                                                                  |
 
-The simplest possible cron runtime could be the result of a call to `cron.New` with a single `cron.WithJob` option. This
-creates all the components that a cron runtime needs with the most minimal setup. It creates the underlying selector and 
-executors.
+The simplest possible cron runtime could be the result of a call to [`cron.New`](./cron.go#L86) with a single 
+[`cron.WithJob`](./cron_config.go#L53) option. This creates all the components that a cron runtime needs with the most
+minimal setup. It creates the underlying selector and executors.
 
 Otherwise, the caller must use the [`WithSelector`](./cron_config.go#L31) option, and configure a 
-[`selector.Selector`](./selector/selector.go#L27) manually when doing so. This results in more _boilerplate_ to get the
+[`selector.Selector`](./selector/selector.go#L36) manually when doing so. This results in more _boilerplate_ to get the
 runtime set up, but provides deeper control on how the cron should be composed. The next chapter covers what is a
-[`selector.Selector`](./selector/selector.go#L27) and how to create one.
+[`selector.Selector`](./selector/selector.go#L36) and how to create one.
 
 _______
 
 #### Cron Selector
 
-_TBD_
+This component is responsible for picking up the next job to execute, according to their schedule frequency. For this, 
+the [`Selector`](./selector/selector.go#L36) is configured with a set of 
+[`executor.Executor`](./executor/executor.go#L84), which in turn will expose a 
+[`Next` method](./executor/executor.go#L92). With this information, the [`Selector`](./selector/selector.go#L36) cycles 
+through its [`executor.Executor`](./executor/executor.go#L84) and picks up the next task(s) to run.
+
+While the [`Selector`](./selector/selector.go#L36) calls the 
+[`executor.Executor`'s `Exec` method](./executor/executor.go#L90), the actual waiting is within the
+[`executor.Executor`'s](./executor/executor.go#L84) logic.
+
+You're able to create a [`Selector`](./selector/selector.go#L36) through 
+[its constructor function](./selector/selector.go#L115):
+
+```go
+func New(options ...cfg.Option[Config]) (Selector, error)
+```
+
+
+Below is a table with all the options available for creating a cron job selector:
+
+
+|                       Function                        |                                 Input Parameters                                  |                                                         Description                                                          |
+|:-----------------------------------------------------:|:---------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------:|
+| [`WithExecutors`](./selector/selector_config.go#L23)  |          [`executors ...executor.Executor`](./executor/executor.go#L84)           | Configures the [`Selector`](./selector/selector.go#L36) with the input [`executor.Executor`(s)](./executor/executor.go#L84). |
+|  [`WithMetrics`](./selector/selector_config.go#L51)   |          [`m selector.Metrics`](./selector/selector_with_metrics.go#L10)          |                   Decorates the [`Selector`](./selector/selector.go#L36) with the input metrics registry.                    |
+|   [`WithLogger`](./selector/selector_config.go#L64)   |            [`logger *slog.Logger`](https://pkg.go.dev/log/slog#Logger)            |                        Decorates the [`Selector`](./selector/selector.go#L36) with the input logger.                         |
+| [`WithLogHandler`](./selector/selector_config.go#L77) |           [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)           |               Decorates the [`Selector`](./selector/selector.go#L36) with logging using the input log handler.               |
+|   [`WithTrace`](./selector/selector_config.go#L90)    | [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) |                     Decorates the [`Selector`](./selector/selector.go#L36) with the input trace.Tracer.                      |
 
 _______
 
 #### Cron Executor
 
-_TBD_
+Like the name implies, the [`Executor`](./executor/executor.go#L84) is the component that actually executes the job, on 
+its next scheduled time.
+
+The [`Executor`](./executor/executor.go#L84) is composed of a [cron schedule](#cron-schedule) and a (set of) 
+[`Runner`(s)](./executor/executor.go#L40). Also, the [`Executor`](./executor/executor.go#L84) stores an ID that is used 
+to identify this particular job.
+
+Having these 3 components in mind, it's natural that the [`Executor`](./executor/executor.go#L84) exposes three methods:
+- [`Exec`](./executor/executor.go#L90) - runs the task when on its scheduled time.
+- [`Next`](./executor/executor.go#L92) - calls the underlying 
+[`schedule.Scheduler` Next method](./schedule/scheduler.go#L26).
+- [`ID`](./executor/executor.go#L94) - returns the ID.
+
+Considering that the [`Executor`](./executor/executor.go#L84) holds a specific 
+[`schedule.Scheduler`](./schedule/scheduler.go#L24), it is also responsible for managing any waiting time before the 
+job is executed. The strategy employed by the [`Executable`](./executor/executor.go#L99) type is one that calculates the
+duration until the next job, and sleeps until that time is reached (instead of, for example, calling the
+[`schedule.Scheduler` Next method](./schedule/scheduler.go#L26) every second).
+
+
+To create an [`Executor`](./executor/executor.go#L84), you can use the [`New`](./executor/executor.go#L160) function 
+that serves as a constructor. Note that the minimum requirements to creating an [`Executor`](./executor/executor.go#L84)
+are to include both a [`schedule.Scheduler`](./schedule/scheduler.go#L24) with the 
+[`WithScheduler`](./executor/executor_config.go#L60) option (or a cron string, using the 
+[`WithSchedule`](./executor/executor_config.go#L77) option), 
+and at least one [`Runner`](./executor/executor.go#L40) with the [`WithRunners`](./executor/executor_config.go#L28) 
+option.
+
+The [`Runner`](./executor/executor.go#L40) itself is an interface with a single method 
+([`Run`](./executor/executor.go#L47)), that takes in a `context.Context` and returns an error. If your implementation is
+so simple that you have it as a function and don't need to create a type for this 
+[`Runner`](./executor/executor.go#L40), then you can use the [`Runnable` type](./executor/executor.go#L53) instead, 
+which is a type alias to a function of the same signature, but implements [`Runner`](./executor/executor.go#L40) by 
+calling itself as a function, in its `Run` method.
 
 _______
 
