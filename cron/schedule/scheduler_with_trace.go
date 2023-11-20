@@ -13,6 +13,7 @@ type withTrace struct {
 	tracer trace.Tracer
 }
 
+// Next calculates and returns the following scheduled time, from the input time.Time.
 func (s withTrace) Next(ctx context.Context, now time.Time) time.Time {
 	ctx, span := s.tracer.Start(ctx, "Scheduler.Next")
 	defer span.End()
@@ -24,9 +25,18 @@ func (s withTrace) Next(ctx context.Context, now time.Time) time.Time {
 	return next
 }
 
-func schedulerWithTrace(s Scheduler, tracer trace.Tracer) Scheduler {
-	if s == nil {
-		return noOpScheduler{}
+// AddTraces decorates the input Scheduler with tracing, using the input trace.Tracer.
+//
+// If the input Scheduler is nil or a no-op Scheduler, a no-op Scheduler is returned. If the input trace.Tracer is nil,
+// then the input Scheduler is returned as-is.
+//
+// If the input Scheduler is already a Scheduler with tracing, then this Scheduler with tracing is returned with the new
+// trace.Tracer configured in place of the former.
+//
+// Otherwise, the Scheduler is decorated with tracing within a custom type that implements Scheduler.
+func AddTraces(s Scheduler, tracer trace.Tracer) Scheduler {
+	if s == nil || s == NoOp() {
+		return NoOp()
 	}
 
 	if tracer == nil {
