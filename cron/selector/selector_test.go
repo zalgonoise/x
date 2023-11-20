@@ -40,6 +40,12 @@ func TestConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "WithExecutors/NilExecutor",
+			opts: []cfg.Option[Config]{
+				WithExecutors(nil),
+			},
+		},
+		{
 			name: "WithExecutors/MultipleCalls",
 			opts: []cfg.Option[Config]{
 				WithExecutors(exec),
