@@ -12,6 +12,7 @@ import (
 
 const (
 	minStepDuration = 50 * time.Millisecond
+	defaultTimeout  = time.Second
 
 	errSelectorDomain = errs.Domain("x/cron/selector")
 
@@ -48,7 +49,8 @@ type Selector interface {
 }
 
 type selector struct {
-	exec []executor.Executor
+	timeout time.Duration
+	exec    []executor.Executor
 }
 
 // Next picks up the following scheduled job to execute from its configured (set of) executor.Executor, and
@@ -70,7 +72,7 @@ func (s selector) Next(ctx context.Context) error {
 		return ErrEmptyExecutorsList
 	}
 
-	localCtx, cancel := context.WithTimeout(ctx, time.Second)
+	localCtx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
 	errCh := make(chan error)
@@ -175,8 +177,13 @@ func newSelector(config Config) (Selector, error) {
 		}, nil
 	}
 
+	if config.timeout < minStepDuration {
+		config.timeout = defaultTimeout
+	}
+
 	return selector{
-		exec: config.exec,
+		timeout: config.timeout,
+		exec:    config.exec,
 	}, nil
 }
 
