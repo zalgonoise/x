@@ -38,9 +38,10 @@ func TestSelector(t *testing.T) {
 	runner2 := testRunner{v: 2, ch: values}
 
 	cron := "* * * * * *"
+	cron2 := "0-59 * * * * *"
 	twoMinEven := "0/2 * * * * *"
 	twoMinOdd := "1/2 * * * * *"
-	defaultDur := 2100 * time.Millisecond
+	defaultDur := 2010 * time.Millisecond
 
 	for _, testcase := range []struct {
 		name    string
@@ -74,6 +75,15 @@ func TestSelector(t *testing.T) {
 			},
 			dur:   defaultDur,
 			wants: []int{1, 1, 2},
+		},
+		{
+			name: "TwoExecsSameSchedule",
+			execMap: map[string][]executor.Runner{
+				cron:  {runner1},
+				cron2: {runner2},
+			},
+			dur:   defaultDur,
+			wants: []int{1, 1, 2, 2},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
