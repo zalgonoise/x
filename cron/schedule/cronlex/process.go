@@ -9,10 +9,26 @@ import (
 	"github.com/zalgonoise/x/cron/schedule/resolve"
 )
 
+// Resolver describes the capabilities of a cron schedule resolver.
+//
+// Implementations of Resolver should focus on calculating the difference until the
+// next scheduled value, on a per-unit basis. This means that for each configurable schedule element
+// (seconds, minutes, hours, etc.), an individual Resolver calculates the next occurrence for a given value.
+//
+// In the context of dates and timestamps, it enables to simply resolve the next occurrence's date as a difference
+// of the current time's units against the Resolver's configuration, and with that information to build the
+// timestamp for the next job execution, with a time.Date call, in the schedule.Scheduler component, that would sum the
+// current time to the values taken from the Resolver.
+//
+// Implementations of Resolver must ensure that their logic functions for all date elements of Schedule, provided that
+// the Resolver is used in that data structure.
 type Resolver interface {
+	// Resolve returns the distance to the next occurrence, as unit values.
 	Resolve(value int) int
 }
 
+// Schedule describes the structure of an (extended) cron schedule, which includes all basic cron schedule elements
+// (minutes, hours, day-of-the-month, month and weekdays), as well as support for seconds.
 type Schedule struct {
 	Sec      Resolver
 	Min      Resolver
@@ -22,6 +38,10 @@ type Schedule struct {
 	DayWeek  Resolver
 }
 
+// Parse consumes the input cron string and creates a Schedule from it, also returning an error if raised.
+//
+// Before parsing the string, this function validates that the cron string does not contain any illegal characters,
+// before actually scanning and processing it.
 func Parse(cronString string) (s Schedule, err error) {
 	if err = validateCharacters(cronString); err != nil {
 		return s, err
@@ -30,6 +50,11 @@ func Parse(cronString string) (s Schedule, err error) {
 	return parse.Run([]byte(cronString), StateFunc, ParseFunc, ProcessFunc)
 }
 
+// ProcessFunc is the third and last phase of the parser, which consumes a parse.Tree scoped to Token and byte,
+// returning the new Schedule and error if raised.
+//
+// This sequence will validate the nodes in the input parse.Tree, returning an error if raised. Then, depending on the
+// configured top-level nodes, it will process the tree in the correct, supported way to derive a Schedule out of it.
 func ProcessFunc(t *parse.Tree[Token, byte]) (s Schedule, err error) {
 	if err = Validate(t); err != nil {
 		return s, err
