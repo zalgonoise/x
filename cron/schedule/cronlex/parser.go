@@ -4,6 +4,17 @@ import (
 	"github.com/zalgonoise/parse"
 )
 
+// ParseFunc is the second and middle phase of the parser, which consumes a parse.Tree scoped to Token and byte,
+// in tandem with StateFunc, as a lexer-parser state-machine strategy.
+//
+// This function continuously consumes tokens emitted by the StateFunc lexer portion of the logic, and organizes them
+// in an abstract syntax tree. This AST is then processed into a Schedule through the ProcessFunc sequence, as a
+// parse.Run function call.
+//
+// The AST keeps a top-level node that branches into several nodes, representative of the number of top-level child
+// nodes in the cron string ("* * * * *" means there are 5 top-level child nodes; "@weekly" means there is 1 top-level
+// child node). If a given top-level child node contains more information than a single value (e.g. ranges, sets), then
+// the top-level child node will be the parent to more nodes containing any Token chained to that top-level child node.
 func ParseFunc(t *parse.Tree[Token, byte]) parse.ParseFn[Token, byte] {
 	switch t.Peek().Type {
 	case TokenAt:
