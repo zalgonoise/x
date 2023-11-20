@@ -66,13 +66,42 @@ func (s selector) Next(ctx context.Context) error {
 	// a runner is not executed more than once per trigger.
 	defer time.Sleep(minStepDuration)
 
-	switch len(s.exec) {
-	case 0:
+	if len(s.exec) == 0 {
 		return ErrEmptyExecutorsList
-	case 1:
-		return s.exec[0].Exec(ctx)
-	default:
-		return executor.Multi(ctx, s.next(ctx)...)
+	}
+
+	localCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	errCh := make(chan error)
+
+	go func() {
+		var err error
+
+		switch len(s.exec) {
+		case 1:
+			err = s.exec[0].Exec(ctx)
+		default:
+			err = executor.Multi(ctx, s.next(ctx)...)
+		}
+
+		select {
+		case <-localCtx.Done():
+			close(errCh)
+		default:
+			errCh <- err
+		}
+	}()
+
+	select {
+	case <-localCtx.Done():
+		return nil
+	case err, ok := <-errCh:
+		if !ok {
+			return nil
+		}
+
+		return err
 	}
 }
 
@@ -138,6 +167,12 @@ func New(options ...cfg.Option[Config]) (Selector, error) {
 func newSelector(config Config) (Selector, error) {
 	if len(config.exec) == 0 {
 		return noOpSelector{}, ErrEmptyExecutorsList
+	}
+
+	if config.block {
+		return blockingSelector{
+			exec: config.exec,
+		}, nil
 	}
 
 	return selector{
