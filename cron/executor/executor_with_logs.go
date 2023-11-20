@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"os"
 	"time"
+
+	"github.com/zalgonoise/x/cron/log"
 )
 
 type withLogs struct {
@@ -12,6 +14,11 @@ type withLogs struct {
 	logger *slog.Logger
 }
 
+// Exec runs the task when on its scheduled time.
+//
+// For this, Exec leverages the Executor's underlying schedule.Scheduler to retrieve the job's next execution time,
+// waits for it, and calls Runner.Run on each configured Runner. All raised errors are joined and returned at the end
+// of this call.
 func (e withLogs) Exec(ctx context.Context) error {
 	id := slog.String("id", e.e.ID())
 
@@ -25,6 +32,7 @@ func (e withLogs) Exec(ctx context.Context) error {
 	return err
 }
 
+// Next calls the Executor's underlying schedule.Scheduler Next method.
 func (e withLogs) Next(ctx context.Context) time.Time {
 	next := e.e.Next(ctx)
 
@@ -36,16 +44,26 @@ func (e withLogs) Next(ctx context.Context) time.Time {
 	return next
 }
 
+// ID returns this Executor's ID.
 func (e withLogs) ID() string {
 	return e.e.ID()
 }
 
-func executorWithLogs(e Executor, handler slog.Handler) Executor {
-	if e == nil {
-		return noOpExecutor{}
+// AddLogs decorates the input Executor with logging, using the input slog.Handler.
+//
+// If the input Executor is nil or a no-op Executor, a no-op Executor is returned. If the input slog.Handler is nil or a
+// no-op handler, then a default slog.Handler is configured (a text handler printing to standard-error)
+//
+// If the input Executor is already a logged Executor, then this logged Executor is returned with the new handler as its
+// logger's handler.
+//
+// Otherwise, the Executor is decorated with logging within a custom type that implements Executor.
+func AddLogs(e Executor, handler slog.Handler) Executor {
+	if e == nil || e == NoOp() {
+		return NoOp()
 	}
 
-	if handler == nil {
+	if handler == nil || handler == log.NoOp() {
 		handler = slog.NewTextHandler(os.Stderr, nil)
 	}
 
