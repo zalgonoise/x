@@ -88,7 +88,6 @@ func validateCharacters(s string) error {
 		return ErrEmptyInput
 	}
 
-	//s := strings.ToLower(cronString)
 	for i := range s {
 		if (s[i] >= 'a' && s[i] <= 'z') ||
 			(s[i] >= 'A' && s[i] <= 'Z') ||
@@ -107,6 +106,7 @@ func validateCharacters(s string) error {
 	return nil
 }
 
+// Validate scans the entire parse.Tree for inconsistencies or validation errors, returning them if raised.
 func Validate(t *parse.Tree[Token, byte]) error {
 	nodes := t.List()
 
