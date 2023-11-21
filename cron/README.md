@@ -157,14 +157,35 @@ func New(options ...cfg.Option[Config]) (Selector, error)
 Below is a table with all the options available for creating a cron job selector:
 
 
-|                       Function                        |                                 Input Parameters                                  |                                                         Description                                                          |
-|:-----------------------------------------------------:|:---------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------:|
-| [`WithExecutors`](./selector/selector_config.go#L23)  |          [`executors ...executor.Executor`](./executor/executor.go#L84)           | Configures the [`Selector`](./selector/selector.go#L36) with the input [`executor.Executor`(s)](./executor/executor.go#L84). |
-|  [`WithMetrics`](./selector/selector_config.go#L51)   |          [`m selector.Metrics`](./selector/selector_with_metrics.go#L10)          |                   Decorates the [`Selector`](./selector/selector.go#L36) with the input metrics registry.                    |
-|   [`WithLogger`](./selector/selector_config.go#L64)   |            [`logger *slog.Logger`](https://pkg.go.dev/log/slog#Logger)            |                        Decorates the [`Selector`](./selector/selector.go#L36) with the input logger.                         |
-| [`WithLogHandler`](./selector/selector_config.go#L77) |           [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)           |               Decorates the [`Selector`](./selector/selector.go#L36) with logging using the input log handler.               |
-|   [`WithTrace`](./selector/selector_config.go#L90)    | [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) |                     Decorates the [`Selector`](./selector/selector.go#L36) with the input trace.Tracer.                      |
+|                       Function                        |                                 Input Parameters                                  |                                                                                    Description                                                                                     |
+|:-----------------------------------------------------:|:---------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| [`WithExecutors`](./selector/selector_config.go#L23)  |          [`executors ...executor.Executor`](./executor/executor.go#L84)           |                            Configures the [`Selector`](./selector/selector.go#L36) with the input [`executor.Executor`(s)](./executor/executor.go#L84).                            |
+|   [`WithBlock`](./selector/selector_config.go#L23)    |                                                                                   |       Configures the [`Selector`](./selector/selector.go#L36) to block (wait) for the underlying [`executor.Executor`(s)](./executor/executor.go#L84) to complete the task.        |
+|  [`WithTimeout`](./selector/selector_config.go#L23)   |                                `dur time.Duration`                                | Configures a (non-blocking) [`Selector`](./selector/selector.go#L36) to wait a certain duration before detaching of the executable task, before continuing to select the next one. |
+|  [`WithMetrics`](./selector/selector_config.go#L51)   |          [`m selector.Metrics`](./selector/selector_with_metrics.go#L10)          |                                              Decorates the [`Selector`](./selector/selector.go#L36) with the input metrics registry.                                               |
+|   [`WithLogger`](./selector/selector_config.go#L64)   |            [`logger *slog.Logger`](https://pkg.go.dev/log/slog#Logger)            |                                                   Decorates the [`Selector`](./selector/selector.go#L36) with the input logger.                                                    |
+| [`WithLogHandler`](./selector/selector_config.go#L77) |           [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)           |                                          Decorates the [`Selector`](./selector/selector.go#L36) with logging using the input log handler.                                          |
+|   [`WithTrace`](./selector/selector_config.go#L90)    | [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) |                                                Decorates the [`Selector`](./selector/selector.go#L36) with the input trace.Tracer.                                                 |
 
+There is a catch to the [`Selector`](./selector/selector.go#L36), which is the actual job's execution time. While the 
+[`Selector`](./selector/selector.go#L36) cycles through its [`executor.Executor`](./executor/executor.go#L84) list, it 
+will execute the task while waiting for it to return with or without an error. This may cause issues when a given 
+running task takes too long to complete when there are other, very frequent tasks. If there is a situation where the 
+long-running task overlaps the execution time for another scheduled job, that job's execution is potentially skipped -- 
+as the next task would only be picked up and waited for once the long-running one exits.
+
+For this reason, there are two implementations of [`Selector`](./selector/selector.go#L36): 
+- A blocking one, that waits for every job to run and return an error, accurately returning the correct outcome in its
+`Next` call. This implementation is great for fast and snappy jobs, or less frequent / non-overlapping schedules and 
+executions. There is less resource overhead to it, and the error returns are fully accurate with the actual outcome.
+- A non-blocking one, that waits for a job to raise an error in a goroutine, with a set timeout (either set by the 
+caller or a default one). This implementation is great if the jobs are too frequent and / or the tasks too long, when it
+risks skipping executions due to stuck long-running tasks. It relies more heavily on having configured Observability at
+least on the [`executor.Executor`](./executor/executor.go#L84) level to underline those events (which get detached from 
+the [`Selector`](./selector/selector.go#L36) after timing out).
+
+It is important to have a good idea of how your cron jobs will execute and how often, or simply ensure that there is at 
+least logging enabled for the configured [`executor.Executor`(s)](./executor/executor.go#L84).
 _______
 
 #### Cron Executor
@@ -204,11 +225,81 @@ so simple that you have it as a function and don't need to create a type for thi
 which is a type alias to a function of the same signature, but implements [`Runner`](./executor/executor.go#L40) by 
 calling itself as a function, in its `Run` method.
 
+Creating an [`Executor`](./executor/executor.go#L84) is as easy as calling
+[its constructor function](./executor/executor.go#L160):
+
+```go
+func New(id string, options ...cfg.Option[Config]) (Executor, error)
+```
+
+
+Below is a table with all the options available for creating a cron job executor:
+
+
+
+|                        Function                        |                                 Input Parameters                                  |                                                                     Description                                                                     |
+|:------------------------------------------------------:|:---------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------------------:|
+|   [`WithRunners`](./executor/executor_config.go#L28)   |                 [`runners ...Runner`](./executor/executor.go#L40)                 |                  Configures the [`Executor`](./executor/executor.go#L84) with the input [`Runner`(s)](./executor/executor.go#L40).                  |
+|  [`WithScheduler`](./executor/executor_config.go#L60)  |             [`sched schedule.Scheduler`](./schedule/scheduler.go#L24)             |             Configures the [`Executor`](./executor/executor.go#L84) with the input [`schedule.Scheduler`](./schedule/scheduler.go#L24).             |
+|  [`WithSchedule`](./executor/executor_config.go#L77)   |                                `cronString string`                                |   Configures the [`Executor`](./executor/executor.go#L84) with a [`schedule.Scheduler`](./schedule/scheduler.go#L24) using the input cron string.   |
+|  [`WithLocation`](./executor/executor_config.go#L95)   |                               `loc *time.Location`                                | Configures the [`Executor`](./executor/executor.go#L84) with a [`schedule.Scheduler`](./schedule/scheduler.go#L24) using the input `time.Location`. |
+|  [`WithMetrics`](./executor/executor_config.go#L108)   |          [`m executor.Metrics`](./executor/executor_with_metrics.go#L11)          |                               Decorates the [`Executor`](./executor/executor.go#L84) with the input metrics registry.                               |
+|   [`WithLogger`](./executor/executor_config.go#L121)   |            [`logger *slog.Logger`](https://pkg.go.dev/log/slog#Logger)            |                                    Decorates the [`Executor`](./executor/executor.go#L84) with the input logger.                                    |
+| [`WithLogHandler`](./executor/executor_config.go#L134) |           [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)           |                          Decorates the [`Executor`](./executor/executor.go#L84) with logging using the input log handler.                           |
+|   [`WithTrace`](./executor/executor_config.go#L147)    | [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) |                                 Decorates the [`Executor`](./executor/executor.go#L84) with the input trace.Tracer.                                 |
+
+
 _______
 
-#### Cron Schedule
+#### Cron Scheduler
+
+The [`Scheduler`](./schedule/scheduler.go#L24) is responsible for keeping schedule state (for example, derived from a 
+cron string), and calculating the next job's execution time, with the context of the input timestamp. As such, the
+[`Scheduler` interface only exposes one method, `Next`](./schedule/scheduler.go#L26) which is responsible of making such 
+calculations.
+
+The default implementation of [`Scheduler`](./schedule/scheduler.go#L24), [`CronSchedule`](./schedule/scheduler.go#L32), 
+will be created from parsing a cron string, and is nothing but a data structure with a 
+[`cronlex.Schedule`](./schedule/cronlex/process.go#L32) bounded to a `time.Location`.
+
+While the [`CronSchedule`](./schedule/scheduler.go#L32) leverages different schedule elements with 
+[`cronlex.Resolver` interfaces](./schedule/cronlex/process.go#L25), the [`Scheduler`](./schedule/scheduler.go#L24) uses 
+these values as a difference from the input timestamp, to create a new date with a 
+[`time.Date()`](https://pkg.go.dev/time#Date) call. This call merely adds the difference until the next job to the 
+current time, on different elements of the timestamp, with added logic to calculate weekdays if set.
+
+Fortunately, Go's `time` package is super solid and allows date overflows, calculating them accordingly. This makes the 
+logic of the base implementation a total breeze, and simple enough to be pulled off as opposed to ticking every second, 
+checking for new jobs.
+
+You're able to create a [`Scheduler`](./schedule/scheduler.go#L24) by calling
+[its constructor function](./schedule/scheduler.go#L94), with the mandatory minimum of supplying a cron string through 
+its [`WithSchedule`](./schedule/scheduler_config.go#L23) option.
+
+```go
+func New(options ...cfg.Option[Config]) (Scheduler, error)
+```
+
+Below is a table with all the options available for creating a cron job scheduler:
+
+
+|                        Function                        |                                 Input Parameters                                  |                                            Description                                             |
+|:------------------------------------------------------:|:---------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------:|
+|  [`WithSchedule`](./schedule/scheduler_config.go#L23)  |                                `cronString string`                                |       Configures the [`Scheduler`](./schedule/scheduler.go#L24) with the input cron string.        |
+|  [`WithLocation`](./schedule/scheduler_config.go#L38)  |                               `loc *time.Location`                                |     Configures the [`Scheduler`](./schedule/scheduler.go#L24) with the input `time.Location`.      |
+|  [`WithMetrics`](./schedule/scheduler_config.go#L51)   |         [`m executor.Metrics`](./schedule/scheduler_with_metrics.go#L11)          |     Decorates the [`Scheduler`](./schedule/scheduler.go#L24) with the input metrics registry.      |
+|   [`WithLogger`](./schedule/scheduler_config.go#L64)   |            [`logger *slog.Logger`](https://pkg.go.dev/log/slog#Logger)            |          Decorates the [`Scheduler`](./schedule/scheduler.go#L24) with the input logger.           |
+| [`WithLogHandler`](./schedule/scheduler_config.go#L77) |           [`handler slog.Handler`](https://pkg.go.dev/log/slog#Handler)           | Decorates the [`Scheduler`](./schedule/scheduler.go#L24) with logging using the input log handler. |
+|   [`WithTrace`](./schedule/scheduler_config.go#L90)    | [`tracer trace.Tracer`](https://pkg.go.dev/go.opentelemetry.io/otel/trace#Tracer) |       Decorates the [`Scheduler`](./schedule/scheduler.go#L24) with the input trace.Tracer.        |
+
+
+
+_______
+
+##### Cron Schedule
 
 _TBD_
+
 
 _______
 
