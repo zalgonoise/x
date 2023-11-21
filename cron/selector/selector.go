@@ -98,11 +98,7 @@ func (s selector) Next(ctx context.Context) error {
 	select {
 	case <-localCtx.Done():
 		return nil
-	case err, ok := <-errCh:
-		if !ok {
-			return nil
-		}
-
+	case err := <-errCh:
 		return err
 	}
 }
