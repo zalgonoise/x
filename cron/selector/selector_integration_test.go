@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cron/executor"
 	"github.com/zalgonoise/x/cron/metrics"
 	"github.com/zalgonoise/x/cron/selector"
@@ -89,69 +90,82 @@ func TestSelector(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			results := make([]int, 0, len(testcase.wants))
-			execs := make([]executor.Executor, 0, len(testcase.execMap))
+			testFunc := func(t *testing.T, withBlock bool) {
+				results := make([]int, 0, len(testcase.wants))
+				execs := make([]executor.Executor, 0, len(testcase.execMap))
 
-			var n int
-			for cronString, runners := range testcase.execMap {
-				exec, err := executor.New(fmt.Sprintf("%d", n),
-					executor.WithSchedule(cronString),
-					executor.WithLocation(time.Local),
-					executor.WithRunners(runners...),
-					executor.WithLogHandler(h),
-				)
+				var n int
+				for cronString, runners := range testcase.execMap {
+					exec, err := executor.New(fmt.Sprintf("%d", n),
+						executor.WithSchedule(cronString),
+						executor.WithLocation(time.Local),
+						executor.WithRunners(runners...),
+						executor.WithLogHandler(h),
+					)
+					is.Empty(t, err)
+
+					execs = append(execs, exec)
+					n++
+				}
+
+				selectorOpts := []cfg.Option[selector.Config]{
+					selector.WithExecutors(execs...),
+					selector.WithLogHandler(h),
+				}
+
+				if withBlock {
+					selectorOpts = append(selectorOpts, selector.WithBlock())
+				}
+
+				sel, err := selector.New(selectorOpts...)
+
 				is.Empty(t, err)
 
-				execs = append(execs, exec)
-				n++
-			}
+				ctx, cancel := context.WithTimeout(context.Background(), testcase.dur)
 
-			sel, err := selector.New(
-				selector.WithExecutors(execs...),
-				selector.WithLogHandler(h),
-				selector.WithBlock(),
-			)
+				go func(t *testing.T, err error) {
+					defer cancel()
 
-			is.Empty(t, err)
+					for {
+						select {
+						case <-ctx.Done():
+							return
+						default:
+						}
 
-			ctx, cancel := context.WithTimeout(context.Background(), testcase.dur)
-
-			go func(t *testing.T, err error) {
-				defer cancel()
+						selErr := sel.Next(ctx)
+						if !errors.Is(selErr, err) && !errors.Is(selErr, context.DeadlineExceeded) {
+							t.Error(selErr)
+						}
+					}
+				}(t, testcase.err)
 
 				for {
 					select {
 					case <-ctx.Done():
-						return
-					default:
-					}
+						if testcase.dur < time.Second {
+							is.True(t, errors.Is(ctx.Err(), context.DeadlineExceeded))
 
-					selErr := sel.Next(ctx)
-					if !errors.Is(selErr, err) && !errors.Is(selErr, context.DeadlineExceeded) {
-						t.Error(selErr)
-					}
-				}
-			}(t, testcase.err)
+							return
+						}
 
-			for {
-				select {
-				case <-ctx.Done():
-					if testcase.dur < time.Second {
-						is.True(t, errors.Is(ctx.Err(), context.DeadlineExceeded))
+						slices.Sort(results)
+						is.EqualElements(t, testcase.wants, results)
 
 						return
+					case v := <-values:
+						results = append(results, v)
 					}
-
-					slices.Sort(results)
-					is.EqualElements(t, testcase.wants, results)
-
-					return
-				case v := <-values:
-					t.Log("received", v)
-
-					results = append(results, v)
 				}
 			}
+
+			t.Run("WithBlock", func(t *testing.T) {
+				testFunc(t, true)
+			})
+
+			t.Run("NonBlocking", func(t *testing.T) {
+				testFunc(t, false)
+			})
 		})
 	}
 }
