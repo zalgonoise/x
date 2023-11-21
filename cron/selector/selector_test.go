@@ -237,6 +237,10 @@ func (testExecutor) Exec(ctx context.Context) error     { return ctx.Err() }
 func (testExecutor) Next(context.Context) (t time.Time) { return t }
 func (testExecutor) ID() string                         { return "" }
 
+type testSelector struct{}
+
+func (testSelector) Next(ctx context.Context) error { return ctx.Err() }
+
 func TestSelectorWithMetrics(t *testing.T) {
 	m := testMetrics{}
 	s := &selector{
@@ -312,6 +316,13 @@ func TestSelectorWithMetrics(t *testing.T) {
 			_ = s.Next(ctx)
 		})
 	}
+
+	t.Run("ErrorOnNext", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_ = AddMetrics(testSelector{}, m).Next(ctx)
+	})
 }
 
 func TestSelectorWithTrace(t *testing.T) {
@@ -437,7 +448,13 @@ func TestWithObservability(t *testing.T) {
 }
 
 func TestZeroExecutors(t *testing.T) {
-	t.Run("FromRawSelector", func(t *testing.T) {
+	t.Run("WithBlock/FromRawSelector", func(t *testing.T) {
+		is.True(t, errors.Is(
+			ErrEmptyExecutorsList,
+			blockingSelector{}.Next(context.Background()),
+		))
+	})
+	t.Run("NonBlocking/FromRawSelector", func(t *testing.T) {
 		is.True(t, errors.Is(
 			ErrEmptyExecutorsList,
 			selector{}.Next(context.Background()),
