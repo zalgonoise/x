@@ -298,34 +298,252 @@ _______
 
 ##### Cron Schedule
 
-_TBD_
+[`Schedule`](./schedule/cronlex/process.go#L32) is a data structure that holds a set of 
+[`Resolver`s](./schedule/cronlex/process.go#L25), for each node, segment or unit of the schedule. This implementation 
+focuses on the cron string specification with added support for a seconds definition (instead of the usual minutes, 
+hours, days-of-the-month, months and weekdays). Each of these elements are 
+[`Resolver`s](./schedule/cronlex/process.go#L25) interfaces that will calculate the difference until the target value(s)
+is reached. More information on [`Resolver`s](./schedule/cronlex/process.go#L25) in 
+[its own section](#schedule-resolver).
 
+The [`Schedule`](./schedule/cronlex/process.go#L32) only holds the state of a parsed cron string, and its elements are 
+made public so that implementations of [`Scheduler`](./schedule/scheduler.go#L24) can leverage it to calculate the 
+job's next execution time.
 
+To create a new [`Schedule`](./schedule/cronlex/process.go#L32) type, you're able to use the
+[`Parse` function](./schedule/cronlex/process.go#L45), that consumes the input cron string, returning a 
+[`Schedule`](./schedule/cronlex/process.go#L32) and an error if raised. More details on the actual parsing of the string
+[in its own section](#schedule-parser).
+
+Once created, the elements of [`Schedule`](./schedule/cronlex/process.go#L32) are accessed directly, where the caller 
+can use the [`Resolver`](./schedule/cronlex/process.go#L25) interface:
+
+```go
+type Schedule struct {
+	Sec      Resolver
+	Min      Resolver
+	Hour     Resolver
+	DayMonth Resolver
+	Month    Resolver
+	DayWeek  Resolver
+}
+```
 _______
 
 ##### Schedule Resolver
 
-_TBD_
+This component calculates the difference between the input value and the (set of) value(s) it is configured to be 
+triggered on, also given a certain maximum value for that [`Resolver`'s](./schedule/cronlex/process.go#L25) range.
 
+This difference is useful on a [`Scheduler`](./schedule/scheduler.go#L24), where 
+[`time.Date()`](https://pkg.go.dev/time#Date) sums the input time to the difference until the next execution. As such, 
+given each node in a [`Schedule`](./schedule/cronlex/process.go#L32), it is possible to derive the next time per node,
+following this logic.
+
+Take a minute as an example. It is an element that spans from 0 to 59; and consider all elements start at zero. A
+minutes [`Resolver`](./schedule/cronlex/process.go#L25) is configured with a maximum value of 59, and this example is 
+configured to trigger at minute 15. If the input time is 2:03 PM, the [`Resolver`](./schedule/cronlex/process.go#L25)
+returns a difference of 12. When the [`Scheduler`](./schedule/scheduler.go#L24) gets this information, it adds up the 12
+minutes to the input time, and returns the resulting datetime value.
+
+This also makes the [`Resolver`](./schedule/cronlex/process.go#L25) very flexible, in tandem with the corresponding
+[`Schedule`](./schedule/cronlex/process.go#L32) and [`Scheduler`](./schedule/scheduler.go#L24), providing customizable 
+levels of precision. The seconds [`Resolver`](./schedule/cronlex/process.go#L25) in 
+[`Schedule`](./schedule/cronlex/process.go#L32) is an example of this.
+
+The implementations of [`Resolver`](./schedule/cronlex/process.go#L25) can be found in the 
+[`resolve` package](./schedule/resolve/resolve.go). These are derived from parsing a cron string and assigned 
+automatically when calling the [`Parse` function](./schedule/cronlex/process.go#L45).
+
+To explore the different implementations, it's good to have in mind the modularity in cron schedules:
+- it supports "every value" sequences when using a star (`*`)
+- it supports range value sequences when using a dash (`-`, e.g. `0-15`)
+- it supports step value sequences when using a slash (`/`, e.g. `*/3`)
+- it supports separated range value elements when using commas (`,`, e.g. `0,20,25,30`) 
+- it supports a combination of range values and steps (e.g. `0-15/3`)
+- it supports overrides, for certain configurations (e.g. `@weekly`)
+
+Having this in mind, this could technically be achieved with a single [`Resolver`](./schedule/cronlex/process.go#L25) 
+type (that you will find for step values), but to maximize performance and reduce complexity where it is not needed, 
+there are four types of [`Resolver`](./schedule/cronlex/process.go#L25):
+
+
+###### `Everytime` Resolver
+
+```go
+type Everytime struct{}
+```
+
+The [`Everytime Resolver`](./schedule/resolve/resolve.go#L4) always returns zero, meaning that it resolves to the current time 
+always (_trigger now_ type of action). This is the default [`Resolver`](./schedule/cronlex/process.go#L25) whenever a 
+star (`*`) node is found, for example.
+
+
+###### `FixedSchedule` Resolver
+
+```go
+type FixedSchedule struct {
+	Max int
+	At  int
+}
+```
+
+The [`FixedSchedule Resolver`](./schedule/resolve/resolve.go#L13) resolves at a specific value within the entire range. 
+It is especially useful when a node only contains a non-star (`*`) alphanumeric value, such as the cron string 
+`0 0 * * *`, which has both minutes and hours as [`FixedSchedule Resolver`s](./schedule/resolve/resolve.go#L13).
+
+
+
+###### `RangeSchedule` Resolver
+
+```go
+type RangeSchedule struct {
+    Max  int
+    From int
+    To   int
+}
+```
+
+The [`RangeSchedule Resolver`](./schedule/resolve/resolve.go#L25) resolves within a portion of the entire range. It is 
+used when a range is provided without any gaps. This means that the schedule element does not contain any slashes (`/`)
+or commas (`,`), and is only a range with a dash (`-`), such as the cron string `0-15 * * * *`, which contains a
+[`RangeSchedule Resolver`](./schedule/resolve/resolve.go#L25) for its minutes' node.
+
+
+
+###### `StepSchedule` Resolver
+
+```go
+type StepSchedule struct {
+    Max   int
+    Steps []int
+}
+```
+
+The [`StepSchedule Resolver`](./schedule/resolve/resolve.go#L42) is the most complex of all -- that could potentially 
+serve all the other implementations, however it can be the most resource-expensive of all 
+[`Resolver`s](./schedule/cronlex/process.go#L25).
+
+This implementation stores the defined values for the schedule and returns the difference of the closest value ahead of 
+it. This involves scanning all the steps in the sequence as it requires looking into values that are less than the 
+input, e.g., when the input is value 57, the maximum is 59, and the closest step is 0, with a difference of 3.
+
+Doing this for complex cron setups can be more complex, and that is the major reason for having several other 
+implementations. Regardless, if your cron string is one that involves many individual steps separated by commas (`,`), 
+or contains a given frequency delimited by a slash (`/`), it surely will have an underlying 
+[`StepSchedule Resolver`](./schedule/resolve/resolve.go#L42) to resolve that / those node(s). 
+
+The [`StepSchedule Resolver`](./schedule/resolve/resolve.go#L42) is the only
+[`Resolver`s](./schedule/cronlex/process.go#L25) which exposes a constructor, with the 
+[`NewStepSchedule` function](./schedule/resolve/resolve.go#L77), that takes _from_ and _to_ values, 
+a maximum, and a certain frequency (which should be 1 if no custom frequency is desired). Any further additions to 
+the `Steps` in the [`StepSchedule Resolver`](./schedule/resolve/resolve.go#L42), should be added to the data structure,
+separately:
+
+```go
+func NewStepSchedule(from, to, maximum, frequency int) StepSchedule
+```
+
+In the [Schedule Parser section](#schedule-parser), we explore how its processor will create the
+[`Schedule`](./schedule/cronlex/process.go#L32) types following some rules, when working with the abstract syntax tree 
+from parsing the cron string.
 _______
 
 ##### Schedule Parser
 
-_TBD_
+To consume a cron string and make something meaningful of it, we must parse it. This step is most important to 
+nail down accurately as it is the main source of user input within this library's logic. The executed jobs are of the 
+caller's responsibility as they pass into it whatever they want. But having a correct understanding of the input 
+schedule as well as calculating the times for the jobs' execution is fundamentally most important.
 
-_______
+As mentioned before, this package exposes a [`Parse` function](./schedule/cronlex/process.go#L45) that consumes a cron 
+string returning a [`Schedule`](./schedule/cronlex/process.go#L32) and an error:
 
-### Structure and observations
+```go
+func Parse(cronString string) (s Schedule, err error)
+```
 
-_TBD_
+This is a process broken down in three phases that can be explored individually, having into consideration that the 
+lexer and parser components work in tandem:
+- A lexer, that consumes individual bytes from the cron string, emitting meaningful tokens about what they represent. 
+The tokens also hold the value (bytes) that represent them. 
+- A parser, which consumes the tokens as they are emitted from the lexer, and progressively builds an abstract syntax 
+tree that is the cron schedule and its different nodes.
+- A processor, which consumes the finalized abstract syntax tree created by the parser, validates its contents and 
+creates the appropriate [`Schedule`](./schedule/cronlex/process.go#L32).
+
+The implementations of the underlying lexer and parser logic are taken from Go's standard library, from its 
+[`go/token`](https://pkg.go.dev/go/token) and [`text/template`](https://pkg.go.dev/text/template) packages. There is 
+also [a fantastic talk from Rob Pike](https://www.youtube.com/watch?v=HxaD_trXwRE) not only describing how to 
+write a lexer and parser as state machines in Go, but also carrying the viewer through the details of the 
+`text/template` implementation. With this in mind, I had released the same general concept of a lexer and parser, but 
+supporting generic types, allowing consumers of the library to write their parsers for anything, with any type 
+(both for input, tokens and output). These implementations can be further explored below:
+- [`zalgonoise/lex`](https://github.com/zalgonoise/lex)
+- [`zalgonoise/parse`](https://github.com/zalgonoise/parse)
+
+Taking this as a kick-off point, it's only required to implement 3 (major) functions for the lexer, parser and processor
+phases of this pipeline. These functions are broken down with their own individual handler functions, as required.
+
+Introducing the [`Token` type](./schedule/cronlex/token.go#L4), we can see how different symbols are set to trigger 
+different tokens, while having a few general ones like [`TokenAlphaNum`](./schedule/cronlex/token.go#L9) for numbers and
+characters, [`TokenEOF`](./schedule/cronlex/token.go#L7) when the end of the string is reached, etc.  
+
+Starting with the lexer, it exposes a [`StateFunc` function](./schedule/cronlex/lexer.go#L19). This is the starting 
+point for the state machine that consumes individual bytes. This function basically emits a token for a given character 
+(if supported), except for alphanumeric bytes (that are collected and a single token emitted with them), and at the end 
+of the string.
+
+At the same time that the lexer is emitting these tokens, the parser's 
+[`ParseFunc` function](./schedule/cronlex/parser.go#L18) is consuming them to build an abstract syntax tree. This tree 
+has a root (top-level) node that is branched for how many nodes are there in a cron string -- say, `* * * * *` contains 
+5 nodes, `* * * * * *` contains 6 nodes, and `@weekly` contains 1 node.
+
+If these nodes are more complex than a single value, then the node will store the value while aggregating all following
+(chained) values by their symbol as children. These symbol nodes must contain a value as child (a comma cannot be left 
+by itself at the end of a node). Take the following node in a cron string: `0-15/3,20,25`. The node in the tree should
+look like:
+
+```
+- (root)
+  +- alphanum --> value: 0
+    +- dash   --> value: 15
+    +- slash  --> value: 3
+    +- comma  --> value: 20
+    +- comma  --> value: 25
+```
+
+Having created the cron's abstract syntax tree we arrive to the last phase, the 
+[`ProcessFunc` function](./schedule/cronlex/process.go#L58). It starts off by validating the contents in the abstract 
+syntax tree to ensure there are no unsupported values like greater than the maximum, etc.
+
+Once ensured it is valid, the function checks how many nodes are children of the root node in the tree, with support for
+3 types of lengths:
+- 1 child node means this should be an exception (like `@weekly`).
+- 5 child nodes represent a _classic_ cron string ranging from minutes to weekdays (e.g. `* * * * *`).
+- 6 child nodes represent an _extended_ cron string supporting seconds to weekdays (e.g. `* * * * * *`).
+
+Handling the exceptions is very simple as the function only switches on the supported values looking for a match. The 
+switch statement is the fastest algorithm to perform this check. 
+
+A _classic_ cron string with 5 nodes will still have a seconds [`Resolver`](./schedule/cronlex/process.go#L25) in its 
+[`Schedule`](./schedule/cronlex/process.go#L32), by configuring it as a
+[`FixedSchedule` type](./schedule/resolve/resolve.go#L13), triggering at value 0 with a maximum of 59 (for seconds). 
+
+Generally, the Resolver types for each node from both _classic_ and _extended_ cron strings are built by checking
+if it's a star (`*`) or alphanumeric node, creating the appropriate [`Resolver`](./schedule/cronlex/process.go#L25). 
+Note that step values are sorted and compacted before being returned, for optimal efficiency when being used.
+
+Lastly, considering the weekday support for 0 and 7 as Sundays, if the weekday 
+[`Resolver`](./schedule/cronlex/process.go#L25) is a 
+[`StepSchedule` type](./schedule/resolve/resolve.go#L42), it is normalized as a 0 value.
+
 
 _______
 
 ### Example
 
-_TBD_
-
-Another working example is the [Steam CLI app](https://github.com/zalgonoise/x/tree/master/steam) mentioned in the 
+A working example is the [Steam CLI app](https://github.com/zalgonoise/x/tree/master/steam) mentioned in the 
 [Motivation](#motivation) section above. This application exposes some commands, one of them being 
 [`monitor`](https://github.com/zalgonoise/x/blob/master/steam/cmd/steam/monitor/monitor.go). This file provides some 
 insight on how the cron service is set up from a `main.go` / script-like approach.
