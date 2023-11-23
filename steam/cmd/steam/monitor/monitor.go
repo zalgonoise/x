@@ -12,10 +12,10 @@ import (
 
 	"github.com/zalgonoise/x/steam/cmd/steam/alert"
 
-	"github.com/zalgonoise/x/cron"
-	"github.com/zalgonoise/x/cron/executor"
-	"github.com/zalgonoise/x/cron/schedule"
-	"github.com/zalgonoise/x/cron/selector"
+	"github.com/zalgonoise/micron"
+	"github.com/zalgonoise/micron/executor"
+	"github.com/zalgonoise/micron/schedule"
+	"github.com/zalgonoise/micron/selector"
 )
 
 const defaultSchedule = "0 10 * * *"
@@ -96,7 +96,7 @@ func runCron(
 		"steam_discount_monitor",
 		executor.WithScheduler(s),
 		executor.WithRunners(r),
-		executor.WithLogs(logger),
+		executor.WithLogger(logger),
 	)
 	if err != nil {
 		return err, 1
@@ -104,13 +104,13 @@ func runCron(
 
 	sel, err := selector.New(
 		selector.WithExecutors(e),
-		selector.WithLogs(logger),
+		selector.WithLogger(logger),
 	)
 	if err != nil {
 		return err, 1
 	}
 
-	c, err := cron.New(cron.WithSelector(sel), cron.WithLogs(logger))
+	c, err := cron.New(cron.WithSelector(sel), cron.WithLogger(logger))
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
