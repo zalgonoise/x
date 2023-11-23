@@ -110,7 +110,7 @@ func runCron(
 		return err, 1
 	}
 
-	c, err := cron.New(cron.WithSelector(sel), cron.WithLogger(logger))
+	c, err := micron.New(micron.WithSelector(sel), micron.WithLogger(logger))
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
