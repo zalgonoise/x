@@ -6,7 +6,7 @@ toolchain go1.21.4
 
 require (
 	github.com/zalgonoise/fts v1.0.0
-	github.com/zalgonoise/micron v1.0.0
+	github.com/zalgonoise/micron v1.0.1
 	github.com/zalgonoise/x/discord v0.0.0-20231028163844-9788f3b3b512
 	github.com/zalgonoise/x/errs v0.0.0-20231111152101-e78dd34855c9
 	github.com/zalgonoise/x/ptr v0.0.0-20231028163844-9788f3b3b512
