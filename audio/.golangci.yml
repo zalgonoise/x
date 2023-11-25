@@ -204,7 +204,6 @@ linters:
     - unused
     - whitespace
     - gochecknoglobals
-    - goerr113
     - prealloc
     - asciicheck
     - nestif
