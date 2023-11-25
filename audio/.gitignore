@@ -12,3 +12,6 @@ local/
 
 # exclude changes in the provisioning directory
 provisioning/
+
+# exclude test coverage directory
+coverage/
