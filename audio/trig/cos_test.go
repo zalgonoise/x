@@ -1,3 +1,4 @@
+//nolint:godot // benchmark function comments contain tests output
 package trig
 
 import (

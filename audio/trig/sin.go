@@ -1,3 +1,4 @@
+//nolint:gomnd,gochecknoglobals // package contains a modified port of the standard library logic
 package trig
 
 import (
@@ -19,7 +20,7 @@ const (
 	PI4C  = 2.69515142907905952645e-15 // 0x3ce8469898cc5170,
 )
 
-// sin coefficients
+// sin coefficients.
 var _sin = [...]float64{
 	1.58962301576546568060e-10, // 0x3de5d8fd1fd19ccd
 	-2.50507477628578072866e-8, // 0xbe5ae5e5a9291f5d
@@ -29,7 +30,7 @@ var _sin = [...]float64{
 	-1.66666666666666307295e-1, // 0xbfc5555555555548
 }
 
-// cos coefficients
+// cos coefficients.
 var _cos = [...]float64{
 	-1.13585365213876817300e-11, // 0xbda8fa49a0861a9b
 	2.08757008419747316778e-9,   // 0x3e21ee9d7b4e3f05
@@ -47,13 +48,17 @@ var _cos = [...]float64{
 func Sin(x float64) float64 {
 	// make argument positive but save the sign
 	sign := false
+
 	if x < 0 {
 		x = -x
 		sign = true
 	}
 
-	var j uint64
-	var y, z float64
+	var (
+		j    uint64
+		y, z float64
+	)
+
 	if x >= reduceThreshold {
 		j, z = trigReduce(x)
 	} else {
@@ -68,20 +73,25 @@ func Sin(x float64) float64 {
 		j &= 7                               // octant modulo 2Pi radians (360 degrees)
 		z = ((x - y*PI4A) - y*PI4B) - y*PI4C // Extended precision modular arithmetic
 	}
+
 	// reflect in x axis
 	if j > 3 {
 		sign = !sign
 		j -= 4
 	}
+
 	zz := z * z
+
 	if j == 1 || j == 2 {
 		y = 1.0 - 0.5*zz + zz*zz*((((((_cos[0]*zz)+_cos[1])*zz+_cos[2])*zz+_cos[3])*zz+_cos[4])*zz+_cos[5])
 	} else {
 		y = z + z*zz*((((((_sin[0]*zz)+_sin[1])*zz+_sin[2])*zz+_sin[3])*zz+_sin[4])*zz+_sin[5])
 	}
+
 	if sign {
 		y = -y
 	}
+
 	return y
 }
 
@@ -96,12 +106,14 @@ func trigReduce(x float64) (j uint64, z float64) {
 	if x < PiBy4 {
 		return 0, x
 	}
+
 	// Extract out the integer and exponent such that,
 	// x = ix * 2 ** exp.
 	ix := *(*uint64)(unsafe.Pointer(&x))
 	exp := int(ix>>shift&mask) - bias - shift
 	ix &^= mask << shift
 	ix |= 1 << shift
+
 	// Use the exponent to extract the 3 appropriate uint64 digits from mPi4,
 	// B ~ (z0, z1, z2), such that the product leading digit has the exponent -61.
 	// Note, exp >= -53 since x >= PI4 and exp < 971 for maximum float64.
@@ -109,30 +121,37 @@ func trigReduce(x float64) (j uint64, z float64) {
 	z0 := (mPi4[digit] << bitshift) | (mPi4[digit+1] >> (64 - bitshift))
 	z1 := (mPi4[digit+1] << bitshift) | (mPi4[digit+2] >> (64 - bitshift))
 	z2 := (mPi4[digit+2] << bitshift) | (mPi4[digit+3] >> (64 - bitshift))
+
 	// Multiply mantissa by the digits and extract the upper two digits (hi, lo).
 	z2hi, _ := bits.Mul64(z2, ix)
 	z1hi, z1lo := bits.Mul64(z1, ix)
 	z0lo := z0 * ix
 	lo, c := bits.Add64(z1lo, z2hi, 0)
 	hi, _ := bits.Add64(z0lo, z1hi, c)
+
 	// The top 3 bits are j.
 	j = hi >> 61
+
 	// Extract the fraction and find its magnitude.
 	hi = hi<<3 | lo>>61
 	lz := uint(bits.LeadingZeros64(hi))
 	e := uint64(bias - (lz + 1))
+
 	// Clear implicit mantissa bit and shift into place.
 	hi = (hi << (lz + 1)) | (lo >> (64 - (lz + 1)))
 	hi >>= 64 - shift
+
 	// Include the exponent and convert to a float.
 	hi |= e << shift
 	z = *(*float64)(unsafe.Pointer(&hi))
+
 	// Map zeros to origin.
 	if j&1 == 1 {
 		j++
 		j &= 7
 		z--
 	}
+
 	// Multiply the fractional part by pi/4.
 	return j, z * PiBy4
 }
