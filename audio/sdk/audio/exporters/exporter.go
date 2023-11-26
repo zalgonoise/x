@@ -10,8 +10,8 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
 )
 
-func NewExporter(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Exporter, error) {
-	config := cfg.Set[Config](DefaultConfig, options...)
+func NewExporter(emitter audio.Emitter, options ...cfg.Option[*Config]) (audio.Exporter, error) {
+	config := cfg.Set[*Config](DefaultConfig(), options...)
 
 	e, err := audio.NewExporter(emitter, newPeaksCollector(config), newSpectrumCollector(config))
 	if err != nil {
@@ -25,8 +25,8 @@ func NewExporter(emitter audio.Emitter, options ...cfg.Option[Config]) (audio.Ex
 	return e, nil
 }
 
-func newPeaksCollector(config Config) audio.Collector[float64] {
-	if !config.withPeaks {
+func newPeaksCollector(config *Config) audio.Collector[float64] {
+	if config == nil || !config.withPeaks {
 		return audio.NoOpCollector[float64]()
 	}
 
@@ -43,8 +43,8 @@ func newPeaksCollector(config Config) audio.Collector[float64] {
 	)
 }
 
-func newSpectrumCollector(config Config) audio.Collector[[]fft.FrequencyPower] {
-	if !config.withSpectrum {
+func newSpectrumCollector(config *Config) audio.Collector[[]fft.FrequencyPower] {
+	if config == nil || !config.withSpectrum {
 		return audio.NoOpCollector[[]fft.FrequencyPower]()
 	}
 
