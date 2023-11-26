@@ -23,15 +23,19 @@ func BenchmarkChunk8bit(b *testing.B) {
 					h, err := data.From(pcm.Test8bitHeader)
 					if err != nil {
 						b.Error(err)
+
 						return
 					}
 
-					var chunk *data.DataChunk
+					var chunk *data.Chunk
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
-						chunk = data.NewPCMDataChunk(bitDepth8, h)
+						chunk = data.NewPCMChunk(bitDepth8, h)
 						chunk.Parse(pcm.Test8bitPCM)
 					}
+
 					_ = chunk
 				},
 			)
@@ -40,15 +44,19 @@ func BenchmarkChunk8bit(b *testing.B) {
 					h, err := data.From(pcm.Test8bitHeader)
 					if err != nil {
 						b.Error(err)
+
 						return
 					}
 
-					var chunk = data.NewPCMDataChunk(bitDepth8, h)
+					chunk := data.NewPCMChunk(bitDepth8, h)
 					chunk.Parse(pcm.Test8bitPCM)
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						chunk.Parse(pcm.Test8bitPCM)
 					}
+
 					_ = chunk
 				},
 			)
@@ -59,19 +67,23 @@ func BenchmarkChunk8bit(b *testing.B) {
 			h, err := data.From(pcm.Test8bitHeader)
 			if err != nil {
 				b.Error(err)
+
 				return
 			}
 
 			var (
-				chunk = data.NewPCMDataChunk(bitDepth8, h)
+				chunk = data.NewPCMChunk(bitDepth8, h)
 				buf   []byte
 			)
+
 			chunk.Parse(pcm.Test8bitPCM)
+
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
 				buf = chunk.Bytes()
 			}
+
 			_ = buf
 		},
 	)
@@ -83,7 +95,8 @@ func Test8bitHeader(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	chunk := &data.DataChunk{
+
+	chunk := &data.Chunk{
 		ChunkHeader: h,
 		Depth:       8, // set by NewChunk()
 	}
