@@ -61,6 +61,7 @@ var (
 	ErrShortDataBuffer    = errs.WithDomain(ErrDomain, ErrShort, ErrDataBuffer)
 )
 
+//nolint:gochecknoglobals // is initialized in the background for performance during runtime, as it is never mutated.
 var headerValidator = valigator.New(
 	validateChunkID,
 	validateFormat,
@@ -70,7 +71,7 @@ var headerValidator = valigator.New(
 	validateAudioFormat,
 )
 
-// ValidateHeader verifies that the input Header `h` is not nil and that it is valid
+// ValidateHeader verifies that the input Header `h` is not nil and that it is valid.
 func ValidateHeader(h *Header) error {
 	if h == nil {
 		return ErrEmptyHeader
@@ -80,7 +81,7 @@ func ValidateHeader(h *Header) error {
 }
 
 // Check confirms whether the input bytes are likely to be a header
-// with the least operations possible
+// with the least operations possible.
 func Check(buf []byte) bool {
 	if len(buf) < Size {
 		return false
@@ -91,7 +92,7 @@ func Check(buf []byte) bool {
 }
 
 func validateChunkID(h *Header) error {
-	if string(h.ChunkID[:]) != string(defaultChunkID[:]) {
+	if !bytes.Equal(h.ChunkID[:], defaultChunkID[:]) {
 		return fmt.Errorf("%w: ChunkID %s", ErrInvalidHeader, string(h.ChunkID[:]))
 	}
 
@@ -99,7 +100,7 @@ func validateChunkID(h *Header) error {
 }
 
 func validateFormat(h *Header) error {
-	if string(h.Format[:]) != string(defaultFormat[:]) {
+	if !bytes.Equal(h.Format[:], defaultFormat[:]) {
 		return fmt.Errorf("%w: Format %s", ErrInvalidHeader, string(h.Format[:]))
 	}
 

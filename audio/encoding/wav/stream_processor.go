@@ -5,11 +5,11 @@ import (
 )
 
 // ProcessFunc describes a function that processes a portion of the audio buffer
-// as it is read and decoded from the incoming byte stream
+// as it is read and decoded from the incoming byte stream.
 type ProcessFunc func(header *Header, data []float64) error
 
 // MultiProc merges multiple processor functions for floating point audio data, with
-// or without a fail-fast strategy
+// or without a fail-fast strategy.
 func MultiProc(failFast bool, fns ...ProcessFunc) ProcessFunc {
 	switch len(fns) {
 	case 0:
@@ -31,7 +31,8 @@ func MultiProc(failFast bool, fns ...ProcessFunc) ProcessFunc {
 	}
 
 	return func(h *Header, data []float64) error {
-		var errs = make([]error, 0, len(fns))
+		errs := make([]error, 0, len(fns))
+
 		for i := range fns {
 			if err := fns[i](h, data); err != nil {
 				errs = append(errs, err)

@@ -6,13 +6,13 @@ import (
 	"github.com/zalgonoise/x/audio/encoding/wav/data"
 )
 
-// Read implements the io.Reader interface
+// Read implements the io.Reader interface.
 //
 // Read will write to the input slice of bytes `buf` the contents
 // of the Wav `w`.
 //
 // It returns the number of bytes written to the buffer, and an error if the buffer
-// is not big enough
+// is not big enough.
 func (w *Wav) Read(buf []byte) (n int, err error) {
 	if !w.readOnly.Load() {
 		w.encode()
@@ -22,7 +22,7 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 	return w.buf.Read(buf)
 }
 
-// Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding
+// Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding.
 func (w *Wav) Bytes() []byte {
 	if !w.readOnly.Load() {
 		w.encode()
@@ -47,6 +47,8 @@ func (w *Wav) encode() {
 	}
 
 	buf := make([]byte, size)
+
+	//nolint:errcheck // reading from the header should not raise any errors, and can be safely ignored.
 	_, _ = w.Header.Read(buf[n : n+Size])
 	n += Size
 
@@ -56,14 +58,15 @@ func (w *Wav) encode() {
 			chunkSize   = int(chunkHeader.Subchunk2Size)
 		)
 
+		//nolint:errcheck // reading from the chunk header should not raise any errors, and can be safely ignored.
 		_, _ = chunkHeader.Read(buf[n : n+data.Size])
 		n += data.Size
+
+		//nolint:errcheck // reading from the chunk should not raise any errors, and can be safely ignored.
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
 		n += chunkSize
 	}
 
 	w.readOnly.Store(true)
 	w.buf = bytes.NewBuffer(buf)
-
-	return
 }

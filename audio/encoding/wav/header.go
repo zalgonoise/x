@@ -7,24 +7,26 @@ import (
 )
 
 const (
-	Size          = 36
-	chunkIDEnd    = 4
-	formatOffset  = 8
-	subChunkIDEnd = 16
+	Size                 = 36
+	byteSize             = 8
+	chunkIDEnd           = 4
+	formatOffset         = 8
+	subChunkIDEnd        = 16
+	defaultSubChunk1Size = 16
 )
 
+//nolint:gochecknoglobals // referenced directly for assignments and comparisons
 var (
-	defaultChunkID     = [4]byte{82, 73, 70, 70}
-	defaultFormat      = [4]byte{87, 65, 86, 69}
-	defaultSubchunk1ID = [4]byte{102, 109, 116, 32}
-
+	defaultChunkID      = [4]byte{82, 73, 70, 70}
+	defaultFormat       = [4]byte{87, 65, 86, 69}
+	defaultSubchunk1ID  = [4]byte{102, 109, 116, 32}
 	formatAndSubchunkID = []byte{87, 65, 86, 69, 102, 109, 116, 32}
 )
 
 // Header describes the header of a WAV file (or buffer).
 //
 // The structure is defined as seen in the WAV file format, and can
-// be quickly encoded / decoded into binary format as-is
+// be quickly encoded / decoded into binary format as-is.
 //
 // Reference: http://soundfile.sapp.org/doc/WaveFormat/
 type Header struct {
@@ -42,7 +44,7 @@ type Header struct {
 }
 
 // HeaderFrom extracts a WAV Header from an input slice of bytes; returning a
-// pointer to a Header, and an error if the data is invalid
+// pointer to a Header, and an error if the data is invalid.
 func HeaderFrom(buf []byte) (h *Header, err error) {
 	h = new(Header)
 
@@ -55,29 +57,29 @@ func HeaderFrom(buf []byte) (h *Header, err error) {
 
 // NewHeader creates a Header from the input sampleRate, bitDepth, numChannels and format.
 //
-// This call also validates the generated header in the returned error
+// This call also validates the generated header in the returned error.
 func NewHeader(sampleRate uint32, bitDepth, numChannels, format uint16) (*Header, error) {
 	h := &Header{
 		ChunkID:       defaultChunkID,
 		ChunkSize:     0,
 		Format:        defaultFormat,
 		Subchunk1ID:   defaultSubchunk1ID,
-		Subchunk1Size: 16,
+		Subchunk1Size: defaultSubChunk1Size,
 		AudioFormat:   format,
 		NumChannels:   numChannels,
 		SampleRate:    sampleRate,
-		ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / 8,
-		BlockAlign:    bitDepth * numChannels / 8,
+		ByteRate:      sampleRate * uint32(bitDepth) * uint32(numChannels) / byteSize,
+		BlockAlign:    bitDepth * numChannels / byteSize,
 		BitsPerSample: bitDepth,
 	}
 
 	return h, ValidateHeader(h)
 }
 
-// Write implements the io.Writer interface
+// Write implements the io.Writer interface.
 //
 // It consumes the byte slice `buf` as a Wav Header, returning an error
-// if the input data cannot be parsed, or if the resulting header is invalid
+// if the input data cannot be parsed, or if the resulting header is invalid.
 func (h *Header) Write(buf []byte) (n int, err error) {
 	if len(buf) < Size {
 		return 0, ErrShortDataBuffer
@@ -98,10 +100,10 @@ func (h *Header) Write(buf []byte) (n int, err error) {
 	return Size, ValidateHeader(h)
 }
 
-// ReadFrom implements the io.ReaderFrom interface
+// ReadFrom implements the io.ReaderFrom interface.
 //
 // It consumes the byte slice `buf` as a Wav Header from an io.Reader, returning an error
-// if the input data cannot be parsed, or if the resulting header is invalid
+// if the input data cannot be parsed, or if the resulting header is invalid.
 func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	if r == nil {
 		return 0, nil
@@ -124,10 +126,9 @@ func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	return int64(m), err
 }
 
-// Read implements the io.Reader interface
+// Read implements the io.Reader interface.
 //
-// It reads the Header into the byte slice `buf`,
-// returning the number of bytes written and an error if raised
+// It reads the Header into the byte slice `buf`, returning the number of bytes written and an error if raised.
 func (h *Header) Read(buf []byte) (n int, err error) {
 	if len(buf) < Size {
 		return 0, ErrShortDataBuffer
@@ -149,7 +150,7 @@ func (h *Header) Read(buf []byte) (n int, err error) {
 }
 
 // Bytes casts a Header as a slice of bytes, by binary-encoding the
-// object
+// object.
 func (h *Header) Bytes() []byte {
 	buf := make([]byte, Size)
 
@@ -161,7 +162,7 @@ func (h *Header) Bytes() []byte {
 }
 
 // GetSampleRate returns the SampleRate value from the Header, to satisfy a
-// common header interface among different audio encodings
+// common header interface among different audio encodings.
 func (h *Header) GetSampleRate() int {
 	if h == nil {
 		return 0

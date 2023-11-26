@@ -9,14 +9,14 @@ import (
 
 const dataSubchunkID = "data"
 
-// Write implements the io.Writer interface
+// Write implements the io.Writer interface.
 //
 // Write will gradually build a Wav object from the data passed through the
 // slice of bytes `buf` input parameter. This method follows the lifetime of a
 // Wav file from start to finish, even if it is raw and without a header.
 //
 // The method returns the number of bytes read by the buffer, and an error if the
-// data is invalid (or too short)
+// data is invalid (or too short).
 func (w *Wav) Write(buf []byte) (n int, err error) {
 	if w.readOnly.Load() {
 		w.buf.Reset()
@@ -135,47 +135,53 @@ func (w *Wav) decodeHeader() (n int, err error) {
 	w.Header = new(Header)
 
 	num, err := w.Header.ReadFrom(w.buf)
+
 	return int(num), err
 }
 
 func (w *Wav) decodeNewSubChunk(n int) (int, error) {
 	// try to read subchunk headers
-	if w.buf.Len() > data.Size {
-		var (
-			err            error
-			subchunk       *data.Header
-			subchunkBuffer = make([]byte, data.Size)
-		)
+	if w.buf.Len() < data.Size {
+		return 0, ErrShortDataBuffer
+	}
 
-		if _, err = w.buf.Read(subchunkBuffer); err != nil {
+	var (
+		err            error
+		subchunk       *data.Header
+		subchunkBuffer = make([]byte, data.Size)
+	)
+
+	if _, err = w.buf.Read(subchunkBuffer); err != nil {
+		return n, err
+	}
+
+	if subchunk, err = data.From(subchunkBuffer); err == nil {
+		n += data.Size
+		chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
+
+		if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
+			w.Data = chunk
+		}
+
+		end := int(subchunk.Subchunk2Size)
+		ln := w.buf.Len()
+
+		// grab remaining bytes if the byte slice isn't long enough
+		// for a subchunk read
+		if end > 0 && end > ln {
+			end = ln - (ln % int(w.Header.BlockAlign))
+		}
+
+		chunkBuffer := make([]byte, end)
+		if _, err = w.buf.Read(chunkBuffer); err != nil {
 			return n, err
 		}
 
-		if subchunk, err = data.From(subchunkBuffer); err == nil {
-			n += data.Size
-			chunk := NewChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat)
-			if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
-				w.Data = chunk
-			}
-
-			end := int(subchunk.Subchunk2Size)
-			ln := w.buf.Len()
-			// grab remaining bytes if the byte slice isn't long enough
-			// for a subchunk read
-			if end > 0 && end > ln {
-				end = ln - (ln % int(w.Header.BlockAlign))
-			}
-
-			chunkBuffer := make([]byte, end)
-			if _, err = w.buf.Read(chunkBuffer); err != nil {
-				return n, err
-			}
-
-			chunk.Parse(chunkBuffer)
-			w.Chunks = append(w.Chunks, chunk)
-			n += end
-		}
+		chunk.Parse(chunkBuffer)
+		w.Chunks = append(w.Chunks, chunk)
+		n += end
 	}
+
 	return n, nil
 }
 
@@ -187,7 +193,7 @@ func (w *Wav) decodeIntoData(n int) (int, error) {
 	)
 
 	if end > 0 && end > ln {
-		end = ln - (ln % int(w.Header.BlockAlign))
+		ln -= ln % int(w.Header.BlockAlign)
 	}
 
 	chunkBuffer := make([]byte, ln)
@@ -196,5 +202,6 @@ func (w *Wav) decodeIntoData(n int) (int, error) {
 	}
 
 	w.Data.Parse(chunkBuffer)
+
 	return n + ln, nil
 }
