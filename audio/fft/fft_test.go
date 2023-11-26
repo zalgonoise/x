@@ -9,10 +9,10 @@ import (
 
 	dspfft "github.com/mjibson/go-dsp/fft"
 	"github.com/stretchr/testify/require"
-	"github.com/zalgonoise/x/audio/encoding/wav"
-	"github.com/zalgonoise/x/audio/fft/window"
 
+	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/fft"
+	"github.com/zalgonoise/x/audio/fft/window"
 	"github.com/zalgonoise/x/audio/osc"
 )
 
@@ -20,17 +20,17 @@ import (
 // to prioritize the most performant approach -- that is, by declaring variables for the real and imaginary parts of the
 // complex number in question, and calculating `sqrt(real*real + imag*imag)`
 //
-// ❯ go test -bench . -benchmem -benchtime=5s -cpuprofile /tmp/cpu.pprof ./fft
+//	❯ go test -bench . -benchmem -benchtime=5s -cpuprofile /tmp/cpu.pprof ./fft
 //
-// goos: linux
-// goarch: amd64
-// pkg: github.com/zalgonoise/x/audio/wav/fft
-// cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
-// BenchmarkHypotenuse/Simplified-4                60037294                18.63 ns/op            0 B/op          0 allocs/op
-// BenchmarkHypotenuse/Minimal-4                   415254681                3.015 ns/op           0 B/op          0 allocs/op
-// BenchmarkHypotenuse/Extended-4                  330081352                3.616 ns/op           0 B/op          0 allocs/op
+//	goos: linux
+//	goarch: amd64
+//	pkg: github.com/zalgonoise/x/audio/wav/fft
+//	cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
+//	BenchmarkHypotenuse/Simplified-4                60037294                18.63 ns/op            0 B/op          0 allocs/op
+//	BenchmarkHypotenuse/Minimal-4                   415254681                3.015 ns/op           0 B/op          0 allocs/op
+//	BenchmarkHypotenuse/Extended-4                  330081352                3.616 ns/op           0 B/op          0 allocs/op
 func BenchmarkHypotenuse(b *testing.B) {
-	var complexData = []complex128{
+	complexData := []complex128{
 		0.5 + 1.3i, 1.1 + 0.4i, 0.8 - 1.2i, 1.3 - 0.5i,
 	}
 
@@ -71,7 +71,6 @@ func BenchmarkHypotenuse(b *testing.B) {
 		}
 		_ = out
 	})
-
 }
 
 func newSine(freq int) (*wav.Wav, error) {
@@ -81,7 +80,9 @@ func newSine(freq int) (*wav.Wav, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	sine.Generate(osc.SineWave, freq, 5*time.Second)
+
 	return sine, nil
 }
 
@@ -89,14 +90,14 @@ func newSine(freq int) (*wav.Wav, error) {
 // as go-dsp/fft, while running a comparison benchmark test to measure both implementations'
 // performance
 //
-// ❯ go test -bench '^(BenchmarkFFT)$' -run='^$'  -benchmem -benchtime=5s -cpuprofile /tmp/cpu.pprof ./wav/fft
-// goos: linux
-// goarch: amd64
-// pkg: github.com/zalgonoise/x/audio/wav/fft
-// cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
-// BenchmarkFFT/Self/FFT-4                  4871833              1312 ns/op            1024 B/op          2 allocs/op
-// BenchmarkFFT/GoDSP/FFT-4                  213699             25352 ns/op            1803 B/op         26 allocs/op
-// BenchmarkFFT/Compare-4                  1000000000               0.0000034 ns/op               0 B/op          0 allocs/op
+//	❯ go test -bench '^(BenchmarkFFT)$' -run='^$'  -benchmem -benchtime=5s -cpuprofile /tmp/cpu.pprof ./wav/fft
+//	goos: linux
+//	goarch: amd64
+//	pkg: github.com/zalgonoise/x/audio/wav/fft
+//	cpu: AMD Ryzen 3 PRO 3300U w/ Radeon Vega Mobile Gfx
+//	BenchmarkFFT/Self/FFT-4                  4871833              1312 ns/op            1024 B/op          2 allocs/op
+//	BenchmarkFFT/GoDSP/FFT-4                  213699             25352 ns/op            1803 B/op         26 allocs/op
+//	BenchmarkFFT/Compare-4                  1000000000               0.0000034 ns/op               0 B/op          0 allocs/op
 func BenchmarkFFT(b *testing.B) {
 	sine, err := newSine(2000)
 	if err != nil {

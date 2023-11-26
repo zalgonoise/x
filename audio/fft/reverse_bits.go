@@ -1,7 +1,7 @@
 package fft
 
 // RevBitsTypes is a type constraint interface to scope the allowed types to
-// call the ReverseBits function
+// call the ReverseBits function.
 type RevBitsTypes interface {
 	uint | uint16 | uint32 | uint64 | int | int16 | int32 | int64
 }
@@ -30,7 +30,7 @@ func ReverseBits[T RevBitsTypes](value T) (reverse T) {
 
 // ReorderData shuffles the input complex128 values to re-order it,
 // setting the first half of the slice in even indexes and the last half
-// of the slice in odd indexes
+// of the slice in odd indexes.
 func ReorderData(value []complex128) []complex128 {
 	var (
 		ln      = len(value)

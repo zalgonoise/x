@@ -1,3 +1,4 @@
+//nolint:cyclop,godot // tests and benchmarks are excluded from cyclomatic complexity checks
 package fft
 
 import "testing"
@@ -33,113 +34,116 @@ func BenchmarkLog2(b *testing.B) {
 	)
 
 	b.Run("HardcodedSwitch", func(b *testing.B) {
-		var (
-			log2fn = func(v uint) uint {
-				var r uint
-				for ; v > 1; v >>= 1 {
-					r++
-				}
+		log2fn := func(v uint) uint {
+			var r uint
+			for ; v > 1; v >>= 1 {
+				r++
+			}
 
-				return r
+			return r
+		}
+
+		fn := func(v uint) uint {
+			switch v {
+			case 2:
+				return 1
+			case 4:
+				return 2
+			case 8:
+				return 3
+			case 16:
+				return 4
+			case 32:
+				return 5
+			case 64:
+				return 6
+			case 128:
+				return 7
+			case 256:
+				return 8
+			case 512:
+				return 9
+			case 1024:
+				return 10
+			case 2048:
+				return 11
+			case 4096:
+				return 12
+			case 8192:
+				return 13
+			default:
+				return log2fn(v)
 			}
-			fn = func(v uint) uint {
-				switch v {
-				case 2:
-					return 1
-				case 4:
-					return 2
-				case 8:
-					return 3
-				case 16:
-					return 4
-				case 32:
-					return 5
-				case 64:
-					return 6
-				case 128:
-					return 7
-				case 256:
-					return 8
-				case 512:
-					return 9
-				case 1024:
-					return 10
-				case 2048:
-					return 11
-				case 4096:
-					return 12
-				case 8192:
-					return 13
-				default:
-					return log2fn(v)
-				}
-			}
-		)
+		}
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			outputA = fn(input)
 		}
+
 		_ = outputA
 	})
 
 	b.Run("HardcodedTable", func(b *testing.B) {
-		var (
-			log2Table = map[uint]uint{
-				4:    2,
-				8:    3,
-				16:   4,
-				32:   5,
-				64:   6,
-				128:  7,
-				256:  8,
-				512:  9,
-				1024: 10,
-				2048: 11,
-				4096: 12,
-				8192: 13,
-			}
-		)
+		log2Table := map[uint]uint{
+			4:    2,
+			8:    3,
+			16:   4,
+			32:   5,
+			64:   6,
+			128:  7,
+			256:  8,
+			512:  9,
+			1024: 10,
+			2048: 11,
+			4096: 12,
+			8192: 13,
+		}
+
 		for i := 0; i < b.N; i++ {
 			outputB = log2Table[input]
 		}
-		_ = outputB
 
+		_ = outputB
 	})
 
 	b.Run("Self", func(b *testing.B) {
-		var (
-			fn = func(v uint) uint {
-				var r uint
-				for ; v > 1; v >>= 1 {
-					r++
-				}
-
-				return r
+		fn := func(v uint) uint {
+			var r uint
+			for ; v > 1; v >>= 1 {
+				r++
 			}
-		)
+
+			return r
+		}
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			outputC = fn(input)
 		}
+
 		_ = outputC
 	})
 
 	b.Run("GoDSPFFT", func(b *testing.B) {
-		var (
-			fn = func(v uint) uint {
-				var r uint
+		fn := func(v uint) uint {
+			var r uint
 
-				for v >>= 1; v != 0; v >>= 1 {
-					r++
-				}
-
-				return r
+			for v >>= 1; v != 0; v >>= 1 {
+				r++
 			}
-		)
+
+			return r
+		}
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			outputD = fn(input)
 		}
+
 		_ = outputD
 	})
 

@@ -1,3 +1,4 @@
+//nolint:lll,gofumpt // tests contain very long literals, and old / external implementations
 package fft_test
 
 import (
@@ -14,18 +15,20 @@ import (
 //
 // ❯ go test -v -bench 'BenchmarkGetRadix2Factors' -run '^$' -benchtime=5s ./fft
 //
-// goos: darwin
-// goarch: arm64
-// pkg: github.com/zalgonoise/x/audio/fft
-// BenchmarkGetRadix2Factors
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_30_10_2023
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_30_10_2023-10         	   27501	    218430 ns/op
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_13_04_2023
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_13_04_2023-10         	   24498	    244077 ns/op
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Initial
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Initial-10                        	   24178	    246764 ns/op
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Original
-// BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Original-10                       	   25106	    264334 ns/op
+//	goos: darwin
+//	goarch: arm64
+//	pkg: github.com/zalgonoise/x/audio/fft
+//	BenchmarkGetRadix2Factors
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_30_10_2023
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_30_10_2023-10         	   27501	    218430 ns/op
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_13_04_2023
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Improvement_13_04_2023-10         	   24498	    244077 ns/op
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Initial
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Initial-10                        	   24178	    246764 ns/op
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Original
+//	BenchmarkGetRadix2Factors/Self/GetRadix2Factors/Original-10                       	   25106	    264334 ns/op
+//
+//nolint:gocognit,gocyclo,cyclop // test contains old/external implementations, and covers different approaches
 func BenchmarkGetRadix2Factors(b *testing.B) {
 	const (
 		tau   = 2 * math.Pi
@@ -43,7 +46,7 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 		var (
 			fn = func(inputLen int) []complex128 {
 				radix2Factors := map[int][]complex128{
-					4:    {(1 + 0i), (0 - 1i), (-1 + 0i), (0 + 1i)},
+					4:    {1 + 0i, 0 - 1i, -1 + 0i, 0 + 1i},
 					8:    {1 + 0i, 0.7071067811865476 - 0.7071067811865475i, 0 - 1i, -0.7071067811865475 - 0.7071067811865476i, -1 + 0i, -0.7071067811865477 + 0.7071067811865475i, 0 + 1i, 0.7071067811865475 + 0.7071067811865477i},
 					16:   {1 + 0i, 0.9238795325112867 - 0.3826834323650898i, 0.7071067811865476 - 0.7071067811865475i, 0.38268343236508984 - 0.9238795325112867i, 0 - 1i, -0.3826834323650897 - 0.9238795325112867i, -0.7071067811865475 - 0.7071067811865476i, -0.9238795325112867 - 0.38268343236508984i, -1 + 0i, -0.9238795325112868 + 0.38268343236508967i, -0.7071067811865477 + 0.7071067811865475i, -0.38268343236509034 + 0.9238795325112865i, 0 + 1i, 0.38268343236509 + 0.9238795325112866i, 0.7071067811865475 + 0.7071067811865477i, 0.9238795325112865 + 0.3826834323650904i},
 					32:   {1 + 0i, 0.9807852804032304 - 0.19509032201612825i, 0.9238795325112867 - 0.3826834323650898i, 0.8314696123025453 - 0.5555702330196022i, 0.7071067811865476 - 0.7071067811865475i, 0.5555702330196023 - 0.8314696123025452i, 0.38268343236508984 - 0.9238795325112867i, 0.1950903220161283 - 0.9807852804032304i, 0 - 1i, -0.1950903220161282 - 0.9807852804032304i, -0.3826834323650897 - 0.9238795325112867i, -0.555570233019602 - 0.8314696123025453i, -0.7071067811865475 - 0.7071067811865476i, -0.8314696123025453 - 0.5555702330196021i, -0.9238795325112867 - 0.38268343236508984i, -0.9807852804032303 - 0.19509032201612858i, -1 + 0i, -0.9807852804032304 + 0.19509032201612836i, -0.9238795325112868 + 0.38268343236508967i, -0.8314696123025453 + 0.555570233019602i, -0.7071067811865477 + 0.7071067811865475i, -0.5555702330196022 + 0.8314696123025453i, -0.38268343236509034 + 0.9238795325112865i, -0.19509032201612866 + 0.9807852804032303i, 0 + 1i, 0.19509032201612828 + 0.9807852804032304i, 0.38268343236509 + 0.9238795325112866i, 0.5555702330196018 + 0.8314696123025455i, 0.7071067811865475 + 0.7071067811865477i, 0.8314696123025453 + 0.5555702330196022i, 0.9238795325112865 + 0.3826834323650904i, 0.9807852804032303 + 0.19509032201612872i},
@@ -90,7 +93,7 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 		var (
 			fn = func(inputLen int) []complex128 {
 				radix2Factors := map[int][]complex128{
-					4: {(1 + 0i), (0 - 1i), (-1 + 0i), (0 + 1i)},
+					4: {1 + 0i, 0 - 1i, -1 + 0i, 0 + 1i},
 				}
 
 				if factors, ok := radix2Factors[inputLen]; ok {
@@ -129,7 +132,7 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 		var (
 			fn = func(inputLen int) []complex128 {
 				radix2Factors := map[int][]complex128{
-					4: {(1 + 0i), (0 - 1i), (-1 + 0i), (0 + 1i)},
+					4: {1 + 0i, 0 - 1i, -1 + 0i, 0 + 1i},
 				}
 
 				if factors, ok := radix2Factors[inputLen]; ok {
@@ -166,7 +169,7 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 		var (
 			fn = func(input_len int) []complex128 {
 				radix2Factors := map[int][]complex128{
-					4: {(1 + 0i), (0 - 1i), (-1 + 0i), (0 + 1i)},
+					4: {1 + 0i, 0 - 1i, -1 + 0i, 0 + 1i},
 				}
 				radix2Lock := sync.RWMutex{}
 				hasRadix2Factors := func(idx int) bool {
@@ -212,23 +215,21 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 
 	b.Run("Compare", func(b *testing.B) {
 		if len(outputA) != len(outputB) || len(outputA) != len(outputC) {
-			b.Errorf("output length mismatch error: slice A: %d ; slice B: %d ; slice C: %d", len(outputA), len(outputB), len(outputC))
+			b.Errorf(
+				"output length mismatch error: slice A: %d ; slice B: %d ; slice C: %d",
+				len(outputA), len(outputB), len(outputC),
+			)
+
 			return
 		}
 
 		for idx := range outputA {
 			if outputA[idx] != outputB[idx] || outputA[idx] != outputC[idx] || outputA[idx] != outputD[idx] {
-				b.Errorf("output mismatch error: index #%d: slice A: %v ; slice B: %v ; slice C: %v ; slice D: %v", idx, outputA[idx], outputB[idx], outputC[idx], outputD[idx])
+				b.Errorf(
+					"output mismatch error: index #%d: slice A: %v ; slice B: %v ; slice C: %v ; slice D: %v",
+					idx, outputA[idx], outputB[idx], outputC[idx], outputD[idx],
+				)
 			}
 		}
 	})
-
 }
-
-//func TestGetRadix2Factors(t *testing.T) {
-//	var inputFactorLengths = []int{4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192}
-//
-//	for _, v := range inputFactorLengths {
-//		t.Logf("\t%d: %#v,\n", v, fft.GetRadix2Factors(v))
-//	}
-//}

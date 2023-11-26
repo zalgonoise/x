@@ -1,7 +1,8 @@
+//nolint:gomnd // contains hardcoded return values for the fastest execution results
 package fft
 
 // Log2Types is a type constraint interface to scope the allowed types to
-// call the Log2 function
+// call the Log2 function.
 type Log2Types interface {
 	uint | uint16 | uint32 | uint64 | int | int16 | int32 | int64
 }
@@ -10,7 +11,7 @@ type Log2Types interface {
 // values to achieve the fastest performance possible.
 //
 // If the input is not present, then its log2 value is computed with a fast
-// bit-shifting technique
+// bit-shifting technique.
 //
 // from: http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogObvious
 func Log2[T Log2Types](v T) T {

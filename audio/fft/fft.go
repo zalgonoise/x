@@ -1,3 +1,4 @@
+//nolint:gomnd // hardcoded constant values, that are less readable if defined as constants
 package fft
 
 import (
@@ -10,19 +11,19 @@ const (
 	tau = 2 * math.Pi
 
 	// DefaultMagnitudeThreshold describes the default value where a certain
-	// frequency is strong enough to be considered relevant to the spectrum filter
+	// frequency is strong enough to be considered relevant to the spectrum filter.
 	DefaultMagnitudeThreshold = 10
 )
 
 // FrequencyPower denotes a single frequency and its magnitude in a Fast
-// Fourier Transform of a signal
+// Fourier Transform of a signal.
 type FrequencyPower struct {
 	Freq int
 	Mag  float64
 }
 
 // Apply applies a Fast Fourier Transform (FFT) on a slice of float64 `data`,
-// with sample rate `sampleRate`. It returns a slice of FrequencyPower
+// with sample rate `sampleRate`. It returns a slice of FrequencyPower.
 func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 	var (
 		ln         = len(data)
@@ -56,13 +57,14 @@ func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 }
 
 // FFT applies a Fast Fourier Transform to the input slice of complex128 values, to
-// retrieve the frequency spectrum of a digital signal
+// retrieve the frequency spectrum of a digital signal.
 func FFT(value []complex128) []complex128 {
 	var (
 		valueLen = len(value)
 		factors  = GetRadix2Factors(valueLen)
 		temp     = make([]complex128, valueLen) // temp
 	)
+
 	value = ReorderData(value)
 
 	// stage increases by a power of two
@@ -75,7 +77,6 @@ func FFT(value []complex128) []complex128 {
 		// iterate through each item in the batch, increasing by the stage value
 		for batchIdx := 0; batchIdx < valueLen; batchIdx += stage {
 			if stage == 2 { // "first stage" scenario
-
 				var (
 					reorderIdx  = value[batchIdx]
 					reorderNext = value[batchIdx+1]
@@ -83,8 +84,10 @@ func FFT(value []complex128) []complex128 {
 
 				temp[batchIdx] = reorderIdx + reorderNext
 				temp[batchIdx+1] = reorderIdx - reorderNext
+
 				continue
 			}
+
 			for iter := 0; iter < stage2Value; iter++ {
 				var (
 					idx        = iter + batchIdx
@@ -104,7 +107,7 @@ func FFT(value []complex128) []complex128 {
 	return value
 }
 
-// IFFT returns the Inverse Fast Fourier Transform of a given complex128 slice
+// IFFT returns the Inverse Fast Fourier Transform of a given complex128 slice.
 func IFFT(value []complex128) []complex128 {
 	var (
 		ln     = len(value)
@@ -114,6 +117,7 @@ func IFFT(value []complex128) []complex128 {
 
 	// Reverse inputs, which is calculated with modulo factor, hence value[0] as an outlier
 	output[0] = value[0]
+
 	for i, j := 1, ln-1; i < ln; i, j = i+1, j-1 {
 		output[i] = value[j]
 	}
@@ -137,7 +141,7 @@ func Convolve(x, y []complex128) []complex128 {
 	y = FFT(y)
 
 	for i := 0; i < len(x); i++ {
-		x[i] = x[i] * y[i]
+		x[i] *= y[i]
 	}
 
 	return IFFT(x)

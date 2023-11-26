@@ -1,3 +1,4 @@
+//nolint:gomnd // contains hardcoded values; makes code less readable to make these constants
 package fft
 
 import (
@@ -15,10 +16,14 @@ import (
 // placing each element of the input on every second slot. Finally, it casts this float slice as a complex slice,
 // using an unsafe approach to prioritize performance.
 func ToComplex(x []float64) []complex128 {
-	length := len(x)
-	out := make([]float64, length*2)
+	var (
+		length = len(x)
+		out    = make([]float64, length*2)
+	)
+
 	for i, j := 0, 0; i < len(x); i, j = i+1, (i+1)*2 {
 		out[j] = x[i]
 	}
+
 	return (*(*[]complex128)(unsafe.Pointer(&out)))[:length]
 }

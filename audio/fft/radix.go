@@ -1,3 +1,4 @@
+//nolint:gomnd // contains hardcoded constants, it's less readable to make constants from them
 package fft
 
 import (
@@ -9,7 +10,7 @@ const (
 	firstPrev = 1024
 )
 
-// GetRadix2Factors is temporarily public, could become private at a later point.,
+// GetRadix2Factors is temporarily public, could become private at a later point.
 func GetRadix2Factors(inputLen int) []complex128 {
 	if factors, ok := radix2Factors[inputLen]; ok {
 		return factors

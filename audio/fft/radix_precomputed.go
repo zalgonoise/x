@@ -1,5 +1,6 @@
 package fft
 
+//nolint:gochecknoglobals,lll // immutable, precomputed radix factors for faster executions
 var radix2Factors = map[int][]complex128{
 	4:    {1 + 0i, 0 - 1i, -1 + 0i, 0 + 1i},
 	8:    {1 + 0i, 0.7071067811865476 - 0.7071067811865475i, 0 - 1i, -0.7071067811865475 - 0.7071067811865476i, -1 + 0i, -0.7071067811865477 + 0.7071067811865475i, 0 + 1i, 0.7071067811865475 + 0.7071067811865477i},

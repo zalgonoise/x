@@ -18,6 +18,7 @@ const (
 )
 
 var (
+	//nolint:gochecknoglobals // immutable set of supported block sizes, as a cache map
 	supportedSizes = map[int]struct{}{
 		Block8:    {},
 		Block16:   {},
@@ -32,6 +33,7 @@ var (
 		Block8192: {},
 	}
 
+	//nolint:gochecknoglobals // immutable set of supported block sizes, as a slice
 	blockSizes = []int{
 		Block8, Block16, Block32, Block64,
 		Block128, Block256, Block512, Block1024,
@@ -40,7 +42,7 @@ var (
 )
 
 // AsBlock returns a valid block size for the input int `size`. If the input
-// size is not valid, a default block size is returned (Block1024)
+// size is not valid, a default block size is returned (Block1024).
 func AsBlock(size int) int {
 	if _, ok := supportedSizes[size]; ok {
 		return size
