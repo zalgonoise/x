@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"strconv"
@@ -26,8 +27,14 @@ const (
 	shutdownTimeout = 15 * time.Second
 )
 
+const (
+	undefined = iota
+	noHost
+	withHost
+)
+
 func main() {
-	err, code := run()
+	code, err := run()
 	if err != nil {
 		slog.Error(
 			"audio: runtime error",
@@ -38,14 +45,14 @@ func main() {
 	os.Exit(code)
 }
 
-func run() (error, int) {
+func run() (int, error) {
 	logHandler := slog.NewTextHandler(os.Stderr, nil)
 	logger := slog.New(logHandler)
 	ctx := context.Background()
 
 	config, err := NewConfig()
 	if err != nil {
-		return err, 1
+		return 1, err
 	}
 
 	logger.InfoContext(ctx, "setting up consumer")
@@ -55,46 +62,56 @@ func run() (error, int) {
 		httpaudio.WithTimeout(config.Duration),
 	)
 	if err != nil {
-		return err, 1
+		return 1, err
 	}
 
 	logger.InfoContext(ctx, "setting up exporter")
+
 	exporter, err := newExporter(ctx, config, logHandler)
 	if err != nil {
-		return err, 1
+		return 1, err
 	}
 
 	logger.InfoContext(ctx, "setting up processor")
+
 	proc := processors.PCM(exporter)
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.Duration)
 	defer cancel()
 
 	logger.InfoContext(ctx, "reading from consumer")
+
 	reader, err := consumer.Consume(ctx)
 	if err != nil {
-		return err, 1
+		return 1, err
 	}
 
 	logger.InfoContext(ctx, "processing signal")
+
 	go proc.Process(ctx, reader)
 
 	errs := proc.Err()
 
-	defer audio.Shutdown(ctx, shutdownTimeout, consumer, proc)
+	defer func() {
+		logger.InfoContext(ctx, "shutting down", slog.Duration("timeout", shutdownTimeout))
+
+		if shutdownErr := audio.Shutdown(ctx, shutdownTimeout, consumer, proc); shutdownErr != nil {
+			logger.WarnContext(ctx, "error when shutting down", slog.String("error", shutdownErr.Error()))
+		}
+	}()
 
 	for {
 		select {
 		case <-ctx.Done():
 			logger.InfoContext(ctx, "exiting")
 
-			return nil, 0
-		case err, ok := <-errs:
-			if !ok || err == nil || errors.Is(err, audio.ErrHaltSignal) {
-				return nil, 0
+			return 0, nil
+		case procErr, ok := <-errs:
+			if !ok || procErr == nil || errors.Is(procErr, audio.ErrHaltSignal) {
+				return 0, nil
 			}
 
-			return err, 1
+			return 1, procErr
 		}
 	}
 }
@@ -132,20 +149,17 @@ func newExporter(ctx context.Context, config *Config, logHandler slog.Handler) (
 	return exporter, nil
 }
 
-func newExporterOpts(config *Config, logHandler slog.Handler) []cfg.Option[exporters.Config] {
-	return []cfg.Option[exporters.Config]{
+func newExporterOpts(config *Config, logHandler slog.Handler) []cfg.Option[*exporters.Config] {
+	return []cfg.Option[*exporters.Config]{
 		exporters.WithLogHandler(logHandler),
 		newPeaksOpt(config),
 		newSpectrumOpt(config),
 	}
 }
 
-func newPeaksOpt(config *Config) cfg.Option[exporters.Config] {
+func newPeaksOpt(config *Config) cfg.Option[*exporters.Config] {
 	if config.Mode == "spectrum" {
-		// no-op
-		return cfg.Register[exporters.Config](func(config exporters.Config) exporters.Config {
-			return config
-		})
+		return cfg.NoOp[*exporters.Config]{}
 	}
 
 	if config.Batch {
@@ -159,12 +173,9 @@ func newPeaksOpt(config *Config) cfg.Option[exporters.Config] {
 	return exporters.WithPeaks()
 }
 
-func newSpectrumOpt(config *Config) cfg.Option[exporters.Config] {
+func newSpectrumOpt(config *Config) cfg.Option[*exporters.Config] {
 	if config.Mode == "peaks" {
-		// no-op
-		return cfg.Register[exporters.Config](func(config exporters.Config) exporters.Config {
-			return config
-		})
+		return cfg.NoOp[*exporters.Config]{}
 	}
 
 	if config.Batch {
@@ -179,17 +190,23 @@ func newSpectrumOpt(config *Config) cfg.Option[exporters.Config] {
 }
 
 func getPort(addr string) (port int, err error) {
+	if addr == "" {
+		return defaultPort, nil
+	}
+
 	split := strings.Split(addr, ":")
 
 	switch len(split) {
-	case 1:
+	case undefined:
+		return defaultPort, nil
+	case noHost:
 		port, err = strconv.Atoi(split[0])
 		if err != nil {
 			return defaultPort, err
 		}
 
 		return port, nil
-	case 2:
+	case withHost:
 		port, err = strconv.Atoi(split[1])
 		if err != nil {
 			return defaultPort, err
@@ -197,6 +214,6 @@ func getPort(addr string) (port int, err error) {
 
 		return port, nil
 	default:
-		return defaultPort, nil
+		return defaultPort, fmt.Errorf("invalid port configuration: %s", addr)
 	}
 }

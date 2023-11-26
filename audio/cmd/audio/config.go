@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -23,20 +22,35 @@ const (
 	minDuration           = 15 * time.Second
 	maxDuration           = 365 * 24 * time.Hour
 	defaultDuration       = 4 * time.Hour
-	defaultOutputType     = "logger"
-	defaultMode           = "combined"
 	defaultPort           = 13088
+
+	urlSchemeHTTP  = "http"
+	urlSchemeHTTPS = "https"
+
+	outputToLog        = "log"
+	outputToLogger     = "logger"
+	outputToProm       = "prom"
+	outputToPrometheus = "prometheus"
+
+	modePeaks    = "peaks"
+	modeSpectrum = "spectrum"
+	modeCombined = "combined"
+
+	batchMax     = "max"
+	batchMaximum = "maximum"
 )
 
-var (
-	emptyConfig   = Config{}
-	defaultConfig = Config{
-		OutputType: defaultOutputType,
+//nolint:gochecknoglobals // immutable object used in comparisons when creating Config
+var emptyConfig = Config{}
+
+func DefaultConfig() *Config {
+	return &Config{
+		OutputType: outputToLogger,
 		BucketSize: defaultBucketSize,
-		Mode:       defaultMode,
+		Mode:       modeCombined,
 		Duration:   defaultDuration,
 	}
-)
+}
 
 type Config struct {
 	// Input points to an audio stream source (URL)
@@ -69,7 +83,7 @@ type Config struct {
 
 func NewConfig() (*Config, error) {
 	config := merge(
-		merge(&defaultConfig, newEnvConfig()),
+		merge(DefaultConfig(), newEnvConfig()),
 		newFlagsConfig(),
 	)
 
@@ -140,63 +154,64 @@ func newFlagsConfig() *Config {
 	return config
 }
 
-func merge(base, new *Config) *Config {
+func merge(base, input *Config) *Config {
 	switch {
-	case base == nil && new == nil:
-		return &defaultConfig
-	case new == nil:
+	case base == nil && input == nil:
+		return DefaultConfig()
+	case input == nil:
 		return base
 	case base == nil:
-		return new
+		return input
 	}
 
-	if new.Input != "" {
-		base.Input = new.Input
+	if input.Input != "" {
+		base.Input = input.Input
 	}
 
-	if new.OutputType != "" {
-		base.OutputType = new.OutputType
+	if input.OutputType != "" {
+		base.OutputType = input.OutputType
 	}
 
-	if new.Output != "" {
-		base.Output = new.Output
+	if input.Output != "" {
+		base.Output = input.Output
 	}
 
-	if new.Mode != "" {
-		base.Mode = new.Mode
+	if input.Mode != "" {
+		base.Mode = input.Mode
 	}
 
-	if new.BucketSize > 0 {
-		base.BucketSize = new.BucketSize
+	if input.BucketSize > 0 {
+		base.BucketSize = input.BucketSize
 	}
 
-	if new.Batch {
-		base.Batch = new.Batch
+	if input.Batch {
+		base.Batch = input.Batch
 	}
 
-	if new.BatchSize > 0 {
-		base.BatchSize = new.BatchSize
+	if input.BatchSize > 0 {
+		base.BatchSize = input.BatchSize
 	}
 
-	if new.BatchFrequency > 0 {
-		base.BatchFrequency = new.BatchFrequency
+	if input.BatchFrequency > 0 {
+		base.BatchFrequency = input.BatchFrequency
 	}
 
-	if new.BatchCompactor != "" {
-		base.BatchCompactor = new.BatchCompactor
+	if input.BatchCompactor != "" {
+		base.BatchCompactor = input.BatchCompactor
 	}
 
-	if new.Duration > 0 {
-		base.Duration = new.Duration
+	if input.Duration > 0 {
+		base.Duration = input.Duration
 	}
 
-	if new.ExitCode > 0 {
-		base.ExitCode = new.ExitCode
+	if input.ExitCode > 0 {
+		base.ExitCode = input.ExitCode
 	}
 
 	return base
 }
 
+//nolint:cyclop // validate needs to perform several checks against the input *Config
 func validate(config *Config) error {
 	// validate input
 	if config.Input == "" {
@@ -210,7 +225,7 @@ func validate(config *Config) error {
 		return err
 	}
 
-	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+	if parsedURL.Scheme != urlSchemeHTTP && parsedURL.Scheme != urlSchemeHTTPS {
 		return fmt.Errorf("input must be a valid HTTP or HTTPS URL: %s", config.Input)
 	}
 
@@ -220,32 +235,11 @@ func validate(config *Config) error {
 
 	// validate output
 	switch strings.ToLower(config.OutputType) {
-	case "logger", "log":
+	case outputToLogger, outputToLog:
 
-	case "prom", "prometheus":
-		if config.Output != "" {
-			split := strings.Split(config.Output, ":")
-
-			switch len(split) {
-			case 0:
-				// apply defaults
-			case 1:
-				_, err := strconv.Atoi(split[0])
-				if err != nil {
-					return fmt.Errorf("output must be a valid port number: %v", err)
-				}
-
-			case 2:
-				// assume "localhost" "{port}"
-				_, err := strconv.Atoi(split[1])
-				if err != nil {
-					return fmt.Errorf("output must be a valid port number: %v", err)
-				}
-			default:
-				return fmt.Errorf(
-					"invalid output address, should be either a port or 'localhost:{port}': %s", config.Output,
-				)
-			}
+	case outputToProm, outputToPrometheus:
+		if _, err = getPort(config.Output); err != nil {
+			return fmt.Errorf("invalid port: %w", err)
 		}
 	default:
 		return fmt.Errorf("invalid output type: %s", config.OutputType)
@@ -253,7 +247,7 @@ func validate(config *Config) error {
 
 	// validate mode
 	switch config.Mode {
-	case "peaks", "spectrum", "combined", "":
+	case modePeaks, modeSpectrum, modeCombined, "":
 		// OK state
 	default:
 		return fmt.Errorf("invalid mode: %s", config.Mode)
@@ -275,7 +269,7 @@ func validate(config *Config) error {
 		}
 
 		switch config.BatchCompactor {
-		case "max", "maximum", "":
+		case batchMax, batchMaximum, "":
 		// OK state
 		default:
 			return fmt.Errorf("invalid compactor: %s", config.BatchCompactor)
