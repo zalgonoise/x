@@ -34,7 +34,7 @@ func (p loggedProcessor) Process(ctx context.Context, reader io.Reader) {
 // This implementation will simply return a call to the underlying Processor's Err method.
 //
 // It returns a receiving channel for errors, that allows the caller of a Process method to listen for any raised
-// errors
+// errors.
 func (p loggedProcessor) Err() <-chan error {
 	return p.p.Err()
 }

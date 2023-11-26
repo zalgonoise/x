@@ -19,12 +19,12 @@ func (noOpRegistry[T]) Load() <-chan T { return nil }
 // This is a no-op call and the returned error is always nil.
 func (noOpRegistry[T]) Shutdown(context.Context) error { return nil }
 
-// NoOpLoader returns a no-op Registry, scoped as a Loader interface
+// NoOpLoader returns a no-op Registry, scoped as a Loader interface.
 func NoOpLoader[T any]() Loader[T] {
 	return noOpRegistry[T]{}
 }
 
-// NoOpRegistry returns a no-op Registry
+// NoOpRegistry returns a no-op Registry.
 func NoOpRegistry[T any]() Registry[T] {
 	return noOpRegistry[T]{}
 }

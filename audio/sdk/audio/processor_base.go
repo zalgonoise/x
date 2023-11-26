@@ -17,7 +17,7 @@ const (
 	ErrSignal = errs.Entity("with OS signal")
 )
 
-// ErrHaltSignal is a sentinel error for when an OS signal is emitted, to halt or stop the application's runtime
+// ErrHaltSignal is a sentinel error for when an OS signal is emitted, to halt or stop the application's runtime.
 var ErrHaltSignal = errs.WithDomain(errDomain, ErrHalt, ErrSignal)
 
 type processor struct {
@@ -36,7 +36,8 @@ type processor struct {
 // Process should be called in a goroutine, as a blocking call that is supposed to be issued asynchronously.
 func (p *processor) Process(ctx context.Context, reader io.Reader) {
 	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt, os.Kill, syscall.SIGTERM)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
+
 	defer close(signalCh)
 
 	ctx, p.cancel = context.WithCancel(ctx)
@@ -61,7 +62,7 @@ func (p *processor) Process(ctx context.Context, reader io.Reader) {
 // Err implements the Processor interface.
 //
 // It returns a receiving channel for errors, that allows the caller of a Process method to listen for any raised
-// errors
+// errors.
 func (p *processor) Err() <-chan error {
 	return p.errCh
 }

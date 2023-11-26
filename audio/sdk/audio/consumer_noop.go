@@ -17,7 +17,7 @@ func (noOpConsumer) Consume(context.Context) (reader io.Reader, err error) { ret
 // This is a no-op call and the returned error is always nil.
 func (noOpConsumer) Shutdown(context.Context) error { return nil }
 
-// NoOpConsumer returns a no-op Consumer
+// NoOpConsumer returns a no-op Consumer.
 func NoOpConsumer() Consumer {
 	return noOpConsumer{}
 }

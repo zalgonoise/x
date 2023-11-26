@@ -5,6 +5,10 @@ import (
 	"errors"
 )
 
+const (
+	errAlloc = 2
+)
+
 type collector[T any] struct {
 	extractor Extractor[T]
 	registry  Registry[T]
@@ -44,7 +48,7 @@ func (c collector[T]) ForceFlush() error {
 // Shutdown gracefully shuts down the component, by calling its Registry and Extractor's Shutdown methods, if they
 // exist, returning any errors raised in the process.
 func (c collector[T]) Shutdown(ctx context.Context) error {
-	errs := make([]error, 0, 2)
+	errs := make([]error, 0, errAlloc)
 
 	if closer, ok := c.extractor.(interface {
 		Shutdown(ctx context.Context) error

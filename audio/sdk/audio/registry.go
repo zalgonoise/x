@@ -2,7 +2,7 @@ package audio
 
 // Registry is a generic type that registers and loads values on a specific type context.
 //
-// Registries are responsible for handling aggregations and compacting values into one, when Load is called
+// Registries are responsible for handling aggregations and compacting values into one, when Load is called.
 type Registry[T any] interface {
 	// Register stores the input data in the Registry, returning an error if raised
 	Register(T) error
@@ -34,5 +34,5 @@ type Loader[T any] interface {
 //
 // It should be perceived as the reduce process in a Map-Reduce strategy.
 //
-// A Compactor is an optional, configurable component within a Registry, if applicable
+// A Compactor is an optional, configurable component within a Registry, if applicable.
 type Compactor[T any] func([]T) (T, error)

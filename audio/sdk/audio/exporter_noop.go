@@ -19,7 +19,7 @@ func (noOpExporter) ForceFlush() error { return nil }
 // This is a no-op call and the returned error is always nil.
 func (noOpExporter) Shutdown(context.Context) error { return nil }
 
-// NoOpExporter returns a no-op Exporter
+// NoOpExporter returns a no-op Exporter.
 func NoOpExporter() Exporter {
 	return noOpExporter{}
 }

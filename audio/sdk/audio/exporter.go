@@ -13,7 +13,7 @@ package audio
 // its output target if none are configured.
 //
 // Exporter also implements StreamCloser as a means to both flush any batched or aggregated values and gracefully
-// shutdown the exporter
+// shutdown the exporter.
 type Exporter interface {
 	// Export consumes the audio data chunks from the Processor, preparing them to be pushed to their destination.
 	//

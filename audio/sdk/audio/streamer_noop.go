@@ -12,7 +12,7 @@ type noOpStreamer struct{}
 // This is a no-op call and has no effect.
 func (noOpStreamer) Stream(context.Context, io.Reader, chan<- error) {}
 
-// NoOpStreamer returns a no-op Streamer
+// NoOpStreamer returns a no-op Streamer.
 func NoOpStreamer() Streamer {
 	return noOpStreamer{}
 }
@@ -39,7 +39,7 @@ func (noOpStreamExporter) ForceFlush() error { return nil }
 // This is a no-op call and the returned error is always nil.
 func (noOpStreamExporter) Shutdown(context.Context) error { return nil }
 
-// NoOpStreamExporter returns a no-op StreamExporter
+// NoOpStreamExporter returns a no-op StreamExporter.
 func NoOpStreamExporter() StreamExporter {
 	return noOpStreamExporter{}
 }
