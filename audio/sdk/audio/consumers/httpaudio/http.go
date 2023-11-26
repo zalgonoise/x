@@ -34,6 +34,7 @@ func (c *httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error
 
 	req.Header.Set(headerContentTypeKey, headerContentTypeValue)
 
+	//nolint:bodyclose // in this implementation, the processor will close the reader once it's done.
 	res, err := (&http.Client{
 		Timeout: c.cfg.timeout,
 	}).Do(req)
@@ -56,7 +57,7 @@ func (c *httpConsumer) Shutdown(_ context.Context) error {
 }
 
 func New(options ...cfg.Option[Config]) (audio.Consumer, error) {
-	config := cfg.Set(defaultConfig, options...)
+	config := cfg.Set(DefaultConfig(), options...)
 
 	if err := Validate(config); err != nil {
 		return audio.NoOpConsumer(), err

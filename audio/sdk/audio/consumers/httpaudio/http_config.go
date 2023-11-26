@@ -24,11 +24,15 @@ const (
 var (
 	ErrInvalidProtocol = errs.WithDomain(consumerDomain, ErrInvalid, ErrProtocol)
 
+	//nolint:gochecknoglobals // it's faster to initialize it on startup, as it is an immutable object
 	configValidator = valigator.New(validateTarget)
-	defaultConfig   = Config{
+)
+
+func DefaultConfig() Config {
+	return Config{
 		timeout: defaultConnTimeout,
 	}
-)
+}
 
 // Config defines a data structure for configurations and options related to a HTTP audio.Consumer.
 type Config struct {
@@ -71,7 +75,7 @@ func validateTarget(config Config) error {
 	return nil
 }
 
-// Validate verifies if the input Config contains missing or invalid fields
+// Validate verifies if the input Config contains missing or invalid fields.
 func Validate(config Config) error {
 	return configValidator.Validate(config)
 }
