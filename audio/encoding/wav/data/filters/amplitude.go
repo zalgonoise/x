@@ -7,11 +7,11 @@ package filters
 // Clipping (cutting off the floating point audio data at +1.0 and -1.0) may occur
 // if the signal is amplified beyond the acceptable range, of -1.0 and +1.0.
 //
-// For an approach to Amplify that avoids clipping, use Normalize
+// For an approach to Amplify that avoids clipping, use Normalize.
 func Amplify(ratio float64) func([]float64) {
 	return func(buffer []float64) {
 		for i := range buffer {
-			buffer[i] = buffer[i] * ratio
+			buffer[i] *= ratio
 
 			if buffer[i] > 1.0 {
 				buffer[i] = 1.0
@@ -26,7 +26,7 @@ func Amplify(ratio float64) func([]float64) {
 // peak levels in the signal.
 //
 // This is done by measuring the peak value of the signal and amplifying it
-// by the ratio of (1.0 + 1 / maxValue)
+// by the ratio of (1.0 + 1 / maxValue).
 func Normalize() func([]float64) {
 	return func(buffer []float64) {
 		var maxValue float64
