@@ -16,15 +16,19 @@ func BenchmarkChunk24bit(b *testing.B) {
 					h, err := data.From(pcm.Test24bitHeader)
 					if err != nil {
 						b.Error(err)
+
 						return
 					}
 
-					var chunk *data.DataChunk
+					var chunk *data.Chunk
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
-						chunk = data.NewPCMDataChunk(bitDepth24, h)
+						chunk = data.NewPCMChunk(bitDepth24, h)
 						chunk.Parse(pcm.Test24bitPCM)
 					}
+
 					_ = chunk
 				},
 			)
@@ -33,15 +37,19 @@ func BenchmarkChunk24bit(b *testing.B) {
 					h, err := data.From(pcm.Test24bitHeader)
 					if err != nil {
 						b.Error(err)
+
 						return
 					}
 
-					var chunk = data.NewPCMDataChunk(bitDepth24, h)
+					chunk := data.NewPCMChunk(bitDepth24, h)
 					chunk.Parse(pcm.Test24bitPCM)
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						chunk.Parse(pcm.Test24bitPCM)
 					}
+
 					_ = chunk
 				},
 			)
@@ -52,19 +60,22 @@ func BenchmarkChunk24bit(b *testing.B) {
 			h, err := data.From(pcm.Test24bitHeader)
 			if err != nil {
 				b.Error(err)
+
 				return
 			}
 
 			var (
-				chunk = data.NewPCMDataChunk(bitDepth24, h)
+				chunk = data.NewPCMChunk(bitDepth24, h)
 				buf   []byte
 			)
+
 			chunk.Parse(pcm.Test24bitPCM)
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
 				buf = chunk.Bytes()
 			}
+
 			_ = buf
 		},
 	)
@@ -74,9 +85,11 @@ func Test24bitHeader(t *testing.T) {
 	h, err := data.From(pcm.Test24bitHeader)
 	if err != nil {
 		t.Error(err)
+
 		return
 	}
-	chunk := data.NewPCMDataChunk(bitDepth24, h)
+
+	chunk := data.NewPCMChunk(bitDepth24, h)
 
 	if output := chunk.Header(); !reflect.DeepEqual(*h, *output) {
 		t.Errorf("output mismatch error: wanted %+v ; got %+v", *h, *output)
