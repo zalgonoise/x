@@ -1,5 +1,7 @@
+//nolint:gomnd // contains hardcoded constants, it's less readable to make constants from them
 package window
 
+//nolint:gochecknoglobals // immutable map linking window sizes to its corresponding precomputed window slices
 var bartlettMap = map[int]Window{
 	8:    Bartlett8,
 	16:   Bartlett16,
@@ -21,6 +23,7 @@ func Bartlett(i int) Window {
 	if !ok {
 		return newBartlett(i)
 	}
+
 	return w
 }
 
@@ -32,7 +35,7 @@ func newBartlett(i int) Window {
 		return []float64{1}
 	default:
 		var (
-			r           = make([]float64, i, i)
+			r           = make([]float64, i)
 			indices     = float64(i - 1)
 			coefficient = 2 / indices
 			n           = 0.0
@@ -41,6 +44,7 @@ func newBartlett(i int) Window {
 		for ; n <= indices/2; n++ {
 			r[int(n)] = coefficient * n
 		}
+
 		for ; n <= indices; n++ {
 			r[int(n)] = 2 - coefficient*n
 		}
