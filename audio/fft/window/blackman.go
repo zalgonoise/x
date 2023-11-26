@@ -2,6 +2,7 @@ package window
 
 import "github.com/zalgonoise/x/audio/trig"
 
+//nolint:gochecknoglobals // immutable map linking window sizes to its corresponding precomputed window slices
 var blackmanMap = map[int]Window{
 	8:    Blackman8,
 	16:   Blackman16,
@@ -23,6 +24,7 @@ func Blackman(i int) Window {
 	if !ok {
 		return newBlackman(i)
 	}
+
 	return w
 }
 
@@ -36,7 +38,7 @@ func newBlackman(i int) Window {
 		return []float64{1}
 	default:
 		var (
-			r       = make([]float64, i, i)
+			r       = make([]float64, i)
 			indices = float64(i - 1)
 		)
 
