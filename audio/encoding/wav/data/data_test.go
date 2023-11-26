@@ -50,16 +50,17 @@ func TestDataChunk(t *testing.T) {
 
 			for _, testcase := range []struct {
 				name string
-				op   func(*DataChunk)
+				op   func(*Chunk)
 			}{
 				{
 					name: "ParseAndBytes",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						require.Equal(t, class.data, chunk.Bytes())
 					},
-				}, {
+				},
+				{
 					name: "WriteAndRead",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 
 						_, err = chunk.Write(class.data)
@@ -75,7 +76,7 @@ func TestDataChunk(t *testing.T) {
 				},
 				{
 					name: "ReadFrom",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 
 						reader := bytes.NewReader(class.data)
@@ -90,97 +91,111 @@ func TestDataChunk(t *testing.T) {
 
 						require.Equal(t, class.data, buf)
 					},
-				}, {
+				},
+				{
 					name: "Value",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						require.Greater(t, len(chunk.Value()), 0)
 					},
-				}, {
+				},
+				{
 					name: "Float",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						require.Greater(t, len(chunk.Float()), 0)
 					},
-				}, {
+				},
+				{
 					name: "ParseFloat",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						f := chunk.Float()
 
-						newChunk := NewPCMDataChunk(bitDepth16, h)
+						newChunk := NewPCMChunk(bitDepth16, h)
 						newChunk.ParseFloat(f)
 						require.Equal(t, chunk.Data, newChunk.Data)
 					},
-				}, {
+				},
+				{
 					name: "ParseSecondRun",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Parse(class.data)
 					},
-				}, {
+				},
+				{
 					name: "Header",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						require.Equal(t, h, chunk.Header())
 					},
-				}, {
+				},
+				{
 					name: "BitDepth",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						require.Equal(t, class.bitDepth, chunk.BitDepth())
 					},
-				}, {
+				},
+				{
 					name: "Reset",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Reset()
 						require.Len(t, chunk.Data, 0)
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/SineWithNilData",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 						chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Greater(t, len(chunk.Data), 0)
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/Square",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 						chunk.Generate(osc.SquareWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Greater(t, len(chunk.Data), 0)
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/Triangle",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 						chunk.Generate(osc.TriangleWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Greater(t, len(chunk.Data), 0)
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/SawtoothUp",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Greater(t, len(chunk.Data), 0)
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/SawtoothDown",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 						chunk.Generate(osc.SawtoothDownWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Greater(t, len(chunk.Data), 0)
 					},
-				}, {
+				},
+				{
 					name: "Generate/Fail",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						chunk.Data = nil
 						chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
 
 						require.Len(t, chunk.Data, 0)
 					},
-				}, {
+				},
+				{
 					name: "Apply",
-					op: func(chunk *DataChunk) {
+					op: func(chunk *Chunk) {
 						orig := make([]float64, len(chunk.Data))
 						copy(orig, chunk.Data)
 
@@ -194,7 +209,8 @@ func TestDataChunk(t *testing.T) {
 				},
 			} {
 				t.Run(testcase.name, func(t *testing.T) {
-					chunk := NewPCMDataChunk(class.bitDepth, h)
+					chunk := NewPCMChunk(class.bitDepth, h)
+
 					chunk.Parse(class.data)
 					testcase.op(chunk)
 				})
@@ -246,16 +262,17 @@ func TestDataRing(t *testing.T) {
 
 			for _, testcase := range []struct {
 				name string
-				op   func(*DataRing)
+				op   func(*Ring)
 			}{
 				{
 					name: "ParseAndBytes",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						require.Equal(t, class.data[len(class.data)-class.size:], chunk.Bytes())
 					},
-				}, {
+				},
+				{
 					name: "WriteAndRead",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Data.Reset()
 
 						_, err = chunk.Write(class.data)
@@ -271,7 +288,7 @@ func TestDataRing(t *testing.T) {
 				},
 				{
 					name: "ReadFrom",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Data.Reset()
 
 						reader := bytes.NewReader(class.data)
@@ -286,88 +303,102 @@ func TestDataRing(t *testing.T) {
 
 						require.Equal(t, class.data[len(class.data)-class.size:], buf)
 					},
-				}, {
+				},
+				{
 					name: "Value",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						require.Len(t, chunk.Value(), class.size/(int(class.bitDepth)/byteSize))
 					},
-				}, {
+				},
+				{
 					name: "Float",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						require.Len(t, chunk.Float(), class.size/(int(class.bitDepth)/byteSize))
 					},
-				}, {
+				},
+				{
 					name: "ParseFloat",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						f := chunk.Float()
 
-						newChunk := NewPCMDataRing(bitDepth16, h, class.size*2, nil)
+						newChunk := NewPCMRing(bitDepth16, h, class.size*2, nil)
 						newChunk.ParseFloat(f)
 						require.Equal(t, chunk.Data.Value(), newChunk.Data.Value())
 					},
-				}, {
+				},
+				{
 					name: "ParseSecondRun",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Parse(class.data)
 					},
-				}, {
+				},
+				{
 					name: "Header",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						require.Equal(t, h, chunk.Header())
 					},
-				}, {
+				},
+				{
 					name: "BitDepth",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						require.Equal(t, class.bitDepth, chunk.BitDepth())
 					},
-				}, {
+				},
+				{
 					name: "Reset",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Reset()
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/SineWithNilData",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Len(t, chunk.Data.Value(), class.size/(int(class.bitDepth)/byteSize))
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/Square",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Generate(osc.SquareWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Len(t, chunk.Data.Value(), class.size/(int(class.bitDepth)/byteSize))
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/Triangle",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Generate(osc.TriangleWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Len(t, chunk.Data.Value(), class.size/(int(class.bitDepth)/byteSize))
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/SawtoothUp",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Len(t, chunk.Data.Value(), class.size/(int(class.bitDepth)/byteSize))
 					},
-				}, {
+				},
+				{
 					name: "Generate/Success/SawtoothDown",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Generate(osc.SawtoothDownWave, 2000, 44100, 100*time.Millisecond)
 
 						require.Len(t, chunk.Data.Value(), class.size/(int(class.bitDepth)/byteSize))
 					},
-				}, {
+				},
+				{
 					name: "Generate/Fail",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
 					},
-				}, {
+				},
+				{
 					name: "Apply",
-					op: func(chunk *DataRing) {
+					op: func(chunk *Ring) {
 						orig := make([]float64, chunk.Data.Cap())
 						copy(orig, chunk.Data.Value())
 
@@ -381,7 +412,8 @@ func TestDataRing(t *testing.T) {
 				},
 			} {
 				t.Run(testcase.name, func(t *testing.T) {
-					chunk := NewPCMDataRing(class.bitDepth, h, class.size, nil)
+					chunk := NewPCMRing(class.bitDepth, h, class.size, nil)
+
 					chunk.Parse(class.data)
 					testcase.op(chunk)
 				})

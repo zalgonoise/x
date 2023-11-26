@@ -16,12 +16,14 @@ const (
 type ID [4]byte
 
 var (
-	Data ID = [4]byte([]byte(DataIDString))
-	Junk ID = [4]byte([]byte(JunkIDString))
+	//nolint:gochecknoglobals // is served for comparisons and assignments, as a byte array for its string constant
+	DataID ID = [4]byte([]byte(DataIDString))
+	//nolint:gochecknoglobals // is served for comparisons and assignments, as a byte array for its string constant
+	JunkID ID = [4]byte([]byte(JunkIDString))
 )
 
 // Header describes the (raw) structure of a WAV file subchunk, which usually
-// contains a "data" or "junk" ID, and the length of the data as its size
+// contains a "data" or "junk" ID, and the length of the data as its size.
 //
 // Reference: http://soundfile.sapp.org/doc/WaveFormat/
 type Header struct {
@@ -30,7 +32,7 @@ type Header struct {
 }
 
 // From extracts a subchunk Header from an input slice of bytes; returning a
-// pointer to a Header, and an error if the data is invalid
+// pointer to a Header, and an error if the data is invalid.
 func From(buf []byte) (h *Header, err error) {
 	h = new(Header)
 
@@ -41,10 +43,10 @@ func From(buf []byte) (h *Header, err error) {
 	return h, nil
 }
 
-// Write implements the io.Writer interface
+// Write implements the io.Writer interface.
 //
 // It consumes the byte slice `buf` as a subchunk Header, returning an error
-// if the input data cannot be parsed, or if the resulting header is invalid
+// if the input data cannot be parsed, or if the resulting header is invalid.
 func (h *Header) Write(buf []byte) (n int, err error) {
 	if len(buf) < Size {
 		return 0, ErrShortBuffer
@@ -56,10 +58,10 @@ func (h *Header) Write(buf []byte) (n int, err error) {
 	return Size, Validate(h)
 }
 
-// ReadFrom implements the io.ReaderFrom interface
+// ReadFrom implements the io.ReaderFrom interface.
 //
 // It consumes the byte slice `buf` as a Wav Header from an io.Reader, returning an error
-// if the input data cannot be parsed, or if the resulting header is invalid
+// if the input data cannot be parsed, or if the resulting header is invalid.
 func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	if r == nil {
 		return 0, nil
@@ -82,10 +84,9 @@ func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	return int64(m), err
 }
 
-// Read implements the io.Reader interface
+// Read implements the io.Reader interface.
 //
-// It reads the Header into the byte slice `buf`,
-// returning the number of bytes written and an error if raised
+// It reads the Header into the byte slice `buf`, returning the number of bytes written and an error if raised.
 func (h *Header) Read(buf []byte) (n int, err error) {
 	if len(buf) < Size {
 		return 0, ErrShortBuffer
@@ -98,7 +99,7 @@ func (h *Header) Read(buf []byte) (n int, err error) {
 }
 
 // Bytes casts a Header as a slice of bytes, by binary-encoding the
-// object
+// object.
 func (h *Header) Bytes() []byte {
 	buf := make([]byte, Size)
 
@@ -109,22 +110,22 @@ func (h *Header) Bytes() []byte {
 	return buf
 }
 
-// New creates a Header based on the input subchunk ID
+// New creates a Header based on the input subchunk ID.
 func New(id ID) *Header {
 	switch id {
-	case Data, Junk:
+	case DataID, JunkID:
 		return &Header{Subchunk2ID: id}
 	default:
 		return nil
 	}
 }
 
-// NewData creates a new ChunkHeader tagged with a "data" ID
-func NewData() *Header {
-	return &Header{Subchunk2ID: Data}
+// NewDataHeader creates a new ChunkHeader tagged with a "data" ID.
+func NewDataHeader() *Header {
+	return &Header{Subchunk2ID: DataID}
 }
 
-// NewJunk creates a new ChunkHeader tagged with a "junk" ID
-func NewJunk() *Header {
-	return &Header{Subchunk2ID: Junk}
+// NewJunkHeader creates a new ChunkHeader tagged with a "junk" ID.
+func NewJunkHeader() *Header {
+	return &Header{Subchunk2ID: JunkID}
 }

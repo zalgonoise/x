@@ -25,6 +25,7 @@ var (
 	ErrShortBuffer           = errs.WithDomain(ErrDomain, ErrShort, ErrBuffer)
 )
 
+//nolint:gochecknoglobals // is initialized in the background for performance during runtime, as it is never mutated.
 var headerValidator = valigator.New(validateHeaderSubChunkID)
 
 func validateHeaderSubChunkID(h *Header) error {
@@ -36,7 +37,7 @@ func validateHeaderSubChunkID(h *Header) error {
 	}
 }
 
-// Validate verifies that the input Header `h` is not nil and that it is valid
+// Validate verifies that the input Header `h` is not nil and that it is valid.
 func Validate(h *Header) error {
 	if h == nil {
 		return ErrEmptySubChunkHeader

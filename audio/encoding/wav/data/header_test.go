@@ -9,34 +9,34 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	t.Run("NewData", func(t *testing.T) {
-		wants := &data.Header{Subchunk2ID: data.Data}
+	t.Run("NewDataHeader", func(t *testing.T) {
+		wants := &data.Header{Subchunk2ID: data.DataID}
 
-		out := data.NewData()
+		out := data.NewDataHeader()
 
 		require.Equal(t, wants, out)
 	})
 
 	t.Run("WithDataID", func(t *testing.T) {
-		wants := &data.Header{Subchunk2ID: data.Data}
+		wants := &data.Header{Subchunk2ID: data.DataID}
 
-		out := data.New(data.Data)
+		out := data.New(data.DataID)
 
 		require.Equal(t, wants, out)
 	})
 
-	t.Run("NewJunk", func(t *testing.T) {
-		wants := &data.Header{Subchunk2ID: data.Junk}
+	t.Run("NewJunkHeader", func(t *testing.T) {
+		wants := &data.Header{Subchunk2ID: data.JunkID}
 
-		out := data.NewJunk()
+		out := data.NewJunkHeader()
 
 		require.Equal(t, wants, out)
 	})
 
 	t.Run("WithJunkID", func(t *testing.T) {
-		wants := &data.Header{Subchunk2ID: data.Junk}
+		wants := &data.Header{Subchunk2ID: data.JunkID}
 
-		out := data.New(data.Junk)
+		out := data.New(data.JunkID)
 
 		require.Equal(t, wants, out)
 	})
@@ -50,7 +50,7 @@ func TestNew(t *testing.T) {
 
 func TestHeader_Read(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		h := &data.Header{Subchunk2ID: data.Data, Subchunk2Size: 4097}
+		h := &data.Header{Subchunk2ID: data.DataID, Subchunk2Size: 4097}
 		wants := []byte{
 			100, 97, 116, 97, // "data"
 			1, 16, 0, 0, // 4097 little endian
@@ -68,7 +68,7 @@ func TestHeader_Read(t *testing.T) {
 
 func TestHeader_Write(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		wants := &data.Header{Subchunk2ID: data.Data, Subchunk2Size: 4097}
+		wants := &data.Header{Subchunk2ID: data.DataID, Subchunk2Size: 4097}
 		input := []byte{
 			100, 97, 116, 97, // "data"
 			1, 16, 0, 0, // 4097 little endian
@@ -86,7 +86,7 @@ func TestHeader_Write(t *testing.T) {
 
 func TestHeader_Bytes(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		h := &data.Header{Subchunk2ID: data.Data, Subchunk2Size: 4097}
+		h := &data.Header{Subchunk2ID: data.DataID, Subchunk2Size: 4097}
 		wants := []byte{
 			100, 97, 116, 97, // "data"
 			1, 16, 0, 0, // 4097 little endian
@@ -100,7 +100,7 @@ func TestHeader_Bytes(t *testing.T) {
 
 func TestFrom(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		wants := &data.Header{Subchunk2ID: data.Data, Subchunk2Size: 4097}
+		wants := &data.Header{Subchunk2ID: data.DataID, Subchunk2Size: 4097}
 		input := []byte{
 			100, 97, 116, 97, // "data"
 			1, 16, 0, 0, // 4097 little endian
@@ -115,7 +115,7 @@ func TestFrom(t *testing.T) {
 
 func BenchmarkHeader_ReadWrite(b *testing.B) {
 	b.Run("Read", func(b *testing.B) {
-		h := &data.Header{Subchunk2ID: data.Data, Subchunk2Size: 4097}
+		h := &data.Header{Subchunk2ID: data.DataID, Subchunk2Size: 4097}
 
 		out := make([]byte, data.Size)
 

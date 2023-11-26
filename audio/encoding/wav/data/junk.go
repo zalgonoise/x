@@ -7,8 +7,8 @@ import (
 	"github.com/zalgonoise/x/audio/osc"
 )
 
-// JunkChunk is a DataChunk used for storing "junk"-ID subchunk data
-type JunkChunk struct {
+// Junk is a Chunk used for storing "junk"-ID subchunk data.
+type Junk struct {
 	ChunkHeader *Header
 	Data        []byte
 	Depth       uint16
@@ -16,25 +16,25 @@ type JunkChunk struct {
 	written int
 }
 
-// Write implements the io.Writer interface
+// Write implements the io.Writer interface.
 //
-// It allows to grow the JunkChunk's data with the input `buf` bytes, returning the number of
-// bytes consumed and an error
-func (d *JunkChunk) Write(buf []byte) (n int, err error) {
+// It allows to grow the Junk's data with the input `buf` bytes, returning the number of
+// bytes consumed and an error.
+func (d *Junk) Write(buf []byte) (n int, err error) {
 	d.Parse(buf)
 
 	return len(buf), nil
 }
 
-// Read implements the io.Reader interface
+// Read implements the io.Reader interface.
 //
-// It writes the data of the JunkChunk into the input `buf`, returning the number of bytes read
-// and an error
-func (d *JunkChunk) Read(buf []byte) (n int, err error) {
+// It writes the data of the Junk into the input `buf`, returning the number of bytes read
+// and an error.
+func (d *Junk) Read(buf []byte) (n int, err error) {
 	return copy(buf, d.Data), nil
 }
 
-func (d *JunkChunk) ReadFrom(p io.Reader) (n int64, err error) {
+func (d *Junk) ReadFrom(p io.Reader) (n int64, err error) {
 	var size int
 
 	switch {
@@ -61,59 +61,62 @@ func (d *JunkChunk) ReadFrom(p io.Reader) (n int64, err error) {
 }
 
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
-// from raw bytes
-func (d *JunkChunk) Parse(buf []byte) {
+// from raw bytes.
+func (d *Junk) Parse(buf []byte) {
 	if d.Data == nil {
 		d.Data = buf
+
 		if d.ChunkHeader.Subchunk2Size == 0 {
 			d.ChunkHeader.Subchunk2Size = uint32(len(buf))
 		}
+
 		return
 	}
+
 	d.Data = append(d.Data, buf...)
 }
 
 // ParseFloat will consume the input float64 slice `buf`, to extract the PCM audio buffer
-// from floating-point audio data
-func (d *JunkChunk) ParseFloat(_ []float64) {}
+// from floating-point audio data.
+func (d *Junk) ParseFloat(_ []float64) {}
 
-// Bytes will return a slice of bytes with the encoded PCM buffer
-func (d *JunkChunk) Bytes() []byte {
+// Bytes will return a slice of bytes with the encoded PCM buffer.
+func (d *Junk) Bytes() []byte {
 	return d.Data
 }
 
-// Header returns the ChunkHeader of the DataChunk
-func (d *JunkChunk) Header() *Header { return d.ChunkHeader }
+// Header returns the ChunkHeader of the Junk.
+func (d *Junk) Header() *Header { return d.ChunkHeader }
 
-// BitDepth returns the bit depth of the DataChunk
-func (d *JunkChunk) BitDepth() uint16 { return d.Depth }
+// BitDepth returns the bit depth of the Junk.
+func (d *Junk) BitDepth() uint16 { return d.Depth }
 
-// Reset clears the data stored in the DataChunk
-func (d *JunkChunk) Reset() {
+// Reset clears the data stored in the Junk.
+func (d *Junk) Reset() {
 	d.Data = make([]byte, 0, dataChunkBaseLen)
 }
 
-// Value returns the PCM audio buffer from the DataChunk, as a slice of int
-func (d *JunkChunk) Value() []int { return to[byte, int](d.Data) }
+// Value returns the PCM audio buffer from the Chunk, as a slice of int.
+func (d *Junk) Value() []int { return to[byte, int](d.Data) }
 
-// Float returns the PCM audio buffer from the DataChunk, as a slice of float64
-func (d *JunkChunk) Float() []float64 {
+// Float returns the PCM audio buffer from the Chunk, as a slice of float64.
+func (d *Junk) Float() []float64 {
 	return nil
 }
 
-// Generate creates a wave of the given form, frequency and duration within this DataChunk
-func (d *JunkChunk) Generate(_ osc.Type, _, _ int, _ time.Duration) {}
+// Generate creates a wave of the given form, frequency and duration within this Junk.
+func (d *Junk) Generate(_ osc.Type, _, _ int, _ time.Duration) {}
 
-// Apply transforms the floating-point audio data with each FilterFunc in `filters`
-func (d *JunkChunk) Apply(_ ...FilterFunc) {}
+// Apply transforms the floating-point audio data with each FilterFunc in `filters`.
+func (d *Junk) Apply(_ ...FilterFunc) {}
 
-// NewJunkChunk creates a JunkChunk with the input `subchunk` ChunkHeader, or with a default one if nil
-func NewJunkChunk(h *Header) *JunkChunk {
+// NewJunk creates a Junk with the input `subchunk` ChunkHeader, or with a default one if nil.
+func NewJunk(h *Header) *Junk {
 	if h == nil {
-		h = NewJunk()
+		h = NewJunkHeader()
 	}
 
-	return &JunkChunk{
+	return &Junk{
 		ChunkHeader: h,
 		Depth:       0,
 	}

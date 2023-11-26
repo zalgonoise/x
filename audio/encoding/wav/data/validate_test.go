@@ -16,11 +16,11 @@ func TestValidate(t *testing.T) {
 	}{
 		{
 			name:  "Valid/DataID",
-			input: &data.Header{Subchunk2ID: data.Data},
+			input: &data.Header{Subchunk2ID: data.DataID},
 		},
 		{
 			name:  "Valid/JunkID",
-			input: &data.Header{Subchunk2ID: data.Junk},
+			input: &data.Header{Subchunk2ID: data.JunkID},
 		},
 		{
 			name:  "Invalid/UnsupportedID",

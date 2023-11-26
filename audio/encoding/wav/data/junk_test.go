@@ -12,26 +12,29 @@ import (
 )
 
 func TestJunkChunk(t *testing.T) {
-	var err error
-	input := []byte("some junk data")
-	h := &Header{
-		Subchunk2ID:   Junk,
-		Subchunk2Size: 14,
-	}
-	bitDepth := 0
+	var (
+		err   error
+		input = []byte("some junk data")
+		h     = &Header{
+			Subchunk2ID:   JunkID,
+			Subchunk2Size: 14,
+		}
+		bitDepth = 0
+	)
 
 	for _, testcase := range []struct {
 		name string
-		op   func(chunk *JunkChunk)
+		op   func(chunk *Junk)
 	}{
 		{
 			name: "ParseAndBytes",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				require.Equal(t, input, chunk.Bytes())
 			},
-		}, {
+		},
+		{
 			name: "WriteAndRead",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 
 				_, err = chunk.Write(input)
@@ -47,7 +50,7 @@ func TestJunkChunk(t *testing.T) {
 		},
 		{
 			name: "ReadFrom",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 
 				reader := bytes.NewReader(input)
@@ -62,93 +65,107 @@ func TestJunkChunk(t *testing.T) {
 
 				require.Equal(t, input, buf)
 			},
-		}, {
+		},
+		{
 			name: "Value",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				require.Greater(t, len(chunk.Value()), 0)
 			},
-		}, {
+		},
+		{
 			name: "Float",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				require.Equal(t, len(chunk.Float()), 0)
 			},
-		}, {
+		},
+		{
 			name: "ParseFloat",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.ParseFloat([]float64{1.5})
 			},
-		}, {
+		},
+		{
 			name: "ParseSecondRun",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Parse(input)
 			},
-		}, {
+		},
+		{
 			name: "Header",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				require.Equal(t, h, chunk.Header())
 			},
-		}, {
+		},
+		{
 			name: "BitDepth",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				require.Equal(t, uint16(bitDepth), chunk.BitDepth())
 			},
-		}, {
+		},
+		{
 			name: "Reset",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Reset()
 				require.Len(t, chunk.Data, 0)
 			},
-		}, {
+		},
+		{
 			name: "Generate/Success/SineWithNilData",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 				chunk.Generate(osc.SineWave, 2000, 44100, 100*time.Millisecond)
 
 				require.Len(t, chunk.Data, 0)
 			},
-		}, {
+		},
+		{
 			name: "Generate/Success/Square",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 				chunk.Generate(osc.SquareWave, 2000, 44100, 100*time.Millisecond)
 
 				require.Len(t, chunk.Data, 0)
 			},
-		}, {
+		},
+		{
 			name: "Generate/Success/Triangle",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 				chunk.Generate(osc.TriangleWave, 2000, 44100, 100*time.Millisecond)
 
 				require.Len(t, chunk.Data, 0)
 			},
-		}, {
+		},
+		{
 			name: "Generate/Success/SawtoothUp",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 				chunk.Generate(osc.SawtoothUpWave, 2000, 44100, 100*time.Millisecond)
 
 				require.Len(t, chunk.Data, 0)
 			},
-		}, {
+		},
+		{
 			name: "Generate/Success/SawtoothDown",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 				chunk.Generate(osc.SawtoothDownWave, 2000, 44100, 100*time.Millisecond)
 
 				require.Len(t, chunk.Data, 0)
 			},
-		}, {
+		},
+		{
 			name: "Generate/Fail",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				chunk.Data = nil
 				chunk.Generate(osc.Type(255), 2000, 44100, 100*time.Millisecond)
 
 				require.Len(t, chunk.Data, 0)
 			},
-		}, {
+		},
+		{
 			name: "Apply",
-			op: func(chunk *JunkChunk) {
+			op: func(chunk *Junk) {
 				orig := make([]byte, len(chunk.Data))
 				copy(orig, chunk.Data)
 
@@ -162,7 +179,7 @@ func TestJunkChunk(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			chunk := NewJunkChunk(h)
+			chunk := NewJunk(h)
 			chunk.Parse(input)
 			testcase.op(chunk)
 		})
