@@ -1,3 +1,4 @@
+//nolint:lll // comments contain tests output
 package osc_test
 
 import (
@@ -100,11 +101,14 @@ func BenchmarkSineCompare(b *testing.B) {
 							buffer[i] = int16(sample * (math.Pow(2.0, depth)/2.0 - 1.0))
 						}
 					}
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						before = make([]int16, halfPeriod)
 						fn(before, freq, depth, sampleRate)
 					}
+
 					_ = before
 				},
 			)
@@ -119,11 +123,14 @@ func BenchmarkSineCompare(b *testing.B) {
 							buffer[i] = int16(sample * float64(int(2)<<int(depth-1)/2-1))
 						}
 					}
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						after = make([]int16, halfPeriod)
 						fn(after, freq, depth, sampleRate)
 					}
+
 					_ = after
 				},
 			)
@@ -157,19 +164,23 @@ func BenchmarkSine(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
+
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(nil, 16, 1)
 						chunk.Generate(osc.SineWave, 2000, 44100, time.Second/2)
 					}
+
 					_ = chunk
 				},
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(nil, 16, 1)
+					chunk := wav.NewChunk(nil, 16, 1)
+
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.SineWave, 2000, 44100, time.Second/2)
 					}
+
 					_ = chunk
 				},
 			)
@@ -180,19 +191,23 @@ func BenchmarkSine(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
+
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(nil, 16, 1)
 						chunk.Generate(osc.SineWave, 500, 44100, time.Millisecond*50)
 					}
+
 					_ = chunk
 				},
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(nil, 16, 1)
+					chunk := wav.NewChunk(nil, 16, 1)
+
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.SineWave, 500, 44100, time.Millisecond*50)
 					}
+
 					_ = chunk
 				},
 			)
