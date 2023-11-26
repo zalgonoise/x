@@ -1,9 +1,10 @@
+//nolint:gomnd // contains hardcoded constants, would be less readable to declare these values as such
 package osc
 
-// Triangle is an oscillator that writes a triangle wave of frequency `freq`, bit depth `depth`,
-// and sample rate `sampleRate`, into the buffer of type T `buffer`
+// Triangle is an oscillator that writes a triangle wave of frequency `freq`, bit-depth `depth`,
+// and sample rate `sampleRate`, into the buffer of type T `buffer`.
 func Triangle(buffer []float64, freq, depth, sampleRate int) {
-	var wave = buildFrom1Hz(len(buffer), sampleRate, freq, triangle1Hz)
+	wave := buildFrom1Hz(len(buffer), sampleRate, freq, triangle1Hz)
 
 	for i := range buffer {
 		buffer[i] = wave[i] * float64(int(2)<<(depth-2)-1)
@@ -22,12 +23,14 @@ func triangle1Hz(sampleRate int) []float64 {
 	for i, j := 0, -1.0; i < quarterCycle; i, j = i+1, j+stepValue {
 		buffer[i] = j
 	}
+
 	buffer[quarterCycle] = 0
 
 	// Q2 is negative reverse of Q2
 	for i, j := quarterCycle+1, quarterCycle-1; i < halfCycle; i, j = i+1, j-1 {
 		buffer[i] = -buffer[j]
 	}
+
 	buffer[halfCycle] = 1.0
 
 	// Q3+Q4 are reverse of Q2+Q1

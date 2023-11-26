@@ -1,3 +1,4 @@
+//nolint:gocognit,lll // skip cyclomatic complexity in benchmarks; comments contain tests output
 package osc_test
 
 import (
@@ -35,6 +36,7 @@ func TestTriangle(t *testing.T) {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
 			chunk := wav.NewChunk(nil, 16, 1)
+
 			chunk.Generate(osc.TriangleWave, testFreq, sampleRate, 500*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
@@ -59,6 +61,7 @@ func TestTriangle(t *testing.T) {
 					testFreq, spectrum[0].Freq,
 				)
 			}
+
 			t.Log(chunk.Float()[:128])
 			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
 		})
@@ -92,59 +95,76 @@ func BenchmarkTriangleCompare(b *testing.B) {
 				"triangle_24_3_23", func(b *testing.B) {
 					fn := func(buffer []int16, halfPeriod int, sampleInt int16, increment, depth float64) {
 						var swap bool
+
 						for i := 0; i < len(buffer); i++ {
 							if i%(halfPeriod/2) == 0 {
 								swap = !swap
 							}
+
 							if swap {
 								sampleInt += int16(increment * (math.Pow(2.0, depth-1) - 1.0))
 							} else {
 								sampleInt -= int16(increment * (math.Pow(2.0, depth-1) - 1.0))
 							}
+
 							buffer[i] = sampleInt
 						}
 					}
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						var (
 							halfPeriod       = int(sampleRate / freq)
 							increment        = 4.0 / float64(halfPeriod)
 							sampleInt  int16 = -(1 << int(depth-1))
 						)
+
 						before = make([]int16, halfPeriod)
 						fn(before, halfPeriod, sampleInt, increment, depth)
 					}
+
 					_ = before
 				},
 			)
+
 			b.Run(
 				"triangle_replacement", func(b *testing.B) {
 					fn := func(buffer []int16, halfPeriod int, sampleInt int16, increment, depth float64) {
-						var stepValue = int16(increment * float64(int(2)<<int(depth-2)-1))
-						var quarterPeriod = halfPeriod / 2
-						var swap bool
+						var (
+							stepValue     = int16(increment * float64(int(2)<<int(depth-2)-1))
+							quarterPeriod = halfPeriod / 2
+							swap          bool
+						)
+
 						for i := 0; i < len(buffer); i++ {
 							if i%(quarterPeriod) == 0 {
 								swap = !swap
 							}
+
 							if swap {
 								sampleInt += stepValue
 							} else {
 								sampleInt -= stepValue
 							}
+
 							buffer[i] = sampleInt
 						}
 					}
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						var (
 							halfPeriod       = int(sampleRate / freq)
 							increment        = 4.0 / float64(halfPeriod)
 							sampleInt  int16 = -(1 << int(depth-1))
 						)
+
 						after = make([]int16, halfPeriod)
 						fn(after, halfPeriod, sampleInt, increment, depth)
 					}
+
 					_ = after
 				},
 			)
@@ -178,19 +198,23 @@ func BenchmarkTriangle(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
+
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(nil, 16, 1)
 						chunk.Generate(osc.TriangleWave, 2000, 44100, time.Second/2)
 					}
+
 					_ = chunk
 				},
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(nil, 16, 1)
+					chunk := wav.NewChunk(nil, 16, 1)
+
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.TriangleWave, 2000, 44100, time.Second/2)
 					}
+
 					_ = chunk
 				},
 			)
@@ -201,19 +225,23 @@ func BenchmarkTriangle(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
+
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(nil, 16, 1)
 						chunk.Generate(osc.TriangleWave, 500, 44100, time.Millisecond*50)
 					}
+
 					_ = chunk
 				},
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(nil, 16, 1)
+					chunk := wav.NewChunk(nil, 16, 1)
+
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.TriangleWave, 500, 44100, time.Millisecond*50)
 					}
+
 					_ = chunk
 				},
 			)
