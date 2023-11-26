@@ -1,7 +1,9 @@
+//nolint:gomnd // contains hardcoded constants, it's less readable to make constants from them
 package window
 
 import "github.com/zalgonoise/x/audio/trig"
 
+//nolint:gochecknoglobals // immutable map linking window sizes to its corresponding precomputed window slices
 var hannMap = map[int]Window{
 	8:    Hann8,
 	16:   Hann16,
@@ -23,6 +25,7 @@ func Hann(i int) Window {
 	if !ok {
 		return newHann(i)
 	}
+
 	return w
 }
 
@@ -34,7 +37,7 @@ func newHann(i int) Window {
 		return []float64{1}
 	default:
 		var (
-			r           = make([]float64, i, i)
+			r           = make([]float64, i)
 			indices     = float64(i - 1)
 			coefficient = tau / indices
 		)
@@ -42,6 +45,7 @@ func newHann(i int) Window {
 		for n := 0.0; n <= indices; n++ {
 			r[int(n)] = 0.5 * (1 - trig.Cos(coefficient*n))
 		}
+
 		return r
 	}
 }
