@@ -13,6 +13,8 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
 )
 
+const shutdownAlloc = 2
+
 type batchRegistry[T any] struct {
 	buffer    *gbuf.RingBuffer[T]
 	reg       audio.Registry[T]
@@ -38,7 +40,7 @@ func (r batchRegistry[T]) Register(value T) error {
 // Load returns a receive-only channel of items of a given type, usually as part of a Registry features.
 //
 // The returned channel is actually the underlying unit audio.Registry's values channel. However, the values registered
-// to it are managed by this audio.Registry
+// to it are managed by this audio.Registry.
 func (r batchRegistry[T]) Load() <-chan T {
 	return r.reg.Load()
 }
@@ -48,7 +50,8 @@ func (r batchRegistry[T]) Load() <-chan T {
 // It will both ForceFlush and call its inner audio.Registry's Shutdown method, returning any error if raised.
 func (r batchRegistry[T]) Shutdown(ctx context.Context) error {
 	defer r.cancel()
-	errs := make([]error, 0, 2)
+
+	errs := make([]error, 0, shutdownAlloc)
 
 	if err := r.ForceFlush(); err != nil {
 		errs = append(errs, err)
@@ -87,8 +90,8 @@ func (r batchRegistry[T]) flushToCompactor() error {
 		return err
 	}
 
-	if err = r.reg.Register(v); err != nil {
-		return err
+	if regErr := r.reg.Register(v); regErr != nil {
+		return regErr
 	}
 
 	if r.buffer.Len() > 0 {
