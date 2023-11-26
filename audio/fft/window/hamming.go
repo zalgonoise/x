@@ -1,7 +1,9 @@
+//nolint:gomnd // contains hardcoded constants, it's less readable to make constants from them
 package window
 
 import "github.com/zalgonoise/x/audio/trig"
 
+//nolint:gochecknoglobals // immutable map linking window sizes to its corresponding precomputed window slices
 var hammingMap = map[int]Window{
 	8:    Hamming8,
 	16:   Hamming16,
@@ -23,6 +25,7 @@ func Hamming(i int) Window {
 	if !ok {
 		return newHamming(i)
 	}
+
 	return w
 }
 
@@ -34,7 +37,7 @@ func newHamming(i int) Window {
 		return []float64{1}
 	default:
 		var (
-			r           = make([]float64, i, i)
+			r           = make([]float64, i)
 			idx         = float64(i - 1)
 			coefficient = tau / idx
 		)
