@@ -28,6 +28,7 @@ func BenchmarkCopy24to32(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		out = copy24to32([]byte{12, 34, 56, 78, 90, 123})
 	}
+
 	_ = out
 }
 
