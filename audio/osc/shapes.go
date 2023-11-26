@@ -4,19 +4,19 @@ import (
 	"math"
 )
 
-// Type is an enumeration for the supported oscillator types
+// Type is an enumeration for the supported oscillator types.
 type Type uint8
 
 const (
-	// SineWave is the oscillator Type for a Sine Oscillator
+	// SineWave is the oscillator Type for a Sine Oscillator.
 	SineWave Type = iota
-	// SquareWave is the oscillator Type for a Square Oscillator
+	// SquareWave is the oscillator Type for a Square Oscillator.
 	SquareWave
-	// TriangleWave is the oscillator Type for a Triangle Oscillator
+	// TriangleWave is the oscillator Type for a Triangle Oscillator.
 	TriangleWave
-	// SawtoothUpWave is the oscillator Type for a rising Sawtooth Oscillator
+	// SawtoothUpWave is the oscillator Type for a rising Sawtooth Oscillator.
 	SawtoothUpWave
-	// SawtoothDownWave is the oscillator Type for a falling Sawtooth Oscillator
+	// SawtoothDownWave is the oscillator Type for a falling Sawtooth Oscillator.
 	SawtoothDownWave
 )
 
@@ -42,7 +42,7 @@ const (
 )
 
 // Oscillator is a generic function that writes a wave of a certain shape into a buffer
-// of float64 type
+// of float64 type.
 type Oscillator func(buffer []float64, freq, depth, sampleRate int)
 
 func buildFrom1Hz(size, sampleRate, freq int, oneHzFunc func(int) []float64) []float64 {
