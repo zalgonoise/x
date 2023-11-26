@@ -1,3 +1,4 @@
+//nolint:gochecknoglobals // package contains several precomputed objects
 package window
 
 var (
