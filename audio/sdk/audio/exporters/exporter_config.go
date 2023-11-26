@@ -9,10 +9,15 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
 )
 
-const defaultBlockSize = 64
+const (
+	minBlockSize     = 8
+	defaultBlockSize = 64
+)
 
-var DefaultConfig = Config{
-	spectrumBlockSize: defaultBlockSize,
+func DefaultConfig() *Config {
+	return &Config{
+		spectrumBlockSize: defaultBlockSize,
+	}
 }
 
 type Config struct {
@@ -29,8 +34,8 @@ type Config struct {
 	LogHandler slog.Handler
 }
 
-func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Option[*Config] {
+	return cfg.Register(func(config *Config) *Config {
 		config.withPeaks = true
 		config.batchedPeaks = true
 		config.batchedPeaksOptions = options
@@ -39,9 +44,12 @@ func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Optio
 	})
 }
 
-func WithBatchedSpectrum(blockSize int, options ...cfg.Option[batchreg.Config[[]fft.FrequencyPower]]) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
-		if blockSize < 8 {
+func WithBatchedSpectrum(
+	blockSize int,
+	options ...cfg.Option[batchreg.Config[[]fft.FrequencyPower]],
+) cfg.Option[*Config] {
+	return cfg.Register(func(config *Config) *Config {
+		if blockSize < minBlockSize {
 			blockSize = defaultBlockSize
 		}
 
@@ -54,19 +62,19 @@ func WithBatchedSpectrum(blockSize int, options ...cfg.Option[batchreg.Config[[]
 	})
 }
 
-func WithPeaks() cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func WithPeaks() cfg.Option[*Config] {
+	return cfg.Register(func(config *Config) *Config {
 		config.withPeaks = true
 
 		return config
 	})
 }
 
-func WithSpectrum(blockSize int) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func WithSpectrum(blockSize int) cfg.Option[*Config] {
+	return cfg.Register(func(config *Config) *Config {
 		config.withSpectrum = true
 
-		if blockSize < 8 {
+		if blockSize < minBlockSize {
 			blockSize = defaultBlockSize
 		}
 
@@ -76,24 +84,24 @@ func WithSpectrum(blockSize int) cfg.Option[Config] {
 	})
 }
 
-func WithLogger(logger *slog.Logger) cfg.Option[Config] {
+func WithLogger(logger *slog.Logger) cfg.Option[*Config] {
 	if logger == nil {
-		return cfg.NoOp[Config]{}
+		return cfg.NoOp[*Config]{}
 	}
 
-	return cfg.Register(func(config Config) Config {
+	return cfg.Register(func(config *Config) *Config {
 		config.LogHandler = logger.Handler()
 
 		return config
 	})
 }
 
-func WithLogHandler(h slog.Handler) cfg.Option[Config] {
+func WithLogHandler(h slog.Handler) cfg.Option[*Config] {
 	if h == nil {
-		return cfg.NoOp[Config]{}
+		return cfg.NoOp[*Config]{}
 	}
 
-	return cfg.Register(func(config Config) Config {
+	return cfg.Register(func(config *Config) *Config {
 		config.LogHandler = h
 
 		return config
