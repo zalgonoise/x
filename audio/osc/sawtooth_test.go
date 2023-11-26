@@ -1,3 +1,4 @@
+//nolint:gocognit,lll // skip cyclomatic complexity in benchmarks; comments contain tests output
 package osc_test
 
 import (
@@ -33,6 +34,7 @@ func TestSawtoothUp(t *testing.T) {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
 			chunk := wav.NewChunk(nil, 16, 1)
+
 			chunk.Generate(osc.SawtoothUpWave, testFreq, sampleRate, 500*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
@@ -57,6 +59,7 @@ func TestSawtoothUp(t *testing.T) {
 					testFreq, spectrum[0].Freq,
 				)
 			}
+
 			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
 		})
 	}
@@ -82,6 +85,7 @@ func TestSawtoothDown(t *testing.T) {
 		t.Run(fmt.Sprintf("%dHz", testFreq), func(t *testing.T) {
 			// generate wave
 			chunk := wav.NewChunk(nil, 16, 1)
+
 			chunk.Generate(osc.SawtoothDownWave, testFreq, sampleRate, 500*time.Millisecond)
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
@@ -106,6 +110,7 @@ func TestSawtoothDown(t *testing.T) {
 					testFreq, spectrum[0].Freq,
 				)
 			}
+
 			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
 		})
 	}
@@ -142,26 +147,33 @@ func BenchmarkSawtoothCompare(b *testing.B) {
 							} else {
 								sampleInt += int16(increment * (math.Pow(2.0, depth-1) - 1.0))
 							}
+
 							buffer[i] = sampleInt
 						}
 					}
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						var (
 							halfPeriod = int(sampleRate / freq)
 							increment  = 2.0 / float64(halfPeriod)
 						)
+
 						before = make([]int16, halfPeriod)
 						fn(before, halfPeriod, 0, increment, depth)
 					}
+
 					_ = before
 				},
 			)
 			b.Run(
 				"sawtooth_replacement", func(b *testing.B) {
 					fn := func(buffer []int16, halfPeriod int, sampleInt int16, increment, depth float64) {
-						var base int16 = ^(2 << int(depth-2)) + 2
-						inc := int16(increment * float64(^base))
+						var (
+							base int16 = ^(2 << int(depth-2)) + 2
+							inc        = int16(increment * float64(^base))
+						)
 
 						for i := 0; i < len(buffer); i++ {
 							if i%halfPeriod == 0 {
@@ -169,6 +181,7 @@ func BenchmarkSawtoothCompare(b *testing.B) {
 							} else {
 								sampleInt += inc
 							}
+
 							buffer[i] = sampleInt
 						}
 					}
@@ -178,9 +191,11 @@ func BenchmarkSawtoothCompare(b *testing.B) {
 							halfPeriod = int(sampleRate / freq)
 							increment  = 2.0 / float64(halfPeriod)
 						)
+
 						after = make([]int16, halfPeriod)
 						fn(after, halfPeriod, 0, increment, depth)
 					}
+
 					_ = after
 				},
 			)
@@ -214,19 +229,23 @@ func BenchmarkSawtooth(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
+
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(nil, 16, 1)
 						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, time.Second/2)
 					}
+
 					_ = chunk
 				},
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(nil, 16, 1)
+					chunk := wav.NewChunk(nil, 16, 1)
+
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.SawtoothUpWave, 2000, 44100, time.Second/2)
 					}
+
 					_ = chunk
 				},
 			)
@@ -237,19 +256,23 @@ func BenchmarkSawtooth(b *testing.B) {
 			b.Run(
 				"NilBuffer", func(b *testing.B) {
 					var chunk wav.Chunk
+
 					for i := 0; i < b.N; i++ {
 						chunk = wav.NewChunk(nil, 16, 1)
 						chunk.Generate(osc.SawtoothUpWave, 500, 44100, time.Millisecond*50)
 					}
+
 					_ = chunk
 				},
 			)
 			b.Run(
 				"ContinuousWrite", func(b *testing.B) {
-					var chunk = wav.NewChunk(nil, 16, 1)
+					chunk := wav.NewChunk(nil, 16, 1)
+
 					for i := 0; i < b.N; i++ {
 						chunk.Generate(osc.SawtoothUpWave, 500, 44100, time.Millisecond*50)
 					}
+
 					_ = chunk
 				},
 			)
