@@ -9,7 +9,12 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio"
 )
 
-// MaxPeak returns a float64 Collector that calculates the maximum peak value in an audio signal
+const (
+	minBlockSize     = 8
+	defaultBlockSize = 64
+)
+
+// MaxPeak returns a float64 Collector that calculates the maximum peak value in an audio signal.
 func MaxPeak() audio.Extractor[float64] {
 	return audio.Extraction[float64](func(_ audio.Header, data []float64) (maximum float64) {
 		for i := range data {
@@ -22,7 +27,7 @@ func MaxPeak() audio.Extractor[float64] {
 	})
 }
 
-// AveragePeak returns a float64 Collector that calculates the average peak value in an audio signal
+// AveragePeak returns a float64 Collector that calculates the average peak value in an audio signal.
 func AveragePeak() audio.Extractor[float64] {
 	return audio.Extraction[float64](func(_ audio.Header, data []float64) (average float64) {
 		for i := range data {
@@ -33,10 +38,10 @@ func AveragePeak() audio.Extractor[float64] {
 	})
 }
 
-// MaxSpectrum returns a []fft.FrequencyPower Collector that calculates the spectrum values in an audio signal
+// MaxSpectrum returns a []fft.FrequencyPower Collector that calculates the spectrum values in an audio signal.
 func MaxSpectrum(size int) audio.Extractor[[]fft.FrequencyPower] {
-	if size < 8 {
-		size = 64
+	if size < minBlockSize {
+		size = defaultBlockSize
 	}
 
 	return audio.Extraction[[]fft.FrequencyPower](func(h audio.Header, data []float64) []fft.FrequencyPower {
@@ -46,14 +51,14 @@ func MaxSpectrum(size int) audio.Extractor[[]fft.FrequencyPower] {
 		}
 
 		bs := fft.NearestBlock(size)
-		windowBlock := window.New(window.Blackman, int(bs))
+		windowBlock := window.New(window.Blackman, bs)
 
-		maximum := make([]fft.FrequencyPower, 0, len(data)/int(bs))
+		maximum := make([]fft.FrequencyPower, 0, len(data)/bs)
 
-		for i := 0; i+int(bs) < len(data); i += int(bs) {
+		for i := 0; i+bs < len(data); i += bs {
 			spectrum := fft.Apply(
 				sampleRate,
-				data[i:i+int(bs)],
+				data[i:i+bs],
 				windowBlock,
 			)
 
@@ -69,10 +74,10 @@ func MaxSpectrum(size int) audio.Extractor[[]fft.FrequencyPower] {
 }
 
 // Spectrum returns a []fft.FrequencyPower Collector that calculates the full spectrum values in an audio signal
-// with a given Compactor as reducer / filter
+// with a given Compactor as reducer / filter.
 func Spectrum(size int, compactor audio.Compactor[[]fft.FrequencyPower]) audio.Extractor[[]fft.FrequencyPower] {
-	if size < 8 {
-		size = 64
+	if size < minBlockSize {
+		size = defaultBlockSize
 	}
 
 	return audio.Extraction[[]fft.FrequencyPower](func(h audio.Header, data []float64) []fft.FrequencyPower {
@@ -82,14 +87,14 @@ func Spectrum(size int, compactor audio.Compactor[[]fft.FrequencyPower]) audio.E
 		}
 
 		bs := fft.NearestBlock(size)
-		windowBlock := window.New(window.Blackman, int(bs))
+		windowBlock := window.New(window.Blackman, bs)
 
-		spectra := make([][]fft.FrequencyPower, 0, len(data)/int(bs))
+		spectra := make([][]fft.FrequencyPower, 0, len(data)/bs)
 
-		for i := 0; i+int(bs) < len(data); i += int(bs) {
+		for i := 0; i+bs < len(data); i += bs {
 			spectrum := fft.Apply(
 				sampleRate,
-				data[i:i+int(bs)],
+				data[i:i+bs],
 				windowBlock,
 			)
 
