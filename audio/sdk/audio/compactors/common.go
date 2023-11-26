@@ -17,18 +17,16 @@ const (
 	ErrValueSet = errs.Entity("set of values")
 )
 
-var (
-	ErrEmptyValueSet = errs.WithDomain(errDomain, ErrEmpty, ErrValueSet)
-)
+var ErrEmptyValueSet = errs.WithDomain(errDomain, ErrEmpty, ErrValueSet)
 
-// Number is a type constraint that only accepts any type of integer or floating-point number
+// Number is a type constraint that only accepts any type of integer or floating-point number.
 type Number interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64 |
 		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
 		~float32 | ~float64
 }
 
-// Last returns the last item in a slice, as a default one-fits-all compactor
+// Last returns the last item in a slice, as a default one-fits-all compactor.
 func Last[T any](values []T) (T, error) {
 	if len(values) == 0 {
 		return *new(T), nil
@@ -69,9 +67,11 @@ func AbsMax[T Number](values []T) (T, error) {
 		return *new(T), ErrEmptyValueSet
 	}
 
-	var zero T
-	idx := 0
-	maximum := values[0]
+	var (
+		zero    T
+		idx     = 0
+		maximum = values[0]
+	)
 
 	for i := 0; i < len(values); i++ {
 		if values[i] >= zero {
@@ -84,6 +84,7 @@ func AbsMax[T Number](values []T) (T, error) {
 		}
 
 		absValue := -values[i]
+
 		if absValue > maximum {
 			maximum = absValue
 			idx = i
@@ -112,6 +113,7 @@ func MaxSpectra(data [][]fft.FrequencyPower) ([]fft.FrequencyPower, error) {
 	}
 
 	final := make([]fft.FrequencyPower, 0, len(data))
+
 	for i := range data {
 		if len(data[i]) > 0 {
 			final = append(final, data[i][0])
@@ -139,6 +141,7 @@ func UpperSpectra(data [][]fft.FrequencyPower) ([]fft.FrequencyPower, error) {
 
 	for i := range final {
 		buf := make([]fft.FrequencyPower, 0, len(data))
+
 		for idx := range data {
 			if len(data[idx]) == 0 || i >= len(data[idx]) {
 				continue
