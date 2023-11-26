@@ -1,9 +1,10 @@
+//nolint:gomnd // contains hardcoded constants, would be less readable to declare these values as such
 package osc
 
-// Square is an oscillator that writes a square wave of frequency `freq`, bit depth `depth`,
-// and sample rate `sampleRate`, into the buffer of type T `buffer`
+// Square is an oscillator that writes a square wave of frequency `freq`, bit-depth `depth`,
+// and sample rate `sampleRate`, into the buffer of type T `buffer`.
 func Square(buffer []float64, freq, depth, sampleRate int) {
-	var wave = buildFrom1Hz(len(buffer), sampleRate, freq, square1Hz)
+	wave := buildFrom1Hz(len(buffer), sampleRate, freq, square1Hz)
 
 	for i := range buffer {
 		buffer[i] = wave[i] * float64(int(2)<<(depth-2)-1)
