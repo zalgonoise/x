@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"net/url"
@@ -9,6 +8,32 @@ import (
 	"time"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/zalgonoise/x/errs"
+)
+
+const (
+	errDomain = errs.Domain("x/audio")
+
+	ErrEmpty   = errs.Kind("empty")
+	ErrInvalid = errs.Kind("invalid")
+
+	ErrInput      = errs.Entity("input")
+	ErrHTTPURL    = errs.Entity("HTTP or HTTPS URL")
+	ErrHost       = errs.Entity("host")
+	ErrPort       = errs.Entity("port")
+	ErrOutputType = errs.Entity("output type")
+	ErrMode       = errs.Entity("mode")
+	ErrCompactor  = errs.Entity("compactor")
+)
+
+var (
+	ErrEmptyInput        = errs.WithDomain(errDomain, ErrEmpty, ErrInput)
+	ErrInvalidHTTPURL    = errs.WithDomain(errDomain, ErrInvalid, ErrHTTPURL)
+	ErrInvalidHost       = errs.WithDomain(errDomain, ErrInvalid, ErrHost)
+	ErrInvalidPort       = errs.WithDomain(errDomain, ErrInvalid, ErrPort)
+	ErrInvalidOutputType = errs.WithDomain(errDomain, ErrInvalid, ErrOutputType)
+	ErrInvalidMode       = errs.WithDomain(errDomain, ErrInvalid, ErrMode)
+	ErrInvalidCompactor  = errs.WithDomain(errDomain, ErrInvalid, ErrCompactor)
 )
 
 const (
@@ -215,7 +240,7 @@ func merge(base, input *Config) *Config {
 func validate(config *Config) error {
 	// validate input
 	if config.Input == "" {
-		return errors.New("input cannot be empty")
+		return ErrEmptyInput
 	}
 
 	// currently there is only one (HTTP) consumer. We can try to
@@ -226,11 +251,11 @@ func validate(config *Config) error {
 	}
 
 	if parsedURL.Scheme != urlSchemeHTTP && parsedURL.Scheme != urlSchemeHTTPS {
-		return fmt.Errorf("input must be a valid HTTP or HTTPS URL: %s", config.Input)
+		return fmt.Errorf("%w: %s", ErrInvalidHTTPURL, config.Input)
 	}
 
 	if parsedURL.Host == "" {
-		return fmt.Errorf("input must be a valid host: %s", config.Input)
+		return fmt.Errorf("%w: %s", ErrInvalidHost, config.Input)
 	}
 
 	// validate output
@@ -239,10 +264,10 @@ func validate(config *Config) error {
 
 	case outputToProm, outputToPrometheus:
 		if _, err = getPort(config.Output); err != nil {
-			return fmt.Errorf("invalid port: %w", err)
+			return fmt.Errorf("%w: %w", ErrInvalidPort, err)
 		}
 	default:
-		return fmt.Errorf("invalid output type: %s", config.OutputType)
+		return fmt.Errorf("%w: %s", ErrInvalidOutputType, config.OutputType)
 	}
 
 	// validate mode
@@ -250,7 +275,7 @@ func validate(config *Config) error {
 	case modePeaks, modeSpectrum, modeCombined, "":
 		// OK state
 	default:
-		return fmt.Errorf("invalid mode: %s", config.Mode)
+		return fmt.Errorf("%w: %s", ErrInvalidMode, config.Mode)
 	}
 
 	// validate spectrum bucket size
@@ -272,7 +297,7 @@ func validate(config *Config) error {
 		case batchMax, batchMaximum, "":
 		// OK state
 		default:
-			return fmt.Errorf("invalid compactor: %s", config.BatchCompactor)
+			return fmt.Errorf("%w: %s", ErrInvalidCompactor, config.BatchCompactor)
 		}
 	}
 

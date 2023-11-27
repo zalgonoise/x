@@ -214,6 +214,6 @@ func getPort(addr string) (port int, err error) {
 
 		return port, nil
 	default:
-		return defaultPort, fmt.Errorf("invalid port configuration: %s", addr)
+		return defaultPort, fmt.Errorf("%w: %s", ErrInvalidPort, addr)
 	}
 }
