@@ -78,6 +78,13 @@ func DefaultConfig() *Config {
 }
 
 type Config struct {
+	// BufferSize defines the audio stream's buffer size in bytes.
+	BufferSize int `envconfig:"X_AUDIO_BUFFER_SIZE"`
+	// BufferDur defines the audio stream's buffer size as a duration.
+	BufferDur time.Duration `envconfig:"X_AUDIO_BUFFER_DURATION"`
+	// BufferRatio defines the audio stream's buffer size as a ratio to one second (1.0 is one second).
+	BufferRatio float64 `envconfig:"X_AUDIO_BUFFER_RATIO"`
+
 	// Input points to an audio stream source (URL)
 	Input string `envconfig:"X_AUDIO_INPUT"`
 
@@ -130,6 +137,11 @@ func newEnvConfig() *Config {
 }
 
 func newFlagsConfig() *Config {
+	bufferSize := flag.Int("buffer-size", 0, "defines the audio stream's buffer size in bytes")
+	bufferDur := flag.Duration("buffer-dur", 0, "defines the audio stream's buffer size as a duration")
+	bufferRatio := flag.Float64("buffer-ratio", 0,
+		"defines the audio stream's buffer size as a ratio to one second (1.0 is one second)")
+
 	input := flag.String("input", "", "")
 
 	outputType := flag.String("output-type", "", "")
@@ -140,25 +152,18 @@ func newFlagsConfig() *Config {
 	bucketSize := flag.Int("bucket-size", 0, "")
 	batch := flag.Bool("batch", false, "")
 	batchSize := flag.Int("batch-size", 0, "")
-	batchFrequencyString := flag.String("batch-freq", "", "")
+	batchFrequency := flag.Duration("batch-freq", 0, "")
 	batchCompactor := flag.String("batch-compactor", "", "")
 
-	durationString := flag.String("dur", "", "")
+	duration := flag.Duration("dur", 0, "")
 	exitCode := flag.Int("exit", 0, "")
 
 	flag.Parse()
 
-	batchFrequency, err := time.ParseDuration(*batchFrequencyString)
-	if err != nil {
-		return nil
-	}
-
-	duration, err := time.ParseDuration(*durationString)
-	if err != nil {
-		return nil
-	}
-
 	config := &Config{
+		BufferSize:     *bufferSize,
+		BufferDur:      *bufferDur,
+		BufferRatio:    *bufferRatio,
 		Input:          *input,
 		OutputType:     *outputType,
 		Output:         *output,
@@ -166,9 +171,9 @@ func newFlagsConfig() *Config {
 		BucketSize:     *bucketSize,
 		Batch:          *batch,
 		BatchSize:      *batchSize,
-		BatchFrequency: batchFrequency,
+		BatchFrequency: *batchFrequency,
 		BatchCompactor: *batchCompactor,
-		Duration:       duration,
+		Duration:       *duration,
 		ExitCode:       *exitCode,
 	}
 
@@ -187,6 +192,18 @@ func merge(base, input *Config) *Config {
 		return base
 	case base == nil:
 		return input
+	}
+
+	if input.BufferSize != 0 {
+		base.BufferSize = input.BufferSize
+	}
+
+	if input.BufferDur != 0 {
+		base.BufferDur = input.BufferDur
+	}
+
+	if input.BufferRatio != 0 {
+		base.BufferRatio = input.BufferRatio
 	}
 
 	if input.Input != "" {
