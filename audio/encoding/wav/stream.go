@@ -6,6 +6,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/encoding/wav/data"
 )
 
@@ -43,36 +45,18 @@ type Stream struct {
 	Size int
 	proc ProcessFunc
 
-	cfg *StreamConfig
-}
-
-// StreamConfig holds different configuration settings for a Stream.
-type StreamConfig struct {
-	// Size describes different settings for the Stream's buffer size.
-	Size SizeConfig
-}
-
-// SizeConfig contains different configurations to define the Stream's buffer size.
-type SizeConfig struct {
-	// Size is a concrete value for the Stream's buffer size (in bytes).
-	Size int
-	// Dur is a time.Duration value for the desired Stream buffer, that is later translated to a concrete value.
-	Dur time.Duration
-	// Ratio is a float64 value describing a ratio against 1 second (e.g. 0.5 is half-a-second, 2.0 is two seconds).
-	Ratio float64
+	cfg Config
 }
 
 // NewStream creates a Stream with a certain StreamConfig `cfg` and processor function `proc`.
 //
 // The size is in bytes and can be calculated through one of the available *ToBufferSize functions.
-func NewStream(cfg *StreamConfig, proc ProcessFunc) *Stream {
-	if cfg == nil {
-		cfg = new(StreamConfig)
-	}
+func NewStream(proc ProcessFunc, opts ...cfg.Option[Config]) *Stream {
+	config := cfg.New(opts...)
 
 	return &Stream{
 		Wav:  new(Wav),
-		cfg:  cfg,
+		cfg:  config,
 		proc: proc,
 	}
 }
@@ -84,31 +68,18 @@ func NewStream(cfg *StreamConfig, proc ProcessFunc) *Stream {
 func (w *Stream) Stream(ctx context.Context, r io.Reader, errCh chan<- error) {
 	w.proc = ErrorPipe(w.proc, errCh)
 
-	if err := w.stream(ctx, r); err != nil {
-		errCh <- err
-		close(errCh)
-
-		return
-	}
-}
-
-func (w *Stream) stream(ctx context.Context, r io.Reader) (err error) {
-	streamCtx, cancel := context.WithCancelCause(ctx)
-	defer cancel(nil)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	go func() {
 		if _, readErr := w.ReadFrom(r); readErr != nil {
-			cancel(readErr)
+			errCh <- readErr
+			close(errCh)
+			cancel()
 		}
 	}()
 
-	<-streamCtx.Done()
-
-	if causeErr := context.Cause(streamCtx); causeErr != nil {
-		return causeErr
-	}
-
-	return streamCtx.Err()
+	<-ctx.Done()
 }
 
 // Write implements the io.Writer interface.
@@ -209,18 +180,18 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 func (w *Stream) checkSize() {
 	switch {
 	case w.Header == nil:
-	case w.cfg.Size.Ratio > 0.0:
+	case w.cfg.ratio > 0.0:
 		w.Size = RatioToBufferSize(ByteRate(
 			w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels,
-		), w.cfg.Size.Ratio)
+		), w.cfg.ratio)
 
-	case w.cfg.Size.Size > 0:
-		w.Size = w.cfg.Size.Size
+	case w.cfg.size > 0:
+		w.Size = w.cfg.size
 
-	case w.cfg.Size.Dur > 0:
+	case w.cfg.dur > 0:
 		w.Size = TimeToBufferSize(ByteRate(
 			w.Header.SampleRate, w.Header.BitsPerSample, w.Header.NumChannels,
-		), w.cfg.Size.Dur)
+		), w.cfg.dur)
 
 	default:
 		w.Size = int(ByteRate(
