@@ -12,6 +12,7 @@ import (
 
 	"github.com/zalgonoise/cfg"
 
+	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
@@ -74,7 +75,12 @@ func run() (int, error) {
 
 	logger.InfoContext(ctx, "setting up processor")
 
-	proc := processors.PCM(exporter)
+	proc := processors.PCM(
+		[]audio.Exporter{exporter},
+		wav.WithSize(config.BufferSize),
+		wav.WithDuration(config.BufferDur),
+		wav.WithRatio(config.BufferRatio),
+	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.Duration)
 	defer cancel()
