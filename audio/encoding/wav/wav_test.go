@@ -537,19 +537,15 @@ func TestStream(t *testing.T) {
 
 	t.Run("WriteAndRead", func(t *testing.T) {
 		for idx, test := range td {
-			var (
-				size = 64
-				cfg  = &wav.StreamConfig{
-					Size: wav.SizeConfig{
-						Size: size,
-					},
-				}
-			)
+			size := 64
 
 			// Write
-			w := wav.NewStream(cfg, func(h *wav.Header, data []float64) error {
-				return nil
-			})
+			w := wav.NewStream(
+				func(h *wav.Header, data []float64) error {
+					return nil
+				},
+				wav.WithSize(size),
+			)
 
 			_, err = w.Write(test.data)
 			require.NoError(t, err, "index", idx)
@@ -571,19 +567,15 @@ func TestStream(t *testing.T) {
 
 	t.Run("ReadFromAndRead", func(t *testing.T) {
 		for idx, test := range td {
-			var (
-				size = 64
-				cfg  = &wav.StreamConfig{
-					Size: wav.SizeConfig{
-						Size: size,
-					},
-				}
-			)
+			size := 64
 
 			// Write
-			w := wav.NewStream(cfg, func(h *wav.Header, data []float64) error {
-				return nil
-			})
+			w := wav.NewStream(
+				func(h *wav.Header, data []float64) error {
+					return nil
+				},
+				wav.WithSize(size),
+			)
 
 			r := bytes.NewReader(test.data)
 			_, err = w.ReadFrom(r)
