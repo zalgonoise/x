@@ -6,7 +6,7 @@ import (
 )
 
 // Processor is responsible for reading a byte stream and extract useful information from it.
-// This can be done with a combination of Aggregators and Exporters.
+// This can be done with a combination of Collector(s) and Exporter(s).
 //
 // The Processor will determine the scope of the audio encoding and creates an audio stream from
 // the provided io.Reader in its Process method. From that point forward, it consumes the audio from the
@@ -14,11 +14,11 @@ import (
 //
 // Processor is not responsible for writing, generating or transforming any data -- it exclusively converts
 // the read bytes from the io.Reader into a readable format to be then further processed by any inner modules
-// configured in the Processor (Exporters, Aggregators).
+// configured in the Processor (Exporter(s), Collector(s), Registry).
 //
 // Implementations of Processor are responsible for the configuration of these modules, and should allow a modular
 // approach to how the caller wants to use the incoming audio. This implies that the Processor pipes all processed audio
-// data to its Exporters alike, which in place will run these audio chunks through any configured Aggregators
+// data to its Exporters alike, which in place will run these audio chunks through any configured Compactor(s)
 // (if applicable).
 type Processor interface {
 	// Process reads the byte stream from the input io.Reader and extracts parsed audio, as chunks of float64 values.
