@@ -9,8 +9,8 @@ package audio
 // is ready to be pushed to its destination by the time it is passed to the Exporter and there shouldn't be any
 // further processing.
 //
-// Its Export method will propagate the incoming audio data chunk into its aggregators if configured, or directly to
-// its output target if none are configured.
+// Its Export method will propagate the incoming audio data chunk into its Collector(s) (and Compactor(s) if
+// configured), or directly to its output target if none are configured.
 //
 // Exporter also implements StreamCloser as a means to both flush any batched or aggregated values and gracefully
 // shutdown the exporter.
