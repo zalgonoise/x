@@ -17,6 +17,80 @@ type Map[T any, S ~[]T] struct {
 	MaxY  int
 	MaxX  int
 	Items map[Coord]T
+
+	reflects bool
+}
+
+func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
+	data, ok := m.Items[coord]
+
+	if ok {
+		return data, true
+	}
+
+	var zero T
+
+	if !ok && !m.reflects {
+		return zero, false
+	}
+
+	var (
+		typ  Quadrant
+		maxX = m.MaxX
+		maxY = m.MaxY
+	)
+
+	if coord.Y < 0 {
+		coord.Y = -coord.Y
+	}
+
+	if coord.X < 0 {
+		coord.X = -coord.X
+	}
+
+	if m.MaxX < 0 {
+		typ ^= Q2
+		maxX = -maxX
+	}
+
+	if m.MaxY < 0 {
+		typ ^= Q3
+		maxY = -maxY
+	}
+
+	switch typ {
+	case Q1:
+		v, ok := m.Items[Coord{
+			Y: coord.Y % m.MaxX,
+			X: coord.X % m.MaxX,
+		}]
+
+		return v, ok
+	case Q2:
+		v, ok := m.Items[Coord{
+			Y: coord.Y % m.MaxX,
+			X: -(coord.X % m.MaxX),
+		}]
+
+		return v, ok
+	case Q3:
+		c := Coord{
+			Y: -(coord.Y % maxY),
+			X: coord.X % maxX,
+		}
+		v, ok := m.Items[c]
+
+		return v, ok
+	case Q4:
+		v, ok := m.Items[Coord{
+			Y: -(coord.Y % m.MaxX),
+			X: -(coord.X % m.MaxX),
+		}]
+
+		return v, ok
+	}
+
+	return zero, false
 }
 
 func Rebuild[T any, S ~[]T](m Map[T, S]) []S {
@@ -65,7 +139,7 @@ func Rebuild[T any, S ~[]T](m Map[T, S]) []S {
 	return grid
 }
 
-func newQ1[T any, S ~[]T](items []S) Map[T, S] {
+func newQ1[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	maxY := len(items) - 1
 	maxX := len(items[0]) - 1
 	m := make(map[Coord]T)
@@ -80,10 +154,12 @@ func newQ1[T any, S ~[]T](items []S) Map[T, S] {
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
+
+		reflects: reflects,
 	}
 }
 
-func newQ2[T any, S ~[]T](items []S) Map[T, S] {
+func newQ2[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	maxY := len(items) - 1
 	maxX := -len(items[0]) + 1
 	m := make(map[Coord]T)
@@ -98,10 +174,12 @@ func newQ2[T any, S ~[]T](items []S) Map[T, S] {
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
+
+		reflects: reflects,
 	}
 }
 
-func newQ3[T any, S ~[]T](items []S) Map[T, S] {
+func newQ3[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	maxY := -len(items) + 1
 	maxX := len(items[0]) - 1
 	m := make(map[Coord]T)
@@ -116,10 +194,12 @@ func newQ3[T any, S ~[]T](items []S) Map[T, S] {
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
+
+		reflects: reflects,
 	}
 }
 
-func newQ4[T any, S ~[]T](items []S) Map[T, S] {
+func newQ4[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	maxY := -len(items) + 1
 	maxX := -len(items[0]) + 1
 	m := make(map[Coord]T)
@@ -134,6 +214,8 @@ func newQ4[T any, S ~[]T](items []S) Map[T, S] {
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
+
+		reflects: reflects,
 	}
 }
 
@@ -142,25 +224,34 @@ func NewGrid[T any, S ~[]T](items []S, opts ...cfg.Option[MapConfig]) Map[T, S] 
 
 	switch config.quadrant {
 	case Q1:
-		return newQ1[T, S](items)
+		return newQ1[T, S](items, config.reflection)
 	case Q2:
-		return newQ2[T, S](items)
+		return newQ2[T, S](items, config.reflection)
 	case Q3:
-		return newQ3[T, S](items)
+		return newQ3[T, S](items, config.reflection)
 	case Q4:
-		return newQ4[T, S](items)
+		return newQ4[T, S](items, config.reflection)
 	default:
-		return newQ1[T, S](items)
+		return newQ1[T, S](items, config.reflection)
 	}
 }
 
 type MapConfig struct {
-	quadrant Quadrant
+	quadrant   Quadrant
+	reflection bool
 }
 
 func WithQuadrant(quadrant Quadrant) cfg.Option[MapConfig] {
 	return cfg.Register(func(config MapConfig) MapConfig {
 		config.quadrant = quadrant
+
+		return config
+	})
+}
+
+func WithReflection() cfg.Option[MapConfig] {
+	return cfg.Register(func(config MapConfig) MapConfig {
+		config.reflection = true
 
 		return config
 	})
