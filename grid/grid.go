@@ -58,34 +58,74 @@ func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
 		maxY = -maxY
 	}
 
+	newCoord := Coord{
+		Y: coord.Y % m.MaxY,
+		X: coord.X % m.MaxX,
+	}
+
 	switch typ {
 	case Q1:
-		v, ok := m.Items[Coord{
-			Y: coord.Y % m.MaxX,
-			X: coord.X % m.MaxX,
-		}]
+		if coord.Y/m.MaxY%2 == 1 {
+			newCoord.Y = m.MaxY - newCoord.Y
+		}
+
+		if coord.X/m.MaxX%2 == 1 {
+			newCoord.X = m.MaxX - newCoord.X
+		}
+
+		v, ok := m.Items[newCoord]
 
 		return v, ok
 	case Q2:
-		v, ok := m.Items[Coord{
-			Y: coord.Y % m.MaxX,
-			X: -(coord.X % m.MaxX),
-		}]
+		if coord.Y/Abs(m.MaxY)%2 == 1 {
+			newCoord.Y = m.MaxY - newCoord.Y
+		}
+
+		if coord.X/Abs(m.MaxX)%2 == 1 {
+			newCoord.X = m.MaxX + Abs(newCoord.X)
+		}
+
+		if newCoord.X > 0 {
+			newCoord.X = -newCoord.X
+		}
+
+		v, ok := m.Items[newCoord]
 
 		return v, ok
 	case Q3:
-		c := Coord{
-			Y: -(coord.Y % maxY),
-			X: coord.X % maxX,
+		if coord.Y/Abs(m.MaxY)%2 == 1 {
+			newCoord.Y = m.MaxY + Abs(newCoord.Y)
 		}
-		v, ok := m.Items[c]
+
+		if coord.X/Abs(m.MaxX)%2 == 1 {
+			newCoord.X = m.MaxX - newCoord.X
+		}
+
+		if newCoord.Y > 0 {
+			newCoord.Y = -newCoord.Y
+		}
+
+		v, ok := m.Items[newCoord]
 
 		return v, ok
 	case Q4:
-		v, ok := m.Items[Coord{
-			Y: -(coord.Y % m.MaxX),
-			X: -(coord.X % m.MaxX),
-		}]
+		if coord.Y/Abs(m.MaxY)%2 == 1 {
+			newCoord.Y = m.MaxY + Abs(newCoord.Y)
+		}
+
+		if coord.X/Abs(m.MaxX)%2 == 1 {
+			newCoord.X = m.MaxX + Abs(newCoord.X)
+		}
+
+		if newCoord.Y > 0 {
+			newCoord.Y = -newCoord.Y
+		}
+
+		if newCoord.X > 0 {
+			newCoord.X = -newCoord.X
+		}
+
+		v, ok := m.Items[newCoord]
 
 		return v, ok
 	}
