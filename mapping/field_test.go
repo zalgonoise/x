@@ -1,8 +1,13 @@
 package mapping
 
-import "testing"
+import (
+	"cmp"
+	"testing"
 
-func TestTable(t *testing.T) {
+	"github.com/zalgonoise/cfg"
+)
+
+func TestField(t *testing.T) {
 	key1 := "alpha"
 	value1 := "A-alpha"
 
@@ -19,12 +24,14 @@ func TestTable(t *testing.T) {
 	}
 
 	for _, testcase := range []struct {
-		name  string
-		m     map[string]*string
-		zero  *string
-		input string
-		wants *string
-		ok    bool
+		name    string
+		m       map[string]*string
+		zero    *string
+		indexed bool
+		cmpFunc func(a, b string) int
+		input   string
+		wants   *string
+		ok      bool
 	}{
 		{
 			name:  "WithValue/NilZero",
@@ -90,11 +97,59 @@ func TestTable(t *testing.T) {
 			ok:    false,
 			wants: &zero,
 		},
+		{
+			name:    "Indexed/Unordered/NilZero",
+			m:       m,
+			zero:    nil,
+			indexed: true,
+			input:   key1,
+			ok:      true,
+			wants:   &value1,
+		},
+		{
+			name:    "Indexed/Ordered/NilZero",
+			m:       m,
+			zero:    nil,
+			indexed: true,
+			cmpFunc: cmp.Compare[string],
+			input:   key1,
+			ok:      true,
+			wants:   &value1,
+		},
+		{
+			name:    "Indexed/Unordered/SetZero",
+			m:       m,
+			zero:    &zero,
+			indexed: true,
+			input:   key1,
+			ok:      true,
+			wants:   &value1,
+		},
+		{
+			name:    "Indexed/Ordered/SetZero",
+			m:       m,
+			zero:    &zero,
+			indexed: true,
+			cmpFunc: cmp.Compare[string],
+			input:   key1,
+			ok:      true,
+			wants:   &value1,
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			table := New(testcase.m, testcase.zero)
+			opts := []cfg.Option[Config[string, *string]]{
+				WithZero[string, *string](testcase.zero),
+			}
 
-			result, ok := table.Get(testcase.input)
+			if testcase.indexed {
+				opts = append(opts, WithIndex[string, *string](
+					testcase.cmpFunc,
+				))
+			}
+
+			field := New(testcase.m, opts...)
+
+			result, ok := field.Get(testcase.input)
 			isEqual(t, testcase.ok, ok)
 			isEqual(t, testcase.wants, result)
 		})
