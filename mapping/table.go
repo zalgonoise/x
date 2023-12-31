@@ -19,10 +19,3 @@ func (t Table[K, T]) Get(key K) (T, bool) {
 
 	return value, true
 }
-
-func New[K comparable, T any](values map[K]T, zero T) Table[K, T] {
-	return Table[K, T]{
-		zero:   zero,
-		values: values,
-	}
-}
