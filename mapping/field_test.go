@@ -138,13 +138,11 @@ func TestField(t *testing.T) {
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			opts := []cfg.Option[Config[string, *string]]{
-				WithZero[string, *string](testcase.zero),
+				WithZero[string](testcase.zero),
 			}
 
 			if testcase.indexed {
-				opts = append(opts, WithIndex[string, *string](
-					testcase.cmpFunc,
-				))
+				opts = append(opts, WithIndex[*string](testcase.cmpFunc))
 			}
 
 			field := New(testcase.m, opts...)
@@ -153,6 +151,67 @@ func TestField(t *testing.T) {
 			isEqual(t, testcase.ok, ok)
 			isEqual(t, testcase.wants, result)
 		})
+	}
+}
+
+func TestEmbeded(t *testing.T) {
+	zero := ""
+	name := "gopher"
+	id := "#0000"
+
+	namePriorities := map[string]*string{
+		"main": nil,
+		"sec":  &name,
+	}
+
+	idPriorities := map[string]*string{
+		"main": nil,
+		"sec":  &zero,
+		"tetr": &id,
+	}
+
+	nameIndex := NewIndex(namePriorities,
+		WithIndex[*string](cmp.Compare[string]),
+	)
+
+	idIndex := NewIndex(idPriorities,
+		WithZero[string](&zero),
+		WithIndex[*string](cmp.Compare[string]),
+	)
+
+	fields := map[string]Index[string, *string]{
+		"name": nameIndex,
+		"id":   idIndex,
+	}
+
+	index := New(fields)
+
+	// access name
+	indexedName, ok := index.Get("name")
+
+	isEqual(t, true, ok)
+
+	for _, key := range indexedName.Keys {
+		value, ok := indexedName.Get(key)
+
+		if ok && value != nil {
+			isEqual(t, "sec", key)
+			isEqual(t, name, *value)
+		}
+	}
+
+	// access id
+	indexedID, ok := index.Get("id")
+
+	isEqual(t, true, ok)
+
+	for _, key := range indexedID.Keys {
+		value, ok := indexedID.Get(key)
+
+		if ok && value != nil && *value != "" {
+			isEqual(t, "tetr", key)
+			isEqual(t, id, *value)
+		}
 	}
 }
 
