@@ -16,7 +16,7 @@ func WithZero[K comparable, T any](zero T) cfg.Option[Config[K, T]] {
 	})
 }
 
-func WithIndex[K comparable, T any](cmpFunc func(a K, b K) int) cfg.Option[Config[K, T]] {
+func WithIndex[T any, K comparable](cmpFunc func(a K, b K) int) cfg.Option[Config[K, T]] {
 	return cfg.Register(func(config Config[K, T]) Config[K, T] {
 		config.indexed = true
 
