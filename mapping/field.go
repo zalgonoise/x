@@ -1,38 +1,53 @@
 package mapping
 
 import (
-	"slices"
-
 	"github.com/zalgonoise/cfg"
 )
 
+// Field describes the capabilities of a dynamic field mapping type, that is to Get and Set values of a certain type,
+// using comparable key types.
+//
+// The Get method fetches the value in a mapping Field for a given key. If the value does not exist, the Field's
+// configured zero value is returned. A boolean value is also returned to highlight whether accessing the key was
+// successful or not.
+//
+// Set replaces the value of a certain key in the map, or it adds it if it does not exist. The returned boolean value
+// represents whether the key is new in the mapping Field or not.
 type Field[K comparable, T any] interface {
+	// Get fetches the value in a mapping Field for a given key. If the value does not exist, the Field's
+	// configured zero value is returned. A boolean value is also returned to highlight whether accessing the key was
+	// successful or not.
 	Get(key K) (T, bool)
+	// Set replaces the value of a certain key in the map, or it adds it if it does not exist. The returned boolean value
+	// represents whether the key is new in the mapping Field or not.
+	Set(key K, value T) bool
 }
 
+// New creates a Field type appropriate to the configured options (either a *Table[K, T] type, or an *Index[K, T] type.
 func New[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) Field[K, T] {
 	config := cfg.New(opts...)
 
 	if !config.indexed {
-		return Table[K, T]{
-			zero:   config.zero,
-			values: values,
+		return NewTable(values, opts...)
+	}
+
+	return NewIndex(values, opts...)
+}
+
+// Keys provides access to all keys in a Field, regardless if it's a *Table[K, T] type, or an *Index[K, T] type.
+func Keys[K comparable, T any](field Field[K, T]) []K {
+	switch f := field.(type) {
+	case *Index[K, T]:
+		return f.Keys
+	case *Table[K, T]:
+		keys := make([]K, 0, len(f.values))
+
+		for k := range f.values {
+			keys = append(keys, k)
 		}
-	}
 
-	idx := make([]K, 0, len(values))
-	for key := range values {
-		idx = append(idx, key)
-	}
-
-	if config.cmpFunc != nil {
-		slices.SortFunc(idx, config.cmpFunc)
-	}
-
-	return Index[K, T]{
-		Keys: idx,
-
-		zero:   config.zero,
-		values: values,
+		return keys
+	default:
+		return nil
 	}
 }
