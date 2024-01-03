@@ -179,7 +179,7 @@ func TestEmbeded(t *testing.T) {
 		WithIndex[*string](cmp.Compare[string]),
 	)
 
-	fields := map[string]Index[string, *string]{
+	fields := map[string]*Index[string, *string]{
 		"name": nameIndex,
 		"id":   idIndex,
 	}
