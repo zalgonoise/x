@@ -53,7 +53,7 @@ func (i *Index[K, T]) Set(key K, value T) bool {
 		slices.SortFunc(i.Keys, i.cmp)
 	}
 
-	return ok
+	return true
 }
 
 func NewIndex[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) *Index[K, T] {
