@@ -7,7 +7,71 @@ import (
 	"github.com/zalgonoise/cfg"
 )
 
-func TestField(t *testing.T) {
+func TestFieldSet(t *testing.T) {
+	key1 := "alpha"
+	value1 := "A-alpha"
+	zero := "zero"
+
+	for _, testcase := range []struct {
+		name string
+		zero *string
+	}{
+		{
+			name: "WithZero",
+			zero: &zero,
+		},
+		{
+			name: "NilZero",
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Run("Table", func(t *testing.T) {
+				m := make(map[string]*string, 2)
+
+				table := NewTable(m, WithZero[string](testcase.zero))
+
+				value, ok := table.Get(key1)
+
+				isEqual(t, false, ok)
+				isEqual(t, testcase.zero, value)
+
+				added := table.Set(key1, &value1)
+
+				isEqual(t, true, added)
+
+				value, ok = table.Get(key1)
+
+				isEqual(t, true, ok)
+				isEqual(t, &value1, value)
+			})
+
+			t.Run("Index", func(t *testing.T) {
+				m := make(map[string]*string, 2)
+
+				index := NewIndex(m,
+					WithZero[string](testcase.zero),
+					WithIndex[*string](cmp.Compare[string]),
+				)
+
+				value, ok := index.Get(key1)
+
+				isEqual(t, false, ok)
+				isEqual(t, testcase.zero, value)
+
+				added := index.Set(key1, &value1)
+
+				isEqual(t, true, added)
+
+				value, ok = index.Get(key1)
+
+				isEqual(t, true, ok)
+				isEqual(t, &value1, value)
+			})
+		})
+	}
+}
+
+func TestFieldGet(t *testing.T) {
 	key1 := "alpha"
 	value1 := "A-alpha"
 
