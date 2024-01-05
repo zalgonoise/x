@@ -2,6 +2,7 @@ package mapping
 
 import (
 	"cmp"
+	"slices"
 	"testing"
 
 	"github.com/zalgonoise/cfg"
@@ -9,7 +10,9 @@ import (
 
 func TestFieldSet(t *testing.T) {
 	key1 := "alpha"
+	key2 := "beta"
 	value1 := "A-alpha"
+	value2 := "a-alpha"
 	zero := "zero"
 
 	for _, testcase := range []struct {
@@ -30,19 +33,39 @@ func TestFieldSet(t *testing.T) {
 
 				table := NewTable(m, WithZero[string](testcase.zero))
 
+				// get non-existing key's value
 				value, ok := table.Get(key1)
 
 				isEqual(t, false, ok)
 				isEqual(t, testcase.zero, value)
 
+				// set key
 				added := table.Set(key1, &value1)
 
 				isEqual(t, true, added)
 
+				// get previous key's value
 				value, ok = table.Get(key1)
 
 				isEqual(t, true, ok)
 				isEqual(t, &value1, value)
+
+				// get non-existing key's value again
+				value, ok = table.Get(key2)
+
+				isEqual(t, false, ok)
+				isEqual(t, testcase.zero, value)
+
+				// replace value
+				added = table.Set(key1, &value2)
+
+				isEqual(t, false, added)
+
+				// get key's new value
+				value, ok = table.Get(key1)
+
+				isEqual(t, true, ok)
+				isEqual(t, &value2, value)
 			})
 
 			t.Run("Index", func(t *testing.T) {
@@ -53,19 +76,39 @@ func TestFieldSet(t *testing.T) {
 					WithIndex[*string](cmp.Compare[string]),
 				)
 
+				// get non-existing key's value
 				value, ok := index.Get(key1)
 
 				isEqual(t, false, ok)
 				isEqual(t, testcase.zero, value)
 
+				// set key
 				added := index.Set(key1, &value1)
 
 				isEqual(t, true, added)
 
+				// get previous key's value
 				value, ok = index.Get(key1)
 
 				isEqual(t, true, ok)
 				isEqual(t, &value1, value)
+
+				// get non-existing key's value again
+				value, ok = index.Get(key2)
+
+				isEqual(t, false, ok)
+				isEqual(t, testcase.zero, value)
+
+				// replace value
+				added = index.Set(key1, &value2)
+
+				isEqual(t, false, added)
+
+				// get key's new value
+				value, ok = index.Get(key1)
+
+				isEqual(t, true, ok)
+				isEqual(t, &value2, value)
 			})
 		})
 	}
@@ -214,6 +257,89 @@ func TestFieldGet(t *testing.T) {
 			result, ok := field.Get(testcase.input)
 			isEqual(t, testcase.ok, ok)
 			isEqual(t, testcase.wants, result)
+		})
+	}
+}
+
+type noOpField[K comparable, T any] struct{}
+
+func (noOpField[K, T]) Get(K) (T, bool) {
+	return *new(T), false
+}
+
+func (noOpField[K, T]) Set(K, T) bool {
+	return false
+}
+
+func TestKeys(t *testing.T) {
+	key1 := "alpha"
+	value1 := "A-alpha"
+
+	key2 := "beta"
+	value2 := "B-beta"
+
+	zero := "zero"
+
+	m := map[string]*string{
+		key1: &value1,
+		key2: &value2,
+	}
+
+	for _, testcase := range []struct {
+		name    string
+		field   Field[string, *string]
+		wants   []string
+		ordered bool
+	}{
+		{
+			name:  "Table/SetZero",
+			field: NewTable(m, WithZero[string](&zero)),
+			wants: []string{key1, key2},
+		},
+		{
+			name:  "Table/NilZero",
+			field: NewTable(m),
+			wants: []string{key1, key2},
+		},
+		{
+			name:  "Index/SetZero/Unordered",
+			field: NewIndex(m, WithZero[string](&zero)),
+			wants: []string{key1, key2},
+		},
+		{
+			name:  "Table/NilZero/Unordered",
+			field: NewIndex(m),
+			wants: []string{key1, key2},
+		},
+		{
+			name:    "Index/SetZero/Ordered",
+			field:   NewIndex(m, WithZero[string](&zero), WithIndex[*string](cmp.Compare[string])),
+			wants:   []string{key1, key2},
+			ordered: true,
+		},
+		{
+			name:    "Table/NilZero/Ordered",
+			field:   NewIndex(m, WithIndex[*string](cmp.Compare[string])),
+			wants:   []string{key1, key2},
+			ordered: true,
+		},
+		{
+			name:  "Unsupported",
+			field: noOpField[string, *string]{},
+			wants: nil,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			keys := Keys(testcase.field)
+
+			if keys != nil && !testcase.ordered {
+				slices.Sort(keys)
+			}
+
+			isEqual(t, len(testcase.wants), len(keys))
+			for i := range testcase.wants {
+				isEqual(t, testcase.wants[i], keys[i])
+			}
 		})
 	}
 }
