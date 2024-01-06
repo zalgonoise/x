@@ -30,7 +30,6 @@ func TestFieldSet(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			t.Run("Table", func(t *testing.T) {
 				m := make(map[string]*string, 2)
-
 				table := NewTable(m, WithZero[string](testcase.zero))
 
 				// get non-existing key's value
@@ -70,7 +69,6 @@ func TestFieldSet(t *testing.T) {
 
 			t.Run("Index", func(t *testing.T) {
 				m := make(map[string]*string, 2)
-
 				index := NewIndex(m,
 					WithZero[string](testcase.zero),
 					WithIndex[*string](cmp.Compare[string]),
@@ -117,12 +115,9 @@ func TestFieldSet(t *testing.T) {
 func TestFieldGet(t *testing.T) {
 	key1 := "alpha"
 	value1 := "A-alpha"
-
 	key2 := "beta"
 	value2 := "B-beta"
-
 	key3 := "gamma"
-
 	zero := "zero"
 
 	m := map[string]*string{
@@ -263,21 +258,14 @@ func TestFieldGet(t *testing.T) {
 
 type noOpField[K comparable, T any] struct{}
 
-func (noOpField[K, T]) Get(K) (T, bool) {
-	return *new(T), false
-}
-
-func (noOpField[K, T]) Set(K, T) bool {
-	return false
-}
+func (noOpField[K, T]) Get(K) (T, bool) { return *new(T), false }
+func (noOpField[K, T]) Set(K, T) bool   { return false }
 
 func TestKeys(t *testing.T) {
 	key1 := "alpha"
 	value1 := "A-alpha"
-
 	key2 := "beta"
 	value2 := "B-beta"
-
 	zero := "zero"
 
 	m := map[string]*string{
