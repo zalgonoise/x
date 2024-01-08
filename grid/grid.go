@@ -13,15 +13,15 @@ const (
 	Q4                 // 0x11 - invert both X and Y axis
 )
 
-type Map[T any, S ~[]T] struct {
-	MaxY  int
-	MaxX  int
-	Items map[Coord]T
+type Map[T any, S ~[]T, I Integer] struct {
+	MaxY  I
+	MaxX  I
+	Items map[Coord[I]]T
 
 	reflects bool
 }
 
-func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
+func Get[T any, S ~[]T, I Integer](m Map[T, S, I], coord Coord[I]) (T, bool) {
 	data, ok := m.Items[coord]
 
 	if ok {
@@ -58,18 +58,18 @@ func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
 		maxY = -maxY
 	}
 
-	newCoord := Coord{
-		Y: coord.Y % m.MaxY,
-		X: coord.X % m.MaxX,
+	newCoord := Coord[I]{
+		Y: I(int(coord.Y) % int(m.MaxY)),
+		X: I(int(coord.X) % int(m.MaxX)),
 	}
 
 	switch typ {
 	case Q1:
-		if coord.Y/m.MaxY%2 == 1 {
+		if int(coord.Y/m.MaxY)%2 == 1 {
 			newCoord.Y = m.MaxY - newCoord.Y
 		}
 
-		if coord.X/m.MaxX%2 == 1 {
+		if int(coord.X/m.MaxX)%2 == 1 {
 			newCoord.X = m.MaxX - newCoord.X
 		}
 
@@ -77,11 +77,11 @@ func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
 
 		return v, ok
 	case Q2:
-		if coord.Y/Abs(m.MaxY)%2 == 1 {
+		if int(coord.Y/Abs(m.MaxY))%2 == 1 {
 			newCoord.Y = m.MaxY - newCoord.Y
 		}
 
-		if coord.X/Abs(m.MaxX)%2 == 1 {
+		if int(coord.X/Abs(m.MaxX))%2 == 1 {
 			newCoord.X = m.MaxX + Abs(newCoord.X)
 		}
 
@@ -93,11 +93,11 @@ func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
 
 		return v, ok
 	case Q3:
-		if coord.Y/Abs(m.MaxY)%2 == 1 {
+		if int(coord.Y/Abs(m.MaxY))%2 == 1 {
 			newCoord.Y = m.MaxY + Abs(newCoord.Y)
 		}
 
-		if coord.X/Abs(m.MaxX)%2 == 1 {
+		if int(coord.X/Abs(m.MaxX))%2 == 1 {
 			newCoord.X = m.MaxX - newCoord.X
 		}
 
@@ -109,11 +109,11 @@ func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
 
 		return v, ok
 	case Q4:
-		if coord.Y/Abs(m.MaxY)%2 == 1 {
+		if int(coord.Y/Abs(m.MaxY))%2 == 1 {
 			newCoord.Y = m.MaxY + Abs(newCoord.Y)
 		}
 
-		if coord.X/Abs(m.MaxX)%2 == 1 {
+		if int(coord.X/Abs(m.MaxX))%2 == 1 {
 			newCoord.X = m.MaxX + Abs(newCoord.X)
 		}
 
@@ -133,7 +133,7 @@ func Get[T any, S ~[]T](m Map[T, S], coord Coord) (T, bool) {
 	return zero, false
 }
 
-func Rebuild[T any, S ~[]T](m Map[T, S]) []S {
+func Rebuild[T any, S ~[]T, I Integer](m Map[T, S, I]) []S {
 	var (
 		typ  Quadrant
 		maxX = m.MaxX
@@ -150,13 +150,13 @@ func Rebuild[T any, S ~[]T](m Map[T, S]) []S {
 		maxY = -maxY
 	}
 
-	grid := make([]S, maxY+1)
+	grid := make([]S, int(maxY+1))
 	for i := range grid {
-		grid[i] = make(S, maxX+1)
+		grid[i] = make(S, int(maxX+1))
 	}
 
 	for coord, value := range m.Items {
-		var x, y int
+		var x, y I
 
 		switch typ {
 		case Q1:
@@ -173,24 +173,24 @@ func Rebuild[T any, S ~[]T](m Map[T, S]) []S {
 			y = -coord.Y
 		}
 
-		grid[y][x] = value
+		grid[int(y)][int(x)] = value
 	}
 
 	return grid
 }
 
-func newQ1[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
-	maxY := len(items) - 1
-	maxX := len(items[0]) - 1
-	m := make(map[Coord]T)
+func newQ1[T any, S ~[]T, I Integer](items []S, reflects bool) Map[T, S, I] {
+	maxY := I(len(items) - 1)
+	maxX := I(len(items[0]) - 1)
+	m := make(map[Coord[I]]T)
 
 	for y := range items {
 		for x := range items[y] {
-			m[Coord{Y: maxY - y, X: x}] = items[y][x]
+			m[Coord[I]{Y: maxY - I(y), X: I(x)}] = items[y][x]
 		}
 	}
 
-	return Map[T, S]{
+	return Map[T, S, I]{
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
@@ -199,18 +199,18 @@ func newQ1[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	}
 }
 
-func newQ2[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
-	maxY := len(items) - 1
-	maxX := -len(items[0]) + 1
-	m := make(map[Coord]T)
+func newQ2[T any, S ~[]T, I Integer](items []S, reflects bool) Map[T, S, I] {
+	maxY := I(len(items) - 1)
+	maxX := I(-len(items[0]) + 1)
+	m := make(map[Coord[I]]T)
 
 	for y := range items {
 		for x := range items[y] {
-			m[Coord{Y: maxY - y, X: maxX + x}] = items[y][x]
+			m[Coord[I]{Y: maxY - I(y), X: maxX + I(x)}] = items[y][x]
 		}
 	}
 
-	return Map[T, S]{
+	return Map[T, S, I]{
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
@@ -219,18 +219,18 @@ func newQ2[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	}
 }
 
-func newQ3[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
-	maxY := -len(items) + 1
-	maxX := len(items[0]) - 1
-	m := make(map[Coord]T)
+func newQ3[T any, S ~[]T, I Integer](items []S, reflects bool) Map[T, S, I] {
+	maxY := I(-len(items) + 1)
+	maxX := I(len(items[0]) - 1)
+	m := make(map[Coord[I]]T)
 
 	for y := range items {
 		for x := range items[y] {
-			m[Coord{Y: -y, X: x}] = items[y][x]
+			m[Coord[I]{Y: I(-y), X: I(x)}] = items[y][x]
 		}
 	}
 
-	return Map[T, S]{
+	return Map[T, S, I]{
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
@@ -239,18 +239,18 @@ func newQ3[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	}
 }
 
-func newQ4[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
-	maxY := -len(items) + 1
-	maxX := -len(items[0]) + 1
-	m := make(map[Coord]T)
+func newQ4[T any, S ~[]T, I Integer](items []S, reflects bool) Map[T, S, I] {
+	maxY := I(-len(items) + 1)
+	maxX := I(-len(items[0]) + 1)
+	m := make(map[Coord[I]]T)
 
 	for y := range items {
 		for x := range items[y] {
-			m[Coord{Y: -y, X: maxX + x}] = items[y][x]
+			m[Coord[I]{Y: I(-y), X: maxX + I(x)}] = items[y][x]
 		}
 	}
 
-	return Map[T, S]{
+	return Map[T, S, I]{
 		MaxY:  maxY,
 		MaxX:  maxX,
 		Items: m,
@@ -259,20 +259,20 @@ func newQ4[T any, S ~[]T](items []S, reflects bool) Map[T, S] {
 	}
 }
 
-func NewGrid[T any, S ~[]T](items []S, opts ...cfg.Option[MapConfig]) Map[T, S] {
+func NewGrid[I Integer, T any, S ~[]T](items []S, opts ...cfg.Option[MapConfig]) Map[T, S, I] {
 	config := cfg.New(opts...)
 
 	switch config.quadrant {
 	case Q1:
-		return newQ1[T, S](items, config.reflection)
+		return newQ1[T, S, I](items, config.reflection)
 	case Q2:
-		return newQ2[T, S](items, config.reflection)
+		return newQ2[T, S, I](items, config.reflection)
 	case Q3:
-		return newQ3[T, S](items, config.reflection)
+		return newQ3[T, S, I](items, config.reflection)
 	case Q4:
-		return newQ4[T, S](items, config.reflection)
+		return newQ4[T, S, I](items, config.reflection)
 	default:
-		return newQ1[T, S](items, config.reflection)
+		return newQ1[T, S, I](items, config.reflection)
 	}
 }
 
