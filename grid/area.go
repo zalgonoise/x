@@ -1,18 +1,18 @@
 package grid
 
-func Area(vectors []Vector) int {
-	coords := Travel(Coord{}, vectors)
+func Area[I Integer](vectors []Vector[I]) I {
+	coords := Travel[I](Coord[I]{}, vectors)
 
 	return Shoelace(coords) + Perimeter(coords)/2 + 1
 }
 
-func Travel(start Coord, vectors []Vector) []Coord {
+func Travel[I Integer](start Coord[I], vectors []Vector[I]) []Coord[I] {
 	cur := start
-	coords := make([]Coord, 0, len(vectors)+1)
+	coords := make([]Coord[I], 0, len(vectors)+1)
 
 	for i := range vectors {
 		coords = append(coords, cur)
-		cur = Add(cur, Mul(vectors[i].Dir, vectors[i].Len))
+		cur = Add(cur, Mul(vectors[i].Dir, I(vectors[i].Len)))
 	}
 
 	coords = append(coords, cur)
@@ -20,8 +20,8 @@ func Travel(start Coord, vectors []Vector) []Coord {
 	return coords
 }
 
-func Shoelace(vertices []Coord) int {
-	var n int
+func Shoelace[I Integer](vertices []Coord[I]) I {
+	var n I
 
 	for i := range vertices {
 		next := (i + 1) % len(vertices)
@@ -33,8 +33,8 @@ func Shoelace(vertices []Coord) int {
 	return Abs(n) / 2
 }
 
-func Perimeter(vertices []Coord) int {
-	var n int
+func Perimeter[I Integer](vertices []Coord[I]) I {
+	var n I
 
 	for i := 0; i < len(vertices); i++ {
 		next := (i + 1) % len(vertices)
