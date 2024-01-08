@@ -118,26 +118,26 @@ type Numeric interface {
 		uint | uint8 | uint16 | uint32 | uint64
 }
 
-type context struct {
-	coord  Coord
-	dir    Coord
-	streak int
+type context[I Integer] struct {
+	coord  Coord[I]
+	dir    Coord[I]
+	streak I
 }
 
-func AStar[T Numeric, S ~[]T](g Graph[T, S], minSteps int, maxSteps int) int {
+func AStar[T Numeric, S ~[]T, I Integer](g Graph[T, S, I], minSteps I, maxSteps I) I {
 	var (
-		startCtx = context{
+		startCtx = context[I]{
 			coord:  g.Head,
-			dir:    Coord{},
+			dir:    Coord[I]{},
 			streak: 0,
 		}
-		pathQueue = &PriorityQueue[context]{}
-		prevCtx   = make(map[context]context)
-		distance  = make(map[context]int)
+		pathQueue = &PriorityQueue[context[I], I]{}
+		prevCtx   = make(map[context[I]]context[I])
+		distance  = make(map[context[I]]I)
 	)
 
-	gbuf.Init[QueueItem[context]](pathQueue)
-	gbuf.Push[QueueItem[context]](pathQueue, QueueItem[context]{
+	gbuf.Init[QueueItem[context[I], I]](pathQueue)
+	gbuf.Push[QueueItem[context[I], I]](pathQueue, QueueItem[context[I], I]{
 		Item:     startCtx,
 		Priority: 0,
 	})
@@ -146,7 +146,7 @@ func AStar[T Numeric, S ~[]T](g Graph[T, S], minSteps int, maxSteps int) int {
 	distance[startCtx] = 0
 
 	for pathQueue.Len() > 0 {
-		cur := gbuf.Pop[QueueItem[context]](pathQueue).(QueueItem[context]).Item
+		cur := gbuf.Pop[QueueItem[context[I], I]](pathQueue).(QueueItem[context[I], I]).Item
 		curDistance := distance[cur]
 
 		if g.IsLast(cur.coord) {
@@ -156,19 +156,19 @@ func AStar[T Numeric, S ~[]T](g Graph[T, S], minSteps int, maxSteps int) int {
 		edges := g.Edges(cur.coord)
 		for i := range edges {
 			dir := Sub(edges[i], cur.coord)
-			streak := 1
+			streak := I(1)
 
 			if dir == cur.dir {
 				streak += cur.streak
 			}
 
-			nextCtx := context{
+			nextCtx := context[I]{
 				coord:  edges[i],
 				dir:    dir,
 				streak: streak,
 			}
 
-			nextDistance := curDistance + int(g.Map.Items[edges[i]])
+			nextDistance := curDistance + I(g.Map.Items[edges[i]])
 			if length, ok := distance[nextCtx]; ok && nextDistance >= length {
 				continue
 			}
@@ -189,8 +189,8 @@ func AStar[T Numeric, S ~[]T](g Graph[T, S], minSteps int, maxSteps int) int {
 			prevCtx[nextCtx] = cur
 
 			priority := nextDistance + Manhattan(edges[i], g.Tail)
-			queueItem := QueueItem[context]{Item: nextCtx, Priority: priority}
-			gbuf.Push[QueueItem[context]](pathQueue, queueItem)
+			queueItem := QueueItem[context[I], I]{Item: nextCtx, Priority: priority}
+			gbuf.Push[QueueItem[context[I], I]](pathQueue, queueItem)
 		}
 	}
 
