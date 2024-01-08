@@ -17,16 +17,16 @@ func TestNewGrid(t *testing.T) {
 		name     string
 		input    [][]int
 		quadrant Quadrant
-		wants    Map[int, []int]
+		wants    Map[int, []int, int]
 	}{
 		{
 			name:     "Q1",
 			input:    data,
 			quadrant: Q1,
-			wants: Map[int, []int]{
+			wants: Map[int, []int, int]{
 				MaxX: 3,
 				MaxY: 3,
-				Items: map[Coord]int{
+				Items: map[Coord[int]]int{
 					{3, 0}: 1,
 					{3, 1}: 2,
 					{3, 2}: 3,
@@ -50,10 +50,10 @@ func TestNewGrid(t *testing.T) {
 			name:     "Q2",
 			input:    data,
 			quadrant: Q2,
-			wants: Map[int, []int]{
+			wants: Map[int, []int, int]{
 				MaxX: -3,
 				MaxY: 3,
-				Items: map[Coord]int{
+				Items: map[Coord[int]]int{
 					{3, -3}: 1,
 					{3, -2}: 2,
 					{3, -1}: 3,
@@ -77,10 +77,10 @@ func TestNewGrid(t *testing.T) {
 			name:     "Q3",
 			input:    data,
 			quadrant: Q3,
-			wants: Map[int, []int]{
+			wants: Map[int, []int, int]{
 				MaxX: 3,
 				MaxY: -3,
-				Items: map[Coord]int{
+				Items: map[Coord[int]]int{
 					{0, 0}:  1,
 					{0, 1}:  2,
 					{0, 2}:  3,
@@ -104,10 +104,10 @@ func TestNewGrid(t *testing.T) {
 			name:     "Q4",
 			input:    data,
 			quadrant: Q4,
-			wants: Map[int, []int]{
+			wants: Map[int, []int, int]{
 				MaxX: -3,
 				MaxY: -3,
-				Items: map[Coord]int{
+				Items: map[Coord[int]]int{
 					{0, -3}:  1,
 					{0, -2}:  2,
 					{0, -1}:  3,
@@ -129,7 +129,7 @@ func TestNewGrid(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			g := NewGrid(testcase.input, WithQuadrant(testcase.quadrant))
+			g := NewGrid[int](testcase.input, WithQuadrant(testcase.quadrant))
 
 			isEqual(t, testcase.wants.MaxX, g.MaxX)
 			isEqual(t, testcase.wants.MaxY, g.MaxY)
@@ -164,7 +164,7 @@ func TestRebuild(t *testing.T) {
 			} {
 				{
 					t.Run(testcase.name, func(t *testing.T) {
-						grid := NewGrid(testcase.input, WithQuadrant(quadrant))
+						grid := NewGrid[int](testcase.input, WithQuadrant(quadrant))
 
 						rebuilt := Rebuild(grid)
 
@@ -192,160 +192,160 @@ func TestGet(t *testing.T) {
 		{13, 14, 15, 16},
 	}
 
-	mapQ1 := NewGrid(data, WithQuadrant(Q1), WithReflection())
-	mapQ2 := NewGrid(data, WithQuadrant(Q2), WithReflection())
-	mapQ3 := NewGrid(data, WithQuadrant(Q3), WithReflection())
-	mapQ4 := NewGrid(data, WithQuadrant(Q4), WithReflection())
+	mapQ1 := NewGrid[int](data, WithQuadrant(Q1), WithReflection())
+	mapQ2 := NewGrid[int](data, WithQuadrant(Q2), WithReflection())
+	mapQ3 := NewGrid[int](data, WithQuadrant(Q3), WithReflection())
+	mapQ4 := NewGrid[int](data, WithQuadrant(Q4), WithReflection())
 
 	for _, testcase := range []struct {
 		name  string
-		input Map[int, []int]
-		key   Coord
+		input Map[int, []int, int]
+		key   Coord[int]
 		wants int
 	}{
 		{
 			name:  "Q1/WithinGrid",
 			input: mapQ1,
-			key:   Coord{0, 0},
+			key:   Coord[int]{0, 0},
 			wants: 13,
 		},
 		{
 			name:  "Q1/OffGrid/Y",
 			input: mapQ1,
-			key:   Coord{-1, 0},
+			key:   Coord[int]{-1, 0},
 			wants: 9,
 		},
 		{
 			name:  "Q1/OffGrid/X",
 			input: mapQ1,
-			key:   Coord{1, -1},
+			key:   Coord[int]{1, -1},
 			wants: 10,
 		},
 		{
 			name:  "Q1/OffGrid/YX",
 			input: mapQ1,
-			key:   Coord{-2, -1},
+			key:   Coord[int]{-2, -1},
 			wants: 6,
 		},
 		{
 			name:  "Q2/WithinGrid",
 			input: mapQ2,
-			key:   Coord{0, 0},
+			key:   Coord[int]{0, 0},
 			wants: 16,
 		},
 		{
 			name:  "Q2/OffGrid/Y",
 			input: mapQ2,
-			key:   Coord{-1, 0},
+			key:   Coord[int]{-1, 0},
 			wants: 12,
 		},
 		{
 			name:  "Q2/OffGrid/X",
 			input: mapQ2,
-			key:   Coord{1, 1},
+			key:   Coord[int]{1, 1},
 			wants: 11,
 		},
 		{
 			name:  "Q2/OffGrid/YX",
 			input: mapQ2,
-			key:   Coord{-2, -1},
+			key:   Coord[int]{-2, -1},
 			wants: 7,
 		},
 		{
 			name:  "Q3/WithinGrid",
 			input: mapQ3,
-			key:   Coord{0, 0},
+			key:   Coord[int]{0, 0},
 			wants: 1,
 		},
 		{
 			name:  "Q3/OffGrid/Y",
 			input: mapQ3,
-			key:   Coord{1, 0},
+			key:   Coord[int]{1, 0},
 			wants: 5,
 		},
 		{
 			name:  "Q3/OffGrid/X",
 			input: mapQ3,
-			key:   Coord{-1, -1},
+			key:   Coord[int]{-1, -1},
 			wants: 6,
 		},
 		{
 			name:  "Q3/OffGrid/YX",
 			input: mapQ3,
-			key:   Coord{2, -1},
+			key:   Coord[int]{2, -1},
 			wants: 10,
 		},
 
 		{
 			name:  "Q4/WithinGrid",
 			input: mapQ4,
-			key:   Coord{0, 0},
+			key:   Coord[int]{0, 0},
 			wants: 4,
 		},
 		{
 			name:  "Q4/OffGrid/Y",
 			input: mapQ4,
-			key:   Coord{1, 0},
+			key:   Coord[int]{1, 0},
 			wants: 8,
 		},
 		{
 			name:  "Q4/OffGrid/X",
 			input: mapQ4,
-			key:   Coord{-1, 1},
+			key:   Coord[int]{-1, 1},
 			wants: 7,
 		},
 		{
 			name:  "Q4/OffGrid/YX",
 			input: mapQ4,
-			key:   Coord{2, 1},
+			key:   Coord[int]{2, 1},
 			wants: 11,
 		},
 		{
 			name:  "Q1/WayOffGrid/Inverted",
 			input: mapQ1,
-			key:   Coord{-10, -11},
+			key:   Coord[int]{-10, -11},
 			wants: 6,
 		},
 		{
 			name:  "Q2/WayOffGrid/Inverted",
 			input: mapQ2,
-			key:   Coord{-10, 11},
+			key:   Coord[int]{-10, 11},
 			wants: 7,
 		},
 		{
 			name:  "Q3/WayOffGrid/Inverted",
 			input: mapQ3,
-			key:   Coord{10, -11},
+			key:   Coord[int]{10, -11},
 			wants: 10,
 		},
 		{
 			name:  "Q4/WayOffGrid/Inverted",
 			input: mapQ4,
-			key:   Coord{10, 11},
+			key:   Coord[int]{10, 11},
 			wants: 11,
 		},
 		{
 			name:  "Q1/WayOffGrid/Alike",
 			input: mapQ1,
-			key:   Coord{7, 7},
+			key:   Coord[int]{7, 7},
 			wants: 10,
 		},
 		{
 			name:  "Q2/WayOffGrid/Alike",
 			input: mapQ2,
-			key:   Coord{7, -7},
+			key:   Coord[int]{7, -7},
 			wants: 11,
 		},
 		{
 			name:  "Q3/WayOffGrid/Alike",
 			input: mapQ3,
-			key:   Coord{-7, 7},
+			key:   Coord[int]{-7, 7},
 			wants: 6,
 		},
 		{
 			name:  "Q4/WayOffGrid/Alike",
 			input: mapQ4,
-			key:   Coord{-7, -7},
+			key:   Coord[int]{-7, -7},
 			wants: 7,
 		},
 	} {
