@@ -2,24 +2,24 @@ package grid
 
 import "github.com/zalgonoise/cfg"
 
-type Graph[T any, S ~[]T] struct {
-	Head Coord
-	Tail Coord
+type Graph[T any, S ~[]T, I Integer] struct {
+	Head Coord[I]
+	Tail Coord[I]
 
-	Map Map[T, S]
+	Map Map[T, S, I]
 }
 
-func (g Graph[T, S]) Root() Coord {
+func (g Graph[T, S, I]) Root() Coord[I] {
 	return g.Head
 }
 
-func (g Graph[T, S]) Edges(c Coord) []Coord {
-	edges := make([]Coord, 0, 4)
+func (g Graph[T, S, I]) Edges(c Coord[I]) []Coord[I] {
+	edges := make([]Coord[I], 0, 4)
 
-	north := Add(c, North)
-	south := Add(c, South)
-	east := Add(c, East)
-	west := Add(c, West)
+	north := Add(c, North[I]())
+	south := Add(c, South[I]())
+	east := Add(c, East[I]())
+	west := Add(c, West[I]())
 
 	if _, ok := g.Map.Items[north]; ok {
 		edges = append(edges, north)
@@ -37,44 +37,44 @@ func (g Graph[T, S]) Edges(c Coord) []Coord {
 	return edges
 }
 
-func (g Graph[T, S]) IsLast(c Coord) bool {
+func (g Graph[T, S, I]) IsLast(c Coord[I]) bool {
 	return c == g.Tail
 }
 
-func NewGraph[T any, S ~[]T](m Map[T, S], opts ...cfg.Option[GraphConfig]) Graph[T, S] {
+func NewGraph[T any, S ~[]T, I Integer](m Map[T, S, I], opts ...cfg.Option[GraphConfig[I]]) Graph[T, S, I] {
 	config := cfg.New(opts...)
 
-	var tail Coord
+	var tail Coord[I]
 
 	switch config.tail {
 	case nil:
-		tail = Coord{m.MaxY, m.MaxX}
+		tail = Coord[I]{m.MaxY, m.MaxX}
 	default:
 		tail = *config.tail
 	}
 
-	return Graph[T, S]{
+	return Graph[T, S, I]{
 		Head: config.head,
 		Tail: tail,
 		Map:  m,
 	}
 }
 
-type GraphConfig struct {
-	head Coord
-	tail *Coord
+type GraphConfig[I Integer] struct {
+	head Coord[I]
+	tail *Coord[I]
 }
 
-func WithRoot(c Coord) cfg.Option[GraphConfig] {
-	return cfg.Register(func(config GraphConfig) GraphConfig {
+func WithRoot[I Integer](c Coord[I]) cfg.Option[GraphConfig[I]] {
+	return cfg.Register(func(config GraphConfig[I]) GraphConfig[I] {
 		config.head = c
 
 		return config
 	})
 }
 
-func WithEnd(c Coord) cfg.Option[GraphConfig] {
-	return cfg.Register(func(config GraphConfig) GraphConfig {
+func WithEnd[I Integer](c Coord[I]) cfg.Option[GraphConfig[I]] {
+	return cfg.Register(func(config GraphConfig[I]) GraphConfig[I] {
 		config.tail = &c
 
 		return config
