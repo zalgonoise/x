@@ -1,43 +1,58 @@
 package grid
 
-var (
-	North = Coord{1, 0}
-	South = Coord{-1, 0}
-	East  = Coord{0, 1}
-	West  = Coord{0, -1}
-)
+type Integer interface {
+	int | int8 | int16 | int32 | int64 | float32 | float64
+}
 
-var Directions = []Coord{North, South, East, West}
+func North[I Integer]() Coord[I] {
+	return Coord[I]{Y: 1, X: 0}
+}
 
-type Vector struct {
-	Dir Coord
+func South[I Integer]() Coord[I] {
+	return Coord[I]{Y: -1, X: 0}
+}
+
+func East[I Integer]() Coord[I] {
+	return Coord[I]{Y: 0, X: 1}
+}
+
+func West[I Integer]() Coord[I] {
+	return Coord[I]{Y: 0, X: -1}
+}
+
+func Directions[I Integer]() []Coord[I] {
+	return []Coord[I]{North[I](), South[I](), East[I](), West[I]()}
+}
+
+type Vector[I Integer] struct {
+	Dir Coord[I]
 	Len int
 }
 
-type Coord struct {
-	Y int
-	X int
+type Coord[I Integer] struct {
+	Y I
+	X I
 }
 
-func Add(a, b Coord) Coord {
-	return Coord{
+func Add[I Integer](a, b Coord[I]) Coord[I] {
+	return Coord[I]{
 		Y: a.Y + b.Y,
 		X: a.X + b.X,
 	}
 }
 
-func Sub(a, b Coord) Coord {
-	return Coord{
+func Sub[I Integer](a, b Coord[I]) Coord[I] {
+	return Coord[I]{
 		Y: a.Y - b.Y,
 		X: a.X - b.X,
 	}
 }
 
-func Mul(c Coord, factor int) Coord {
-	return Coord{c.Y * factor, c.X * factor}
+func Mul[I Integer](c Coord[I], factor I) Coord[I] {
+	return Coord[I]{c.Y * factor, c.X * factor}
 }
 
-func Abs(i int) int {
+func Abs[I Integer](i I) I {
 	if i < 0 {
 		return -i
 	}
@@ -45,13 +60,13 @@ func Abs(i int) int {
 	return i
 }
 
-func Inverse(c Coord) Coord {
-	return Coord{
+func Inverse[I Integer](c Coord[I]) Coord[I] {
+	return Coord[I]{
 		Y: -c.Y,
 		X: -c.X,
 	}
 }
 
-func Manhattan(a, b Coord) int {
+func Manhattan[I Integer](a, b Coord[I]) I {
 	return Abs(a.X-b.X) + Abs(a.Y-b.Y)
 }
