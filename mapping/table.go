@@ -30,12 +30,14 @@ func (t *Table[K, T]) Get(key K) (T, bool) {
 
 // Set replaces the value of a certain key in the map, or it adds it if it does not exist. The returned boolean value
 // represents whether the key is new in the mapping Field or not.
-func (t *Table[K, T]) Set(key K, value T) bool {
-	_, ok := t.values[key]
+func (t *Table[K, T]) Set(key K, setter Setter[T]) bool {
+	value, exists := t.values[key]
 
-	t.values[key] = value
+	newValue := setter(value)
 
-	return !ok
+	t.values[key] = newValue
+
+	return !exists
 }
 
 func NewTable[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) *Table[K, T] {
