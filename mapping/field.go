@@ -20,8 +20,12 @@ type Field[K comparable, T any] interface {
 	Get(key K) (T, bool)
 	// Set replaces the value of a certain key in the map, or it adds it if it does not exist. The returned boolean value
 	// represents whether the key is new in the mapping Field or not.
-	Set(key K, value T) bool
+	Set(key K, setter Setter[T]) bool
 }
+
+// Setter is a generic function type that applies a new value in replacement of a former value of type T. It should
+// return the new (or same) T value and a boolean representing if the item was newly set (from a zero value).
+type Setter[T any] func(old T) T
 
 // New creates a Field type appropriate to the configured options (either a *Table[K, T] type, or an *Index[K, T] type.
 func New[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) Field[K, T] {
