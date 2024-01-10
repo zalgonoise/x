@@ -39,7 +39,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// set key
-				added := table.Set(key1, &value1)
+				added := table.Set(key1, func(*string) *string { return &value1 })
 
 				isEqual(t, true, added)
 
@@ -56,7 +56,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// replace value
-				added = table.Set(key1, &value2)
+				added = table.Set(key1, func(*string) *string { return &value2 })
 
 				isEqual(t, false, added)
 
@@ -81,7 +81,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// set key
-				added := index.Set(key1, &value1)
+				added := index.Set(key1, func(*string) *string { return &value1 })
 
 				isEqual(t, true, added)
 
@@ -98,7 +98,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// replace value
-				added = index.Set(key1, &value2)
+				added = index.Set(key1, func(*string) *string { return &value2 })
 
 				isEqual(t, false, added)
 
@@ -258,8 +258,8 @@ func TestFieldGet(t *testing.T) {
 
 type noOpField[K comparable, T any] struct{}
 
-func (noOpField[K, T]) Get(K) (T, bool) { return *new(T), false }
-func (noOpField[K, T]) Set(K, T) bool   { return false }
+func (noOpField[K, T]) Get(K) (T, bool)       { return *new(T), false }
+func (noOpField[K, T]) Set(K, Setter[T]) bool { return false }
 
 func TestKeys(t *testing.T) {
 	key1 := "alpha"
@@ -391,6 +391,22 @@ func TestEmbeded(t *testing.T) {
 			isEqual(t, id, *value)
 		}
 	}
+
+	// set sec ID
+	index.Set("id", func(old *Index[string, *string]) *Index[string, *string] {
+		old.Set("sec", func(*string) *string { return &id })
+
+		return old
+	})
+
+	ids, ok := index.Get("id")
+
+	isEqual(t, true, ok)
+
+	value, ok := ids.Get("sec")
+
+	isEqual(t, true, ok)
+	isEqual(t, id, *value)
 }
 
 func isEqual[T comparable](t *testing.T, wants, got T) {
