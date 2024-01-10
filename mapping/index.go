@@ -38,13 +38,15 @@ func (i *Index[K, T]) Get(key K) (T, bool) {
 
 // Set replaces the value of a certain key in the map, or it adds it if it does not exist. The returned boolean value
 // represents whether the key is new in the mapping Field or not.
-func (i *Index[K, T]) Set(key K, value T) bool {
-	_, ok := i.values[key]
+func (i *Index[K, T]) Set(key K, setter Setter[T]) bool {
+	value, exists := i.values[key]
 
-	i.values[key] = value
+	newValue := setter(value)
 
-	if ok {
-		return !ok
+	i.values[key] = newValue
+
+	if exists {
+		return false
 	}
 
 	i.Keys = append(i.Keys, key)
