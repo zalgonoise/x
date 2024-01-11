@@ -90,11 +90,11 @@ func ToFile(opts ...cfg.Option[Config]) (audio.Exporter, error) {
 
 	switch {
 	case config.maxDuration != 0 && config.maxSamples == 0:
-		maxSamples = int64(config.maxDuration.Seconds() * float64(wav.ByteRate(config.sampleRate, config.bitDepth, config.numChannels)))
+		maxSamples = int64(config.maxDuration.Seconds() * float64(config.sampleRate*uint32(config.numChannels)))
 	case config.maxDuration == defaultDuration && config.maxSamples != 0:
 		maxSamples = config.maxSamples
 	default:
-		maxSamples = numSeconds * int64(wav.ByteRate(config.sampleRate, config.bitDepth, config.numChannels))
+		maxSamples = numSeconds * int64(config.sampleRate*uint32(config.numChannels))
 	}
 
 	return &exporter{
