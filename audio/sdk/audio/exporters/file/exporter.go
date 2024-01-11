@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"sync/atomic"
 
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/audio/encoding/wav"
@@ -24,12 +25,32 @@ type exporter struct {
 	name string
 	idx  int
 
-	buffer *wav.Wav
-	f      io.WriteCloser
+	numSamples int64
+	maxSamples int64
+	recording  *atomic.Bool
+
+	buffer    *wav.Wav
+	f         io.WriteCloser
+	extractor audio.Extractor[float64]
+	threshold func(float64) bool
 }
 
-func (e *exporter) Export(_ audio.Header, data []float64) error {
-	e.buffer.Data.ParseFloat(data)
+func (e *exporter) Export(header audio.Header, data []float64) error {
+	value := e.extractor.Extract(header, data)
+
+	if e.threshold(value) {
+		e.recording.Store(true)
+		e.numSamples = 0
+	}
+
+	if e.recording.Load() {
+		e.buffer.Data.ParseFloat(data)
+		e.numSamples += int64(len(data))
+	}
+
+	if e.numSamples > e.maxSamples {
+		return e.close()
+	}
 
 	return nil
 }
@@ -53,23 +74,7 @@ func (e *exporter) Shutdown(_ context.Context) error {
 		}
 	}
 
-	_, err := io.Copy(e.f, e.buffer)
-
-	e.buffer.Data.Reset()
-
-	if err != nil {
-		defer e.f.Close()
-
-		return err
-	}
-
-	if err = e.f.Close(); err != nil {
-		return err
-	}
-
-	e.f = nil
-
-	return nil
+	return e.close()
 }
 
 func ToFile(opts ...cfg.Option[Config]) (audio.Exporter, error) {
@@ -81,10 +86,25 @@ func ToFile(opts ...cfg.Option[Config]) (audio.Exporter, error) {
 		return audio.NoOpExporter(), err
 	}
 
+	var maxSamples int64
+
+	switch {
+	case config.maxDuration != 0 && config.maxSamples == 0:
+		maxSamples = int64(config.maxDuration.Seconds() * float64(wav.ByteRate(config.sampleRate, config.bitDepth, config.numChannels)))
+	case config.maxDuration == defaultDuration && config.maxSamples != 0:
+		maxSamples = config.maxSamples
+	default:
+		maxSamples = numSeconds * int64(wav.ByteRate(config.sampleRate, config.bitDepth, config.numChannels))
+	}
+
 	return &exporter{
-		dir:    config.outputDir,
-		name:   config.filenamePrefix,
-		buffer: w,
+		dir:        config.outputDir,
+		name:       config.filenamePrefix,
+		buffer:     w,
+		maxSamples: maxSamples,
+		recording:  &atomic.Bool{},
+		extractor:  config.extractor,
+		threshold:  config.threshold,
 	}, nil
 }
 
@@ -113,4 +133,18 @@ func (e *exporter) open() error {
 	e.f = f
 
 	return nil
+}
+
+func (e *exporter) close() error {
+	if _, err := io.Copy(e.f, e.buffer); err != nil {
+		return errors.Join(err, e.f.Close())
+	}
+
+	e.buffer.Data.Reset()
+
+	err := e.f.Close()
+
+	e.f = nil
+
+	return err
 }
