@@ -39,7 +39,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// set key
-				added := table.Set(key1, func(*string) *string { return &value1 })
+				added := table.Set(key1, func(old *string) (*string, bool) { return &value1, old == nil || *old == "" })
 
 				isEqual(t, true, added)
 
@@ -56,7 +56,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// replace value
-				added = table.Set(key1, func(*string) *string { return &value2 })
+				added = table.Set(key1, func(old *string) (*string, bool) { return &value2, old == nil || *old == "" })
 
 				isEqual(t, false, added)
 
@@ -81,7 +81,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// set key
-				added := index.Set(key1, func(*string) *string { return &value1 })
+				added := index.Set(key1, func(old *string) (*string, bool) { return &value1, old == nil || *old == "" })
 
 				isEqual(t, true, added)
 
@@ -98,7 +98,7 @@ func TestFieldSet(t *testing.T) {
 				isEqual(t, testcase.zero, value)
 
 				// replace value
-				added = index.Set(key1, func(*string) *string { return &value2 })
+				added = index.Set(key1, func(old *string) (*string, bool) { return &value2, old == nil || *old == "" })
 
 				isEqual(t, false, added)
 
@@ -393,11 +393,11 @@ func TestEmbeded(t *testing.T) {
 	}
 
 	// set sec ID
-	index.Set("id", func(old *Index[string, *string]) *Index[string, *string] {
-		old.Set("sec", func(*string) *string { return &id })
-
-		return old
+	added := index.Set("id", func(old *Index[string, *string]) (*Index[string, *string], bool) {
+		return old, old.Set("sec", func(old *string) (*string, bool) { return &id, *old == "" })
 	})
+
+	isEqual(t, true, added)
 
 	ids, ok := index.Get("id")
 
@@ -407,6 +407,13 @@ func TestEmbeded(t *testing.T) {
 
 	isEqual(t, true, ok)
 	isEqual(t, id, *value)
+
+	// unset sec ID
+	added = index.Set("id", func(old *Index[string, *string]) (*Index[string, *string], bool) {
+		return old, old.Set("sec", func(old *string) (*string, bool) { return &zero, *old == "" })
+	})
+
+	isEqual(t, false, added)
 }
 
 func isEqual[T comparable](t *testing.T, wants, got T) {
