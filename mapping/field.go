@@ -24,8 +24,9 @@ type Field[K comparable, T any] interface {
 }
 
 // Setter is a generic function type that applies a new value in replacement of a former value of type T. It should
-// return the new (or same) T value and a boolean representing if the item was newly set (from a zero value).
-type Setter[T any] func(old T) T
+// return the new (or same) T value and a boolean representing if the item was newly set (from a zero value) or added;
+// where a false value represents a substitution.
+type Setter[T any] func(old T) (T, bool)
 
 // New creates a Field type appropriate to the configured options (either a *Table[K, T] type, or an *Index[K, T] type.
 func New[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) Field[K, T] {
