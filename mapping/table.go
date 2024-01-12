@@ -33,11 +33,17 @@ func (t *Table[K, T]) Get(key K) (T, bool) {
 func (t *Table[K, T]) Set(key K, setter Setter[T]) bool {
 	value, exists := t.values[key]
 
-	newValue := setter(value)
+	if !exists {
+		value = *new(T)
+
+		t.values[key] = value
+	}
+
+	newValue, added := setter(value)
 
 	t.values[key] = newValue
 
-	return !exists
+	return added
 }
 
 func NewTable[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) *Table[K, T] {
