@@ -41,11 +41,17 @@ func (i *Index[K, T]) Get(key K) (T, bool) {
 func (i *Index[K, T]) Set(key K, setter Setter[T]) bool {
 	value, exists := i.values[key]
 
-	newValue := setter(value)
+	if !exists {
+		value = *new(T)
+
+		i.values[key] = value
+	}
+
+	newValue, added := setter(value)
 
 	i.values[key] = newValue
 
-	if exists {
+	if !added {
 		return false
 	}
 
