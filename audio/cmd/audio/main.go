@@ -18,8 +18,8 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio/compactors"
 	"github.com/zalgonoise/x/audio/sdk/audio/consumers/httpaudio"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters"
-	"github.com/zalgonoise/x/audio/sdk/audio/exporters/prom"
-	"github.com/zalgonoise/x/audio/sdk/audio/exporters/stdout"
+	"github.com/zalgonoise/x/audio/sdk/audio/exporters/stats/prom"
+	"github.com/zalgonoise/x/audio/sdk/audio/exporters/stats/stdout"
 	"github.com/zalgonoise/x/audio/sdk/audio/processors"
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/batchreg"
 )
