@@ -2,19 +2,19 @@ module github.com/zalgonoise/x/audio
 
 go 1.21.0
 
-toolchain go1.21.4
+toolchain go1.21.6
 
 require (
 	github.com/golangci/golangci-lint v1.55.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
-	github.com/prometheus/client_golang v1.17.0
+	github.com/prometheus/client_golang v1.18.0
 	github.com/stretchr/testify v1.8.4
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.0.1
 	github.com/zalgonoise/valigator v0.0.0-20231029164536-67d5b5a63e60
-	github.com/zalgonoise/x/errs v0.0.0-20231123191853-c39aedae1b1e
-	github.com/zalgonoise/x/ptr v0.0.0-20231123191853-c39aedae1b1e
+	github.com/zalgonoise/x/errs v0.0.0-20240113163419-b8174f47c5ba
+	github.com/zalgonoise/x/ptr v0.0.0-20240113163419-b8174f47c5ba
 )
 
 require (
@@ -159,7 +159,7 @@ require (
 	github.com/spf13/viper v1.12.0 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.1.1 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.1 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
@@ -186,7 +186,7 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.14.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
