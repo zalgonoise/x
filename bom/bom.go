@@ -38,7 +38,7 @@ func (b *BOM) Read(p []byte) (n int, err error) {
 	}
 
 	if len(p) <= 2 {
-		return 2, nil
+		return 0, nil
 	}
 
 	switch {
@@ -70,7 +70,7 @@ func (b *BOM) Read(p []byte) (n int, err error) {
 	}
 
 	if len(p) <= 3 {
-		return 3, nil
+		return 0, nil
 	}
 
 	switch {
@@ -100,7 +100,7 @@ func (b *BOM) Read(p []byte) (n int, err error) {
 		return 4, fmt.Errorf("%w: GB 18030", ErrUnsupportedEncoding)
 	}
 
-	return 4, nil
+	return 0, nil
 }
 
 func equal[T comparable, S ~[]T](a, b S) bool {
