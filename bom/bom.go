@@ -33,8 +33,28 @@ type BOM struct {
 // is returned if the encoding is unsupported. A zero-value, nil-error return means that the byte
 // slice does not contain a BOM Header.
 func (b *BOM) Read(p []byte) (n int, err error) {
-	if len(p) <= 1 {
+	if len(p) < 2 {
 		return 0, nil
+	}
+
+	// similar headers, check UTF32 first
+	if len(p) >= 4 {
+		switch {
+		case equal(bomUTF32BE, p[0:4]):
+			b.Unicode = true
+			b.Size = 32
+			b.Header = bomUTF32BE
+			b.ByteOrder = binary.BigEndian
+
+			return 4, nil
+		case equal(bomUTF32LE, p[0:4]):
+			b.Unicode = true
+			b.Size = 32
+			b.Header = bomUTF32LE
+			b.ByteOrder = binary.LittleEndian
+
+			return 4, nil
+		}
 	}
 
 	switch {
@@ -54,7 +74,7 @@ func (b *BOM) Read(p []byte) (n int, err error) {
 		return 2, nil
 	}
 
-	if len(p) <= 2 {
+	if len(p) < 3 {
 		return 0, nil
 	}
 
@@ -87,25 +107,11 @@ func (b *BOM) Read(p []byte) (n int, err error) {
 		return 3, fmt.Errorf("%w: Binary Ordered Compression for Unicode", ErrUnsupportedEncoding)
 	}
 
-	if len(p) <= 3 {
+	if len(p) < 4 {
 		return 0, nil
 	}
 
 	switch {
-	case equal(bomUTF32BE, p[0:4]):
-		b.Unicode = true
-		b.Size = 32
-		b.Header = bomUTF32BE
-		b.ByteOrder = binary.BigEndian
-
-		return 4, nil
-	case equal(bomUTF32LE, p[0:4]):
-		b.Unicode = true
-		b.Size = 32
-		b.Header = bomUTF32LE
-		b.ByteOrder = binary.LittleEndian
-
-		return 4, nil
 	case equal(bomUTFEBCDIC, p[0:4]):
 		b.Unicode = true
 		b.Header = bomUTFEBCDIC
