@@ -5,6 +5,7 @@ import "github.com/zalgonoise/cfg"
 type Config[K comparable, T any] struct {
 	zero    T
 	indexed bool
+	synced  bool
 	cmpFunc func(a, b K) int
 }
 
@@ -37,6 +38,14 @@ func WithIndex[T any, K comparable](cmpFunc func(a, b K) int) cfg.Option[Config[
 		}
 
 		config.cmpFunc = cmpFunc
+
+		return config
+	})
+}
+
+func WithMutex[K comparable, T any]() cfg.Option[Config[K, T]] {
+	return cfg.Register(func(config Config[K, T]) Config[K, T] {
+		config.synced = true
 
 		return config
 	})
