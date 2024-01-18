@@ -1,6 +1,8 @@
 package mapping
 
 import (
+	"sync"
+
 	"github.com/zalgonoise/cfg"
 )
 
@@ -29,7 +31,23 @@ type Field[K comparable, T any] interface {
 type Setter[T any] func(old T) (T, bool)
 
 // New creates a Field type appropriate to the configured options (either a *Table[K, T] type, or an *Index[K, T] type.
+//
+// Both implementations can be of a SyncField type, if the WithMutex option is used.
 func New[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) Field[K, T] {
+	config := cfg.New(opts...)
+	field := newField(values, opts...)
+
+	if config.synced {
+		return SyncField[K, T]{
+			field: field,
+			mu:    &sync.RWMutex{},
+		}
+	}
+
+	return field
+}
+
+func newField[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) Field[K, T] {
 	config := cfg.New(opts...)
 
 	if !config.indexed {
@@ -42,6 +60,8 @@ func New[K comparable, T any](values map[K]T, opts ...cfg.Option[Config[K, T]]) 
 // Keys provides access to all keys in a Field, regardless if it's a *Table[K, T] type, or an *Index[K, T] type.
 func Keys[K comparable, T any](field Field[K, T]) []K {
 	switch f := field.(type) {
+	case SyncField[K, T]:
+		return Keys(f.field)
 	case *Index[K, T]:
 		return f.Keys
 	case *Table[K, T]:
