@@ -50,16 +50,16 @@ func (w *writer) Reset() error {
 	return w.open()
 }
 
-func (e *writer) open() error {
-	if e.dir == "" {
-		e.dir = os.TempDir()
+func (w *writer) open() error {
+	if w.dir == "" {
+		w.dir = os.TempDir()
 	}
 
-	if e.name == "" {
-		e.name = defaultSlug
+	if w.name == "" {
+		w.name = defaultSlug
 	}
 
-	target := fmt.Sprintf("%s/%s_%04d", e.dir, e.name, e.idx)
+	target := fmt.Sprintf("%s/%s_%04d", w.dir, w.name, w.idx)
 
 	f, err := os.Open(target)
 
@@ -71,8 +71,8 @@ func (e *writer) open() error {
 		return err
 	}
 
-	e.idx++
-	e.w = f
+	w.idx++
+	w.w = f
 
 	return nil
 }
