@@ -9,9 +9,8 @@ import (
 )
 
 const (
-	defaultDuration  = time.Minute
-	numSeconds       = 60
-	defaultThreshold = 0.4
+	defaultDuration = time.Minute
+	numSeconds      = 60
 )
 
 type Config struct {
@@ -30,11 +29,9 @@ func defaultConfig() Config {
 		sampleRate:  44100,
 		numChannels: 2,
 		bitDepth:    32,
-		extractor:   extractors.MaxPeak(),
+		extractor:   extractors.MaxAbsPeak(),
 		maxDuration: defaultDuration,
-		threshold: func(f float64) bool {
-			return f >= defaultThreshold
-		},
+		threshold:   audio.NoOpThreshold[float64](),
 	}
 }
 
@@ -72,7 +69,7 @@ func WithExtractor(extractor audio.Extractor[float64]) cfg.Option[Config] {
 	})
 }
 
-func WithThreshold(threshold func(float64) bool) cfg.Option[Config] {
+func WithThreshold(threshold audio.Threshold[float64]) cfg.Option[Config] {
 	return cfg.Register(func(config Config) Config {
 		config.threshold = threshold
 
