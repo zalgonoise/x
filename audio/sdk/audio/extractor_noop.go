@@ -7,3 +7,11 @@ func NoOpExtractor[T any]() Extractor[T] {
 		return *new(T)
 	})
 }
+
+// NoOpThreshold returns a Threshold for a given type, that does not perform any operations on the input values,
+// and always returns a true value when called (representing the absence of a threshold).
+func NoOpThreshold[T any]() Threshold[T] {
+	return func(T) bool {
+		return true
+	}
+}
