@@ -23,7 +23,7 @@ type exporter struct {
 	buffer    *wav.Wav
 	writer    io.Writer
 	extractor audio.Extractor[float64]
-	threshold func(float64) bool
+	threshold audio.Threshold[float64]
 }
 
 func (e *exporter) Export(header audio.Header, data []float64) error {
@@ -112,6 +112,14 @@ func NewDataExporter(writer io.Writer, options ...cfg.Option[Config]) (audio.Exp
 		maxSamples = config.maxSamples
 	default:
 		maxSamples = numSeconds * int64(config.sampleRate*uint32(config.numChannels))
+	}
+
+	if config.extractor == nil {
+		config.extractor = audio.NoOpExtractor[float64]()
+	}
+
+	if config.threshold == nil {
+		config.threshold = audio.NoOpThreshold[float64]()
 	}
 
 	return &exporter{
