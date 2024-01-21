@@ -27,6 +27,33 @@ func MaxPeak() audio.Extractor[float64] {
 	})
 }
 
+// MaxAbsPeak returns a float64 Collector that calculates the maximum absolute peak value in an audio signal, that is,
+// where its negative values are normalized as positive ones, to find the peaks in both positive and negative axis of
+// the wave.
+//
+// The returned value is the original data point in the signal, so if its peak is a negative value, a negative value is
+// returned.
+func MaxAbsPeak() audio.Extractor[float64] {
+	return audio.Extraction[float64](func(_ audio.Header, data []float64) (maximum float64) {
+		var maxIdx int
+
+		for i := range data {
+			value := data[i]
+
+			if value < 0.0 {
+				value = -value
+			}
+
+			if value > maximum {
+				maximum = value
+				maxIdx = i
+			}
+		}
+
+		return data[maxIdx]
+	})
+}
+
 // AveragePeak returns a float64 Collector that calculates the average peak value in an audio signal.
 func AveragePeak() audio.Extractor[float64] {
 	return audio.Extraction[float64](func(_ audio.Header, data []float64) (average float64) {
