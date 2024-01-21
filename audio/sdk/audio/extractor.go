@@ -35,3 +35,11 @@ type Extraction[T any] func(Header, []float64) T
 func (e Extraction[T]) Extract(header Header, data []float64) T {
 	return e(header, data)
 }
+
+// Threshold evaluates a given input value and determines whether it crosses a certain limit or threshold,
+// returning a boolean representing it.
+//
+// It can be used in an Exporter's sequence, for example after the appropriate Extractor pulled meaningful data
+// from the audio stream; where the Threshold function will be signaling whether this data should be exported,
+// or just skipped through.
+type Threshold[T any] func(T) bool
