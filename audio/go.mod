@@ -13,8 +13,8 @@ require (
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.0.1
 	github.com/zalgonoise/valigator v0.0.0-20231029164536-67d5b5a63e60
-	github.com/zalgonoise/x/errs v0.0.0-20240113163419-b8174f47c5ba
-	github.com/zalgonoise/x/ptr v0.0.0-20240113163419-b8174f47c5ba
+	github.com/zalgonoise/x/errs v0.0.0-20240121133554-bdf88cfc51c0
+	github.com/zalgonoise/x/ptr v0.0.0-20240121133554-bdf88cfc51c0
 )
 
 require (
