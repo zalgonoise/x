@@ -12,9 +12,9 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.0.1
-	github.com/zalgonoise/valigator v0.0.0-20231029164536-67d5b5a63e60
-	github.com/zalgonoise/x/errs v0.0.0-20240121133554-bdf88cfc51c0
-	github.com/zalgonoise/x/ptr v0.0.0-20240121133554-bdf88cfc51c0
+	github.com/zalgonoise/valigator v1.0.0
+	github.com/zalgonoise/x/errs v0.0.0-20240123190655-45fdbc899345
+	github.com/zalgonoise/x/ptr v0.0.0-20240123190655-45fdbc899345
 )
 
 require (
