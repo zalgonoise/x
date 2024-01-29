@@ -92,26 +92,44 @@ type runner[T FlagType] struct {
 }
 
 func (r runner[T]) Run(logger *slog.Logger) (int, error) {
+	ctx := context.Background()
 	fs := flag.NewFlagSet(r.name, flag.ExitOnError)
 
-	value := r.valuer(fs, r.flag, r.zero, r.description)
+	switch {
+	case r.flag != "":
+		value := r.valuer(fs, r.flag, r.zero, r.description)
 
-	if err := fs.Parse(os.Args[1:3]); err != nil {
-		return 1, err
+		if err := fs.Parse(os.Args[1:3]); err != nil {
+			return 1, err
+		}
+
+		if err := r.isValid(value); err != nil {
+			return 1, fmt.Errorf("%w: %v", ErrInvalidOption, value)
+		}
+
+		exec, ok := r.executors[*value]
+		if !ok {
+			return 1, fmt.Errorf("%w: %v", ErrUnsupportedOption, *value)
+		}
+
+		return exec.Exec(ctx, logger, os.Args[3:])
+	default:
+		run, ok := any(r).(runner[string])
+		if !ok {
+			return 1, fmt.Errorf("invalid runner type: %+v", r)
+		}
+
+		if err := run.isValid(&os.Args[1]); err != nil {
+			return 1, fmt.Errorf("%w: %v", ErrInvalidOption, os.Args[1])
+		}
+
+		exec, ok := run.executors[os.Args[1]]
+		if !ok {
+			return 1, fmt.Errorf("invalid option")
+		}
+
+		return exec.Exec(ctx, logger, os.Args[2:])
 	}
-
-	if err := r.isValid(value); err != nil {
-		return 1, fmt.Errorf("%w: %v", ErrInvalidOption, value)
-	}
-
-	ctx := context.Background()
-
-	exec, ok := r.executors[*value]
-	if !ok {
-		return 1, fmt.Errorf("%w: %v", ErrUnsupportedOption, *value)
-	}
-
-	return exec.Exec(ctx, logger, os.Args[3:])
 }
 
 func newStringRunner() Runner {
