@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package timesheet.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// Defines the import path that should be used to import the generated package,
+// and the package name.
+option go_package = "github.com/zalgonoise/x/timesheet/pb;pb";
+
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  swagger: "2.0"
+  info: {
+    title: "Timesheet: Authz"
+    version: "1.0"
+    description: "Allows users to create authorization tokens so they can access the Timesheet application"
+  }
+  schemes: HTTP
+  host: "localhost:8080"
+  tags: [
+    {
+      name: "Login"
+      description: "Service to exchange authorization tokens with users, if they pass a unique challenge"
+    }
+  ]
+  responses: {
+    key: "401"
+    value: {
+      description: "Unauthenticated"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+  responses: {
+    key: "403"
+    value: {
+      description: "Unauthorized"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+};
+
+service Authz {
+  rpc Login(LoginRequest) returns  (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Processes a user login request"
+      description: "This endpoint receives user login requests, which are replied to with a challenge response."
+      tags: "Login"
+    };
+  }
+
+  rpc GetToken(GetTokenRequest) returns (GetTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/token"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Processes a request for an authorization token"
+      description: "This endpoint receives user's challenge response, "
+          "which are replied to with an authentication token if valid."
+      tags: "Login"
+    };
+  }
+}
+
+message LoginRequest {
+  string username = 1 [json_name="username", (validate.rules).string.min_len = 1];
+  bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+}
+
+message LoginResponse {
+  bytes challenge = 1 [json_name="challenge"];
+  int64 expires_on = 2 [json_name="expires_on"];
+}
+
+message GetTokenRequest {
+  string username = 1 [json_name="username", (validate.rules).string.min_len = 1];
+  bytes challenge_response = 2 [json_name="challenge_response", (validate.rules).bytes.min_len = 1];
+}
+
+message GetTokenResponse{
+  string token = 1 [json_name="token"];
+  int64 expires_on = 2 [json_name="expires_on"];
+}
