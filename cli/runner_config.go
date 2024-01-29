@@ -30,7 +30,7 @@ func apply[T FlagType](r Runner, c Config[T]) Runner {
 	run.isValid = c.isValid
 	run.executors = c.executors
 
-	return r
+	return run
 }
 
 func defaultConfig[T FlagType]() Config[T] {
