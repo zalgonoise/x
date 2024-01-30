@@ -1,6 +1,21 @@
 package cli
 
-import "github.com/zalgonoise/cfg"
+import (
+	"slices"
+
+	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/errs"
+)
+
+const (
+	domainErr = errs.Domain("x/cli")
+
+	ErrUnsupported = errs.Kind("unsupported")
+
+	ErrParameter = errs.Entity("parameter")
+)
+
+var ErrUnsupportedParameter = errs.WithDomain(domainErr, ErrUnsupported, ErrParameter)
 
 type Config[T FlagType] struct {
 	name string
@@ -62,6 +77,24 @@ func WithValidation[T FlagType](isValid func(*T) error) cfg.Option[Config[T]] {
 
 	return cfg.Register[Config[T]](func(c Config[T]) Config[T] {
 		c.isValid = isValid
+
+		return c
+	})
+}
+
+func WithOneOf[T FlagType](selectors ...T) cfg.Option[Config[T]] {
+	if len(selectors) == 0 {
+		return cfg.NoOp[Config[T]]{}
+	}
+
+	return cfg.Register[Config[T]](func(c Config[T]) Config[T] {
+		c.isValid = func(value *T) error {
+			if value == nil || !slices.Contains(selectors, *value) {
+				return ErrUnsupportedParameter
+			}
+
+			return nil
+		}
 
 		return c
 	})
