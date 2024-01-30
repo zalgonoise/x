@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"log/slog"
-	"slices"
 
 	"github.com/zalgonoise/x/cli"
 )
@@ -14,13 +12,7 @@ var modes = []string{"print", "newline"}
 
 func main() {
 	runner := cli.NewRunner("printer",
-		cli.WithValidation(func(value *string) error {
-			if value == nil || !slices.Contains(modes, *value) {
-				return errors.New("invalid option")
-			}
-
-			return nil
-		}),
+		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"print":   cli.Executable(ExecPrint),
 			"newline": cli.Executable(ExecNewline),
