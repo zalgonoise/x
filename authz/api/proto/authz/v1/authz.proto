@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package authz.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "validate/validate.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+// Defines the import path that should be used to import the generated package,
+// and the package name.
+option go_package = "github.com/zalgonoise/x/authz/pb;pb";
+
+
+// These annotations are used when generating the OpenAPI file.
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  swagger: "2.0"
+  info: {
+    title: "Authz"
+    version: "1.0"
+    description: "Allows users and apps to register themselves and retrieve authorization tokens for API access"
+  }
+  schemes: HTTP
+  host: "localhost:8080"
+  tags: [
+    {
+      name: "Login"
+      description: "Service to exchange authorization tokens with users, if they pass a unique challenge"
+    }
+  ]
+  responses: {
+    key: "401"
+    value: {
+      description: "Unauthenticated"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+  responses: {
+    key: "403"
+    value: {
+      description: "Unauthorized"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+};
+
+service CertificateAuthority {
+  rpc Register(ServiceRegisterRequest) returns (ServiceRegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/ca/register"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Processes a service's registry request"
+      description: "This endpoint receives service registry requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service."
+      tags: "Register"
+    };
+  }
+}
+
+message ServiceRegisterRequest {
+  string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
+  bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+}
+
+message ServiceRegisterResponse {
+  bytes certificate = 1 [json_name="certificate"];
+}
+
+service Authz {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/v1/register"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Processes a user registry request"
+      description: "This endpoint receives user registry requests, which are replied to with a system's Certificate Authority issued certificate, unique to this user."
+      tags: "Login"
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/v1/login"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Processes a user login request"
+      description: "This endpoint receives user login requests, which are replied to with a challenge response."
+      tags: "Login"
+    };
+  }
+
+  rpc GetToken(TokenRequest) returns (TokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/token"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Processes a request for an authorization token"
+      description: "This endpoint receives user's challenge response, "
+          "which are replied to with an authentication token if valid."
+      tags: "Login"
+    };
+  }
+}
+
+
+message RegisterRequest {
+  string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
+  bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+}
+
+message RegisterResponse {
+  bytes certificate = 1 [json_name="certificate"];
+  ID service = 2 [json_name="service"];
+}
+
+message LoginRequest {
+  string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
+  ID service = 2 [json_name="service"];
+  ID id = 3 [json_name="id"];
+}
+
+message ID {
+  bytes public_key = 1 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+  bytes certificate = 2 [json_name="certificate", (validate.rules).bytes.min_len = 1];
+}
+
+message LoginResponse {
+  bytes challenge = 1 [json_name="challenge"];
+}
+
+message TokenRequest {
+  string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
+  bytes signed_challenge = 2 [json_name="signed_challenge", (validate.rules).bytes.min_len = 1];
+}
+
+message TokenResponse{
+  string token = 1 [json_name="token"];
+  int64 expires_on = 2 [json_name="expires_on"];
+}
