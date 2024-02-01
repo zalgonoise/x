@@ -1,0 +1,363 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Authz",
+    "description": "Allows users and apps to register themselves and retrieve authorization tokens for API access",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "Login",
+      "description": "Service to exchange authorization tokens with users, if they pass a unique challenge"
+    }
+  ],
+  "host": "localhost:8080",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/ca/register": {
+      "post": {
+        "summary": "Processes a service's registry request",
+        "description": "This endpoint receives service registry requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service.",
+        "operationId": "CertificateAuthority_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ServiceRegisterResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ServiceRegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Register"
+        ]
+      }
+    },
+    "/v1/login": {
+      "post": {
+        "summary": "Processes a user login request",
+        "description": "This endpoint receives user login requests, which are replied to with a challenge response.",
+        "operationId": "Authz_Login",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LoginResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1LoginRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Login"
+        ]
+      }
+    },
+    "/v1/register": {
+      "post": {
+        "summary": "Processes a user registry request",
+        "description": "This endpoint receives user registry requests, which are replied to with a system's Certificate Authority issued certificate, unique to this user.",
+        "operationId": "Authz_Register",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Login"
+        ]
+      }
+    },
+    "/v1/token": {
+      "post": {
+        "summary": "Processes a request for an authorization token",
+        "description": "This endpoint receives user's challenge response, which are replied to with an authentication token if valid.",
+        "operationId": "Authz_GetToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1TokenResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1TokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Login"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1ID": {
+      "type": "object",
+      "properties": {
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        },
+        "certificate": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1LoginRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "service": {
+          "$ref": "#/definitions/v1ServiceID"
+        },
+        "id": {
+          "$ref": "#/definitions/v1ID"
+        }
+      }
+    },
+    "v1LoginResponse": {
+      "type": "object",
+      "properties": {
+        "challenge": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1RegisterResponse": {
+      "type": "object",
+      "properties": {
+        "certificate": {
+          "type": "string",
+          "format": "byte"
+        },
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        },
+        "ca_certificate": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1ServiceID": {
+      "type": "object",
+      "properties": {
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        },
+        "certificate": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1ServiceRegisterRequest": {
+      "type": "object",
+      "properties": {
+        "service": {
+          "type": "string"
+        },
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1ServiceRegisterResponse": {
+      "type": "object",
+      "properties": {
+        "certificate": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1TokenRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "signed_challenge": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1TokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "expires_on": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}
