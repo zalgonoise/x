@@ -1,0 +1,18 @@
+version: v1
+plugins:
+  - name: go
+    out: pb
+    opt: paths=source_relative
+  - name: go-grpc
+    out: pb
+    opt: paths=source_relative,require_unimplemented_servers=true
+  - name: grpc-gateway
+    out: pb
+    opt: paths=source_relative
+  - name: openapiv2
+    out: api/openapi
+    opt:
+      - disable_service_tags=true
+  - name: validate
+    out: pb
+    opt: paths=source_relative,lang=go
