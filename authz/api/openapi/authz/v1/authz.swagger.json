@@ -22,7 +22,43 @@
     "application/json"
   ],
   "paths": {
-    "/v1/ca/register": {
+    "/v1/ca": {
+      "get": {
+        "summary": "Returns the Certificate Authority's public key",
+        "description": "This endpoint returns the Certificate Authority's public key.",
+        "operationId": "CertificateAuthority_PublicKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PublicKeyResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Certificates"
+        ]
+      }
+    },
+    "/v1/ca/registry": {
       "post": {
         "summary": "Processes a service's registry request",
         "description": "This endpoint receives service registry requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service.",
@@ -31,7 +67,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1ServiceRegisterResponse"
+              "$ref": "#/definitions/v1CertificateResponse"
             }
           },
           "401": {
@@ -59,12 +95,116 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1ServiceRegisterRequest"
+              "$ref": "#/definitions/v1CertificateRequest"
             }
           }
         ],
         "tags": [
-          "Register"
+          "Certificates"
+        ]
+      }
+    },
+    "/v1/ca/services/{service}/cert": {
+      "post": {
+        "summary": "Fetches a service's certificate, based on their service name and public key",
+        "description": "This endpoint receives service certificate requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service.",
+        "operationId": "CertificateAuthority_GetCertificate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CertificateResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CertificateAuthorityGetCertificateBody"
+            }
+          }
+        ],
+        "tags": [
+          "Certificates"
+        ]
+      }
+    },
+    "/v1/ca/services/{service}/delete": {
+      "post": {
+        "summary": "Drops a service, based on the requesters' service name, public key and certificate",
+        "description": "This endpoint receives service deletion requests, which are complied with if the requester presents all valid information.",
+        "operationId": "CertificateAuthority_DeleteService",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletionResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CertificateAuthorityDeleteServiceBody"
+            }
+          }
+        ],
+        "tags": [
+          "Certificates"
         ]
       }
     },
@@ -208,6 +348,28 @@
     }
   },
   "definitions": {
+    "CertificateAuthorityDeleteServiceBody": {
+      "type": "object",
+      "properties": {
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        },
+        "certificate": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "CertificateAuthorityGetCertificateBody": {
+      "type": "object",
+      "properties": {
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
     "protobufAny": {
       "type": "object",
       "properties": {
@@ -236,6 +398,30 @@
         }
       }
     },
+    "v1CertificateRequest": {
+      "type": "object",
+      "properties": {
+        "service": {
+          "type": "string"
+        },
+        "pub_key": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1CertificateResponse": {
+      "type": "object",
+      "properties": {
+        "certificate": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1DeletionResponse": {
+      "type": "object"
+    },
     "v1ID": {
       "type": "object",
       "properties": {
@@ -256,7 +442,7 @@
           "type": "string"
         },
         "service": {
-          "$ref": "#/definitions/v1ServiceID"
+          "$ref": "#/definitions/v1ID"
         },
         "id": {
           "$ref": "#/definitions/v1ID"
@@ -267,6 +453,15 @@
       "type": "object",
       "properties": {
         "challenge": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1PublicKeyResponse": {
+      "type": "object",
+      "properties": {
+        "pub_key": {
           "type": "string",
           "format": "byte"
         }
@@ -291,47 +486,8 @@
           "type": "string",
           "format": "byte"
         },
-        "pub_key": {
-          "type": "string",
-          "format": "byte"
-        },
-        "ca_certificate": {
-          "type": "string",
-          "format": "byte"
-        }
-      }
-    },
-    "v1ServiceID": {
-      "type": "object",
-      "properties": {
-        "pub_key": {
-          "type": "string",
-          "format": "byte"
-        },
-        "certificate": {
-          "type": "string",
-          "format": "byte"
-        }
-      }
-    },
-    "v1ServiceRegisterRequest": {
-      "type": "object",
-      "properties": {
         "service": {
-          "type": "string"
-        },
-        "pub_key": {
-          "type": "string",
-          "format": "byte"
-        }
-      }
-    },
-    "v1ServiceRegisterResponse": {
-      "type": "object",
-      "properties": {
-        "certificate": {
-          "type": "string",
-          "format": "byte"
+          "$ref": "#/definitions/v1ID"
         }
       }
     },
