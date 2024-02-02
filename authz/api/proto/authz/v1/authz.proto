@@ -54,27 +54,79 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 };
 
 service CertificateAuthority {
-  rpc Register(ServiceRegisterRequest) returns (ServiceRegisterResponse) {
+  rpc Register(CertificateRequest) returns (CertificateResponse) {
     option (google.api.http) = {
-      post: "/v1/ca/register"
+      post: "/v1/ca/registry"
       body: "*"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Processes a service's registry request"
       description: "This endpoint receives service registry requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service."
-      tags: "Register"
+      tags: "Certificates"
+    };
+  }
+
+  rpc GetCertificate(CertificateRequest) returns (CertificateResponse) {
+    option (google.api.http) = {
+      post: "/v1/ca/services/{service}/cert"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Fetches a service's certificate, based on their service name and public key"
+      description: "This endpoint receives service certificate requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service."
+      tags: "Certificates"
+    };
+  }
+
+  rpc DeleteService(DeletionRequest) returns (DeletionResponse) {
+    option (google.api.http) = {
+      post: "/v1/ca/services/{service}/delete"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Drops a service, based on the requesters' service name, public key and certificate"
+      description: "This endpoint receives service deletion requests, which are complied with if the requester presents all valid information."
+      tags: "Certificates"
+    };
+  }
+
+  rpc PublicKey(PublicKeyRequest) returns (PublicKeyResponse) {
+    option (google.api.http) = {
+      get: "/v1/ca"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Returns the Certificate Authority's public key"
+      description: "This endpoint returns the Certificate Authority's public key."
+      tags: "Certificates"
     };
   }
 }
 
-message ServiceRegisterRequest {
+message CertificateRequest {
   string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
   bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
 }
 
-message ServiceRegisterResponse {
+message CertificateResponse {
   bytes certificate = 1 [json_name="certificate"];
+}
+
+message DeletionRequest {
+  string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
+  bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+  bytes certificate = 3 [json_name="certificate", (validate.rules).bytes.min_len = 1];
+}
+
+message DeletionResponse {}
+
+message PublicKeyRequest {}
+
+message PublicKeyResponse {
+  bytes public_key = 1 [json_name="pub_key"];
 }
 
 service Authz {
