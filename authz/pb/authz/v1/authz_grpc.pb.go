@@ -19,14 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	CertificateAuthority_Register_FullMethodName = "/authz.v1.CertificateAuthority/Register"
+	CertificateAuthority_Register_FullMethodName       = "/authz.v1.CertificateAuthority/Register"
+	CertificateAuthority_GetCertificate_FullMethodName = "/authz.v1.CertificateAuthority/GetCertificate"
+	CertificateAuthority_DeleteService_FullMethodName  = "/authz.v1.CertificateAuthority/DeleteService"
+	CertificateAuthority_PublicKey_FullMethodName      = "/authz.v1.CertificateAuthority/PublicKey"
 )
 
 // CertificateAuthorityClient is the client API for CertificateAuthority service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CertificateAuthorityClient interface {
-	Register(ctx context.Context, in *ServiceRegisterRequest, opts ...grpc.CallOption) (*ServiceRegisterResponse, error)
+	Register(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error)
+	GetCertificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error)
+	DeleteService(ctx context.Context, in *DeletionRequest, opts ...grpc.CallOption) (*DeletionResponse, error)
+	PublicKey(ctx context.Context, in *PublicKeyRequest, opts ...grpc.CallOption) (*PublicKeyResponse, error)
 }
 
 type certificateAuthorityClient struct {
@@ -37,9 +43,36 @@ func NewCertificateAuthorityClient(cc grpc.ClientConnInterface) CertificateAutho
 	return &certificateAuthorityClient{cc}
 }
 
-func (c *certificateAuthorityClient) Register(ctx context.Context, in *ServiceRegisterRequest, opts ...grpc.CallOption) (*ServiceRegisterResponse, error) {
-	out := new(ServiceRegisterResponse)
+func (c *certificateAuthorityClient) Register(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error) {
+	out := new(CertificateResponse)
 	err := c.cc.Invoke(ctx, CertificateAuthority_Register_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *certificateAuthorityClient) GetCertificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error) {
+	out := new(CertificateResponse)
+	err := c.cc.Invoke(ctx, CertificateAuthority_GetCertificate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *certificateAuthorityClient) DeleteService(ctx context.Context, in *DeletionRequest, opts ...grpc.CallOption) (*DeletionResponse, error) {
+	out := new(DeletionResponse)
+	err := c.cc.Invoke(ctx, CertificateAuthority_DeleteService_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *certificateAuthorityClient) PublicKey(ctx context.Context, in *PublicKeyRequest, opts ...grpc.CallOption) (*PublicKeyResponse, error) {
+	out := new(PublicKeyResponse)
+	err := c.cc.Invoke(ctx, CertificateAuthority_PublicKey_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +83,10 @@ func (c *certificateAuthorityClient) Register(ctx context.Context, in *ServiceRe
 // All implementations must embed UnimplementedCertificateAuthorityServer
 // for forward compatibility
 type CertificateAuthorityServer interface {
-	Register(context.Context, *ServiceRegisterRequest) (*ServiceRegisterResponse, error)
+	Register(context.Context, *CertificateRequest) (*CertificateResponse, error)
+	GetCertificate(context.Context, *CertificateRequest) (*CertificateResponse, error)
+	DeleteService(context.Context, *DeletionRequest) (*DeletionResponse, error)
+	PublicKey(context.Context, *PublicKeyRequest) (*PublicKeyResponse, error)
 	mustEmbedUnimplementedCertificateAuthorityServer()
 }
 
@@ -58,8 +94,17 @@ type CertificateAuthorityServer interface {
 type UnimplementedCertificateAuthorityServer struct {
 }
 
-func (UnimplementedCertificateAuthorityServer) Register(context.Context, *ServiceRegisterRequest) (*ServiceRegisterResponse, error) {
+func (UnimplementedCertificateAuthorityServer) Register(context.Context, *CertificateRequest) (*CertificateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedCertificateAuthorityServer) GetCertificate(context.Context, *CertificateRequest) (*CertificateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCertificate not implemented")
+}
+func (UnimplementedCertificateAuthorityServer) DeleteService(context.Context, *DeletionRequest) (*DeletionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteService not implemented")
+}
+func (UnimplementedCertificateAuthorityServer) PublicKey(context.Context, *PublicKeyRequest) (*PublicKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PublicKey not implemented")
 }
 func (UnimplementedCertificateAuthorityServer) mustEmbedUnimplementedCertificateAuthorityServer() {}
 
@@ -75,7 +120,7 @@ func RegisterCertificateAuthorityServer(s grpc.ServiceRegistrar, srv Certificate
 }
 
 func _CertificateAuthority_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ServiceRegisterRequest)
+	in := new(CertificateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -87,7 +132,61 @@ func _CertificateAuthority_Register_Handler(srv interface{}, ctx context.Context
 		FullMethod: CertificateAuthority_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CertificateAuthorityServer).Register(ctx, req.(*ServiceRegisterRequest))
+		return srv.(CertificateAuthorityServer).Register(ctx, req.(*CertificateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CertificateAuthority_GetCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CertificateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CertificateAuthorityServer).GetCertificate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CertificateAuthority_GetCertificate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CertificateAuthorityServer).GetCertificate(ctx, req.(*CertificateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CertificateAuthority_DeleteService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CertificateAuthorityServer).DeleteService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CertificateAuthority_DeleteService_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CertificateAuthorityServer).DeleteService(ctx, req.(*DeletionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CertificateAuthority_PublicKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublicKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CertificateAuthorityServer).PublicKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CertificateAuthority_PublicKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CertificateAuthorityServer).PublicKey(ctx, req.(*PublicKeyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -102,6 +201,18 @@ var CertificateAuthority_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Register",
 			Handler:    _CertificateAuthority_Register_Handler,
+		},
+		{
+			MethodName: "GetCertificate",
+			Handler:    _CertificateAuthority_GetCertificate_Handler,
+		},
+		{
+			MethodName: "DeleteService",
+			Handler:    _CertificateAuthority_DeleteService_Handler,
+		},
+		{
+			MethodName: "PublicKey",
+			Handler:    _CertificateAuthority_PublicKey_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

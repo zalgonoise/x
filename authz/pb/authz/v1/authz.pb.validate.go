@@ -35,22 +35,22 @@ var (
 	_ = sort.Sort
 )
 
-// Validate checks the field values on ServiceRegisterRequest with the rules
+// Validate checks the field values on CertificateRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ServiceRegisterRequest) Validate() error {
+func (m *CertificateRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ServiceRegisterRequest with the rules
+// ValidateAll checks the field values on CertificateRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// ServiceRegisterRequestMultiError, or nil if none found.
-func (m *ServiceRegisterRequest) ValidateAll() error {
+// CertificateRequestMultiError, or nil if none found.
+func (m *CertificateRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ServiceRegisterRequest) validate(all bool) error {
+func (m *CertificateRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -58,7 +58,7 @@ func (m *ServiceRegisterRequest) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetService()) < 1 {
-		err := ServiceRegisterRequestValidationError{
+		err := CertificateRequestValidationError{
 			field:  "Service",
 			reason: "value length must be at least 1 runes",
 		}
@@ -69,7 +69,7 @@ func (m *ServiceRegisterRequest) validate(all bool) error {
 	}
 
 	if len(m.GetPublicKey()) < 1 {
-		err := ServiceRegisterRequestValidationError{
+		err := CertificateRequestValidationError{
 			field:  "PublicKey",
 			reason: "value length must be at least 1 bytes",
 		}
@@ -80,19 +80,19 @@ func (m *ServiceRegisterRequest) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return ServiceRegisterRequestMultiError(errors)
+		return CertificateRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// ServiceRegisterRequestMultiError is an error wrapping multiple validation
-// errors returned by ServiceRegisterRequest.ValidateAll() if the designated
-// constraints aren't met.
-type ServiceRegisterRequestMultiError []error
+// CertificateRequestMultiError is an error wrapping multiple validation errors
+// returned by CertificateRequest.ValidateAll() if the designated constraints
+// aren't met.
+type CertificateRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ServiceRegisterRequestMultiError) Error() string {
+func (m CertificateRequestMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -101,11 +101,11 @@ func (m ServiceRegisterRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ServiceRegisterRequestMultiError) AllErrors() []error { return m }
+func (m CertificateRequestMultiError) AllErrors() []error { return m }
 
-// ServiceRegisterRequestValidationError is the validation error returned by
-// ServiceRegisterRequest.Validate if the designated constraints aren't met.
-type ServiceRegisterRequestValidationError struct {
+// CertificateRequestValidationError is the validation error returned by
+// CertificateRequest.Validate if the designated constraints aren't met.
+type CertificateRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -113,24 +113,24 @@ type ServiceRegisterRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e ServiceRegisterRequestValidationError) Field() string { return e.field }
+func (e CertificateRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ServiceRegisterRequestValidationError) Reason() string { return e.reason }
+func (e CertificateRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ServiceRegisterRequestValidationError) Cause() error { return e.cause }
+func (e CertificateRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ServiceRegisterRequestValidationError) Key() bool { return e.key }
+func (e CertificateRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ServiceRegisterRequestValidationError) ErrorName() string {
-	return "ServiceRegisterRequestValidationError"
+func (e CertificateRequestValidationError) ErrorName() string {
+	return "CertificateRequestValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ServiceRegisterRequestValidationError) Error() string {
+func (e CertificateRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -142,14 +142,14 @@ func (e ServiceRegisterRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sServiceRegisterRequest.%s: %s%s",
+		"invalid %sCertificateRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ServiceRegisterRequestValidationError{}
+var _ error = CertificateRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -157,24 +157,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ServiceRegisterRequestValidationError{}
+} = CertificateRequestValidationError{}
 
-// Validate checks the field values on ServiceRegisterResponse with the rules
+// Validate checks the field values on CertificateResponse with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.
-func (m *ServiceRegisterResponse) Validate() error {
+func (m *CertificateResponse) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on ServiceRegisterResponse with the
-// rules defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on CertificateResponse with the rules
+// defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// ServiceRegisterResponseMultiError, or nil if none found.
-func (m *ServiceRegisterResponse) ValidateAll() error {
+// CertificateResponseMultiError, or nil if none found.
+func (m *CertificateResponse) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *ServiceRegisterResponse) validate(all bool) error {
+func (m *CertificateResponse) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -184,19 +184,19 @@ func (m *ServiceRegisterResponse) validate(all bool) error {
 	// no validation rules for Certificate
 
 	if len(errors) > 0 {
-		return ServiceRegisterResponseMultiError(errors)
+		return CertificateResponseMultiError(errors)
 	}
 
 	return nil
 }
 
-// ServiceRegisterResponseMultiError is an error wrapping multiple validation
-// errors returned by ServiceRegisterResponse.ValidateAll() if the designated
+// CertificateResponseMultiError is an error wrapping multiple validation
+// errors returned by CertificateResponse.ValidateAll() if the designated
 // constraints aren't met.
-type ServiceRegisterResponseMultiError []error
+type CertificateResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m ServiceRegisterResponseMultiError) Error() string {
+func (m CertificateResponseMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -205,11 +205,11 @@ func (m ServiceRegisterResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m ServiceRegisterResponseMultiError) AllErrors() []error { return m }
+func (m CertificateResponseMultiError) AllErrors() []error { return m }
 
-// ServiceRegisterResponseValidationError is the validation error returned by
-// ServiceRegisterResponse.Validate if the designated constraints aren't met.
-type ServiceRegisterResponseValidationError struct {
+// CertificateResponseValidationError is the validation error returned by
+// CertificateResponse.Validate if the designated constraints aren't met.
+type CertificateResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -217,24 +217,24 @@ type ServiceRegisterResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e ServiceRegisterResponseValidationError) Field() string { return e.field }
+func (e CertificateResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e ServiceRegisterResponseValidationError) Reason() string { return e.reason }
+func (e CertificateResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e ServiceRegisterResponseValidationError) Cause() error { return e.cause }
+func (e CertificateResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e ServiceRegisterResponseValidationError) Key() bool { return e.key }
+func (e CertificateResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e ServiceRegisterResponseValidationError) ErrorName() string {
-	return "ServiceRegisterResponseValidationError"
+func (e CertificateResponseValidationError) ErrorName() string {
+	return "CertificateResponseValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e ServiceRegisterResponseValidationError) Error() string {
+func (e CertificateResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -246,14 +246,14 @@ func (e ServiceRegisterResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sServiceRegisterResponse.%s: %s%s",
+		"invalid %sCertificateResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = ServiceRegisterResponseValidationError{}
+var _ error = CertificateResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -261,7 +261,444 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = ServiceRegisterResponseValidationError{}
+} = CertificateResponseValidationError{}
+
+// Validate checks the field values on DeletionRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *DeletionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeletionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeletionRequestMultiError, or nil if none found.
+func (m *DeletionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeletionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetService()) < 1 {
+		err := DeletionRequestValidationError{
+			field:  "Service",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetPublicKey()) < 1 {
+		err := DeletionRequestValidationError{
+			field:  "PublicKey",
+			reason: "value length must be at least 1 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetCertificate()) < 1 {
+		err := DeletionRequestValidationError{
+			field:  "Certificate",
+			reason: "value length must be at least 1 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return DeletionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeletionRequestMultiError is an error wrapping multiple validation errors
+// returned by DeletionRequest.ValidateAll() if the designated constraints
+// aren't met.
+type DeletionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeletionRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeletionRequestMultiError) AllErrors() []error { return m }
+
+// DeletionRequestValidationError is the validation error returned by
+// DeletionRequest.Validate if the designated constraints aren't met.
+type DeletionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeletionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeletionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeletionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeletionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeletionRequestValidationError) ErrorName() string { return "DeletionRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DeletionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeletionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeletionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeletionRequestValidationError{}
+
+// Validate checks the field values on DeletionResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *DeletionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on DeletionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// DeletionResponseMultiError, or nil if none found.
+func (m *DeletionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *DeletionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return DeletionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// DeletionResponseMultiError is an error wrapping multiple validation errors
+// returned by DeletionResponse.ValidateAll() if the designated constraints
+// aren't met.
+type DeletionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m DeletionResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m DeletionResponseMultiError) AllErrors() []error { return m }
+
+// DeletionResponseValidationError is the validation error returned by
+// DeletionResponse.Validate if the designated constraints aren't met.
+type DeletionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e DeletionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e DeletionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e DeletionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e DeletionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e DeletionResponseValidationError) ErrorName() string { return "DeletionResponseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e DeletionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sDeletionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = DeletionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = DeletionResponseValidationError{}
+
+// Validate checks the field values on PublicKeyRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *PublicKeyRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PublicKeyRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PublicKeyRequestMultiError, or nil if none found.
+func (m *PublicKeyRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PublicKeyRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return PublicKeyRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// PublicKeyRequestMultiError is an error wrapping multiple validation errors
+// returned by PublicKeyRequest.ValidateAll() if the designated constraints
+// aren't met.
+type PublicKeyRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PublicKeyRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PublicKeyRequestMultiError) AllErrors() []error { return m }
+
+// PublicKeyRequestValidationError is the validation error returned by
+// PublicKeyRequest.Validate if the designated constraints aren't met.
+type PublicKeyRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PublicKeyRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PublicKeyRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PublicKeyRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PublicKeyRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PublicKeyRequestValidationError) ErrorName() string { return "PublicKeyRequestValidationError" }
+
+// Error satisfies the builtin error interface
+func (e PublicKeyRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPublicKeyRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PublicKeyRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PublicKeyRequestValidationError{}
+
+// Validate checks the field values on PublicKeyResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// first error encountered is returned, or nil if there are no violations.
+func (m *PublicKeyResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on PublicKeyResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// PublicKeyResponseMultiError, or nil if none found.
+func (m *PublicKeyResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *PublicKeyResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for PublicKey
+
+	if len(errors) > 0 {
+		return PublicKeyResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// PublicKeyResponseMultiError is an error wrapping multiple validation errors
+// returned by PublicKeyResponse.ValidateAll() if the designated constraints
+// aren't met.
+type PublicKeyResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m PublicKeyResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m PublicKeyResponseMultiError) AllErrors() []error { return m }
+
+// PublicKeyResponseValidationError is the validation error returned by
+// PublicKeyResponse.Validate if the designated constraints aren't met.
+type PublicKeyResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e PublicKeyResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e PublicKeyResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e PublicKeyResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e PublicKeyResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e PublicKeyResponseValidationError) ErrorName() string {
+	return "PublicKeyResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e PublicKeyResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sPublicKeyResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = PublicKeyResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = PublicKeyResponseValidationError{}
 
 // Validate checks the field values on RegisterRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the
@@ -409,9 +846,34 @@ func (m *RegisterResponse) validate(all bool) error {
 
 	// no validation rules for Certificate
 
-	// no validation rules for PublicKey
-
-	// no validation rules for CaCertificate
+	if all {
+		switch v := interface{}(m.GetService()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RegisterResponseValidationError{
+					field:  "Service",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RegisterResponseValidationError{
+					field:  "Service",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetService()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RegisterResponseValidationError{
+				field:  "Service",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return RegisterResponseMultiError(errors)
@@ -658,127 +1120,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = LoginRequestValidationError{}
-
-// Validate checks the field values on ServiceID with the rules defined in the
-// proto definition for this message. If any rules are violated, the first
-// error encountered is returned, or nil if there are no violations.
-func (m *ServiceID) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ServiceID with the rules defined in
-// the proto definition for this message. If any rules are violated, the
-// result is a list of violation errors wrapped in ServiceIDMultiError, or nil
-// if none found.
-func (m *ServiceID) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ServiceID) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(m.GetPublicKey()) < 1 {
-		err := ServiceIDValidationError{
-			field:  "PublicKey",
-			reason: "value length must be at least 1 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(m.GetCertificate()) < 1 {
-		err := ServiceIDValidationError{
-			field:  "Certificate",
-			reason: "value length must be at least 1 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return ServiceIDMultiError(errors)
-	}
-
-	return nil
-}
-
-// ServiceIDMultiError is an error wrapping multiple validation errors returned
-// by ServiceID.ValidateAll() if the designated constraints aren't met.
-type ServiceIDMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m ServiceIDMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m ServiceIDMultiError) AllErrors() []error { return m }
-
-// ServiceIDValidationError is the validation error returned by
-// ServiceID.Validate if the designated constraints aren't met.
-type ServiceIDValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ServiceIDValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ServiceIDValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ServiceIDValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ServiceIDValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ServiceIDValidationError) ErrorName() string { return "ServiceIDValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ServiceIDValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sServiceID.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ServiceIDValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ServiceIDValidationError{}
 
 // Validate checks the field values on ID with the rules defined in the proto
 // definition for this message. If any rules are violated, the first error
