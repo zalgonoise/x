@@ -365,6 +365,12 @@ github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
+github.com/zalgonoise/cfg v1.0.0 h1:clcY7XrNtp6tkLycyDSSq72mmxXv08jJtfpiE5fKwR8=
+github.com/zalgonoise/cfg v1.0.0/go.mod h1:DQcS1/7atS+KAvDgA3DE0rFXsTWSV0/B8tbX7ZbqDog=
+github.com/zalgonoise/x/cli v0.0.0-20240201183302-f3453692852d h1:ho1mr7WpljLFvMw4OvqdniOpLSIO4J43hxAVm9tYxoY=
+github.com/zalgonoise/x/cli v0.0.0-20240201183302-f3453692852d/go.mod h1:B56RQbsJuROvmVqiGc9YWw3XTCSVo8jOgpOcCHp/8jI=
+github.com/zalgonoise/x/errs v0.0.0-20231026174448-45b698aba498 h1:L+EP9Km4/YSKo9BL+TWY77zYYEP4qXdROKSkj1Mf0Os=
+github.com/zalgonoise/x/errs v0.0.0-20231026174448-45b698aba498/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
