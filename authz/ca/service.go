@@ -3,6 +3,7 @@ package ca
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"errors"
 	"log/slog"
 	"slices"
@@ -25,13 +26,13 @@ const (
 	ErrPublicKey   = errs.Entity("public key")
 	ErrCertificate = errs.Entity("certificate")
 	ErrRepository  = errs.Entity("repository")
-	ErrSigner      = errs.Entity("signer")
+	ErrVerifier    = errs.Entity("verifier")
 )
 
 var (
 	ErrNilPrivateKey      = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 	ErrNilRepository      = errs.WithDomain(errDomain, ErrNil, ErrRepository)
-	ErrNilSigner          = errs.WithDomain(errDomain, ErrNil, ErrSigner)
+	ErrNilVerifier        = errs.WithDomain(errDomain, ErrNil, ErrVerifier)
 	ErrInvalidPublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
 	ErrInvalidCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
 )
@@ -42,9 +43,9 @@ type Repository interface {
 	Delete(ctx context.Context, service string) error
 }
 
-type Signer interface {
-	Sign(data []byte, privateKey *ecdsa.PrivateKey) ([]byte, error)
+type Verifier interface {
 	Verify(data []byte, pubKey *ecdsa.PublicKey, signature []byte) error
+	Hash(data []byte) (hash []byte, err error)
 }
 
 type CertificateAuthority struct {
@@ -53,7 +54,7 @@ type CertificateAuthority struct {
 	privateKey *ecdsa.PrivateKey
 
 	repository Repository
-	signer     Signer
+	verifier   Verifier
 
 	logger *slog.Logger
 }
@@ -61,7 +62,7 @@ type CertificateAuthority struct {
 func NewCertificateAuthority(
 	privateKey *ecdsa.PrivateKey,
 	repo Repository,
-	signer Signer,
+	verifier Verifier,
 	logger *slog.Logger,
 ) (*CertificateAuthority, error) {
 	if privateKey == nil {
@@ -72,14 +73,14 @@ func NewCertificateAuthority(
 		return nil, ErrNilRepository
 	}
 
-	if signer == nil {
-		return nil, ErrNilSigner
+	if verifier == nil {
+		return nil, ErrNilVerifier
 	}
 
 	return &CertificateAuthority{
 		privateKey: privateKey,
 		repository: repo,
-		signer:     signer,
+		verifier:   verifier,
 		logger:     logger,
 	}, nil
 }
@@ -91,7 +92,17 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	signature, err := ca.signer.Sign(req.PublicKey, ca.privateKey)
+	_, err = keygen.DecodePublic(req.PublicKey)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	hash, err := ca.verifier.Hash(req.PublicKey)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	signature, err := ecdsa.SignASN1(rand.Reader, ca.privateKey, hash)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
