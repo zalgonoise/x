@@ -71,21 +71,53 @@ func DecodePublic(pemEncodedPub []byte) (*ecdsa.PublicKey, error) {
 	return pubKey, nil
 }
 
+type Signer struct {
+	privKey *ecdsa.PrivateKey
+	h       hash.Hash
+}
+
+func NewSigner(privKey *ecdsa.PrivateKey, h hash.Hash) Signer {
+	return Signer{privKey, h}
+}
+
+func (s Signer) Sign(data []byte) (signature []byte, err error) {
+	h, err := s.Hash(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return ecdsa.SignASN1(rand.Reader, s.privKey, h)
+}
+
+func (s Signer) Hash(data []byte) (hash []byte, err error) {
+	defer s.h.Reset()
+
+	_, err = s.h.Write(data)
+	if err != nil {
+		return nil, err
+	}
+
+	h := s.h.Sum(nil)
+
+	return h, nil
+}
+
 type Verifier struct {
-	h hash.Hash
+	pubKey *ecdsa.PublicKey
+	h      hash.Hash
 }
 
-func NewVerifier(h hash.Hash) Verifier {
-	return Verifier{h}
+func NewVerifier(pubKey *ecdsa.PublicKey, h hash.Hash) Verifier {
+	return Verifier{pubKey, h}
 }
 
-func (v Verifier) Verify(data []byte, pubKey *ecdsa.PublicKey, signature []byte) error {
-	signatureHash, err := v.Hash(data)
+func (v Verifier) Verify(data []byte, signature []byte) error {
+	h, err := v.Hash(data)
 	if err != nil {
 		return err
 	}
 
-	if !ecdsa.VerifyASN1(pubKey, signatureHash, signature) {
+	if !ecdsa.VerifyASN1(v.pubKey, h, signature) {
 		return ErrInvalidSignature
 	}
 
@@ -100,7 +132,7 @@ func (v Verifier) Hash(data []byte) (hash []byte, err error) {
 		return nil, err
 	}
 
-	signatureHash := v.h.Sum(nil)
+	h := v.h.Sum(nil)
 
-	return signatureHash, nil
+	return h, nil
 }
