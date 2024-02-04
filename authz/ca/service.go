@@ -3,7 +3,6 @@ package ca
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/rand"
 	"errors"
 	"log/slog"
 	"slices"
@@ -22,17 +21,17 @@ const (
 	ErrNil     = errs.Kind("nil")
 	ErrInvalid = errs.Kind("invalid")
 
-	ErrPrivateKey  = errs.Entity("private key")
 	ErrPublicKey   = errs.Entity("public key")
 	ErrCertificate = errs.Entity("certificate")
 	ErrRepository  = errs.Entity("repository")
 	ErrVerifier    = errs.Entity("verifier")
+	ErrSigner      = errs.Entity("signer")
 )
 
 var (
-	ErrNilPrivateKey      = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 	ErrNilRepository      = errs.WithDomain(errDomain, ErrNil, ErrRepository)
 	ErrNilVerifier        = errs.WithDomain(errDomain, ErrNil, ErrVerifier)
+	ErrNilSigner          = errs.WithDomain(errDomain, ErrNil, ErrSigner)
 	ErrInvalidPublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
 	ErrInvalidCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
 )
@@ -44,31 +43,34 @@ type Repository interface {
 }
 
 type Verifier interface {
-	Verify(data []byte, pubKey *ecdsa.PublicKey, signature []byte) error
+	Verify(data []byte, signature []byte) error
+	Hash(data []byte) (hash []byte, err error)
+}
+
+type Signer interface {
+	Sign(data []byte) (signature []byte, err error)
 	Hash(data []byte) (hash []byte, err error)
 }
 
 type CertificateAuthority struct {
 	pb.UnimplementedCertificateAuthorityServer
 
-	privateKey *ecdsa.PrivateKey
+	pubKey ecdsa.PublicKey
 
 	repository Repository
 	verifier   Verifier
+	signer     Signer
 
 	logger *slog.Logger
 }
 
 func NewCertificateAuthority(
-	privateKey *ecdsa.PrivateKey,
+	pubKey ecdsa.PublicKey,
 	repo Repository,
 	verifier Verifier,
+	signer Signer,
 	logger *slog.Logger,
 ) (*CertificateAuthority, error) {
-	if privateKey == nil {
-		return nil, ErrNilPrivateKey
-	}
-
 	if repo == nil {
 		return nil, ErrNilRepository
 	}
@@ -77,10 +79,15 @@ func NewCertificateAuthority(
 		return nil, ErrNilVerifier
 	}
 
+	if signer == nil {
+		return nil, ErrNilSigner
+	}
+
 	return &CertificateAuthority{
-		privateKey: privateKey,
+		pubKey:     pubKey,
 		repository: repo,
 		verifier:   verifier,
+		signer:     signer,
 		logger:     logger,
 	}, nil
 }
@@ -97,12 +104,7 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	hash, err := ca.verifier.Hash(req.PublicKey)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	signature, err := ecdsa.SignASN1(rand.Reader, ca.privateKey, hash)
+	signature, err := ca.signer.Sign(req.PublicKey)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -157,11 +159,10 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 }
 
 func (ca *CertificateAuthority) PublicKey(context.Context, *pb.PublicKeyRequest) (*pb.PublicKeyResponse, error) {
-	key, err := keygen.EncodePublic(&ca.privateKey.PublicKey)
+	key, err := keygen.EncodePublic(&ca.pubKey)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.PublicKeyResponse{PublicKey: key}, nil
-
 }
