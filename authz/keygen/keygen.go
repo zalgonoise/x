@@ -6,14 +6,27 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"hash"
+
+	"github.com/zalgonoise/x/errs"
+)
+
+const (
+	errDomain = errs.Domain("x/authz/keygen")
+
+	ErrNil     = errs.Kind("nil")
+	ErrInvalid = errs.Kind("invalid")
+
+	ErrPrivateKey = errs.Entity("private key")
+	ErrPEM        = errs.Entity("PEM key bytes")
+	ErrSignature  = errs.Entity("signature")
 )
 
 var (
-	ErrInvalidPEM       = errors.New("invalid PEM key bytes")
-	ErrInvalidSignature = errors.New("invalid signature")
+	ErrInvalidPEM       = errs.WithDomain(errDomain, ErrInvalid, ErrPEM)
+	ErrInvalidSignature = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
+	ErrNilPrivateKey    = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 )
 
 func New(curve elliptic.Curve) (*ecdsa.PrivateKey, error) {
@@ -76,8 +89,12 @@ type Signer struct {
 	h       hash.Hash
 }
 
-func NewSigner(privKey *ecdsa.PrivateKey, h hash.Hash) Signer {
-	return Signer{privKey, h}
+func NewSigner(privKey *ecdsa.PrivateKey, h hash.Hash) (Signer, error) {
+	if privKey == nil {
+		return Signer{}, ErrNilPrivateKey
+	}
+
+	return Signer{privKey, h}, nil
 }
 
 func (s Signer) Sign(data []byte) (signature []byte, err error) {
@@ -102,12 +119,16 @@ func (s Signer) Hash(data []byte) (hash []byte, err error) {
 	return h, nil
 }
 
+func (s Signer) Key() ecdsa.PublicKey {
+	return s.privKey.PublicKey
+}
+
 type Verifier struct {
-	pubKey *ecdsa.PublicKey
+	pubKey ecdsa.PublicKey
 	h      hash.Hash
 }
 
-func NewVerifier(pubKey *ecdsa.PublicKey, h hash.Hash) Verifier {
+func NewVerifier(pubKey ecdsa.PublicKey, h hash.Hash) Verifier {
 	return Verifier{pubKey, h}
 }
 
@@ -117,7 +138,7 @@ func (v Verifier) Verify(data []byte, signature []byte) error {
 		return err
 	}
 
-	if !ecdsa.VerifyASN1(v.pubKey, h, signature) {
+	if !ecdsa.VerifyASN1(&v.pubKey, h, signature) {
 		return ErrInvalidSignature
 	}
 
@@ -135,4 +156,8 @@ func (v Verifier) Hash(data []byte) (hash []byte, err error) {
 	h := v.h.Sum(nil)
 
 	return h, nil
+}
+
+func (s Verifier) Key() ecdsa.PublicKey {
+	return s.pubKey
 }
