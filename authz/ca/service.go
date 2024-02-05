@@ -45,11 +45,13 @@ type Repository interface {
 type Verifier interface {
 	Verify(data []byte, signature []byte) error
 	Hash(data []byte) (hash []byte, err error)
+	Key() ecdsa.PublicKey
 }
 
 type Signer interface {
 	Sign(data []byte) (signature []byte, err error)
 	Hash(data []byte) (hash []byte, err error)
+	Key() ecdsa.PublicKey
 }
 
 type CertificateAuthority struct {
@@ -65,7 +67,6 @@ type CertificateAuthority struct {
 }
 
 func NewCertificateAuthority(
-	pubKey ecdsa.PublicKey,
 	repo Repository,
 	verifier Verifier,
 	signer Signer,
@@ -84,7 +85,7 @@ func NewCertificateAuthority(
 	}
 
 	return &CertificateAuthority{
-		pubKey:     pubKey,
+		pubKey:     signer.Key(),
 		repository: repo,
 		verifier:   verifier,
 		signer:     signer,
