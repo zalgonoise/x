@@ -7,10 +7,14 @@ import (
 	"log/slog"
 	"slices"
 
+	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/authz/keygen"
+	"github.com/zalgonoise/x/authz/log"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/repository"
 	"github.com/zalgonoise/x/errs"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -64,14 +68,16 @@ type CertificateAuthority struct {
 	signer     Signer
 
 	logger *slog.Logger
+	tracer trace.Tracer
 }
 
 func NewCertificateAuthority(
 	repo Repository,
 	verifier Verifier,
 	signer Signer,
-	logger *slog.Logger,
+	opts ...cfg.Option[Config],
 ) (*CertificateAuthority, error) {
+
 	if repo == nil {
 		return nil, ErrNilRepository
 	}
@@ -84,12 +90,23 @@ func NewCertificateAuthority(
 		return nil, ErrNilSigner
 	}
 
+	config := cfg.New(opts...)
+
+	if config.logHandler == nil {
+		config.logHandler = log.NoOp{}
+	}
+
+	if config.tracer == nil {
+		config.tracer = noop.NewTracerProvider().Tracer("x/authz/ca")
+	}
+
 	return &CertificateAuthority{
 		pubKey:     signer.Key(),
 		repository: repo,
 		verifier:   verifier,
 		signer:     signer,
-		logger:     logger,
+		logger:     slog.New(config.logHandler),
+		tracer:     config.tracer,
 	}, nil
 }
 
@@ -105,6 +122,7 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	// TODO: swap this basic pubkey signing with an actual x509 certificate from the configured template
 	signature, err := ca.signer.Sign(req.PublicKey)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
