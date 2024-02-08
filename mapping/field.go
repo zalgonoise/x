@@ -15,6 +15,10 @@ import (
 //
 // Set replaces the value of a certain key in the map, or it adds it if it does not exist. The returned boolean value
 // represents whether the key is new in the mapping Field or not.
+//
+// Implementations of Field include Table (a set of key-value pairs with a configurable zero value), Index (like a Table
+// but with the ability to index ordered or unordered keys) and SyncField -- the latter being a synchronized
+// implementation of either a Table or Index Field.
 type Field[K comparable, T any] interface {
 	// Get fetches the value in a mapping Field for a given key. If the value does not exist, the Field's
 	// configured zero value is returned. A boolean value is also returned to highlight whether accessing the key was
