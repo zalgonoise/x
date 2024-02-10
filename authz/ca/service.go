@@ -3,6 +3,7 @@ package ca
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/pem"
 	"errors"
 	"log/slog"
 	"slices"
@@ -62,6 +63,7 @@ type CertificateAuthority struct {
 	pb.UnimplementedCertificateAuthorityServer
 
 	pubKey ecdsa.PublicKey
+	cert   *pem.Block
 
 	repository Repository
 	verifier   Verifier
@@ -77,7 +79,6 @@ func NewCertificateAuthority(
 	signer Signer,
 	opts ...cfg.Option[Config],
 ) (*CertificateAuthority, error) {
-
 	if repo == nil {
 		return nil, ErrNilRepository
 	}
@@ -100,8 +101,14 @@ func NewCertificateAuthority(
 		config.tracer = noop.NewTracerProvider().Tracer("x/authz/ca")
 	}
 
+	cert, err := NewCertificate(config.template...)
+	if err != nil {
+		return nil, err
+	}
+
 	return &CertificateAuthority{
 		pubKey:     signer.Key(),
+		cert:       cert,
 		repository: repo,
 		verifier:   verifier,
 		signer:     signer,
