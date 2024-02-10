@@ -1,7 +1,6 @@
 package ca
 
 import (
-	"crypto/x509"
 	"log/slog"
 
 	"github.com/zalgonoise/cfg"
@@ -12,7 +11,7 @@ type Config struct {
 	logHandler slog.Handler
 	tracer     trace.Tracer
 
-	cert *x509.Certificate
+	template []cfg.Option[Template]
 }
 
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
@@ -51,13 +50,13 @@ func WithTracer(tracer trace.Tracer) cfg.Option[Config] {
 	})
 }
 
-func WithTemplate(certificate *x509.Certificate) cfg.Option[Config] {
-	if certificate == nil {
+func WithTemplate(opts ...cfg.Option[Template]) cfg.Option[Config] {
+	if len(opts) == 0 {
 		return cfg.NoOp[Config]{}
 	}
 
 	return cfg.Register[Config](func(config Config) Config {
-		config.cert = certificate
+		config.template = opts
 
 		return config
 	})
