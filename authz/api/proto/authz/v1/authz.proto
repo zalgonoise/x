@@ -109,6 +109,66 @@ service CertificateAuthority {
 message CertificateRequest {
   string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
   bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+  CSR signing_request = 3 [json_name="signing_req"];
+}
+
+message CSR {
+  Subject subject = 1 [json_name="subject"];
+  repeated Extension extensions = 2 [json_name="extensions"];
+  repeated Extension extra_extensions = 3 [json_name="extra_extensions"];
+  repeated string dns_names = 4 [json_name="dns_names"];
+  repeated string email_addresses = 5 [json_name="email_addresses"];
+  repeated IPAddress ip_addresses = 6 [json_name="ip_addresses"];
+  repeated URL uris = 7 [json_name="uris"];
+}
+
+message Subject {
+  repeated string country = 1 [json_name="country"];
+  repeated string organization = 2 [json_name="organization"];
+  repeated string organizational_unit = 3 [json_name="organizational_unit"];
+  repeated string locality = 4 [json_name="locality"];
+  repeated string province = 5 [json_name="province"];
+  repeated string street_address = 6 [json_name="street_address"];
+  repeated string postal_code = 7 [json_name="postal_code"];
+  string serial_number = 8 [json_name="serial_number"];
+  string common_name = 9 [json_name="common_name"];
+  repeated Attribute names = 10 [json_name="names"];
+  repeated Attribute extra_names = 11 [json_name="extra_names"];
+}
+
+message Extension {
+  repeated int32 id = 1 [json_name="id"];
+  bool critical = 2 [json_name="critical"];
+  bytes value = 3 [json_name="value"];
+}
+
+message IPAddress {
+  bytes ip = 1 [json_name="ip"];
+}
+
+message URL {
+  string scheme = 1 [json_name="scheme"];
+  string opaque = 2 [json_name="opaque"];
+  UserInfo user_info = 3 [json_name="user_info"];
+  string host = 4 [json_name="host"];
+  string path = 5 [json_name="path"];
+  string raw_path = 6 [json_name="raw_path"];
+  bool omit_host = 7 [json_name="omit_host"];
+  bool force_query = 8 [json_name="force_query"];
+  string raw_query = 9 [json_name="raw_query"];
+  string fragment = 10 [json_name="fragment"];
+  string raw_fragment = 11 [json_name="raw_fragment"];
+}
+
+message UserInfo {
+  string username = 1 [json_name="username"];
+  string password = 2 [json_name="password"];
+  bool password_set = 3 [json_name="password_set"];
+}
+
+message Attribute {
+  repeated int32 type = 1 [json_name="type"];
+  string value = 2 [json_name="value"];
 }
 
 message CertificateResponse {
