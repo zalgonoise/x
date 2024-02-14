@@ -367,6 +367,9 @@
         "pub_key": {
           "type": "string",
           "format": "byte"
+        },
+        "signing_req": {
+          "$ref": "#/definitions/v1CSR"
         }
       }
     },
@@ -398,6 +401,69 @@
         }
       }
     },
+    "v1Attribute": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CSR": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/definitions/v1Subject"
+        },
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Extension"
+          }
+        },
+        "extra_extensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Extension"
+          }
+        },
+        "dns_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "email_addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ip_addresses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1IPAddress"
+          }
+        },
+        "uris": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1URL"
+          }
+        }
+      }
+    },
     "v1CertificateRequest": {
       "type": "object",
       "properties": {
@@ -407,6 +473,9 @@
         "pub_key": {
           "type": "string",
           "format": "byte"
+        },
+        "signing_req": {
+          "$ref": "#/definitions/v1CSR"
         }
       }
     },
@@ -422,6 +491,25 @@
     "v1DeletionResponse": {
       "type": "object"
     },
+    "v1Extension": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "critical": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
     "v1ID": {
       "type": "object",
       "properties": {
@@ -430,6 +518,15 @@
           "format": "byte"
         },
         "certificate": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1IPAddress": {
+      "type": "object",
+      "properties": {
+        "ip": {
           "type": "string",
           "format": "byte"
         }
@@ -491,6 +588,73 @@
         }
       }
     },
+    "v1Subject": {
+      "type": "object",
+      "properties": {
+        "country": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "organization": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "organizational_unit": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "locality": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "province": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "street_address": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "postal_code": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "serial_number": {
+          "type": "string"
+        },
+        "common_name": {
+          "type": "string"
+        },
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Attribute"
+          }
+        },
+        "extra_names": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Attribute"
+          }
+        }
+      }
+    },
     "v1TokenRequest": {
       "type": "object",
       "properties": {
@@ -512,6 +676,58 @@
         "expires_on": {
           "type": "string",
           "format": "int64"
+        }
+      }
+    },
+    "v1URL": {
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "type": "string"
+        },
+        "opaque": {
+          "type": "string"
+        },
+        "user_info": {
+          "$ref": "#/definitions/v1UserInfo"
+        },
+        "host": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "raw_path": {
+          "type": "string"
+        },
+        "omit_host": {
+          "type": "boolean"
+        },
+        "force_query": {
+          "type": "boolean"
+        },
+        "raw_query": {
+          "type": "string"
+        },
+        "fragment": {
+          "type": "string"
+        },
+        "raw_fragment": {
+          "type": "string"
+        }
+      }
+    },
+    "v1UserInfo": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "password_set": {
+          "type": "boolean"
         }
       }
     }
