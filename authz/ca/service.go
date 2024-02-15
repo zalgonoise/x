@@ -3,13 +3,15 @@ package ca
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"log/slog"
 	"slices"
+	"time"
 
 	"github.com/zalgonoise/cfg"
-	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/authz/log"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/repository"
@@ -27,16 +29,14 @@ const (
 	ErrInvalid = errs.Kind("invalid")
 
 	ErrPublicKey   = errs.Entity("public key")
+	ErrPrivateKey  = errs.Entity("private key")
 	ErrCertificate = errs.Entity("certificate")
 	ErrRepository  = errs.Entity("repository")
-	ErrVerifier    = errs.Entity("verifier")
-	ErrSigner      = errs.Entity("signer")
 )
 
 var (
 	ErrNilRepository      = errs.WithDomain(errDomain, ErrNil, ErrRepository)
-	ErrNilVerifier        = errs.WithDomain(errDomain, ErrNil, ErrVerifier)
-	ErrNilSigner          = errs.WithDomain(errDomain, ErrNil, ErrSigner)
+	ErrNilPrivateKey      = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 	ErrInvalidPublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
 	ErrInvalidCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
 )
@@ -47,27 +47,15 @@ type Repository interface {
 	Delete(ctx context.Context, service string) error
 }
 
-type Verifier interface {
-	Verify(data []byte, signature []byte) error
-	Hash(data []byte) (hash []byte, err error)
-	Key() ecdsa.PublicKey
-}
-
-type Signer interface {
-	Sign(data []byte) (signature []byte, err error)
-	Hash(data []byte) (hash []byte, err error)
-	Key() ecdsa.PublicKey
-}
-
 type CertificateAuthority struct {
 	pb.UnimplementedCertificateAuthorityServer
 
-	pubKey ecdsa.PublicKey
-	cert   *pem.Block
+	privateKey *ecdsa.PrivateKey
+	ca         *x509.Certificate
+	cert       *pem.Block
+	durMonth   int
 
 	repository Repository
-	verifier   Verifier
-	signer     Signer
 
 	logger *slog.Logger
 	tracer trace.Tracer
@@ -75,20 +63,15 @@ type CertificateAuthority struct {
 
 func NewCertificateAuthority(
 	repo Repository,
-	verifier Verifier,
-	signer Signer,
+	privateKey *ecdsa.PrivateKey,
 	opts ...cfg.Option[Config],
 ) (*CertificateAuthority, error) {
 	if repo == nil {
 		return nil, ErrNilRepository
 	}
 
-	if verifier == nil {
-		return nil, ErrNilVerifier
-	}
-
-	if signer == nil {
-		return nil, ErrNilSigner
+	if privateKey == nil {
+		return nil, ErrNilPrivateKey
 	}
 
 	config := cfg.New(opts...)
@@ -101,17 +84,19 @@ func NewCertificateAuthority(
 		config.tracer = noop.NewTracerProvider().Tracer("x/authz/ca")
 	}
 
-	cert, err := NewCertificate(config.template...)
+	template := cfg.Set(newDefaultTemplate(), config.template...)
+
+	ca, cert, err := NewCertificate(template)
 	if err != nil {
 		return nil, err
 	}
 
 	return &CertificateAuthority{
-		pubKey:     signer.Key(),
+		privateKey: privateKey,
+		ca:         ca,
 		cert:       cert,
+		durMonth:   template.DurMonth,
 		repository: repo,
-		verifier:   verifier,
-		signer:     signer,
 		logger:     slog.New(config.logHandler),
 		tracer:     config.tracer,
 	}, nil
@@ -124,22 +109,61 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	_, err = keygen.DecodePublic(req.PublicKey)
+	block, _ := pem.Decode(req.PublicKey)
+	if block == nil {
+		return nil, status.Error(codes.InvalidArgument, "public key not in a PEM block")
+	}
+
+	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// TODO: swap this basic pubkey signing with an actual x509 certificate from the configured template
-	signature, err := ca.signer.Sign(req.PublicKey)
+	i, err := newInt(2, defaultExp, defaultSub)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if err := ca.repository.Create(ctx, req.Service, req.PublicKey, signature); err != nil {
+	csr := toCSR(req.SigningRequest)
+
+	if csr.Subject.CommonName == "" {
+		csr.Subject.CommonName = req.Service
+	}
+
+	cert := &x509.Certificate{
+		Version:         ca.ca.Version,
+		SerialNumber:    i,
+		Subject:         csr.Subject,
+		Extensions:      csr.Extensions,
+		ExtraExtensions: csr.ExtraExtensions,
+		DNSNames:        csr.DNSNames,
+		EmailAddresses:  csr.EmailAddresses,
+		IPAddresses:     csr.IPAddresses,
+		URIs:            csr.URIs,
+		NotBefore:       time.Now(),
+		NotAfter:        time.Now().AddDate(0, ca.durMonth, 0),
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageCodeSigning,
+			x509.ExtKeyUsageServerAuth,
+			x509.ExtKeyUsageClientAuth,
+			x509.ExtKeyUsageOCSPSigning,
+			x509.ExtKeyUsageCodeSigning,
+		},
+		KeyUsage: x509.KeyUsageCertSign,
+	}
+
+	signedCertBytes, err := x509.CreateCertificate(rand.Reader, cert, ca.ca, pubKey, ca.privateKey)
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pb.CertificateResponse{Certificate: signature}, nil
+	signedCert := pem.EncodeToMemory(&pem.Block{Type: typeCertificate, Bytes: signedCertBytes})
+
+	if err := ca.repository.Create(ctx, req.Service, req.PublicKey, signedCert); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.CertificateResponse{Certificate: signedCert}, nil
 }
 
 func (ca *CertificateAuthority) GetCertificate(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
@@ -185,7 +209,7 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 }
 
 func (ca *CertificateAuthority) PublicKey(context.Context, *pb.PublicKeyRequest) (*pb.PublicKeyResponse, error) {
-	key, err := keygen.EncodePublic(&ca.pubKey)
+	key, err := x509.MarshalPKIXPublicKey(&ca.privateKey.PublicKey)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
