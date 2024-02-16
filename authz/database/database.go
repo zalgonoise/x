@@ -10,9 +10,12 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/XSAM/otelsql"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/zalgonoise/cfg"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	_ "modernc.org/sqlite" // Database driver
 )
 
@@ -20,9 +23,18 @@ const (
 	uriFormat = "file:%s?cache=shared"
 	inMemory  = ":memory:"
 	minAlloc  = 64
+
+	defaultMaxOpenConns = 16
+	defaultMaxIdleConns = 16
+
+	pathCA    = "migration/ca"
+	pathAuthz = "migration/authz"
 )
 
 var (
+	//go:embed migration
+	migrationFiles embed.FS
+
 	//go:embed migration/ca/*
 	caMigrationFiles embed.FS
 
@@ -39,7 +51,7 @@ const (
 	CAService    Service = "certificate_authority"
 )
 
-func Open(uri string) (*sql.DB, error) {
+func Open(uri string, opts ...cfg.Option[Config]) (*sql.DB, error) {
 	switch uri {
 	case inMemory:
 	case "":
@@ -50,10 +62,21 @@ func Open(uri string) (*sql.DB, error) {
 		}
 	}
 
-	db, err := sql.Open("sqlite", fmt.Sprintf(uriFormat, uri))
+	config := cfg.New(opts...)
+
+	db, err := otelsql.Open("sqlite",
+		fmt.Sprintf(uriFormat, uri),
+		otelsql.WithAttributes(semconv.DBSystemSqlite),
+		otelsql.WithSpanOptions(otelsql.SpanOptions{
+			OmitConnResetSession: true,
+		}),
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	db.SetMaxOpenConns(config.maxOpenConns)
+	db.SetMaxIdleConns(config.maxIdleConns)
 
 	return db, nil
 }
@@ -80,22 +103,22 @@ func validateURI(uri string) error {
 	return nil
 }
 
-func Migrate(ctx context.Context, db *sql.DB, log *slog.Logger, service Service) error {
-	var migration fs.FS
+func Migrate(ctx context.Context, db *sql.DB, service Service, log *slog.Logger) error {
+	var path string
 
 	switch service {
 	case AuthzService:
-		migration = authzMigrationFiles
+		path = pathAuthz
 	case CAService:
-		migration = caMigrationFiles
+		path = pathCA
 	default:
 		return fmt.Errorf("%w: %q", ErrInvalidServiceType, service)
 	}
 
-	return runMigrations(ctx, db, log, migration)
+	return runMigrations(ctx, db, log, path, migrationFiles)
 }
 
-func runMigrations(ctx context.Context, db *sql.DB, log *slog.Logger, migrationFiles fs.FS) error {
+func runMigrations(ctx context.Context, db *sql.DB, log *slog.Logger, path string, migrationFiles fs.FS) error {
 	conn, err := db.Conn(ctx)
 	if err != nil {
 		return err
@@ -103,7 +126,7 @@ func runMigrations(ctx context.Context, db *sql.DB, log *slog.Logger, migrationF
 
 	defer conn.Close()
 
-	source, err := iofs.New(migrationFiles, "migration")
+	source, err := iofs.New(migrationFiles, path)
 	if err != nil {
 		return err
 	}
