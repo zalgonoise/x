@@ -10,6 +10,7 @@ import (
 type Config struct {
 	logHandler slog.Handler
 	tracer     trace.Tracer
+	metrics    Metrics
 
 	template []cfg.Option[Template]
 }
@@ -45,6 +46,18 @@ func WithTracer(tracer trace.Tracer) cfg.Option[Config] {
 
 	return cfg.Register[Config](func(config Config) Config {
 		config.tracer = tracer
+
+		return config
+	})
+}
+
+func WithMetrics(m Metrics) cfg.Option[Config] {
+	if m == nil {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register[Config](func(config Config) Config {
+		config.metrics = m
 
 		return config
 	})
