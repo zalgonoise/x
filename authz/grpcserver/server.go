@@ -1,6 +1,7 @@
 package grpcserver
 
 import (
+	"context"
 	"net"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
@@ -17,7 +18,6 @@ type Server struct {
 	serverMetrics *grpc_prometheus.ServerMetrics
 }
 
-//go:generate mockery --name=Metrics --with-expecter
 type Metrics interface {
 	RegisterCollector(collector prometheus.Collector)
 }
@@ -56,8 +56,19 @@ func (s *Server) Serve(l net.Listener) error {
 	return s.server.Serve(l)
 }
 
-func (s *Server) Shutdown() {
-	s.server.GracefulStop()
+func (s *Server) Shutdown(ctx context.Context) {
+	shutdownSuccess := make(chan struct{})
+
+	go func() {
+		s.server.GracefulStop()
+		close(shutdownSuccess)
+	}()
+
+	select {
+	case <-ctx.Done():
+		s.server.Stop()
+	case <-shutdownSuccess:
+	}
 }
 
 func (s *Server) RegisterAuthzServer(backend pb.AuthzServer) {
