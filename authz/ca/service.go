@@ -3,7 +3,6 @@ package ca
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/authz/log"
 	"github.com/zalgonoise/x/authz/metrics"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
@@ -152,7 +152,7 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	_, _, err := ca.repository.Get(ctx, req.Service)
+	storedPubKey, storedCert, err := ca.repository.Get(ctx, req.Service)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
@@ -163,29 +163,25 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	block, _ := pem.Decode(req.PublicKey)
-	if block == nil {
+	// service is already registered, just return the stored certificate
+	if err == nil && len(storedPubKey) > 0 && len(storedCert) > 0 {
+		return &pb.CertificateResponse{
+			Certificate: storedCert,
+		}, nil
+	}
+
+	pubKey, err := keygen.DecodePublic(req.PublicKey)
+	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		ca.metrics.IncServiceRegistryFailed()
 		ca.logger.WarnContext(ctx, "invalid request",
 			slog.String("error", err.Error()), slog.String("pub_key", string(req.PublicKey)))
 
-		return nil, status.Error(codes.InvalidArgument, "public key not in a PEM block")
-	}
-
-	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		ca.metrics.IncServiceRegistryFailed()
-		ca.logger.WarnContext(ctx, "invalid request",
-			slog.String("error", err.Error()), slog.String("pub_key", string(block.Bytes)))
-
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	i, err := newInt(2, defaultExp, defaultSub)
+	cert, err := newCertFromCSR(ca.ca.Version, ca.durMonth, toCSR(req.Service, req.SigningRequest))
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
@@ -196,35 +192,7 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	csr := toCSR(req.SigningRequest)
-
-	if csr.Subject.CommonName == "" {
-		csr.Subject.CommonName = req.Service
-	}
-
-	cert := &x509.Certificate{
-		Version:         ca.ca.Version,
-		SerialNumber:    i,
-		Subject:         csr.Subject,
-		Extensions:      csr.Extensions,
-		ExtraExtensions: csr.ExtraExtensions,
-		DNSNames:        csr.DNSNames,
-		EmailAddresses:  csr.EmailAddresses,
-		IPAddresses:     csr.IPAddresses,
-		URIs:            csr.URIs,
-		NotBefore:       time.Now(),
-		NotAfter:        time.Now().AddDate(0, ca.durMonth, 0),
-		ExtKeyUsage: []x509.ExtKeyUsage{
-			x509.ExtKeyUsageCodeSigning,
-			x509.ExtKeyUsageServerAuth,
-			x509.ExtKeyUsageClientAuth,
-			x509.ExtKeyUsageOCSPSigning,
-			x509.ExtKeyUsageCodeSigning,
-		},
-		KeyUsage: x509.KeyUsageCertSign,
-	}
-
-	signedCertBytes, err := x509.CreateCertificate(rand.Reader, cert, ca.ca, pubKey, ca.privateKey)
+	signedCert, err := newCertificate(cert, ca.ca, pubKey, ca.privateKey)
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
@@ -234,8 +202,6 @@ func (ca *CertificateAuthority) Register(
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
-	signedCert := pem.EncodeToMemory(&pem.Block{Type: typeCertificate, Bytes: signedCertBytes})
 
 	if err := ca.repository.Create(ctx, req.Service, req.PublicKey, signedCert); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
@@ -342,8 +308,8 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if !slices.Equal(pubKey, req.PublicKey) {
-		span.SetStatus(otelcodes.Error, err.Error())
+	if !slices.Equal(pubKey, []byte(req.PublicKey)) {
+		span.SetStatus(otelcodes.Error, ErrInvalidPublicKey.Error())
 		span.RecordError(err)
 		ca.metrics.IncServiceDeletionFailed()
 		ca.logger.WarnContext(ctx, "mismatching public keys")
@@ -351,8 +317,8 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 		return nil, status.Error(codes.PermissionDenied, ErrInvalidPublicKey.Error())
 	}
 
-	if !slices.Equal(cert, req.Certificate) {
-		span.SetStatus(otelcodes.Error, err.Error())
+	if !slices.Equal(cert, []byte(req.Certificate)) {
+		span.SetStatus(otelcodes.Error, ErrInvalidCertificate.Error())
 		span.RecordError(err)
 		ca.metrics.IncServiceDeletionFailed()
 		ca.logger.WarnContext(ctx, "mismatching certificates")
@@ -380,7 +346,7 @@ func (ca *CertificateAuthority) PublicKey(ctx context.Context, _ *pb.PublicKeyRe
 	ca.metrics.IncPubKeyRequests()
 	ca.logger.DebugContext(ctx, "CA's public key request")
 
-	key, err := x509.MarshalPKIXPublicKey(&ca.privateKey.PublicKey)
+	key, err := keygen.EncodePublic(&ca.privateKey.PublicKey)
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
