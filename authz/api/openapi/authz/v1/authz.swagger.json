@@ -514,12 +514,10 @@
       "type": "object",
       "properties": {
         "pub_key": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         },
         "certificate": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         }
       }
     },
@@ -571,8 +569,7 @@
           "type": "string"
         },
         "pub_key": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         }
       }
     },
@@ -662,8 +659,7 @@
           "type": "string"
         },
         "signed_challenge": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         }
       }
     },
