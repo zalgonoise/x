@@ -3,17 +3,12 @@ package database
 import (
 	"context"
 	"database/sql"
-	"embed"
 	"errors"
 	"fmt"
-	"io/fs"
 	"log/slog"
 	"os"
 
 	"github.com/XSAM/otelsql"
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/zalgonoise/cfg"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	_ "modernc.org/sqlite" // Database driver
@@ -22,24 +17,25 @@ import (
 const (
 	uriFormat = "file:%s?cache=shared"
 	inMemory  = ":memory:"
-	minAlloc  = 64
 
 	defaultMaxOpenConns = 16
 	defaultMaxIdleConns = 16
 
-	pathCA    = "migration/ca"
-	pathAuthz = "migration/authz"
-)
+	checkCATableExists = `
+	SELECT EXISTS(SELECT 1 FROM sqlite_master
+	WHERE type='table'
+	AND name='services');
+`
 
-var (
-	//go:embed migration
-	migrationFiles embed.FS
-
-	//go:embed migration/ca/*
-	caMigrationFiles embed.FS
-
-	//go:embed migration/authz/*
-	authzMigrationFiles embed.FS
+	createCATables = `
+CREATE TABLE services
+(
+    id           INTEGER PRIMARY KEY NOT NULL,
+    name         TEXT                NOT NULL UNIQUE,
+    pub_key      BLOB                NOT NULL,
+    cert         BLOB                NULL
+);
+`
 )
 
 var ErrInvalidServiceType = errors.New("invalid service type")
@@ -104,65 +100,51 @@ func validateURI(uri string) error {
 }
 
 func Migrate(ctx context.Context, db *sql.DB, service Service, log *slog.Logger) error {
-	var path string
-
 	switch service {
 	case AuthzService:
-		path = pathAuthz
+		return runMigrations(ctx, db)
 	case CAService:
-		path = pathCA
+		return runMigrations(ctx, db, migration{checkCATableExists, createCATables})
 	default:
 		return fmt.Errorf("%w: %q", ErrInvalidServiceType, service)
 	}
-
-	return runMigrations(ctx, db, log, path, migrationFiles)
 }
 
-func runMigrations(ctx context.Context, db *sql.DB, log *slog.Logger, path string, migrationFiles fs.FS) error {
-	conn, err := db.Conn(ctx)
-	if err != nil {
-		return err
+type migration struct {
+	check  string
+	create string
+}
+
+func runMigrations(ctx context.Context, db *sql.DB, migrations ...migration) error {
+	for i := range migrations {
+		r, err := db.QueryContext(ctx, migrations[i].check)
+		if err != nil {
+			return err
+		}
+
+		var count int
+
+		if !r.Next() {
+			return r.Err()
+		}
+
+		if err = r.Scan(&count); err != nil {
+			_ = r.Close()
+
+			return err
+		}
+
+		_ = r.Close()
+
+		if count == 1 {
+			continue
+		}
+
+		_, err = db.ExecContext(ctx, migrations[i].create)
+		if err != nil {
+			return err
+		}
 	}
-
-	defer conn.Close()
-
-	source, err := iofs.New(migrationFiles, path)
-	if err != nil {
-		return err
-	}
-
-	driver, err := sqlite3.WithInstance(db, &sqlite3.Config{})
-	if err != nil {
-		return err
-	}
-
-	migrator, err := migrate.NewWithInstance("iofs", source, "timesheet", driver)
-	if err != nil {
-		return err
-	}
-
-	defer migrator.Close()
-
-	currentVersion, dirty, err := migrator.Version()
-	if errors.Is(err, migrate.ErrNilVersion) {
-		currentVersion = 0
-	} else if err != nil {
-		return err
-	}
-
-	log.InfoContext(ctx, "before migration", slog.Uint64("version", uint64(currentVersion)), slog.Bool("dirty", dirty))
-
-	err = migrator.Up()
-	if !errors.Is(err, migrate.ErrNoChange) && err != nil {
-		return err
-	}
-
-	currentVersion, dirty, err = migrator.Version()
-	if err != nil {
-		return err
-	}
-
-	log.InfoContext(ctx, "after migration", slog.Uint64("version", uint64(currentVersion)), slog.Bool("dirty", dirty))
 
 	return nil
 }
