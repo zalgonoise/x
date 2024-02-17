@@ -3,10 +3,6 @@ package main
 import (
 	"context"
 	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"flag"
 	"fmt"
@@ -21,6 +17,7 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/authz/log"
 	"github.com/zalgonoise/x/authz/metrics"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
@@ -102,6 +99,8 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 	if err != nil {
 		return 1, err
 	}
+
+	defer db.Close()
 
 	if err = database.Migrate(ctx, db, database.CAService, logger); err != nil {
 		return 1, err
@@ -312,17 +311,15 @@ func openOrCreateKey(path string) (*ecdsa.PrivateKey, error) {
 
 			defer f.Close()
 
-			key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+			key, err := keygen.New()
 			if err != nil {
 				return nil, err
 			}
 
-			buf, err := x509.MarshalECPrivateKey(key)
+			keyPEM, err := keygen.EncodePrivate(key)
 			if err != nil {
 				return nil, err
 			}
-
-			keyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: buf})
 
 			_, err = f.Write(keyPEM)
 			if err != nil {
@@ -340,10 +337,5 @@ func openOrCreateKey(path string) (*ecdsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	block, _ := pem.Decode(buf)
-	if block == nil {
-		return nil, ErrInvalidKey
-	}
-
-	return x509.ParseECPrivateKey(block.Bytes)
+	return keygen.DecodePrivate(buf)
 }
