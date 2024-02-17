@@ -4,10 +4,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"hash"
 
 	"github.com/zalgonoise/x/errs"
 )
@@ -29,13 +29,8 @@ var (
 	ErrNilPrivateKey    = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 )
 
-func New(curve elliptic.Curve) (*ecdsa.PrivateKey, error) {
-	privateKey, err := ecdsa.GenerateKey(curve, rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	return privateKey, nil
+func New() (*ecdsa.PrivateKey, error) {
+	return ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 }
 
 func EncodePrivate(privateKey *ecdsa.PrivateKey) (key []byte, err error) {
@@ -84,80 +79,29 @@ func DecodePublic(pemEncodedPub []byte) (*ecdsa.PublicKey, error) {
 	return pubKey, nil
 }
 
-type Signer struct {
-	privKey *ecdsa.PrivateKey
-	h       hash.Hash
+type ECDSASigner struct {
+	Priv *ecdsa.PrivateKey
 }
 
-func NewSigner(privKey *ecdsa.PrivateKey, h hash.Hash) (Signer, error) {
-	if privKey == nil {
-		return Signer{}, ErrNilPrivateKey
-	}
+func (e ECDSASigner) Sign(data []byte) (sig, hash []byte, err error) {
+	sum := sha512.Sum512(data)
 
-	return Signer{privKey, h}, nil
-}
-
-func (s Signer) Sign(data []byte) (signature []byte, err error) {
-	h, err := s.Hash(data)
+	sig, err = ecdsa.SignASN1(rand.Reader, e.Priv, sum[:])
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return ecdsa.SignASN1(rand.Reader, s.privKey, h)
+	return sig, sum[:], nil
 }
 
-func (s Signer) Hash(data []byte) (hash []byte, err error) {
-	defer s.h.Reset()
-
-	_, err = s.h.Write(data)
-	if err != nil {
-		return nil, err
-	}
-
-	h := s.h.Sum(nil)
-
-	return h, nil
+type ECDSAVerifier struct {
+	Pub *ecdsa.PublicKey
 }
 
-func (s Signer) Key() ecdsa.PublicKey {
-	return s.privKey.PublicKey
-}
-
-type Verifier struct {
-	pubKey ecdsa.PublicKey
-	h      hash.Hash
-}
-
-func NewVerifier(pubKey ecdsa.PublicKey, h hash.Hash) Verifier {
-	return Verifier{pubKey, h}
-}
-
-func (v Verifier) Verify(data []byte, signature []byte) error {
-	h, err := v.Hash(data)
-	if err != nil {
-		return err
-	}
-
-	if !ecdsa.VerifyASN1(&v.pubKey, h, signature) {
+func (d ECDSAVerifier) Verify(hash, signature []byte) error {
+	if !ecdsa.VerifyASN1(d.Pub, hash, signature) {
 		return ErrInvalidSignature
 	}
 
 	return nil
-}
-
-func (v Verifier) Hash(data []byte) (hash []byte, err error) {
-	defer v.h.Reset()
-
-	_, err = v.h.Write(data)
-	if err != nil {
-		return nil, err
-	}
-
-	h := v.h.Sum(nil)
-
-	return h, nil
-}
-
-func (s Verifier) Key() ecdsa.PublicKey {
-	return s.pubKey
 }
