@@ -1752,10 +1752,10 @@ func (m *RegisterRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetPublicKey()) < 1 {
+	if utf8.RuneCountInString(m.GetPublicKey()) < 1 {
 		err := RegisterRequestValidationError{
 			field:  "PublicKey",
-			reason: "value length must be at least 1 bytes",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
@@ -2161,10 +2161,10 @@ func (m *ID) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetPublicKey()) < 1 {
+	if utf8.RuneCountInString(m.GetPublicKey()) < 1 {
 		err := IDValidationError{
 			field:  "PublicKey",
-			reason: "value length must be at least 1 bytes",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
@@ -2172,10 +2172,10 @@ func (m *ID) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetCertificate()) < 1 {
+	if utf8.RuneCountInString(m.GetCertificate()) < 1 {
 		err := IDValidationError{
 			field:  "Certificate",
-			reason: "value length must be at least 1 bytes",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
@@ -2395,10 +2395,10 @@ func (m *TokenRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if len(m.GetSignedChallenge()) < 1 {
+	if utf8.RuneCountInString(m.GetSignedChallenge()) < 1 {
 		err := TokenRequestValidationError{
 			field:  "SignedChallenge",
-			reason: "value length must be at least 1 bytes",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
