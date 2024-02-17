@@ -234,7 +234,7 @@ service Authz {
 
 message RegisterRequest {
   string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
-  bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+  string public_key = 2 [json_name="pub_key", (validate.rules).string.min_len = 1];
 }
 
 message RegisterResponse {
@@ -249,8 +249,8 @@ message LoginRequest {
 }
 
 message ID {
-  bytes public_key = 1 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
-  bytes certificate = 2 [json_name="certificate", (validate.rules).bytes.min_len = 1];
+  string public_key = 1 [json_name="pub_key", (validate.rules).string.min_len = 1];
+  string certificate = 2 [json_name="certificate", (validate.rules).string.min_len = 1];
 }
 
 message LoginResponse {
@@ -259,7 +259,7 @@ message LoginResponse {
 
 message TokenRequest {
   string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
-  bytes signed_challenge = 2 [json_name="signed_challenge", (validate.rules).bytes.min_len = 1];
+  string signed_challenge = 2 [json_name="signed_challenge", (validate.rules).string.min_len = 1];
 }
 
 message TokenResponse{
