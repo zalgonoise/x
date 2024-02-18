@@ -178,7 +178,6 @@ message CertificateResponse {
 message DeletionRequest {
   string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
   bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
-  bytes certificate = 3 [json_name="certificate", (validate.rules).bytes.min_len = 1];
 }
 
 message DeletionResponse {}
