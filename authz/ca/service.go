@@ -46,7 +46,7 @@ var (
 
 type Repository interface {
 	Get(ctx context.Context, service string) (pubKey []byte, cert []byte, err error)
-	Create(ctx context.Context, service string, pubKey []byte, cert []byte) (err error)
+	Create(ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time) (err error)
 	Delete(ctx context.Context, service string) error
 }
 
@@ -203,7 +203,7 @@ func (ca *CertificateAuthority) Register(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if err := ca.repository.Create(ctx, req.Service, req.PublicKey, signedCert); err != nil {
+	if err := ca.repository.Create(ctx, req.Service, req.PublicKey, signedCert, cert.NotAfter); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		ca.metrics.IncServiceRegistryFailed()
@@ -272,7 +272,6 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.DeleteService", trace.WithAttributes(
 		attribute.String("service", req.Service),
 		attribute.String("pub_key", string(req.PublicKey)),
-		attribute.String("cert", string(req.Certificate)),
 	))
 	defer span.End()
 
@@ -290,7 +289,7 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pubKey, cert, err := ca.repository.Get(ctx, req.Service)
+	pubKey, _, err := ca.repository.Get(ctx, req.Service)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			ca.logger.DebugContext(ctx, "service was not found",
@@ -315,15 +314,6 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 		ca.logger.WarnContext(ctx, "mismatching public keys")
 
 		return nil, status.Error(codes.PermissionDenied, ErrInvalidPublicKey.Error())
-	}
-
-	if !slices.Equal(cert, []byte(req.Certificate)) {
-		span.SetStatus(otelcodes.Error, ErrInvalidCertificate.Error())
-		span.RecordError(err)
-		ca.metrics.IncServiceDeletionFailed()
-		ca.logger.WarnContext(ctx, "mismatching certificates")
-
-		return nil, status.Error(codes.PermissionDenied, ErrInvalidCertificate.Error())
 	}
 
 	if err = ca.repository.Delete(ctx, req.Service); err != nil {
