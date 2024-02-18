@@ -72,6 +72,7 @@ var (
 func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
 	fs := flag.NewFlagSet("ca", flag.ExitOnError)
 
+	// TODO: add configurable tracing backend
 	dbURI := fs.String("db", "", "the path to the SQLite DB file to store services and their certificates")
 	privateKey := fs.String("private-key", "", "the path to the ECDSA private key file to use for the certificate authority")
 	httpPort := fs.Int("http-port", defaultHTTPPort, "the exposed HTTP port for the CA's API")
@@ -94,6 +95,8 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 	}
 
 	logger.DebugContext(ctx, "preparing database")
+
+	// TODO: add tracer init logic
 
 	db, err := database.Open(*dbURI)
 	if err != nil {
@@ -127,8 +130,17 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 
 	m := metrics.NewMetrics()
 
+	// TODO: add configurable cleanup cron
+	repo, err := repository.NewCertificateAuthority(db,
+		repository.WithLogger(logger),
+		repository.WithMetrics(m),
+	)
+	if err != nil {
+		return 1, err
+	}
+
 	caService, err := ca.NewCertificateAuthority(
-		repository.NewCertificateAuthority(db),
+		repo,
 		key,
 		ca.WithLogger(logger),
 		ca.WithTemplate(ca.WithDurMonth(*dur)),
