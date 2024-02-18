@@ -354,10 +354,6 @@
         "pub_key": {
           "type": "string",
           "format": "byte"
-        },
-        "certificate": {
-          "type": "string",
-          "format": "byte"
         }
       }
     },
