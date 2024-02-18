@@ -24,7 +24,7 @@ WHERE name = ?
 
 	queryCreate = `
 INSERT INTO services (name, pub_key, cert, expiry)
-VALUES (?, ?, ?)
+VALUES (?, ?, ?, ?)
 `
 
 	queryDelete = `
