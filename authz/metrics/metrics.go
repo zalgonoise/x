@@ -38,6 +38,15 @@ type Metrics struct {
 	publicKeyRequestsFailed         prometheus.Counter
 	publicKeyRequestsLatencySeconds prometheus.Histogram
 
+	// Cron metrics
+	schedulerNextTotal         prometheus.Counter
+	executorExecTotal          *prometheus.CounterVec
+	executorExecFailed         *prometheus.CounterVec
+	executorExecLatencySeconds *prometheus.HistogramVec
+	executorNextTotal          *prometheus.CounterVec
+	selectorSelectTotal        prometheus.Counter
+	selectorSelectFailed       prometheus.Counter
+
 	// Third party metrics
 	collectors []prometheus.Collector
 }
@@ -85,7 +94,6 @@ func NewMetrics() *Metrics {
 			Help:    "Histogram of service deletion processing times",
 			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		}),
-
 		publicKeyRequestsTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "public_key_requests_total",
 			Help: "Count of CA public key requests",
@@ -98,6 +106,35 @@ func NewMetrics() *Metrics {
 			Name:    "public_key_requests_latency_seconds",
 			Help:    "Histogram of CA public key request processing times",
 			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		}),
+		schedulerNextTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "cron_scheduler_next_total",
+			Help: "Count of cron's scheduler Next calls",
+		}),
+		executorExecTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "cron_executor_exec_total",
+			Help: "Count of cron's executor Exec calls",
+		}, []string{"id"}),
+		executorExecFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "cron_executor_exec_failed",
+			Help: "Count of failed cron's executor Exec calls",
+		}, []string{"id"}),
+		executorExecLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "cron_executor_exec_latency_seconds",
+			Help:    "Histogram of cron's executor Exec calls processing times",
+			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		}, []string{"id"}),
+		executorNextTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "cron_executor_next_total",
+			Help: "Count of cron's executor Next calls",
+		}, []string{"id"}),
+		selectorSelectTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "cron_selector_select_total",
+			Help: "Count of cron's selector Select calls",
+		}),
+		selectorSelectFailed: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "cron_selector_select_failed",
+			Help: "Count of failed cron's selector Select calls",
 		}),
 	}
 }
@@ -190,6 +227,39 @@ func (m *Metrics) ObservePubKeyRequestLatency(ctx context.Context, duration time
 	m.publicKeyRequestsLatencySeconds.Observe(duration.Seconds())
 }
 
+func (m *Metrics) IncSchedulerNextCalls() {
+	m.schedulerNextTotal.Inc()
+}
+func (m *Metrics) IncExecutorExecCalls(id string) {
+	m.executorExecTotal.WithLabelValues(id).Inc()
+}
+func (m *Metrics) IncExecutorExecErrors(id string) {
+	m.executorExecFailed.WithLabelValues(id).Inc()
+}
+func (m *Metrics) ObserveExecLatency(ctx context.Context, id string, dur time.Duration) {
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		if eo, ok := m.executorExecLatencySeconds.WithLabelValues(id).(prometheus.ExemplarObserver); ok {
+			eo.ObserveWithExemplar(dur.Seconds(), prometheus.Labels{
+				traceIDKey: sc.TraceID().String(),
+			})
+
+			return
+		}
+	}
+
+	m.executorExecLatencySeconds.WithLabelValues(id).Observe(dur.Seconds())
+
+}
+func (m *Metrics) IncExecutorNextCalls(id string) {
+	m.executorNextTotal.WithLabelValues(id).Inc()
+}
+func (m *Metrics) IncSelectorSelectCalls() {
+	m.selectorSelectTotal.Inc()
+}
+func (m *Metrics) IncSelectorSelectErrors() {
+	m.selectorSelectFailed.Inc()
+}
+
 func (m *Metrics) RegisterCollector(collector prometheus.Collector) {
 	m.collectors = append(m.collectors, collector)
 }
@@ -214,6 +284,13 @@ func (m *Metrics) Registry() (*prometheus.Registry, error) {
 		m.publicKeyRequestsTotal,
 		m.publicKeyRequestsFailed,
 		m.publicKeyRequestsLatencySeconds,
+		m.schedulerNextTotal,
+		m.executorExecTotal,
+		m.executorExecFailed,
+		m.executorExecLatencySeconds,
+		m.executorNextTotal,
+		m.selectorSelectTotal,
+		m.selectorSelectFailed,
 	} {
 		err := reg.Register(metric)
 		if err != nil {

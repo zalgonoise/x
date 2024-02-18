@@ -25,5 +25,14 @@ func (noOp) ObserveServiceDeletionLatency(context.Context, time.Duration)       
 func (noOp) IncPubKeyRequests()                                                     {}
 func (noOp) IncPubKeyRequestFailed()                                                {}
 func (noOp) ObservePubKeyRequestLatency(context.Context, time.Duration)             {}
-func (noOp) RegisterCollector(prometheus.Collector)                                 {}
-func (noOp) Registry() (*prometheus.Registry, error)                                { return nil, nil }
+
+func (noOp) IncSchedulerNextCalls()                                               {}
+func (noOp) IncExecutorExecCalls(id string)                                       {}
+func (noOp) IncExecutorExecErrors(id string)                                      {}
+func (noOp) ObserveExecLatency(ctx context.Context, id string, dur time.Duration) {}
+func (noOp) IncExecutorNextCalls(id string)                                       {}
+func (noOp) IncSelectorSelectCalls()                                              {}
+func (noOp) IncSelectorSelectErrors()                                             {}
+
+func (noOp) RegisterCollector(prometheus.Collector)  {}
+func (noOp) Registry() (*prometheus.Registry, error) { return nil, nil }
