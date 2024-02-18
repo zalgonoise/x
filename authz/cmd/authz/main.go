@@ -21,7 +21,9 @@ import (
 	"github.com/zalgonoise/x/authz/log"
 	"github.com/zalgonoise/x/authz/metrics"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
+	"github.com/zalgonoise/x/authz/tracing"
 	"github.com/zalgonoise/x/cli"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -72,12 +74,17 @@ var (
 func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
 	fs := flag.NewFlagSet("ca", flag.ExitOnError)
 
-	// TODO: add configurable tracing backend
 	dbURI := fs.String("db", "", "the path to the SQLite DB file to store services and their certificates")
 	privateKey := fs.String("private-key", "", "the path to the ECDSA private key file to use for the certificate authority")
 	httpPort := fs.Int("http-port", defaultHTTPPort, "the exposed HTTP port for the CA's API")
 	grpcPort := fs.Int("grpc-port", defaultGRPCPort, "the exposed gRPC port for the CA's API")
 	dur := fs.Int("dur", 24, "duration to use on new certificate's expiry")
+	cleanupTimeout := fs.Duration("cleanup-timeout", 5*time.Minute, "timeout duration when running DB cleanup on expired certificates")
+	cleanupSchedule := fs.String("cleanup-cron", "0 6 * * *", "cron schedule to run DB cleanup on expired certificates")
+	tracerURL := fs.String("tracer-url", "", "URL for the tracing backend")
+	tracerUsername := fs.String("tracer-username", "", "username for the tracing backend, if required")
+	tracerPassword := fs.String("tracer-password", "", "password for the tracing backend, if required")
+	tracerTimeout := fs.Duration("tracer-timeout", 2*time.Minute, "timeout when connecting to the tracing backend")
 
 	if *httpPort <= 0 {
 		*httpPort = defaultHTTPPort
@@ -94,16 +101,37 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		*dbURI = defaultDB
 	}
 
-	logger.DebugContext(ctx, "preparing database")
+	logger.DebugContext(ctx, "preparing tracer")
 
-	// TODO: add tracer init logic
+	var (
+		tracer      = noop.NewTracerProvider().Tracer(tracing.ServiceNameCA)
+		tracingDone = func(context.Context) error { return nil }
+	)
+
+	if *tracerURL != "" {
+		exporter, err := tracing.GRPCExporter(ctx, *tracerURL,
+			tracing.WithCredentials(*tracerUsername, *tracerPassword),
+			tracing.WithTimeout(*tracerTimeout),
+		)
+
+		if err != nil {
+			return 1, err
+		}
+
+		tracingDone, err = tracing.Init(ctx, tracing.ServiceNameCA, exporter)
+		if err != nil {
+			return 1, err
+		}
+
+		tracer = tracing.Tracer(tracing.ServiceNameCA)
+	}
+
+	logger.DebugContext(ctx, "preparing database")
 
 	db, err := database.Open(*dbURI)
 	if err != nil {
 		return 1, err
 	}
-
-	defer db.Close()
 
 	if err = database.Migrate(ctx, db, database.CAService, logger); err != nil {
 		return 1, err
@@ -130,10 +158,12 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 
 	m := metrics.NewMetrics()
 
-	// TODO: add configurable cleanup cron
 	repo, err := repository.NewCertificateAuthority(db,
 		repository.WithLogger(logger),
 		repository.WithMetrics(m),
+		repository.WithTrace(tracer),
+		repository.WithCleanupTimeout(*cleanupTimeout),
+		repository.WithCleanupSchedule(*cleanupSchedule),
 	)
 	if err != nil {
 		return 1, err
@@ -143,6 +173,8 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		repo,
 		key,
 		ca.WithLogger(logger),
+		ca.WithMetrics(m),
+		ca.WithTracer(tracer),
 		ca.WithTemplate(ca.WithDurMonth(*dur)),
 	)
 
@@ -189,6 +221,14 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 	}
 
 	grpcServer.Shutdown(shutdownCtx)
+
+	if err = tracingDone(shutdownCtx); err != nil {
+		return 1, err
+	}
+
+	if err = repo.Close(); err != nil {
+		return 1, err
+	}
 
 	return 0, nil
 }
