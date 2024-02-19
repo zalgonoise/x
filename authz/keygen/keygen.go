@@ -12,6 +12,8 @@ import (
 	"github.com/zalgonoise/x/errs"
 )
 
+const typeCertificate = "CERTIFICATE"
+
 const (
 	errDomain = errs.Domain("x/authz/keygen")
 
@@ -77,6 +79,24 @@ func DecodePublic(pemEncodedPub []byte) (*ecdsa.PublicKey, error) {
 	}
 
 	return pubKey, nil
+}
+
+func EncodeCertificate(template, parent *x509.Certificate, pub *ecdsa.PublicKey, priv *ecdsa.PrivateKey) ([]byte, error) {
+	signedCertBytes, err := x509.CreateCertificate(rand.Reader, template, parent, pub, priv)
+	if err != nil {
+		return nil, err
+	}
+
+	return pem.EncodeToMemory(&pem.Block{Type: typeCertificate, Bytes: signedCertBytes}), nil
+}
+
+func DecodeCertificate(cert []byte) (*x509.Certificate, error) {
+	block, _ := pem.Decode(cert)
+	if block == nil {
+		return nil, ErrInvalidPEM
+	}
+
+	return x509.ParseCertificate(block.Bytes)
 }
 
 type ECDSASigner struct {
