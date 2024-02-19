@@ -1282,6 +1282,236 @@ var _ interface {
 	ErrorName() string
 } = CertificateResponseValidationError{}
 
+// Validate checks the field values on VerificationRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *VerificationRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on VerificationRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// VerificationRequestMultiError, or nil if none found.
+func (m *VerificationRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *VerificationRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetService()) < 1 {
+		err := VerificationRequestValidationError{
+			field:  "Service",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetCertificate()) < 1 {
+		err := VerificationRequestValidationError{
+			field:  "Certificate",
+			reason: "value length must be at least 1 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return VerificationRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// VerificationRequestMultiError is an error wrapping multiple validation
+// errors returned by VerificationRequest.ValidateAll() if the designated
+// constraints aren't met.
+type VerificationRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m VerificationRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m VerificationRequestMultiError) AllErrors() []error { return m }
+
+// VerificationRequestValidationError is the validation error returned by
+// VerificationRequest.Validate if the designated constraints aren't met.
+type VerificationRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e VerificationRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e VerificationRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e VerificationRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e VerificationRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e VerificationRequestValidationError) ErrorName() string {
+	return "VerificationRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e VerificationRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sVerificationRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = VerificationRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = VerificationRequestValidationError{}
+
+// Validate checks the field values on VerificationResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *VerificationResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on VerificationResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// VerificationResponseMultiError, or nil if none found.
+func (m *VerificationResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *VerificationResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Valid
+
+	// no validation rules for Reason
+
+	if len(errors) > 0 {
+		return VerificationResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// VerificationResponseMultiError is an error wrapping multiple validation
+// errors returned by VerificationResponse.ValidateAll() if the designated
+// constraints aren't met.
+type VerificationResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m VerificationResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m VerificationResponseMultiError) AllErrors() []error { return m }
+
+// VerificationResponseValidationError is the validation error returned by
+// VerificationResponse.Validate if the designated constraints aren't met.
+type VerificationResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e VerificationResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e VerificationResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e VerificationResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e VerificationResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e VerificationResponseValidationError) ErrorName() string {
+	return "VerificationResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e VerificationResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sVerificationResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = VerificationResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = VerificationResponseValidationError{}
+
 // Validate checks the field values on DeletionRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.
