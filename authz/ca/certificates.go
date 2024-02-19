@@ -2,10 +2,8 @@ package ca
 
 import (
 	"crypto/ecdsa"
-	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/pem"
 	"net"
 	"net/url"
 	"time"
@@ -14,17 +12,10 @@ import (
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 )
 
-func newCertificate(template, parent *x509.Certificate, pub *ecdsa.PublicKey, priv *ecdsa.PrivateKey) ([]byte, error) {
-	signedCertBytes, err := x509.CreateCertificate(rand.Reader, template, parent, pub, priv)
-	if err != nil {
-		return nil, err
+func toCSR(name string, pub *ecdsa.PublicKey, req *pb.CSR) *x509.CertificateRequest {
+	csr := &x509.CertificateRequest{
+		PublicKey: pub,
 	}
-
-	return pem.EncodeToMemory(&pem.Block{Type: typeCertificate, Bytes: signedCertBytes}), nil
-}
-
-func toCSR(name string, req *pb.CSR) *x509.CertificateRequest {
-	csr := &x509.CertificateRequest{}
 
 	if req == nil {
 		req = new(pb.CSR)
