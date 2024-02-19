@@ -208,6 +208,58 @@
         ]
       }
     },
+    "/v1/ca/services/{service}/verify": {
+      "post": {
+        "summary": "Verifies a certificate for a given service, based on the service's stored public key",
+        "description": "This endpoint receives certificate verification requests, based on the stored public key for a given service.",
+        "operationId": "CertificateAuthority_VerifyCertificate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1VerificationResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "service",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CertificateAuthorityVerifyCertificateBody"
+            }
+          }
+        ],
+        "tags": [
+          "Certificates"
+        ]
+      }
+    },
     "/v1/login": {
       "post": {
         "summary": "Processes a user login request",
@@ -366,6 +418,15 @@
         },
         "signing_req": {
           "$ref": "#/definitions/v1CSR"
+        }
+      }
+    },
+    "CertificateAuthorityVerifyCertificateBody": {
+      "type": "object",
+      "properties": {
+        "certificate": {
+          "type": "string",
+          "format": "byte"
         }
       }
     },
@@ -720,6 +781,17 @@
         },
         "password_set": {
           "type": "boolean"
+        }
+      }
+    },
+    "v1VerificationResponse": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
         }
       }
     }
