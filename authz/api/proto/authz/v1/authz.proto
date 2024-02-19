@@ -80,6 +80,19 @@ service CertificateAuthority {
     };
   }
 
+  rpc VerifyCertificate(VerificationRequest) returns (VerificationResponse) {
+    option (google.api.http) = {
+      post: "/v1/ca/services/{service}/verify"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Verifies a certificate for a given service, based on the service's stored public key"
+      description: "This endpoint receives certificate verification requests, based on the stored public key for a given service."
+      tags: "Certificates"
+    };
+  }
+
   rpc DeleteService(DeletionRequest) returns (DeletionResponse) {
     option (google.api.http) = {
       post: "/v1/ca/services/{service}/delete"
@@ -173,6 +186,16 @@ message Attribute {
 
 message CertificateResponse {
   bytes certificate = 1 [json_name="certificate"];
+}
+
+message VerificationRequest {
+  string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
+  bytes certificate = 2 [json_name="certificate", (validate.rules).bytes.min_len = 1];
+}
+
+message VerificationResponse {
+  bool valid = 1 [json_name="valid"];
+  string reason = 2 [json_name="reason"];
 }
 
 message DeletionRequest {
