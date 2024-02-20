@@ -356,7 +356,7 @@
       "post": {
         "summary": "Processes a request for an authorization token",
         "description": "This endpoint receives user's challenge response, which are replied to with an authentication token if valid.",
-        "operationId": "Authz_GetToken",
+        "operationId": "Authz_Token",
         "responses": {
           "200": {
             "description": "A successful response.",
