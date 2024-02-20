@@ -259,7 +259,7 @@ var CertificateAuthority_ServiceDesc = grpc.ServiceDesc{
 const (
 	Authz_Register_FullMethodName = "/authz.v1.Authz/Register"
 	Authz_Login_FullMethodName    = "/authz.v1.Authz/Login"
-	Authz_GetToken_FullMethodName = "/authz.v1.Authz/GetToken"
+	Authz_Token_FullMethodName    = "/authz.v1.Authz/Token"
 )
 
 // AuthzClient is the client API for Authz service.
@@ -268,7 +268,7 @@ const (
 type AuthzClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
-	GetToken(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
+	Token(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
 }
 
 type authzClient struct {
@@ -297,9 +297,9 @@ func (c *authzClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.
 	return out, nil
 }
 
-func (c *authzClient) GetToken(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
+func (c *authzClient) Token(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
 	out := new(TokenResponse)
-	err := c.cc.Invoke(ctx, Authz_GetToken_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Authz_Token_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func (c *authzClient) GetToken(ctx context.Context, in *TokenRequest, opts ...gr
 type AuthzServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	GetToken(context.Context, *TokenRequest) (*TokenResponse, error)
+	Token(context.Context, *TokenRequest) (*TokenResponse, error)
 	mustEmbedUnimplementedAuthzServer()
 }
 
@@ -326,8 +326,8 @@ func (UnimplementedAuthzServer) Register(context.Context, *RegisterRequest) (*Re
 func (UnimplementedAuthzServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthzServer) GetToken(context.Context, *TokenRequest) (*TokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetToken not implemented")
+func (UnimplementedAuthzServer) Token(context.Context, *TokenRequest) (*TokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Token not implemented")
 }
 func (UnimplementedAuthzServer) mustEmbedUnimplementedAuthzServer() {}
 
@@ -378,20 +378,20 @@ func _Authz_Login_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Authz_GetToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Authz_Token_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthzServer).GetToken(ctx, in)
+		return srv.(AuthzServer).Token(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Authz_GetToken_FullMethodName,
+		FullMethod: Authz_Token_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthzServer).GetToken(ctx, req.(*TokenRequest))
+		return srv.(AuthzServer).Token(ctx, req.(*TokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -412,8 +412,8 @@ var Authz_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Authz_Login_Handler,
 		},
 		{
-			MethodName: "GetToken",
-			Handler:    _Authz_GetToken_Handler,
+			MethodName: "Token",
+			Handler:    _Authz_Token_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
