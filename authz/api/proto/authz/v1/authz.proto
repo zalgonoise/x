@@ -238,7 +238,7 @@ service Authz {
     };
   }
 
-  rpc GetToken(TokenRequest) returns (TokenResponse) {
+  rpc Token(TokenRequest) returns (TokenResponse) {
     option (google.api.http) = {
       post: "/v1/token"
       body: "*"
