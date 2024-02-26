@@ -34,6 +34,8 @@ type IntervalSet struct {
 	i    Interval
 }
 
+// Add joins the Interval i and its values to the Timeframe t, while ordering its
+// previously inserted Interval(s) in the process.
 func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) error {
 	if i.To.Before(i.From) {
 		return errZeroOrNegativeDur
@@ -47,8 +49,15 @@ func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) error {
 		return nil
 	}
 
+	// TODO: what if we're adding an interval way back in the past?
+	//
+	// needs to scan the entire indexed keys to match any overlaps within the
+	// Interval i's From and To values
 	last := t.Index.Keys[len(t.Index.Keys)-1]
 	lastVal := t.Index.values[last]
+
+	// iterative process to join intervals if needed; should cycle through
+	// all occurrences where current interval overlaps
 	sets, err := t.split(last, i)
 	if err != nil {
 		return err
@@ -183,12 +192,14 @@ func (t *Timeframe[K, T]) split(cur, next Interval) ([]IntervalSet, error) {
 	return nil, errTimeSplitFailed
 }
 
+// Seq describes a sequence of iterable items, which takes a yield func which will be used
+// to perform a certain operation on each yielded item throughout the iteration
+//
 // ref: https://github.com/golang/go/issues/61899
-
 type Seq[T, K any] func(yield func(T, K) bool) bool
 
-// All returns an iterator over the values in the slice,
-// starting with s[0].
+// All returns an iterator over the values in the Timeframe,
+// through the indexed Interval values ordered by their From time.Time value.
 func (t *Timeframe[K, T]) All() Seq[Interval, map[K]T] {
 	return func(yield func(Interval, map[K]T) bool) bool {
 		keys := t.Index.Keys
@@ -208,6 +219,8 @@ func (t *Timeframe[K, T]) All() Seq[Interval, map[K]T] {
 	}
 }
 
+// Append iterates through the input Seq and adds all intervals and respective values
+// to the Timeframe t.
 func (t *Timeframe[K, T]) Append(seq Seq[Interval, map[K]T]) (err error) {
 	if !seq(func(interval Interval, m map[K]T) bool {
 		if err = t.Add(interval, m); err != nil {
@@ -226,6 +239,9 @@ func (t *Timeframe[K, T]) Append(seq Seq[Interval, map[K]T]) (err error) {
 	return nil
 }
 
+// Merge joins the intervals and respective values of the Timeframe tf into the Timeframe t,
+// by extracting a Seq of the same items from tf using Timeframe.All, and adding them into
+// Timeframe t using Timeframe.Append.
 func (t *Timeframe[K, T]) Merge(tf *Timeframe[K, T]) (err error) {
 	return t.Append(tf.All())
 }
