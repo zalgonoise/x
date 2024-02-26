@@ -8,53 +8,122 @@ import (
 func TestTimeframe(t *testing.T) {
 	interval1 := Interval{
 		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		Dur:  12 * time.Hour,
+		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
 	interval2 := Interval{
 		From: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-		Dur:  12 * time.Hour,
+		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
 	}
 
-	kv1 := []KV[string, string]{
-		{true, "a", "value"},
-		{true, "b", "value"},
+	// interleaved on tail
+	interval3 := Interval{
+		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
+	}
+	interval3Split1 := Interval{
+		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
+	}
+	interval3Split2 := Interval{
+		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
 
-	kv2 := []KV[string, string]{
-		{true, "c", "value"},
-		{true, "d", "value"},
+	// interleaved on head
+	interval4 := Interval{
+		From: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
+	}
+
+	interval4Split1 := Interval{
+		From: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+	}
+	interval4Split2 := Interval{
+		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
+	}
+	interval4Split3 := Interval{
+		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	}
+
+	// interleaved in the middle
+	interval5 := Interval{
+		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 16, 0, 0, 0, time.UTC),
+	}
+
+	interval5Split1 := Interval{
+		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
+	}
+	interval5Split2 := Interval{
+		From: time.Date(2024, 1, 1, 16, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	}
+
+	kv1 := map[string]string{
+		"a": "value",
+		"b": "value",
+	}
+
+	kv2 := map[string]string{
+		"c": "value",
+		"d": "value",
 	}
 
 	for _, testcase := range []struct {
 		name  string
-		input []KV[Interval, []KV[string, string]]
+		input map[Interval]map[string]string
 		print []Interval
 	}{
 		{
 			name: "sequential",
-			input: []KV[Interval, []KV[string, string]]{
-				{true, interval1, kv1},
-				{true, interval2, kv2},
+			input: map[Interval]map[string]string{
+				interval1: kv1,
+				interval2: kv2,
 			},
 			print: []Interval{interval1, interval2},
+		},
+		{
+			name: "interleaved/on_tail",
+			input: map[Interval]map[string]string{
+				interval1: kv1,
+				interval3: kv2,
+			},
+			print: []Interval{interval3Split1, interval3Split2, interval2},
+		},
+		{
+			name: "interleaved/on_head",
+			input: map[Interval]map[string]string{
+				interval1: kv1,
+				interval4: kv2,
+			},
+			print: []Interval{interval4Split1, interval4Split2, interval4Split3},
+		},
+		{
+			name: "interleaved/on_middle",
+			input: map[Interval]map[string]string{
+				interval1: kv1,
+				interval5: kv2,
+			},
+			print: []Interval{interval5Split1, interval5, interval5Split2},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			tf := NewTimeframe[string, string]()
 
-			for i := range testcase.input {
-				err := tf.Add(testcase.input[i].Key, testcase.input[i].Value)
+			for interval, values := range testcase.input {
+				err := tf.Add(interval, values)
 				isEqual(t, nil, err)
 			}
 
-			newTF, err := tf.Organize(tf.All())
-			isEqual(t, nil, err)
-
 			for i := range testcase.print {
-				itf, ok := newTF.Index.values[testcase.print[i]]
+				itf, ok := tf.Index.values[testcase.print[i]]
 				isEqual(t, true, ok)
 
-				t.Log(itf.Keys)
+				t.Log(itf)
 			}
 		})
 	}

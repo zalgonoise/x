@@ -1,8 +1,8 @@
 package mapping
 
 import (
-	"cmp"
 	"errors"
+	"maps"
 	"time"
 )
 
@@ -12,29 +12,20 @@ var (
 	errZeroOrNegativeDur     = errors.New("interval cannot end at the same time or before start")
 	errOverlappingTimeframes = errors.New("overlapping timeframes")
 	errGapBetweenTimeframes  = errors.New("gap between timeframes")
-	errOrganizeFailed        = errors.New("failed to organize timeframe")
-	errIntervalNotFound      = errors.New("interval not found")
+	errAppendFailed          = errors.New("failed to append to timeframe")
+	errTimeSplitFailed       = errors.New("failed to split time intervals")
 )
 
 type Interval struct {
 	From time.Time
-	// TODO: benchmark this approach; if another time.Time for a To value isn't preferable
-	To time.Time
-}
-
-type KV[K comparable, T any] struct {
-	// TODO: should *Timeframe[K, T].Add(Interval, []KV) accept an *Index[K, T] instead?
-	Valid bool
-
-	Key   K
-	Value T
+	To   time.Time
 }
 
 type Timeframe[K comparable, T any] struct {
 	noOverlap bool
 	maxGap    time.Duration
 
-	Index *Index[Interval, *Index[K, T]]
+	Index *Index[Interval, map[K]T]
 }
 
 type IntervalSet struct {
@@ -43,50 +34,127 @@ type IntervalSet struct {
 	i    Interval
 }
 
-func split(cur, next Interval) []IntervalSet {
+func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) error {
+	if i.To.Before(i.From) {
+		return errZeroOrNegativeDur
+	}
+
+	if len(t.Index.Keys) == 0 {
+		t.Index.Set(i, func(old map[K]T) (map[K]T, bool) {
+			return values, true
+		})
+
+		return nil
+	}
+
+	last := t.Index.Keys[len(t.Index.Keys)-1]
+	lastVal := t.Index.values[last]
+	sets, err := t.split(last, i)
+	if err != nil {
+		return err
+	}
+
 	switch {
+	case len(sets) == 1 && sets[0].cur && sets[0].next:
+		t.Index.values[last] = coalesce(lastVal, values)
+	// keep last as-is
+	case len(sets) == 2 && sets[0].i == last:
+		t.Index.Set(i, func(old map[K]T) (map[K]T, bool) {
+			return values, true
+		})
+	default:
+		t.Index.Keys = t.Index.Keys[:len(t.Index.Keys)-1]
+		delete(t.Index.values, last)
+
+		for idx := range sets {
+			switch {
+			case sets[idx].cur && sets[idx].next:
+				valuesCopy := make(map[K]T, len(values))
+				maps.Copy(valuesCopy, values)
+
+				t.Index.Set(sets[idx].i, func(old map[K]T) (map[K]T, bool) {
+					return coalesce(valuesCopy, lastVal), true
+				})
+			case sets[idx].cur && !sets[idx].next:
+				t.Index.Set(sets[idx].i, func(old map[K]T) (map[K]T, bool) {
+					return lastVal, true
+				})
+			case !sets[idx].cur && sets[idx].next:
+				t.Index.Set(sets[idx].i, func(old map[K]T) (map[K]T, bool) {
+					return values, true
+				})
+			}
+		}
+	}
+
+	return nil
+}
+
+func (t *Timeframe[K, T]) split(cur, next Interval) ([]IntervalSet, error) {
+	switch {
+	// next is after
 	case cur.To.Before(next.From):
-		return []IntervalSet{{cur: true, i: cur}, {next: true, i: next}}
+		if next.From.Sub(cur.To) > t.maxGap {
+			return nil, errGapBetweenTimeframes
+		}
+
+		return []IntervalSet{{cur: true, i: cur}, {next: true, i: next}}, nil
+
+	// cur is after
 	case cur.From.After(next.To):
-		return []IntervalSet{{next: true, i: next}, {cur: true, i: cur}}
+		if cur.From.Sub(next.To) > t.maxGap {
+			return nil, errGapBetweenTimeframes
+		}
+
+		return []IntervalSet{{next: true, i: next}, {cur: true, i: cur}}, nil
+
+	// overlapping start
 	case cur.From.Equal(next.From):
+		if t.noOverlap {
+			return nil, errOverlappingTimeframes
+		}
+
 		switch cur.To.Compare(next.To) {
 		case -1: // before
 			return []IntervalSet{
 				{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
 				{next: true, i: Interval{From: cur.To, To: next.To}},
-			}
+			}, nil
 		case 1: // after
 			return []IntervalSet{
 				{cur: true, next: true, i: Interval{From: cur.From, To: next.To}},
 				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}
+			}, nil
 		case 0: // equal
 			return []IntervalSet{
 				{cur: true, next: true, i: cur},
-			}
+			}, nil
 		}
 
 	// overlap: portion of end
 	case next.From.After(cur.From):
+		if t.noOverlap {
+			return nil, errOverlappingTimeframes
+		}
+
 		switch next.To.Compare(cur.To) {
 		case 1: // after; next goes beyond cur
 			return []IntervalSet{
 				{cur: true, i: Interval{From: cur.From, To: next.From}},
 				{cur: true, next: true, i: Interval{From: next.From, To: cur.To}},
 				{next: true, i: Interval{From: cur.To, To: next.To}},
-			}
+			}, nil
 		case -1: // before; next is within cur
 			return []IntervalSet{
 				{cur: true, i: Interval{From: cur.From, To: next.From}},
 				{cur: true, next: true, i: Interval{From: next.From, To: next.To}},
 				{next: true, i: Interval{From: next.To, To: cur.To}},
-			}
+			}, nil
 		case 0:
 			return []IntervalSet{
 				{cur: true, i: Interval{From: cur.From, To: next.From}},
 				{cur: true, next: true, i: Interval{From: next.From, To: next.To}},
-			}
+			}, nil
 		}
 
 	// overlap: portion of start
@@ -97,166 +165,22 @@ func split(cur, next Interval) []IntervalSet {
 				{next: true, i: Interval{From: next.From, To: cur.From}},
 				{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
 				{next: true, i: Interval{From: cur.To, To: next.To}},
-			}
+			}, nil
 		case -1:
 			return []IntervalSet{
 				{next: true, i: Interval{From: next.From, To: cur.From}},
 				{cur: true, next: true, i: Interval{From: cur.From, To: next.To}},
 				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}
+			}, nil
 		case 0:
 			return []IntervalSet{
 				{next: true, i: Interval{From: next.From, To: cur.From}},
 				{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
-			}
+			}, nil
 		}
 	}
 
-	return nil
-}
-
-//func (t *Timeframe[K, T]) organize(idx int, i Interval, values []KV[K, T]) error {
-//	// format input
-//	keys := make([]K, 0, len(values))
-//	vals := make(map[K]T, len(values))
-//
-//	for vi := range values {
-//		keys = append(keys, values[vi].Key)
-//		vals[values[vi].Key] = values[vi].Value
-//	}
-//
-//	// retrieve old entry
-//	storedInterval := t.Index.Keys[idx]
-//	storedValues, ok := t.Index.values[storedInterval]
-//	if !ok {
-//		return fmt.Errorf("%w: from: %s ; to: %s",
-//			errIntervalNotFound,
-//			storedInterval.From.String(), storedInterval.To.String(),
-//		)
-//	}
-//
-//	// remove old entry
-//	t.Index.Keys = append(t.Index.Keys[:idx], t.Index.Keys[idx+1:]...)
-//	delete(t.Index.values, storedInterval)
-//
-//	// modify entries
-//	switch {
-//	// overlap: portion of end
-//	case storedInterval.From.Before(i.From) && storedInterval.To.After(i.From):
-//		t.Index.Set(Interval{
-//			From: storedInterval.From,
-//			To:   i.From,
-//		}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//			return storedValues, true
-//		})
-//
-//		switch {
-//		case storedInterval.To.After(i.To):
-//			t.Index.Set(Interval{
-//				From: i.From,
-//				To:   i.To,
-//			}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//				return &Index[K, T]{
-//					Keys:   slices.Concat(storedValues.Keys, keys),
-//					values: coalesce(vals, storedValues.values),
-//				}, true
-//			})
-//
-//			t.Index.Set(Interval{
-//				From: i.To,
-//				To:   storedInterval.To,
-//			}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//				return storedValues, true
-//			})
-//		default:
-//		}
-//
-//	// overlap: portion of start
-//	case storedInterval.From.Before(i.To) && storedInterval.To.After(i.To):
-//
-//	}
-//
-//	// store modified entries
-//
-//	return nil
-//}
-
-func (t *Timeframe[K, T]) Add(i Interval, values []KV[K, T]) error {
-	// check overlaps
-	intervals := t.Index.Keys
-
-	for idx := range intervals {
-		switch {
-		// ends before this one starts
-		case intervals[idx].To.Before(i.From):
-			continue
-		// starts before this one ends
-		case intervals[idx].From.After(i.To):
-			continue
-		default:
-			//return t.organize(idx, i, values)
-		}
-	}
-
-	// insert new data
-	t.Index.Set(i, func(old *Index[K, T]) (*Index[K, T], bool) {
-		var set bool
-
-		if old == nil {
-			old = &Index[K, T]{
-				Keys:   make([]K, 0, len(values)),
-				values: make(map[K]T, len(values)),
-			}
-		}
-
-		for idx := range values {
-			old.Set(values[idx].Key, func(old T) (T, bool) {
-				return values[idx].Value, true
-			})
-
-			set = true
-		}
-
-		return old, set
-	})
-
-	return nil
-}
-
-//func (t *Timeframe[K, T]) Add(i Interval, values []KV[K, T]) error {
-//	if i.To.Before(i.From) {
-//		return errZeroOrNegativeDur
-//	}
-//
-//	t.Index.Set(i, func(old *Index[K, T]) (*Index[K, T], bool) {
-//		if old == nil {
-//			old = &Index[K, T]{
-//				Keys:   make([]K, 0, len(values)),
-//				values: make(map[K]T, len(values)),
-//			}
-//		}
-//
-//		var set bool
-//
-//		for idx := range values {
-//			if values[idx].Valid {
-//				set = true
-//
-//				old.Set(values[idx].Key, func(old T) (T, bool) {
-//					return values[idx].Value, true
-//				})
-//			}
-//		}
-//
-//		return old, set
-//	})
-//
-//	return nil
-//}
-
-type cache[K comparable, T any] struct {
-	interval Interval
-	value    *Index[K, T]
+	return nil, errTimeSplitFailed
 }
 
 // ref: https://github.com/golang/go/issues/61899
@@ -265,8 +189,8 @@ type Seq[T, K any] func(yield func(T, K) bool) bool
 
 // All returns an iterator over the values in the slice,
 // starting with s[0].
-func (t *Timeframe[K, T]) All() Seq[Interval, *Index[K, T]] {
-	return func(yield func(Interval, *Index[K, T]) bool) bool {
+func (t *Timeframe[K, T]) All() Seq[Interval, map[K]T] {
+	return func(yield func(Interval, map[K]T) bool) bool {
 		keys := t.Index.Keys
 
 		for i := range keys {
@@ -284,278 +208,31 @@ func (t *Timeframe[K, T]) All() Seq[Interval, *Index[K, T]] {
 	}
 }
 
-//func (t *Timeframe[K, T]) Organize(seq Seq[Interval, *Index[K, T]]) (*Timeframe[K, T], error) {
-//	// TODO: tidy up this method; break it down however possible
-//
-//	var (
-//		c   *cache[K, T]
-//		err error
-//
-//		tf = &Timeframe[K, T]{
-//			noOverlap: t.noOverlap,
-//			maxGap:    t.maxGap,
-//			Index: &Index[Interval, *Index[K, T]]{
-//				Keys:   make([]Interval, 0, len(t.Index.Keys)),
-//				zero:   t.Index.zero,
-//				cmp:    t.Index.cmp,
-//				values: make(map[Interval]*Index[K, T], len(t.Index.values)),
-//			},
-//		}
-//	)
-//
-//	if !seq(func(interval Interval, i *Index[K, T]) bool {
-//		if c == nil {
-//			c = &cache[K, T]{
-//				interval: interval,
-//				value:    i,
-//			}
-//
-//			return true
-//		}
-//
-//		prevStart := c.interval.From.UnixNano()
-//		curStart := interval.From.UnixNano()
-//		prevEnd := prevStart + int64(c.interval.Dur)
-//
-//		switch {
-//		case prevStart == curStart:
-//			// w/ overlap
-//			if t.noOverlap {
-//				err = errOverlappingTimeframes
-//
-//				return false
-//			}
-//
-//			curEnd := curStart + int64(interval.Dur)
-//
-//			switch {
-//			case curEnd == prevEnd:
-//				c.value.values = coalesce(c.value.values, i.values)
-//
-//				return true
-//			case prevEnd < curEnd:
-//				firstHalf := c.interval.Dur
-//				secHalf := interval.Dur - firstHalf
-//
-//				if !tf.Index.Set(Interval{
-//					From: c.interval.From,
-//					Dur:  firstHalf - 1,
-//				}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//					if old == nil {
-//						old = &Index[K, T]{
-//							values: coalesce(c.value.values, i.values),
-//						}
-//
-//						old.Keys = make([]K, 0, len(old.values))
-//
-//						for key := range old.values {
-//							old.Keys = append(old.Keys, key)
-//						}
-//
-//						return old, true
-//					}
-//
-//					old.values = coalesce(c.value.values, i.values)
-//
-//					return old, true
-//				}) {
-//					return false
-//				}
-//
-//				c.interval = Interval{
-//					From: interval.From.Add(firstHalf),
-//					Dur:  secHalf,
-//				}
-//				c.value = i
-//
-//				return true
-//
-//			case curEnd < prevEnd:
-//				firstHalf := interval.Dur
-//				secHalf := c.interval.Dur - firstHalf
-//
-//				if !tf.Index.Set(Interval{
-//					From: c.interval.From,
-//					Dur:  firstHalf - 1,
-//				}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//					if old == nil {
-//						old = &Index[K, T]{
-//							values: coalesce(c.value.values, i.values),
-//						}
-//
-//						old.Keys = make([]K, 0, len(old.values))
-//
-//						for key := range old.values {
-//							old.Keys = append(old.Keys, key)
-//						}
-//
-//						return old, true
-//					}
-//
-//					old.values = coalesce(c.value.values, i.values)
-//
-//					return old, true
-//				}) {
-//					return false
-//				}
-//
-//				c.interval = Interval{
-//					From: interval.From.Add(firstHalf),
-//					Dur:  interval.Dur - secHalf,
-//				}
-//
-//				return true
-//			}
-//
-//		case prevStart < curStart:
-//			curEnd := curStart + int64(interval.Dur)
-//
-//			switch {
-//			case prevEnd > curEnd:
-//				// w/ overlap
-//				if t.noOverlap {
-//					err = errOverlappingTimeframes
-//
-//					return false
-//				}
-//
-//				firstHalf := time.Duration(prevStart - curStart)
-//
-//				if !tf.Index.Set(Interval{
-//					From: c.interval.From,
-//					Dur:  firstHalf - 1,
-//				}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//					return c.value, true
-//				}) {
-//					return false
-//				}
-//
-//				if !tf.Index.Set(Interval{
-//					From: interval.From,
-//					Dur:  interval.Dur - 1,
-//				}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//					if old == nil {
-//						old = &Index[K, T]{
-//							values: coalesce(i.values, c.value.values),
-//						}
-//
-//						old.Keys = make([]K, 0, len(old.values))
-//
-//						for key := range old.values {
-//							old.Keys = append(old.Keys, key)
-//						}
-//
-//						return old, true
-//					}
-//
-//					old.values = coalesce(i.values, c.value.values)
-//
-//					return old, true
-//				}) {
-//					return false
-//				}
-//
-//				c.interval.From = c.interval.From.Add(firstHalf + interval.Dur)
-//
-//			case prevEnd > curStart:
-//				// w/ overlap
-//				if t.noOverlap {
-//					err = errOverlappingTimeframes
-//
-//					return false
-//				}
-//
-//				firstHalf := time.Duration(curStart - prevStart)
-//				secHalf := c.interval.Dur - firstHalf
-//
-//				if !tf.Index.Set(Interval{
-//					From: c.interval.From,
-//					Dur:  firstHalf - 1,
-//				}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//					return c.value, true
-//				}) {
-//					return false
-//				}
-//
-//				if !tf.Index.Set(Interval{
-//					From: interval.From,
-//					Dur:  secHalf,
-//				}, func(old *Index[K, T]) (*Index[K, T], bool) {
-//					if old == nil {
-//						old = &Index[K, T]{
-//							values: coalesce(c.value.values, i.values),
-//						}
-//
-//						old.Keys = make([]K, 0, len(old.values))
-//
-//						for key := range old.values {
-//							old.Keys = append(old.Keys, key)
-//						}
-//
-//						return old, true
-//					}
-//
-//					old.values = coalesce(c.value.values, i.values)
-//
-//					return old, true
-//				}) {
-//					return false
-//				}
-//
-//				c.interval = Interval{
-//					From: interval.From.Add(secHalf),
-//					Dur:  interval.Dur - secHalf,
-//				}
-//				c.value = i
-//
-//				return true
-//
-//			case prevEnd+int64(t.maxGap) < curStart:
-//				// w/ gap
-//				err = fmt.Errorf("%w: %s", errGapBetweenTimeframes, time.Duration(curStart-prevEnd).String())
-//
-//				return false
-//			default:
-//				ok := tf.Index.Set(c.interval, func(old *Index[K, T]) (*Index[K, T], bool) {
-//					return c.value, true
-//				})
-//
-//				c.interval = interval
-//				c.value = i
-//
-//				if !ok {
-//					return false
-//				}
-//			}
-//		}
-//
-//		return true
-//	}) {
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		return nil, errOrganizeFailed
-//	}
-//
-//	if c != nil {
-//		if !tf.Index.Set(c.interval, func(old *Index[K, T]) (*Index[K, T], bool) {
-//			return c.value, true
-//		}) {
-//			return nil, errOrganizeFailed
-//		}
-//	}
-//
-//	return tf, nil
-//}
+func (t *Timeframe[K, T]) Append(seq Seq[Interval, map[K]T]) (err error) {
+	if !seq(func(interval Interval, m map[K]T) bool {
+		if err = t.Add(interval, m); err != nil {
+			return false
+		}
+
+		return true
+	}) {
+		if err != nil {
+			return err
+		}
+
+		return errAppendFailed
+	}
+
+	return nil
+}
 
 func NewTimeframe[K comparable, T any]() *Timeframe[K, T] {
 	return &Timeframe[K, T]{
 		maxGap: defaultMaxGap,
-		Index: NewIndex[Interval, *Index[K, T]](
-			make(map[Interval]*Index[K, T]),
-			WithIndex[*Index[K, T]](func(a, b Interval) int {
-				return cmp.Compare(a.From.Unix(), b.From.Unix())
+		Index: NewIndex[Interval, map[K]T](
+			make(map[Interval]map[K]T),
+			WithIndex[map[K]T](func(a, b Interval) int {
+				return a.From.Compare(b.From)
 			}),
 		),
 	}
