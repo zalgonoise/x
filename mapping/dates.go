@@ -226,6 +226,10 @@ func (t *Timeframe[K, T]) Append(seq Seq[Interval, map[K]T]) (err error) {
 	return nil
 }
 
+func (t *Timeframe[K, T]) Merge(tf *Timeframe[K, T]) (err error) {
+	return t.Append(tf.All())
+}
+
 func NewTimeframe[K comparable, T any]() *Timeframe[K, T] {
 	return &Timeframe[K, T]{
 		maxGap: defaultMaxGap,
