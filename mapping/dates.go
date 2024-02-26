@@ -53,6 +53,15 @@ func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) error {
 	//
 	// needs to scan the entire indexed keys to match any overlaps within the
 	// Interval i's From and To values
+	//
+	// TestTimeframe --> interleaved/recursive: reproduces this event
+	//
+	// this would become more and more expensive the more passes we do through the data
+	// so organizing the intervals separately seems best. implemented within this function given the current logic,
+	// and certain keys and values get lost in the end. That is not ideal.
+	//
+	// for that we can split the intervals like it's done here (as it works) but in a new Index,
+	// and collecting the data into a set, concatenating it in the end.
 	last := t.Index.Keys[len(t.Index.Keys)-1]
 	lastVal := t.Index.values[last]
 
@@ -254,6 +263,7 @@ func NewTimeframe[K comparable, T any]() *Timeframe[K, T] {
 			WithIndex[map[K]T](func(a, b Interval) int {
 				return a.From.Compare(b.From)
 			}),
+			WithZero[Interval, map[K]T](nil),
 		),
 	}
 }

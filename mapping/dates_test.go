@@ -63,6 +63,46 @@ func TestTimeframe(t *testing.T) {
 		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
 
+	// interleaved recursively
+	interval6 := Interval{
+		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
+	}
+	interval7 := Interval{
+		From: time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
+	}
+	interval8 := Interval{
+		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 21, 0, 0, 0, time.UTC),
+	}
+
+	interval6Split1 := Interval{
+		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
+	}
+	interval6Split2 := Interval{
+		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
+	}
+	interval6Split3 := Interval{
+		From: time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
+	}
+
+	interval6Split4 := Interval{
+		From: time.Date(2024, 1, 1, 21, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
+	}
+	interval6Split5 := Interval{
+		From: time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
+	}
+	interval6Split6 := Interval{
+		From: time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	}
+
 	kv1 := map[string]string{
 		"a": "value",
 		"b": "value",
@@ -72,6 +112,10 @@ func TestTimeframe(t *testing.T) {
 		"c": "value",
 		"d": "value",
 	}
+
+	kv3 := map[string]string{"c": "value"}
+	kv4 := map[string]string{"d": "value"}
+	kv5 := map[string]string{"e": "value"}
 
 	for _, testcase := range []struct {
 		name  string
@@ -109,6 +153,18 @@ func TestTimeframe(t *testing.T) {
 				interval5: kv2,
 			},
 			print: []Interval{interval5Split1, interval5, interval5Split2},
+		},
+		{
+			name: "interleaved/recursive",
+			input: map[Interval]map[string]string{
+				interval1: kv1,
+				interval6: kv3,
+				interval7: kv4,
+				interval8: kv5,
+			},
+			print: []Interval{
+				interval6Split1, interval6Split2, interval6Split3, interval8, interval6Split4, interval6Split5, interval6Split6,
+			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
