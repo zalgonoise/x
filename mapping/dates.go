@@ -23,7 +23,7 @@ type Interval struct {
 
 type Timeframe[K comparable, T any] struct {
 	noOverlap bool
-	maxGap    time.Duration
+	//maxGap    time.Duration
 
 	Index *Index[Interval, map[K]T]
 }
@@ -112,17 +112,17 @@ func (t *Timeframe[K, T]) split(cur, next Interval) ([]IntervalSet, error) {
 	switch {
 	// next is after
 	case cur.To.Before(next.From):
-		if next.From.Sub(cur.To) > t.maxGap {
-			return nil, errGapBetweenTimeframes
-		}
+		//if next.From.Sub(cur.To) > t.maxGap {
+		//	return nil, errGapBetweenTimeframes
+		//}
 
 		return []IntervalSet{{cur: true, i: cur}, {next: true, i: next}}, nil
 
 	// cur is after
 	case cur.From.After(next.To):
-		if cur.From.Sub(next.To) > t.maxGap {
-			return nil, errGapBetweenTimeframes
-		}
+		//if cur.From.Sub(next.To) > t.maxGap {
+		//	return nil, errGapBetweenTimeframes
+		//}
 
 		return []IntervalSet{{next: true, i: next}, {cur: true, i: cur}}, nil
 
@@ -257,7 +257,7 @@ func (t *Timeframe[K, T]) Merge(tf *Timeframe[K, T]) (err error) {
 
 func NewTimeframe[K comparable, T any]() *Timeframe[K, T] {
 	return &Timeframe[K, T]{
-		maxGap: defaultMaxGap,
+		//maxGap: defaultMaxGap,
 		Index: NewIndex[Interval, map[K]T](
 			make(map[Interval]map[K]T),
 			WithIndex[map[K]T](func(a, b Interval) int {
