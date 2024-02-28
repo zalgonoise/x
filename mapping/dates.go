@@ -108,6 +108,27 @@ func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) error {
 	return nil
 }
 
+// TODO: needs rework with a different strategy, in order to flatten any type of Interval combination:
+//  1. iterate through all Interval values, and create an ordered slice of their From time.Time values, along with the
+//     index to the entry they are pointing to (that is starting)
+//  2. iterate through all Interval values, and create an ordered slice of their To time.Time values, along with the
+//     index to the entry they are pointing to (that is ending)
+//     -- this can be combined with step 1, where the indices are shared between starting and ending slices
+//  3. iterate through all From time.Time values, and find the following To time.Time value. This is the first reference
+//     point to that particular interval
+//     Then, iterate through the next From time.Time values to find another From value before the next To. This allows
+//     splitting Intervals according to their content; where the involved indices to the data can be referenced and
+//     aggregated if applicable.
+//  4. with the final Intervals and data indices, rebuild or initialize a new *Timeframe type with the flattened
+//     Intervals, and the aggregated data that they should have respectively.
+//     ---
+//     Ideally, this should be done separately from the Add method, to avoid multiple iterations on the underlying
+//     Timeframe Interval values. The All and Append methods can stay, however, with a similar sequence / iter approach
+//
+// split takes two Interval values, returning a slice of IntervalSet and an error.
+//
+// This method provides context to the caller on how many data points and their respective intervals of time and data,
+// when combining Timeframe Interval values.
 func (t *Timeframe[K, T]) split(cur, next Interval) ([]IntervalSet, error) {
 	switch {
 	// next is after
