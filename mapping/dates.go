@@ -222,15 +222,21 @@ func (t *Timeframe[K, T]) split(cur, next Interval) ([]IntervalSet, error) {
 	return nil, errTimeSplitFailed
 }
 
+// SeqKV describes a sequence of iterable items, which takes a yield func which will be used
+// to perform a certain operation on each yielded item throughout the iteration
+//
+// ref: https://github.com/golang/go/issues/61899
+type SeqKV[T, K any] func(yield func(T, K) bool) bool
+
 // Seq describes a sequence of iterable items, which takes a yield func which will be used
 // to perform a certain operation on each yielded item throughout the iteration
 //
 // ref: https://github.com/golang/go/issues/61899
-type Seq[T, K any] func(yield func(T, K) bool) bool
+type Seq[T any] func(yield func(T) bool) bool
 
 // All returns an iterator over the values in the Timeframe,
 // through the indexed Interval values ordered by their From time.Time value.
-func (t *Timeframe[K, T]) All() Seq[Interval, map[K]T] {
+func (t *Timeframe[K, T]) All() SeqKV[Interval, map[K]T] {
 	return func(yield func(Interval, map[K]T) bool) bool {
 		keys := t.Index.Keys
 
@@ -249,9 +255,9 @@ func (t *Timeframe[K, T]) All() Seq[Interval, map[K]T] {
 	}
 }
 
-// Append iterates through the input Seq and adds all intervals and respective values
+// Append iterates through the input SeqKV and adds all intervals and respective values
 // to the Timeframe t.
-func (t *Timeframe[K, T]) Append(seq Seq[Interval, map[K]T]) (err error) {
+func (t *Timeframe[K, T]) Append(seq SeqKV[Interval, map[K]T]) (err error) {
 	if !seq(func(interval Interval, m map[K]T) bool {
 		if err = t.Add(interval, m); err != nil {
 			return false
@@ -270,7 +276,7 @@ func (t *Timeframe[K, T]) Append(seq Seq[Interval, map[K]T]) (err error) {
 }
 
 // Merge joins the intervals and respective values of the Timeframe tf into the Timeframe t,
-// by extracting a Seq of the same items from tf using Timeframe.All, and adding them into
+// by extracting a SeqKV of the same items from tf using Timeframe.All, and adding them into
 // Timeframe t using Timeframe.Append.
 func (t *Timeframe[K, T]) Merge(tf *Timeframe[K, T]) (err error) {
 	return t.Append(tf.All())
