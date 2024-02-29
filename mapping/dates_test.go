@@ -168,15 +168,21 @@ func TestTimeframe(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			tf := NewTimeframe[string, string]()
+			tf := NewTimeframeV2[string, string]()
 
 			for interval, values := range testcase.input {
 				err := tf.Add(interval, values)
 				isEqual(t, nil, err)
 			}
 
+			tf, err := tf.Organize()
+			if err != nil {
+				t.Error(err)
+				t.Fail()
+			}
+
 			for i := range testcase.print {
-				itf, ok := tf.Index.values[testcase.print[i]]
+				itf, ok := tf.values[testcase.print[i]]
 				isEqual(t, true, ok)
 
 				t.Log(itf)
