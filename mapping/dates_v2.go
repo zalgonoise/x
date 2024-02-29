@@ -30,9 +30,29 @@ func (t *TimeframeV2[K, T]) Add(i Interval, values map[K]T) error {
 	return nil
 }
 
+// All returns an iterator over the values in the Timeframe,
+// through the indexed Interval values ordered by their From time.Time value.
+func (t *TimeframeV2[K, T]) All() SeqKV[Interval, map[K]T] {
+	return func(yield func(Interval, map[K]T) bool) bool {
+		keys := t.keys
+
+		for i := range keys {
+			values, ok := t.values[keys[i]]
+			if !ok {
+				continue
+			}
+
+			if !yield(keys[i], values) {
+				return false
+			}
+		}
+
+		return true
+	}
+}
+
 func (t *TimeframeV2[K, T]) Organize() (*TimeframeV2[K, T], error) {
 	cache := make([]DataInterval[K, T], 0, len(t.keys)*2)
-	final := make([]DataInterval[K, T], 0, len(t.keys)*2)
 	keys := make([]Interval, len(t.keys))
 	copy(keys, t.keys)
 
@@ -41,19 +61,28 @@ func (t *TimeframeV2[K, T]) Organize() (*TimeframeV2[K, T], error) {
 	})
 
 	for len(keys) > 0 {
+		key := keys[0]
+		keys = keys[1:]
+
 		if len(cache) == 0 {
 			cache = append(cache, DataInterval[K, T]{
-				Data:     t.values[keys[0]],
-				Interval: keys[0],
+				Data:     t.values[key],
+				Interval: key,
 			})
-
-			keys = keys[1:]
 
 			continue
 		}
 
-		key := keys[0]
 		conflicts := findConflicts(cache, key)
+
+		if len(conflicts) == 0 {
+			cache = append(cache, DataInterval[K, T]{
+				Data:     t.values[key],
+				Interval: key,
+			})
+
+			continue
+		}
 
 		for i := range conflicts {
 			sets, overlaps, err := split(conflicts[i].Interval, key)
@@ -65,17 +94,15 @@ func (t *TimeframeV2[K, T]) Organize() (*TimeframeV2[K, T], error) {
 				continue
 			}
 
-			cache = append(cache[:i], cache[i+1:]...)
-
 			for idx := range sets {
 				switch {
 				case sets[idx].cur && !sets[idx].next:
-					final = append(final, DataInterval[K, T]{
+					cache = append(cache, DataInterval[K, T]{
 						Data:     conflicts[i].Data,
 						Interval: sets[idx].i,
 					})
 				case !sets[idx].cur && sets[idx].next:
-					final = append(final, DataInterval[K, T]{
+					cache = append(cache, DataInterval[K, T]{
 						Data:     t.values[key],
 						Interval: sets[idx].i,
 					})
@@ -83,7 +110,7 @@ func (t *TimeframeV2[K, T]) Organize() (*TimeframeV2[K, T], error) {
 					dataCopy := maps.Clone(t.values[key])
 					coalesce(dataCopy, conflicts[i].Data)
 
-					final = append(final, DataInterval[K, T]{
+					cache = append(cache, DataInterval[K, T]{
 						Data:     dataCopy,
 						Interval: sets[idx].i,
 					})
@@ -93,12 +120,6 @@ func (t *TimeframeV2[K, T]) Organize() (*TimeframeV2[K, T], error) {
 	}
 
 	tf := NewTimeframeV2[K, T]()
-
-	for i := range final {
-		if err := tf.Add(final[i].Interval, final[i].Data); err != nil {
-			return nil, err
-		}
-	}
 
 	for i := range cache {
 		if err := tf.Add(cache[i].Interval, cache[i].Data); err != nil {
@@ -166,7 +187,7 @@ func split(cur, next Interval) ([]IntervalSet, bool, error) {
 			return []IntervalSet{
 				{cur: true, i: Interval{From: cur.From, To: next.From}},
 				{cur: true, next: true, i: Interval{From: next.From, To: next.To}},
-				{next: true, i: Interval{From: next.To, To: cur.To}},
+				{cur: true, i: Interval{From: next.To, To: cur.To}},
 			}, true, nil
 		case 0:
 			return []IntervalSet{
