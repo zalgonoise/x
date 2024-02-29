@@ -409,6 +409,80 @@ func Organize[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *Timeframe[
 	return tf, nil
 }
 
+func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[Interval, map[K]T], err error) {
+	cache := make([]DataInterval[K, T], 0, minAlloc)
+
+	if !seq(func(interval Interval, m map[K]T) bool {
+		if len(cache) == 0 {
+			cache = append(cache, DataInterval[K, T]{
+				Data:     m,
+				Interval: interval,
+			})
+
+			return true
+		}
+
+		conflicts := findConflicts(cache, interval)
+
+		if len(conflicts) == 0 {
+			cache = append(cache, DataInterval[K, T]{
+				Data:     m,
+				Interval: interval,
+			})
+
+			return true
+		}
+
+		for i := range conflicts {
+			sets, overlaps, err := split(conflicts[i].Interval, interval)
+			if err != nil {
+				return false
+			}
+
+			if !overlaps {
+				continue
+			}
+
+			for idx := range sets {
+				switch {
+				case sets[idx].cur && !sets[idx].next:
+					cache = append(cache, DataInterval[K, T]{
+						Data:     conflicts[i].Data,
+						Interval: sets[idx].i,
+					})
+				case !sets[idx].cur && sets[idx].next:
+					cache = append(cache, DataInterval[K, T]{
+						Data:     m,
+						Interval: sets[idx].i,
+					})
+				default:
+					dataCopy := maps.Clone(m)
+					coalesce(dataCopy, conflicts[i].Data)
+
+					cache = append(cache, DataInterval[K, T]{
+						Data:     dataCopy,
+						Interval: sets[idx].i,
+					})
+				}
+			}
+		}
+
+		return true
+	}) {
+		return nil, err
+	}
+
+	return func(yield func(Interval, map[K]T) bool) bool {
+		for i := range cache {
+			if !yield(cache[i].Interval, cache[i].Data) {
+				return false
+			}
+		}
+
+		return true
+	}, nil
+}
+
 // Append iterates through the input SeqKV and adds all intervals and respective values
 // to the Timeframe t.
 func (t *Timeframe[K, T]) Append(seq SeqKV[Interval, map[K]T]) (err error) {
