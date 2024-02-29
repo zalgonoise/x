@@ -1,6 +1,7 @@
 package mapping
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -168,24 +169,79 @@ func TestTimeframe(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			tf := NewTimeframeV2[string, string]()
+			tf := NewTimeframe[string, string]()
 
 			for interval, values := range testcase.input {
 				err := tf.Add(interval, values)
 				isEqual(t, nil, err)
 			}
 
-			tf, err := tf.Organize()
+			tf, err := Organize(tf.All())
 			if err != nil {
 				t.Error(err)
 				t.Fail()
 			}
 
 			for i := range testcase.print {
-				itf, ok := tf.values[testcase.print[i]]
+				itf, ok := tf.Index.values[testcase.print[i]]
 				isEqual(t, true, ok)
 
 				t.Log(itf)
+			}
+		})
+	}
+}
+
+func TestSplit(t *testing.T) {
+	interval1 := Interval{
+		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	}
+	interval2 := Interval{
+		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
+	}
+
+	i1Split1 := Interval{
+		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
+	}
+	i1Split2 := Interval{
+		From: time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	}
+
+	for _, testcase := range []struct {
+		name     string
+		cur      Interval
+		next     Interval
+		wants    []IntervalSet
+		overlaps bool
+		err      error
+	}{
+		{
+			name: "intersect/middle",
+			cur:  interval1,
+			next: interval2,
+			wants: []IntervalSet{
+				{cur: true, i: i1Split1},
+				{cur: true, next: true, i: interval2},
+				{cur: true, i: i1Split2},
+			},
+			overlaps: true,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			sets, overlaps, err := split(testcase.cur, testcase.next)
+			if err != nil {
+				isEqual(t, true, errors.Is(err, testcase.err))
+			}
+
+			isEqual(t, testcase.overlaps, overlaps)
+			isEqual(t, len(testcase.wants), len(sets))
+
+			for i, w := range testcase.wants {
+				isEqual(t, w, sets[i])
 			}
 		})
 	}
