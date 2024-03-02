@@ -33,30 +33,23 @@ func NewTimeFormatter[K comparable, T any](tf TimeSeq[K, T], opts ...cfg.Option[
 }
 
 func (t TimeFormatter[K, T]) Add(i Interval, values map[K]T) bool {
-	var (
-		from = i.From
-		to   = i.To
-		ok   bool
-	)
+	var ok bool
 
 	if t.fnFrom != nil {
-		from, ok = t.fnFrom(i.From)
+		i.From, ok = t.fnFrom(i.From)
 		if !ok {
 			return false
 		}
 	}
 
 	if t.fnTo != nil {
-		to, ok = t.fnTo(i.To)
+		i.To, ok = t.fnTo(i.To)
 		if !ok {
 			return false
 		}
 	}
 
-	return t.tf.Add(Interval{
-		From: from,
-		To:   to,
-	}, values)
+	return t.tf.Add(i, values)
 }
 
 func (t TimeFormatter[K, T]) All() SeqKV[Interval, map[K]T] {
