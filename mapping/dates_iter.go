@@ -1,6 +1,9 @@
 package mapping
 
-import "maps"
+import (
+	"maps"
+	"time"
+)
 
 // SeqKV describes a sequence of iterable items, which takes a yield func which will be used
 // to perform a certain operation on each yielded item throughout the iteration
@@ -134,6 +137,38 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 
 		return true
 	}, nil
+}
+
+func FormatTime[K comparable, T any](
+	seq SeqKV[Interval, map[K]T],
+	fnFrom func(time.Time) (time.Time, bool),
+	fnTo func(time.Time) (time.Time, bool),
+) SeqKV[Interval, map[K]T] {
+	if fnFrom == nil && fnTo == nil {
+		return seq
+	}
+
+	return func(yield func(Interval, map[K]T) bool) bool {
+		return seq(func(interval Interval, m map[K]T) bool {
+			var ok bool
+
+			if fnFrom != nil {
+				interval.From, ok = fnFrom(interval.From)
+				if !ok {
+					return false
+				}
+			}
+
+			if fnTo != nil {
+				interval.To, ok = fnTo(interval.To)
+				if !ok {
+					return false
+				}
+			}
+
+			return yield(interval, m)
+		})
+	}
 }
 
 func findConflicts[K comparable, T any](cache []DataInterval[K, T], cur Interval) []DataInterval[K, T] {
