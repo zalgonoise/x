@@ -223,7 +223,7 @@ func split(cur, next Interval) ([]IntervalSet, bool, error) {
 		}
 	}
 
-	return nil, false, errTimeSplitFailed
+	return nil, false, ErrTimeSplitFailed
 }
 
 func coalesce[K comparable, T any](start, next map[K]T) map[K]T {

@@ -62,7 +62,7 @@ func (t TimeFormatter[K, T]) Add(i Interval, values map[K]T) bool {
 
 func (t TimeFormatter[K, T]) Append(seq SeqKV[Interval, map[K]T]) (err error) {
 	if !seq(t.Add) {
-		return errAppendFailed
+		return ErrAppendFailed
 	}
 
 	return nil

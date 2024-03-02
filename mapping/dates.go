@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	errAppendFailed    = errors.New("failed to append to timeframe")
-	errTimeSplitFailed = errors.New("failed to split time intervals")
+	ErrAppendFailed    = errors.New("failed to append to timeframe")
+	ErrTimeSplitFailed = errors.New("failed to split time intervals")
 )
 
 // Timeframe stores values in intervals of time, as an Index of Interval and a map of types K and T.
@@ -68,7 +68,7 @@ func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) bool {
 // to the Timeframe t.
 func (t *Timeframe[K, T]) Append(seq SeqKV[Interval, map[K]T]) (err error) {
 	if !seq(t.Add) {
-		return errAppendFailed
+		return ErrAppendFailed
 	}
 
 	return nil
