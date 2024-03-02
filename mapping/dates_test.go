@@ -172,11 +172,11 @@ func TestTimeframe(t *testing.T) {
 			tf := NewTimeframe[string, string]()
 
 			for interval, values := range testcase.input {
-				err := tf.Add(interval, values)
-				isEqual(t, nil, err)
+				ok := tf.Add(interval, values)
+				isEqual(t, true, ok)
 			}
 
-			tf, err := Organize(tf.All())
+			tf, err := tf.Organize()
 			if err != nil {
 				t.Error(err)
 				t.Fail()
