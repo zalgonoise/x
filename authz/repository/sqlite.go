@@ -55,7 +55,7 @@ type Metrics interface {
 	IncSelectorSelectErrors()
 }
 
-type CertificateAuthority struct {
+type SQLite struct {
 	cleanupTimeout  time.Duration
 	cleanupSchedule string
 
@@ -68,7 +68,7 @@ type CertificateAuthority struct {
 	tracer trace.Tracer
 }
 
-func NewCertificateAuthority(db *sql.DB, opts ...cfg.Option[Config]) (*CertificateAuthority, error) {
+func NewSQLite(db *sql.DB, opts ...cfg.Option[Config]) (*SQLite, error) {
 	config := cfg.Set(defaultConfig(), opts...)
 
 	if config.cleanupTimeout <= 0 {
@@ -81,7 +81,7 @@ func NewCertificateAuthority(db *sql.DB, opts ...cfg.Option[Config]) (*Certifica
 
 	ctx, done := context.WithCancel(context.Background())
 
-	ca := &CertificateAuthority{
+	ca := &SQLite{
 		cleanupTimeout:  config.cleanupTimeout,
 		cleanupSchedule: config.cleanupSchedule,
 		db:              db,
@@ -98,7 +98,7 @@ func NewCertificateAuthority(db *sql.DB, opts ...cfg.Option[Config]) (*Certifica
 	return ca, nil
 }
 
-func (r *CertificateAuthority) Get(ctx context.Context, service string) (pubKey []byte, cert []byte, err error) {
+func (r *SQLite) GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error) {
 	if err = r.db.QueryRowContext(ctx, queryGet, service).Scan(&pubKey, &cert); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil, ErrNotFound
@@ -110,7 +110,7 @@ func (r *CertificateAuthority) Get(ctx context.Context, service string) (pubKey 
 	return pubKey, cert, nil
 }
 
-func (r *CertificateAuthority) Create(
+func (r *SQLite) CreateService(
 	ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time,
 ) (err error) {
 	res, err := r.db.ExecContext(ctx, queryCreate, service, pubKey, cert, expiry)
@@ -130,7 +130,7 @@ func (r *CertificateAuthority) Create(
 	return nil
 }
 
-func (r *CertificateAuthority) Delete(ctx context.Context, service string) error {
+func (r *SQLite) DeleteService(ctx context.Context, service string) error {
 	var pubKey, cert []byte
 
 	if err := r.db.QueryRowContext(ctx, queryGet, service).Scan(&pubKey, &cert); err != nil {
@@ -158,7 +158,7 @@ func (r *CertificateAuthority) Delete(ctx context.Context, service string) error
 	return nil
 }
 
-func (r *CertificateAuthority) Close() error {
+func (r *SQLite) Close() error {
 	if r.done != nil {
 		r.done()
 	}
@@ -166,7 +166,7 @@ func (r *CertificateAuthority) Close() error {
 	return r.db.Close()
 }
 
-func (r *CertificateAuthority) cleanup(ctx context.Context) error {
+func (r *SQLite) cleanup(ctx context.Context) error {
 	ctx, done := context.WithTimeout(context.Background(), r.cleanupTimeout)
 	defer done()
 
@@ -175,7 +175,7 @@ func (r *CertificateAuthority) cleanup(ctx context.Context) error {
 	return err
 }
 
-func (r *CertificateAuthority) runCron(ctx context.Context) error {
+func (r *SQLite) runCron(ctx context.Context) error {
 	s, err := schedule.New(
 		schedule.WithSchedule(r.cleanupSchedule),
 		schedule.WithLogger(r.logger),
