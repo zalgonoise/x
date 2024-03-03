@@ -17,25 +17,22 @@ import (
 )
 
 const (
-	queryGet = `
+	queryServicesGet = `
 SELECT pub_key, cert FROM services
 WHERE name = ?
 `
 
-	queryCreate = `
+	queryServicesCreate = `
 INSERT INTO services (name, pub_key, cert, expiry)
 VALUES (?, ?, ?, ?)
 `
 
-	queryDelete = `
+	queryServicesDelete = `
 DELETE FROM services WHERE name = ?
 `
 
-	queryCleanup = `
-DELETE FROM services WHERE name IN (
-    SELECT name FROM services 
-    WHERE expiry < ?
-)
+	queryServicesCleanup = `
+DELETE FROM services WHERE expiry < ?
 `
 )
 
@@ -55,7 +52,7 @@ type Metrics interface {
 	IncSelectorSelectErrors()
 }
 
-type SQLite struct {
+type Services struct {
 	cleanupTimeout  time.Duration
 	cleanupSchedule string
 
@@ -68,7 +65,7 @@ type SQLite struct {
 	tracer trace.Tracer
 }
 
-func NewSQLite(db *sql.DB, opts ...cfg.Option[Config]) (*SQLite, error) {
+func NewServices(db *sql.DB, opts ...cfg.Option[Config]) (*Services, error) {
 	config := cfg.Set(defaultConfig(), opts...)
 
 	if config.cleanupTimeout <= 0 {
@@ -81,7 +78,7 @@ func NewSQLite(db *sql.DB, opts ...cfg.Option[Config]) (*SQLite, error) {
 
 	ctx, done := context.WithCancel(context.Background())
 
-	ca := &SQLite{
+	repo := &Services{
 		cleanupTimeout:  config.cleanupTimeout,
 		cleanupSchedule: config.cleanupSchedule,
 		db:              db,
@@ -91,15 +88,15 @@ func NewSQLite(db *sql.DB, opts ...cfg.Option[Config]) (*SQLite, error) {
 		tracer:          config.tracer,
 	}
 
-	if err := ca.runCron(ctx); err != nil {
+	if err := repo.runCron(ctx); err != nil {
 		return nil, err
 	}
 
-	return ca, nil
+	return repo, nil
 }
 
-func (r *SQLite) GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error) {
-	if err = r.db.QueryRowContext(ctx, queryGet, service).Scan(&pubKey, &cert); err != nil {
+func (r *Services) GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error) {
+	if err = r.db.QueryRowContext(ctx, queryServicesGet, service).Scan(&pubKey, &cert); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil, ErrNotFound
 		}
@@ -110,10 +107,10 @@ func (r *SQLite) GetService(ctx context.Context, service string) (pubKey []byte,
 	return pubKey, cert, nil
 }
 
-func (r *SQLite) CreateService(
+func (r *Services) CreateService(
 	ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time,
 ) (err error) {
-	res, err := r.db.ExecContext(ctx, queryCreate, service, pubKey, cert, expiry)
+	res, err := r.db.ExecContext(ctx, queryServicesCreate, service, pubKey, cert, expiry)
 	if err != nil {
 		return err
 	}
@@ -130,10 +127,10 @@ func (r *SQLite) CreateService(
 	return nil
 }
 
-func (r *SQLite) DeleteService(ctx context.Context, service string) error {
+func (r *Services) DeleteService(ctx context.Context, service string) error {
 	var pubKey, cert []byte
 
-	if err := r.db.QueryRowContext(ctx, queryGet, service).Scan(&pubKey, &cert); err != nil {
+	if err := r.db.QueryRowContext(ctx, queryServicesGet, service).Scan(&pubKey, &cert); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
@@ -141,7 +138,7 @@ func (r *SQLite) DeleteService(ctx context.Context, service string) error {
 		return err
 	}
 
-	res, err := r.db.ExecContext(ctx, queryDelete, service)
+	res, err := r.db.ExecContext(ctx, queryServicesDelete, service)
 	if err != nil {
 		return err
 	}
@@ -158,7 +155,7 @@ func (r *SQLite) DeleteService(ctx context.Context, service string) error {
 	return nil
 }
 
-func (r *SQLite) Close() error {
+func (r *Services) Close() error {
 	if r.done != nil {
 		r.done()
 	}
@@ -166,16 +163,16 @@ func (r *SQLite) Close() error {
 	return r.db.Close()
 }
 
-func (r *SQLite) cleanup(ctx context.Context) error {
+func (r *Services) cleanup(ctx context.Context) error {
 	ctx, done := context.WithTimeout(context.Background(), r.cleanupTimeout)
 	defer done()
 
-	_, err := r.db.ExecContext(ctx, queryCleanup, time.Now())
+	_, err := r.db.ExecContext(ctx, queryServicesCleanup, time.Now())
 
 	return err
 }
 
-func (r *SQLite) runCron(ctx context.Context) error {
+func (r *Services) runCron(ctx context.Context) error {
 	s, err := schedule.New(
 		schedule.WithSchedule(r.cleanupSchedule),
 		schedule.WithLogger(r.logger),
@@ -186,7 +183,7 @@ func (r *SQLite) runCron(ctx context.Context) error {
 		return err
 	}
 
-	exec, err := executor.New("ca_cleanup",
+	exec, err := executor.New("services_cleanup",
 		executor.WithScheduler(s),
 		executor.WithRunners(executor.Runnable(r.cleanup)),
 		executor.WithLocation(time.UTC),
