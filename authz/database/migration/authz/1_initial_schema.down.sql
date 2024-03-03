@@ -1,1 +1,1 @@
-DROP TABLE events, users, attendance;
+DROP TABLE services, challenges, tokens;

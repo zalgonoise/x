@@ -1,4 +1,4 @@
-CREATE TABLE entities
+CREATE TABLE services
 (
     id           INTEGER PRIMARY KEY NOT NULL,
     name         TEXT                NOT NULL UNIQUE,
@@ -6,19 +6,20 @@ CREATE TABLE entities
     cert         BLOB                NULL
 );
 
+
 CREATE TABLE challenges
 (
-    entity_id    INTEGER REFERENCES entities (id) NOT NULL,
-    expiry       INTEGER             NOT NULL,
-    challenge    BLOB                NOT NULL
+    service_id    INTEGER REFERENCES services (id) NOT NULL,
+    challenge     BLOB                             NULL,
+    expiry        INTEGER                          NULL
 );
 
 CREATE TABLE tokens
 (
-    entity_id    INTEGER REFERENCES entities (id) NOT NULL,
-    token        TEXT                             NULL,
-    expiry       INTEGER                          NULL
+    service_id    INTEGER REFERENCES services (id) NOT NULL,
+    token         BLOB                             NULL,
+    expiry        INTEGER                          NULL
 );
 
-CREATE UNIQUE INDEX idx_challenges_entity_id ON challenges (entity_id);
-CREATE UNIQUE INDEX idx_tokens_entity_id ON tokens (entity_id);
+CREATE UNIQUE INDEX idx_challenges_service_id ON challenges (service_id);
+CREATE UNIQUE INDEX idx_tokens_service_id ON tokens (service_id);
