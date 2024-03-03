@@ -571,10 +571,12 @@
       "type": "object",
       "properties": {
         "pub_key": {
-          "type": "string"
+          "type": "string",
+          "format": "byte"
         },
         "certificate": {
-          "type": "string"
+          "type": "string",
+          "format": "byte"
         }
       }
     },
@@ -626,7 +628,11 @@
           "type": "string"
         },
         "pub_key": {
-          "type": "string"
+          "type": "string",
+          "format": "byte"
+        },
+        "signing_req": {
+          "$ref": "#/definitions/v1CSR"
         }
       }
     },
@@ -716,7 +722,8 @@
           "type": "string"
         },
         "signed_challenge": {
-          "type": "string"
+          "type": "string",
+          "format": "byte"
         }
       }
     },
@@ -724,7 +731,8 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string"
+          "type": "string",
+          "format": "byte"
         },
         "expires_on": {
           "type": "string",
