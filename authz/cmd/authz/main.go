@@ -158,7 +158,7 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 
 	m := metrics.NewMetrics()
 
-	repo, err := repository.NewCertificateAuthority(db,
+	repo, err := repository.NewSQLite(db,
 		repository.WithLogger(logger),
 		repository.WithMetrics(m),
 		repository.WithTrace(tracer),
@@ -175,7 +175,7 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		ca.WithLogger(logger),
 		ca.WithMetrics(m),
 		ca.WithTracer(tracer),
-		ca.WithTemplate(ca.WithDurMonth(*dur)),
+		ca.WithTemplate(keygen.WithDurMonth(*dur)),
 	)
 
 	logger.DebugContext(ctx, "CA service is ready")
