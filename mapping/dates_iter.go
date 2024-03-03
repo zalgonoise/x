@@ -2,7 +2,8 @@ package mapping
 
 import (
 	"maps"
-	"time"
+
+	"github.com/zalgonoise/cfg"
 )
 
 // SeqKV describes a sequence of iterable items, which takes a yield func which will be used
@@ -141,10 +142,11 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 
 func FormatTime[K comparable, T any](
 	seq SeqKV[Interval, map[K]T],
-	fnFrom func(time.Time) (time.Time, bool),
-	fnTo func(time.Time) (time.Time, bool),
+	opts ...cfg.Option[Format],
 ) SeqKV[Interval, map[K]T] {
-	if fnFrom == nil && fnTo == nil {
+	format := cfg.New(opts...)
+
+	if format.fnFrom == nil && format.fnTo == nil {
 		return seq
 	}
 
@@ -152,15 +154,15 @@ func FormatTime[K comparable, T any](
 		return seq(func(interval Interval, m map[K]T) bool {
 			var ok bool
 
-			if fnFrom != nil {
-				interval.From, ok = fnFrom(interval.From)
+			if format.fnFrom != nil {
+				interval.From, ok = format.fnFrom(interval.From)
 				if !ok {
 					return false
 				}
 			}
 
-			if fnTo != nil {
-				interval.To, ok = fnTo(interval.To)
+			if format.fnTo != nil {
+				interval.To, ok = format.fnTo(interval.To)
 				if !ok {
 					return false
 				}
