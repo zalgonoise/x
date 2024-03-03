@@ -397,6 +397,52 @@
           "Login"
         ]
       }
+    },
+    "/v1/validate": {
+      "post": {
+        "summary": "Processes a validation request for an authorization token",
+        "description": "This endpoint receives user's token, validating if it's usable.",
+        "operationId": "Authz_VerifyToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AuthResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AuthRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Login"
+        ]
+      }
     }
   },
   "definitions": {
@@ -472,6 +518,18 @@
           "type": "string"
         }
       }
+    },
+    "v1AuthRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1AuthResponse": {
+      "type": "object"
     },
     "v1CSR": {
       "type": "object",
@@ -609,6 +667,10 @@
         "challenge": {
           "type": "string",
           "format": "byte"
+        },
+        "expires_on": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
