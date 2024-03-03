@@ -251,6 +251,19 @@ service Authz {
       tags: "Login"
     };
   }
+
+  rpc VerifyToken(AuthRequest) returns (AuthResponse) {
+    option (google.api.http) = {
+      post: "/v1/validate"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Processes a validation request for an authorization token"
+      description: "This endpoint receives user's token, validating if it's usable."
+      tags: "Login"
+    };
+  }
 }
 
 
@@ -278,6 +291,7 @@ message ID {
 
 message LoginResponse {
   bytes challenge = 1 [json_name="challenge"];
+  int64 expires_on = 2 [json_name="expires_on"];
 }
 
 message TokenRequest {
@@ -289,3 +303,9 @@ message TokenResponse{
   bytes token = 1 [json_name="token"];
   int64 expires_on = 2 [json_name="expires_on"];
 }
+
+message AuthRequest {
+  bytes token = 1 [json_name="token", (validate.rules).bytes.min_len = 1];
+}
+
+message AuthResponse {}
