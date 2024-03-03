@@ -45,9 +45,9 @@ var (
 )
 
 type Repository interface {
-	Get(ctx context.Context, service string) (pubKey []byte, cert []byte, err error)
-	Create(ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time) (err error)
-	Delete(ctx context.Context, service string) error
+	GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error)
+	CreateService(ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time) (err error)
+	DeleteService(ctx context.Context, service string) error
 }
 
 type Metrics interface {
@@ -110,12 +110,12 @@ func NewCertificateAuthority(
 		config.metrics = metrics.NoOp()
 	}
 
-	template := cfg.Set(newDefaultTemplate(), config.template...)
+	template := cfg.Set(keygen.DefaultTemplate(), config.template...)
 	if template.PrivateKey == nil {
 		template.PrivateKey = privateKey
 	}
 
-	ca, cert, err := NewCertificate(template)
+	ca, cert, err := keygen.NewCACertificate(template)
 	if err != nil {
 		return nil, err
 	}
@@ -151,14 +151,14 @@ func (ca *CertificateAuthority) Register(
 		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
 
 	exit := withExit[pb.CertificateRequest, pb.CertificateResponse](
-		ctx, ca, req, ca.metrics.IncServiceRegistryFailed, span,
+		ctx, ca.logger, req, ca.metrics.IncServiceRegistryFailed, span,
 	)
 
 	if err := req.ValidateAll(); err != nil {
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	storedPubKey, storedCert, err := ca.repository.Get(ctx, req.Service)
+	storedPubKey, storedCert, err := ca.repository.GetService(ctx, req.Service)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		return exit(codes.Internal, "failed to get service from DB", err)
 	}
@@ -175,7 +175,7 @@ func (ca *CertificateAuthority) Register(
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	cert, err := newCertFromCSR(ca.ca.Version, ca.durMonth, toCSR(req.Service, pubKey, req.SigningRequest))
+	cert, err := keygen.NewCertFromCSR(ca.ca.Version, ca.durMonth, keygen.ToCSR(req.Service, pubKey, req.SigningRequest))
 	if err != nil {
 		return exit(codes.Internal, "failed to generate new serial number", err)
 	}
@@ -185,7 +185,7 @@ func (ca *CertificateAuthority) Register(
 		return exit(codes.Internal, "failed to generate new certificate", err)
 	}
 
-	if err := ca.repository.Create(ctx, req.Service, req.PublicKey, signedCert, cert.NotAfter); err != nil {
+	if err := ca.repository.CreateService(ctx, req.Service, req.PublicKey, signedCert, cert.NotAfter); err != nil {
 		return exit(codes.Internal, "failed to write certificate to DB", err,
 			slog.String("certificate", string(signedCert)),
 		)
@@ -212,14 +212,14 @@ func (ca *CertificateAuthority) GetCertificate(ctx context.Context, req *pb.Cert
 		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
 
 	exit := withExit[pb.CertificateRequest, pb.CertificateResponse](
-		ctx, ca, req, func() { ca.metrics.IncServiceCertsFetchFailed(req.Service) }, span,
+		ctx, ca.logger, req, func() { ca.metrics.IncServiceCertsFetchFailed(req.Service) }, span,
 	)
 
 	if err := req.ValidateAll(); err != nil {
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	pubKey, cert, err := ca.repository.Get(ctx, req.Service)
+	pubKey, cert, err := ca.repository.GetService(ctx, req.Service)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			ca.logger.DebugContext(ctx, "service was not found",
@@ -255,14 +255,14 @@ func (ca *CertificateAuthority) VerifyCertificate(ctx context.Context, req *pb.V
 		slog.String("service", req.Service))
 
 	exit := withExit[pb.VerificationRequest, pb.VerificationResponse](
-		ctx, ca, req, func() { ca.metrics.IncVerificationFailed(req.Service) }, span,
+		ctx, ca.logger, req, func() { ca.metrics.IncVerificationFailed(req.Service) }, span,
 	)
 
 	if err := req.ValidateAll(); err != nil {
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	pubKey, _, err := ca.repository.Get(ctx, req.Service)
+	pubKey, _, err := ca.repository.GetService(ctx, req.Service)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			ca.logger.DebugContext(ctx, "service was not found",
@@ -320,14 +320,14 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 		slog.String("service", req.Service))
 
 	exit := withExit[pb.DeletionRequest, pb.DeletionResponse](
-		ctx, ca, req, ca.metrics.IncServiceDeletionFailed, span,
+		ctx, ca.logger, req, ca.metrics.IncServiceDeletionFailed, span,
 	)
 
 	if err := req.ValidateAll(); err != nil {
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	pubKey, _, err := ca.repository.Get(ctx, req.Service)
+	pubKey, _, err := ca.repository.GetService(ctx, req.Service)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			ca.logger.DebugContext(ctx, "service was not found",
@@ -343,7 +343,7 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
 	}
 
-	if err = ca.repository.Delete(ctx, req.Service); err != nil {
+	if err = ca.repository.DeleteService(ctx, req.Service); err != nil {
 		return exit(codes.Internal, "failed to remove service from DB", err)
 	}
 
@@ -363,7 +363,7 @@ func (ca *CertificateAuthority) PublicKey(ctx context.Context, _ *pb.PublicKeyRe
 	ca.logger.DebugContext(ctx, "CA's public key request")
 
 	exit := withExit[pb.PublicKeyRequest, pb.PublicKeyResponse](
-		ctx, ca, nil, ca.metrics.IncPubKeyRequestFailed, span,
+		ctx, ca.logger, nil, ca.metrics.IncPubKeyRequestFailed, span,
 	)
 
 	key, err := keygen.EncodePublic(&ca.privateKey.PublicKey)
@@ -375,7 +375,7 @@ func (ca *CertificateAuthority) PublicKey(ctx context.Context, _ *pb.PublicKeyRe
 }
 
 func withExit[Req any, Res any](
-	ctx context.Context, ca *CertificateAuthority,
+	ctx context.Context, logger *slog.Logger,
 	req *Req, metric func(), span trace.Span,
 ) func(codes.Code, string, error, ...any) (*Res, error) {
 	return func(code codes.Code, message string, err error, args ...any) (*Res, error) {
@@ -392,7 +392,7 @@ func withExit[Req any, Res any](
 			span.SetStatus(otelcodes.Error, err.Error())
 			span.RecordError(err)
 			metric()
-			ca.logger.WarnContext(ctx, message, logArgs...)
+			logger.WarnContext(ctx, message, logArgs...)
 
 			return nil, status.Error(code, err.Error())
 		}
@@ -401,7 +401,7 @@ func withExit[Req any, Res any](
 		span.SetStatus(otelcodes.Error, message)
 		span.RecordError(errors.New(message))
 		metric()
-		ca.logger.WarnContext(ctx, message, logArgs...)
+		logger.WarnContext(ctx, message, logArgs...)
 
 		return nil, status.Error(code, message)
 	}
