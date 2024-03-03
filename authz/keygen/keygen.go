@@ -12,8 +12,6 @@ import (
 	"github.com/zalgonoise/x/errs"
 )
 
-const typeCertificate = "CERTIFICATE"
-
 const (
 	errDomain = errs.Domain("x/authz/keygen")
 
