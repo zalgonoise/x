@@ -158,7 +158,7 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 
 	m := metrics.NewMetrics()
 
-	repo, err := repository.NewSQLite(db,
+	repo, err := repository.NewServices(db,
 		repository.WithLogger(logger),
 		repository.WithMetrics(m),
 		repository.WithTrace(tracer),
