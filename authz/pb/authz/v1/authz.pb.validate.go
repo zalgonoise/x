@@ -1971,15 +1971,44 @@ func (m *RegisterRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetPublicKey()) < 1 {
+	if len(m.GetPublicKey()) < 1 {
 		err := RegisterRequestValidationError{
 			field:  "PublicKey",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at least 1 bytes",
 		}
 		if !all {
 			return err
 		}
 		errors = append(errors, err)
+	}
+
+	if all {
+		switch v := interface{}(m.GetSigningRequest()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, RegisterRequestValidationError{
+					field:  "SigningRequest",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, RegisterRequestValidationError{
+					field:  "SigningRequest",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSigningRequest()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return RegisterRequestValidationError{
+				field:  "SigningRequest",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
 	}
 
 	if len(errors) > 0 {
@@ -2380,10 +2409,10 @@ func (m *ID) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetPublicKey()) < 1 {
+	if len(m.GetPublicKey()) < 1 {
 		err := IDValidationError{
 			field:  "PublicKey",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at least 1 bytes",
 		}
 		if !all {
 			return err
@@ -2391,10 +2420,10 @@ func (m *ID) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetCertificate()) < 1 {
+	if len(m.GetCertificate()) < 1 {
 		err := IDValidationError{
 			field:  "Certificate",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at least 1 bytes",
 		}
 		if !all {
 			return err
@@ -2614,10 +2643,10 @@ func (m *TokenRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if utf8.RuneCountInString(m.GetSignedChallenge()) < 1 {
+	if len(m.GetSignedChallenge()) < 1 {
 		err := TokenRequestValidationError{
 			field:  "SignedChallenge",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at least 1 bytes",
 		}
 		if !all {
 			return err
