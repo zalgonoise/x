@@ -32,19 +32,25 @@ import (
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 )
 
-const defaultConnTimeout = time.Minute
+const (
+	defaultConnTimeout     = time.Minute
+	defaultChallengeExpiry = 10 * time.Minute
+	defaultTokenExpiry     = time.Hour
+)
 
 const (
 	errDomain = errs.Domain("x/authz/authz")
 
 	ErrNil     = errs.Kind("nil")
 	ErrInvalid = errs.Kind("invalid")
+	ErrExpired
 
 	ErrPublicKey   = errs.Entity("public key")
 	ErrPrivateKey  = errs.Entity("private key")
 	ErrCertificate = errs.Entity("certificate")
 	ErrRepository  = errs.Entity("repository")
 	ErrSignature   = errs.Entity("signature")
+	ErrChallenge
 )
 
 var (
@@ -53,22 +59,27 @@ var (
 	ErrInvalidPublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
 	ErrInvalidCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
 	ErrInvalidSignature   = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
+	ErrExpiredChallenge   = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
 )
 
 type ServiceRepository interface {
-	GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error)
 	CreateService(ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time) (err error)
+	GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error)
 	DeleteService(ctx context.Context, service string) error
 }
 
-type ChallengeRepository interface {
-	CreateChallenge(ctx context.Context, service string, challenge []byte) error
-	GetChallenge(ctx context.Context, service string) (challenge []byte, err error)
+type TokensRepository interface {
+	CreateChallenge(ctx context.Context, service string, challenge []byte, expiry time.Time) error
+	GetChallenge(ctx context.Context, service string) (challenge []byte, expiry time.Time, err error)
 	DeleteChallenge(ctx context.Context, service string) error
+
+	CreateToken(ctx context.Context, service string, token []byte, expiry time.Time) error
+	GetToken(ctx context.Context, service string) (token []byte, expiry time.Time, err error)
+	DeleteToken(ctx context.Context, service string) error
 }
 
 type Randomizer interface {
-	Random() []byte
+	Random() ([]byte, error)
 }
 
 type Metrics interface {
@@ -110,9 +121,12 @@ type Authz struct {
 	caCert     []byte
 	durMonth   int
 
+	challengeExpiry time.Duration
+	tokenExpiry     time.Duration
+
 	ca         *ca.CertificateAuthority
 	services   ServiceRepository
-	challenges ChallengeRepository
+	challenges TokensRepository
 	random     Randomizer
 
 	metrics Metrics
@@ -124,7 +138,7 @@ func NewAuthz(
 	name, caAddress string,
 	privateKey *ecdsa.PrivateKey,
 	services ServiceRepository,
-	challenges ChallengeRepository,
+	challenges TokensRepository,
 	randomizer Randomizer,
 	opts ...cfg.Option[Config],
 ) (*Authz, error) {
@@ -346,14 +360,18 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 		return exit(codes.InvalidArgument, "expired certificate", ErrInvalidCertificate)
 	}
 
-	// TODO: challenge should expire
-	challenge := a.random.Random()
+	challenge, err := a.random.Random()
+	if err != nil {
+		return exit(codes.Internal, "failed to generate challenge", err)
+	}
 
-	if err = a.challenges.CreateChallenge(ctx, req.Name, challenge); err != nil {
+	expiry := time.Now().Add(a.challengeExpiry)
+
+	if err = a.challenges.CreateChallenge(ctx, req.Name, challenge, expiry); err != nil {
 		return exit(codes.Internal, "failed to store challenge", err)
 	}
 
-	return &pb.LoginResponse{Challenge: challenge}, nil
+	return &pb.LoginResponse{Challenge: challenge, ExpiresOn: expiry.UnixMilli()}, nil
 }
 
 func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenResponse, error) {
@@ -379,10 +397,14 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	challenge, err := a.challenges.GetChallenge(ctx, req.Name)
+	challenge, expiry, err := a.challenges.GetChallenge(ctx, req.Name)
 	if err != nil {
 		// TODO: handle if not exists
 		return exit(codes.Internal, "failed to get challenge", err)
+	}
+
+	if time.Now().After(expiry) {
+		return exit(codes.InvalidArgument, "challenge is expired", ErrExpiredChallenge)
 	}
 
 	storedPub, _, err := a.services.GetService(ctx, req.Name)
@@ -407,6 +429,37 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 	// TODO: return token + expiry
 
 	return nil, nil
+}
+
+func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthResponse, error) {
+	ctx, span := a.tracer.Start(ctx, "Authz.VerifyToken")
+	defer span.End()
+
+	//start := time.Now()
+	defer func() {
+		// TODO: add observe metrics for token verification
+		//a.metrics.ObserveServiceCertsFetchLatency(ctx, time.Since(start))
+	}()
+
+	// TODO: add inc metrics for token verification
+	//a.metrics.IncServiceCertsFetched(req.Service)
+	a.logger.DebugContext(ctx, "new token verification request")
+
+	// TODO: add fail metrics for token verification
+	exit := withExit[pb.AuthRequest, pb.AuthResponse](
+		ctx, a.logger, req, nil, span,
+	)
+
+	if err := req.ValidateAll(); err != nil {
+		return exit(codes.InvalidArgument, "invalid request", err)
+	}
+
+	// TODO: decode token
+	// TODO: fetch service if exists
+	// TODO: check token's expiry
+	// TODO: add meaningful metadata to ctx to identify caller in tx (service?)
+
+	return &pb.AuthResponse{}, nil
 }
 
 func (a *Authz) GetCertificate(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
