@@ -257,9 +257,10 @@ var CertificateAuthority_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	Authz_Register_FullMethodName = "/authz.v1.Authz/Register"
-	Authz_Login_FullMethodName    = "/authz.v1.Authz/Login"
-	Authz_Token_FullMethodName    = "/authz.v1.Authz/Token"
+	Authz_Register_FullMethodName    = "/authz.v1.Authz/Register"
+	Authz_Login_FullMethodName       = "/authz.v1.Authz/Login"
+	Authz_Token_FullMethodName       = "/authz.v1.Authz/Token"
+	Authz_VerifyToken_FullMethodName = "/authz.v1.Authz/VerifyToken"
 )
 
 // AuthzClient is the client API for Authz service.
@@ -269,6 +270,7 @@ type AuthzClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	Token(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
+	VerifyToken(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
 type authzClient struct {
@@ -306,6 +308,15 @@ func (c *authzClient) Token(ctx context.Context, in *TokenRequest, opts ...grpc.
 	return out, nil
 }
 
+func (c *authzClient) VerifyToken(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
+	out := new(AuthResponse)
+	err := c.cc.Invoke(ctx, Authz_VerifyToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthzServer is the server API for Authz service.
 // All implementations must embed UnimplementedAuthzServer
 // for forward compatibility
@@ -313,6 +324,7 @@ type AuthzServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	Token(context.Context, *TokenRequest) (*TokenResponse, error)
+	VerifyToken(context.Context, *AuthRequest) (*AuthResponse, error)
 	mustEmbedUnimplementedAuthzServer()
 }
 
@@ -328,6 +340,9 @@ func (UnimplementedAuthzServer) Login(context.Context, *LoginRequest) (*LoginRes
 }
 func (UnimplementedAuthzServer) Token(context.Context, *TokenRequest) (*TokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Token not implemented")
+}
+func (UnimplementedAuthzServer) VerifyToken(context.Context, *AuthRequest) (*AuthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyToken not implemented")
 }
 func (UnimplementedAuthzServer) mustEmbedUnimplementedAuthzServer() {}
 
@@ -396,6 +411,24 @@ func _Authz_Token_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Authz_VerifyToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzServer).VerifyToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Authz_VerifyToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzServer).VerifyToken(ctx, req.(*AuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Authz_ServiceDesc is the grpc.ServiceDesc for Authz service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -414,6 +447,10 @@ var Authz_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Token",
 			Handler:    _Authz_Token_Handler,
+		},
+		{
+			MethodName: "VerifyToken",
+			Handler:    _Authz_VerifyToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
