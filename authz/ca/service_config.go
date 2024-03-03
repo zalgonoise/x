@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/authz/keygen"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -12,7 +13,7 @@ type Config struct {
 	tracer     trace.Tracer
 	metrics    Metrics
 
-	template []cfg.Option[Template]
+	template []cfg.Option[keygen.Template]
 }
 
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
@@ -63,7 +64,7 @@ func WithMetrics(m Metrics) cfg.Option[Config] {
 	})
 }
 
-func WithTemplate(opts ...cfg.Option[Template]) cfg.Option[Config] {
+func WithTemplate(opts ...cfg.Option[keygen.Template]) cfg.Option[Config] {
 	if len(opts) == 0 {
 		return cfg.NoOp[Config]{}
 	}
