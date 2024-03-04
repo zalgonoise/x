@@ -21,12 +21,14 @@ const (
 	ErrPrivateKey = errs.Entity("private key")
 	ErrPEM        = errs.Entity("PEM key bytes")
 	ErrSignature  = errs.Entity("signature")
+	ErrClaim      = errs.Entity("claim")
 )
 
 var (
 	ErrInvalidPEM       = errs.WithDomain(errDomain, ErrInvalid, ErrPEM)
 	ErrInvalidSignature = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
 	ErrNilPrivateKey    = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
+	ErrInvalidClaim     = errs.WithDomain(errDomain, ErrInvalid, ErrClaim)
 )
 
 func New() (*ecdsa.PrivateKey, error) {
