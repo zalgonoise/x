@@ -1,6 +1,7 @@
 package authz
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha256"
@@ -16,24 +17,24 @@ import (
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/authz/ca"
 	"github.com/zalgonoise/x/authz/keygen"
+	"github.com/zalgonoise/x/authz/randomizer"
 	"github.com/zalgonoise/x/authz/repository"
 	"github.com/zalgonoise/x/errs"
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
-	"github.com/zalgonoise/x/authz/log"
-	"github.com/zalgonoise/x/authz/metrics"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 )
 
 const (
 	defaultConnTimeout     = time.Minute
+	defaultChallengeSize   = 32
+	defaultDurMonth        = 12
 	defaultChallengeExpiry = 10 * time.Minute
 	defaultTokenExpiry     = time.Hour
 )
@@ -43,23 +44,30 @@ const (
 
 	ErrNil     = errs.Kind("nil")
 	ErrInvalid = errs.Kind("invalid")
-	ErrExpired
+	ErrExpired = errs.Kind("expired")
+	ErrEmpty   = errs.Kind("empty")
 
-	ErrPublicKey   = errs.Entity("public key")
-	ErrPrivateKey  = errs.Entity("private key")
-	ErrCertificate = errs.Entity("certificate")
-	ErrRepository  = errs.Entity("repository")
-	ErrSignature   = errs.Entity("signature")
-	ErrChallenge
+	ErrCAAddress    = errs.Entity("CA address")
+	ErrPublicKey    = errs.Entity("public key")
+	ErrPrivateKey   = errs.Entity("private key")
+	ErrCertificate  = errs.Entity("certificate")
+	ErrServicesRepo = errs.Entity("services repository")
+	ErrTokensRepo   = errs.Entity("tokens repository")
+	ErrSignature    = errs.Entity("signature")
+	ErrChallenge    = errs.Entity("challenge")
+	ErrToken        = errs.Entity("token")
 )
 
 var (
-	ErrNilRepository      = errs.WithDomain(errDomain, ErrNil, ErrRepository)
-	ErrNilPrivateKey      = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
-	ErrInvalidPublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
-	ErrInvalidCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
-	ErrInvalidSignature   = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
-	ErrExpiredChallenge   = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
+	ErrEmptyCAAddress        = errs.WithDomain(errDomain, ErrEmpty, ErrCAAddress)
+	ErrNilServicesRepository = errs.WithDomain(errDomain, ErrNil, ErrServicesRepo)
+	ErrNilTokensRepository   = errs.WithDomain(errDomain, ErrNil, ErrServicesRepo)
+	ErrNilPrivateKey         = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
+	ErrInvalidPublicKey      = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
+	ErrInvalidCertificate    = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
+	ErrInvalidSignature      = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
+	ErrExpiredChallenge      = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
+	ErrExpiredToken          = errs.WithDomain(errDomain, ErrExpired, ErrToken)
 )
 
 type ServiceRepository interface {
@@ -90,6 +98,9 @@ type Metrics interface {
 	IncServiceTokenRequests(service string)
 	IncServiceTokenFailed(service string)
 	ObserveServiceTokenLatency(ctx context.Context, service string, duration time.Duration)
+	IncServiceTokenVerifications(service string)
+	IncServiceTokenVerificationFailed(service string)
+	ObserveServiceTokenVerificationLatency(ctx context.Context, service string, duration time.Duration)
 
 	// CA metrics
 	IncServiceRegistries()
@@ -116,6 +127,7 @@ type Authz struct {
 
 	caClient pb.CertificateAuthorityClient
 
+	name       string
 	privateKey *ecdsa.PrivateKey
 	cert       *x509.Certificate
 	caCert     []byte
@@ -124,10 +136,10 @@ type Authz struct {
 	challengeExpiry time.Duration
 	tokenExpiry     time.Duration
 
-	ca         *ca.CertificateAuthority
-	services   ServiceRepository
-	challenges TokensRepository
-	random     Randomizer
+	ca       *ca.CertificateAuthority
+	services ServiceRepository
+	tokens   TokensRepository
+	random   Randomizer
 
 	metrics Metrics
 	logger  *slog.Logger
@@ -138,30 +150,39 @@ func NewAuthz(
 	name, caAddress string,
 	privateKey *ecdsa.PrivateKey,
 	services ServiceRepository,
-	challenges TokensRepository,
-	randomizer Randomizer,
+	tokens TokensRepository,
+	random Randomizer,
 	opts ...cfg.Option[Config],
 ) (*Authz, error) {
-	config := cfg.New(opts...)
-
-	if config.m == nil {
-		config.m = metrics.NoOp()
+	if caAddress == "" {
+		return nil, ErrEmptyCAAddress
 	}
 
-	if config.logger == nil {
-		config.logger = log.New("info")
+	if privateKey == nil {
+		return nil, ErrNilPrivateKey
 	}
 
-	if config.tracer == nil {
-		config.tracer = noop.NewTracerProvider().Tracer("authz")
+	if services == nil {
+		return nil, ErrNilServicesRepository
 	}
+
+	if tokens == nil {
+		return nil, ErrNilTokensRepository
+	}
+
+	if random == nil {
+		random = randomizer.New(defaultChallengeSize)
+	}
+
+	config := cfg.Set(defaultConfig(), opts...)
 
 	conn, err := dial(caAddress, config.m)
 	if err != nil {
 		return nil, err
 	}
 
-	config.logger.DebugContext(context.Background(), "connected to CA")
+	logger := slog.New(config.logger)
+	logger.DebugContext(context.Background(), "connected to CA")
 
 	caClient := pb.NewCertificateAuthorityClient(conn)
 
@@ -182,7 +203,7 @@ func NewAuthz(
 		return nil, err
 	}
 
-	config.logger.InfoContext(ctx, "retrieved certificate from CA")
+	logger.InfoContext(ctx, "retrieved certificate from CA")
 
 	cert, err := keygen.DecodeCertificate(res.Certificate)
 	if err != nil {
@@ -190,16 +211,20 @@ func NewAuthz(
 	}
 
 	return &Authz{
-		caClient:   caClient,
-		privateKey: privateKey,
-		cert:       cert,
-		caCert:     res.Certificate,
-		services:   services,
-		challenges: challenges,
-		random:     randomizer,
-		metrics:    config.m,
-		logger:     config.logger,
-		tracer:     config.tracer,
+		caClient:        caClient,
+		name:            name,
+		privateKey:      privateKey,
+		cert:            cert,
+		caCert:          res.Certificate,
+		durMonth:        config.durMonth,
+		challengeExpiry: config.challengeExpiry,
+		tokenExpiry:     config.tokenExpiry,
+		services:        services,
+		tokens:          tokens,
+		random:          random,
+		metrics:         config.m,
+		logger:          logger,
+		tracer:          config.tracer,
 	}, nil
 }
 
@@ -367,7 +392,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 
 	expiry := time.Now().Add(a.challengeExpiry)
 
-	if err = a.challenges.CreateChallenge(ctx, req.Name, challenge, expiry); err != nil {
+	if err = a.tokens.CreateChallenge(ctx, req.Name, challenge, expiry); err != nil {
 		return exit(codes.Internal, "failed to store challenge", err)
 	}
 
@@ -397,7 +422,7 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	challenge, expiry, err := a.challenges.GetChallenge(ctx, req.Name)
+	challenge, expiry, err := a.tokens.GetChallenge(ctx, req.Name)
 	if err != nil {
 		// TODO: handle if not exists
 		return exit(codes.Internal, "failed to get challenge", err)
@@ -424,40 +449,80 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.InvalidArgument, "invalid signature", ErrInvalidSignature)
 	}
 
-	// TODO: generate token
-	// TODO: store token + expiry
-	// TODO: return token + expiry
+	exp := time.Now().Add(a.tokenExpiry)
+	token, err := keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
+		Service: req.Name,
+		Authz:   a.name,
+	}))
+	if err != nil {
+		return exit(codes.Internal, "failed to generate JWT", err)
+	}
 
-	return nil, nil
+	if err = a.tokens.CreateToken(ctx, req.Name, token, exp); err != nil {
+		return exit(codes.Internal, "failed to store token", err)
+	}
+
+	return &pb.TokenResponse{
+		Token:     token,
+		ExpiresOn: exp.UnixMilli(),
+	}, nil
 }
 
 func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthResponse, error) {
 	ctx, span := a.tracer.Start(ctx, "Authz.VerifyToken")
 	defer span.End()
 
-	//start := time.Now()
+	token, err := keygen.ParseToken(req.Token, &a.privateKey.PublicKey)
+	if err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceTokenVerificationFailed("")
+		a.logger.WarnContext(ctx, "failed to decode token")
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	start := time.Now()
 	defer func() {
-		// TODO: add observe metrics for token verification
-		//a.metrics.ObserveServiceCertsFetchLatency(ctx, time.Since(start))
+		a.metrics.ObserveServiceTokenVerificationLatency(ctx, token.Claim.Service, time.Since(start))
 	}()
 
-	// TODO: add inc metrics for token verification
-	//a.metrics.IncServiceCertsFetched(req.Service)
+	a.metrics.IncServiceTokenVerifications(token.Claim.Service)
 	a.logger.DebugContext(ctx, "new token verification request")
 
-	// TODO: add fail metrics for token verification
 	exit := withExit[pb.AuthRequest, pb.AuthResponse](
-		ctx, a.logger, req, nil, span,
+		ctx, a.logger, req, func() {
+			a.metrics.IncServiceTokenVerificationFailed(token.Claim.Service)
+		}, span,
 	)
 
 	if err := req.ValidateAll(); err != nil {
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	// TODO: decode token
-	// TODO: fetch service if exists
-	// TODO: check token's expiry
-	// TODO: add meaningful metadata to ctx to identify caller in tx (service?)
+	storedToken, exp, err := a.tokens.GetToken(ctx, token.Claim.Service)
+	if err != nil {
+		return exit(codes.InvalidArgument, "invalid token", err)
+	}
+
+	if !bytes.Equal(storedToken, req.Token) {
+		return exit(codes.InvalidArgument, "invalid token", err)
+	}
+
+	if !exp.Equal(token.Expiry) {
+		return exit(codes.InvalidArgument, "invalid token", err)
+	}
+
+	if start.After(exp) {
+		if err = a.tokens.DeleteToken(ctx, token.Claim.Service); err != nil {
+			a.logger.WarnContext(ctx, "failed to remove expired token",
+				slog.String("error", err.Error()),
+				slog.String("service", token.Claim.Service),
+			)
+		}
+
+		return exit(codes.PermissionDenied, "token is expired", ErrExpiredToken)
+	}
 
 	return &pb.AuthResponse{}, nil
 }
