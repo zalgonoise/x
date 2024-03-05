@@ -12,15 +12,12 @@ import (
 
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/authz/keygen"
-	"github.com/zalgonoise/x/authz/log"
-	"github.com/zalgonoise/x/authz/metrics"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/repository"
 	"github.com/zalgonoise/x/errs"
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -96,19 +93,7 @@ func NewCertificateAuthority(
 		return nil, ErrNilPrivateKey
 	}
 
-	config := cfg.New(opts...)
-
-	if config.logHandler == nil {
-		config.logHandler = log.NoOp().Handler()
-	}
-
-	if config.tracer == nil {
-		config.tracer = noop.NewTracerProvider().Tracer("x/authz/ca")
-	}
-
-	if config.metrics == nil {
-		config.metrics = metrics.NoOp()
-	}
+	config := cfg.Set(defaultConfig(), opts...)
 
 	template := cfg.Set(keygen.DefaultTemplate(), config.template...)
 	if template.PrivateKey == nil {
