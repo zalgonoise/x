@@ -5,15 +5,26 @@ import (
 
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/authz/keygen"
+	"github.com/zalgonoise/x/authz/log"
+	"github.com/zalgonoise/x/authz/metrics"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 type Config struct {
+	metrics    Metrics
 	logHandler slog.Handler
 	tracer     trace.Tracer
-	metrics    Metrics
 
 	template []cfg.Option[keygen.Template]
+}
+
+func defaultConfig() Config {
+	return Config{
+		metrics:    metrics.NoOp(),
+		logHandler: log.NoOp().Handler(),
+		tracer:     noop.NewTracerProvider().Tracer("ca"),
+	}
 }
 
 func WithLogger(logger *slog.Logger) cfg.Option[Config] {
