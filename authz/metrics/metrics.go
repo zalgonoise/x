@@ -51,6 +51,10 @@ type Metrics struct {
 	serviceTokenRequestsFailed         *prometheus.CounterVec
 	serviceTokenRequestsLatencySeconds *prometheus.HistogramVec
 
+	serviceTokenVerifyTotal          *prometheus.CounterVec
+	serviceTokenVerifyFailed         *prometheus.CounterVec
+	serviceTokenVerifyLatencySeconds *prometheus.HistogramVec
+
 	// Cron metrics
 	schedulerNextTotal         prometheus.Counter
 	executorExecTotal          *prometheus.CounterVec
@@ -156,6 +160,19 @@ func NewMetrics() *Metrics {
 		serviceTokenRequestsLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "service_token_requests_latency_seconds",
 			Help:    "Histogram of Authz service token requests processing times",
+			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		}, []string{"service"}),
+		serviceTokenVerifyTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "service_token_verify_total",
+			Help: "Count of Authz service token verification requests",
+		}, []string{"service"}),
+		serviceTokenVerifyFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "service_token_verify_failed",
+			Help: "Count of Authz service token verification requests that failed",
+		}, []string{"service"}),
+		serviceTokenVerifyLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "service_token_verify_latency_seconds",
+			Help:    "Histogram of Authz service token verification requests processing times",
 			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		}, []string{"service"}),
 		schedulerNextTotal: prometheus.NewCounter(prometheus.CounterOpts{
@@ -344,6 +361,28 @@ func (m *Metrics) ObserveServiceTokenLatency(ctx context.Context, service string
 	m.serviceTokenRequestsLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
 }
 
+func (m *Metrics) IncServiceTokenVerifications(service string) {
+	m.serviceTokenVerifyTotal.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) IncServiceTokenVerificationFailed(service string) {
+	m.serviceTokenVerifyFailed.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) ObserveServiceTokenVerificationLatency(ctx context.Context, service string, duration time.Duration) {
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		if eo, ok := m.serviceTokenVerifyLatencySeconds.WithLabelValues(service).(prometheus.ExemplarObserver); ok {
+			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
+				traceIDKey: sc.TraceID().String(),
+			})
+
+			return
+		}
+	}
+
+	m.serviceTokenVerifyLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
+}
+
 func (m *Metrics) IncSchedulerNextCalls() {
 	m.schedulerNextTotal.Inc()
 }
@@ -401,6 +440,12 @@ func (m *Metrics) Registry() (*prometheus.Registry, error) {
 		m.servicesDeletedTotal,
 		m.servicesDeletedFailed,
 		m.servicesDeletedLatencySeconds,
+		m.serviceTokenRequestsTotal,
+		m.serviceTokenRequestsFailed,
+		m.serviceTokenRequestsLatencySeconds,
+		m.serviceTokenVerifyTotal,
+		m.serviceTokenVerifyFailed,
+		m.serviceTokenVerifyLatencySeconds,
 		m.publicKeyRequestsTotal,
 		m.publicKeyRequestsFailed,
 		m.publicKeyRequestsLatencySeconds,
