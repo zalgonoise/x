@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"log/slog"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/zalgonoise/x/authz/config"
 	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/authz/log"
 	"github.com/zalgonoise/x/authz/metrics"
@@ -72,33 +72,9 @@ var (
 )
 
 func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
-	fs := flag.NewFlagSet("ca", flag.ExitOnError)
-
-	dbURI := fs.String("db", "", "the path to the SQLite DB file to store services and their certificates")
-	privateKey := fs.String("private-key", "", "the path to the ECDSA private key file to use for the certificate authority")
-	httpPort := fs.Int("http-port", defaultHTTPPort, "the exposed HTTP port for the CA's API")
-	grpcPort := fs.Int("grpc-port", defaultGRPCPort, "the exposed gRPC port for the CA's API")
-	dur := fs.Int("dur", 24, "duration to use on new certificate's expiry")
-	cleanupTimeout := fs.Duration("cleanup-timeout", 5*time.Minute, "timeout duration when running DB cleanup on expired certificates")
-	cleanupSchedule := fs.String("cleanup-cron", "0 6 * * *", "cron schedule to run DB cleanup on expired certificates")
-	tracerURL := fs.String("tracer-url", "", "URL for the tracing backend")
-	tracerUsername := fs.String("tracer-username", "", "username for the tracing backend, if required")
-	tracerPassword := fs.String("tracer-password", "", "password for the tracing backend, if required")
-	tracerTimeout := fs.Duration("tracer-timeout", 2*time.Minute, "timeout when connecting to the tracing backend")
-
-	if *httpPort <= 0 {
-		*httpPort = defaultHTTPPort
-	}
-
-	if *grpcPort <= 0 {
-		*grpcPort = defaultGRPCPort
-	}
-
-	if *dbURI == "" {
-		if err := checkOrCreateDir(defaultLocal); err != nil {
-			return 1, err
-		}
-		*dbURI = defaultDB
+	conf, err := config.New(args)
+	if err != nil {
+		return 1, err
 	}
 
 	logger.DebugContext(ctx, "preparing tracer")
@@ -108,10 +84,10 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		tracingDone = func(context.Context) error { return nil }
 	)
 
-	if *tracerURL != "" {
-		exporter, err := tracing.GRPCExporter(ctx, *tracerURL,
-			tracing.WithCredentials(*tracerUsername, *tracerPassword),
-			tracing.WithTimeout(*tracerTimeout),
+	if conf.Tracer.URI != "" {
+		exporter, err := tracing.GRPCExporter(ctx, conf.Tracer.URI,
+			tracing.WithCredentials(conf.Tracer.Username, conf.Tracer.Password),
+			tracing.WithTimeout(conf.Tracer.ConnTimeout),
 		)
 
 		if err != nil {
@@ -128,7 +104,14 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 
 	logger.DebugContext(ctx, "preparing database")
 
-	db, err := database.Open(*dbURI)
+	if conf.Database.URI == "" {
+		if err := checkOrCreateDir(defaultLocal); err != nil {
+			return 1, err
+		}
+		conf.Database.URI = defaultDB
+	}
+
+	db, err := database.Open(conf.Database.URI)
 	if err != nil {
 		return 1, err
 	}
@@ -140,15 +123,15 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 	logger.DebugContext(ctx, "database is ready")
 	logger.DebugContext(ctx, "preparing private key")
 
-	if *privateKey == "" {
+	if conf.PrivateKey == "" {
 		if err = checkOrCreateDir(defaultLocal); err != nil {
 			return 1, err
 		}
 
-		*privateKey = defaultKey
+		conf.PrivateKey = defaultKey
 	}
 
-	key, err := openOrCreateKey(*privateKey)
+	key, err := openOrCreateKey(conf.PrivateKey)
 	if err != nil {
 		return 1, err
 	}
@@ -162,8 +145,8 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		repository.WithLogger(logger),
 		repository.WithMetrics(m),
 		repository.WithTrace(tracer),
-		repository.WithCleanupTimeout(*cleanupTimeout),
-		repository.WithCleanupSchedule(*cleanupSchedule),
+		repository.WithCleanupTimeout(conf.Database.CleanupTimeout),
+		repository.WithCleanupSchedule(conf.Database.CleanupSchedule),
 	)
 	if err != nil {
 		return 1, err
@@ -175,26 +158,26 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		ca.WithLogger(logger),
 		ca.WithMetrics(m),
 		ca.WithTracer(tracer),
-		ca.WithTemplate(keygen.WithDurMonth(*dur)),
+		ca.WithTemplate(keygen.WithDurMonth(conf.CA.CertDurMonths)),
 	)
 
 	logger.DebugContext(ctx, "CA service is ready")
 	logger.DebugContext(ctx, "preparing HTTP server")
 
-	httpServer, err := httpserver.NewServer(fmt.Sprintf(":%d", *httpPort))
+	httpServer, err := httpserver.NewServer(fmt.Sprintf(":%d", conf.HTTPPort))
 	if err != nil {
 		return 1, err
 	}
 
-	logger.DebugContext(ctx, "HTTP server is ready", slog.Int("port", *httpPort))
+	logger.DebugContext(ctx, "HTTP server is ready", slog.Int("port", conf.HTTPPort))
 	logger.DebugContext(ctx, "preparing gRPC server")
 
-	grpcServer, err := runGRPCServer(ctx, *grpcPort, caService, nil, httpServer, logger, m)
+	grpcServer, err := runGRPCServer(ctx, conf.GRPCPort, caService, nil, httpServer, logger, m)
 	if err != nil {
 		return 1, err
 	}
 
-	logger.DebugContext(ctx, "gRPC server is ready", slog.Int("port", *grpcPort))
+	logger.DebugContext(ctx, "gRPC server is ready", slog.Int("port", conf.GRPCPort))
 	logger.DebugContext(ctx, "setting up metrics handler")
 
 	if err = registerMetrics(m, httpServer); err != nil {
@@ -204,7 +187,7 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 	logger.DebugContext(ctx, "metrics handler is ready", slog.String("endpoint", "/metrics"))
 	logger.DebugContext(ctx, "serving requests")
 
-	go runHTTPServer(ctx, *httpPort, httpServer, logger)
+	go runHTTPServer(ctx, conf.HTTPPort, httpServer, logger)
 
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
