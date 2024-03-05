@@ -5,12 +5,18 @@ import (
 	"errors"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/zalgonoise/x/authz/keygen"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
-const authHeader = "Authorization"
+type contextKey string
+
+const (
+	authHeader            = "Authorization"
+	ContextKey contextKey = "authz"
+)
 
 var (
 	ErrEmptyHeaders = errors.New("empty headers")
@@ -45,7 +51,11 @@ func authzFunc(client pb.AuthzClient) func(ctx context.Context) (context.Context
 			return ctx, err
 		}
 
-		// TODO: inject ID data to context
-		return ctx, nil
+		t, err := keygen.ParseToken(token, nil)
+		if err != nil {
+			return ctx, err
+		}
+
+		return context.WithValue(ctx, ContextKey, t.Claim), nil
 	}
 }
