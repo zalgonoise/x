@@ -71,7 +71,13 @@ func marshal(m map[string]any) Claim {
 }
 
 func ParseToken(token []byte, publicKey *ecdsa.PublicKey) (JWT, error) {
-	t, err := jwt.Parse(token, jwt.WithKey(jwa.ES512, publicKey))
+	opt := jwt.WithVerify(false)
+
+	if publicKey != nil {
+		opt = jwt.WithKey(jwa.ES512, publicKey)
+	}
+
+	t, err := jwt.Parse(token, opt)
 	if err != nil {
 		return JWT{}, err
 	}
