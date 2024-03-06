@@ -65,7 +65,7 @@ type Services struct {
 	tracer trace.Tracer
 }
 
-func NewServices(db *sql.DB, opts ...cfg.Option[Config]) (*Services, error) {
+func NewService(db *sql.DB, opts ...cfg.Option[Config]) (*Services, error) {
 	config := cfg.Set(defaultConfig(), opts...)
 
 	if config.cleanupTimeout <= 0 {

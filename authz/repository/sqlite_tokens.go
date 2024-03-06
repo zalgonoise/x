@@ -75,7 +75,7 @@ type Tokens struct {
 	tracer trace.Tracer
 }
 
-func NewTokens(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
+func NewToken(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
 	config := cfg.Set(defaultConfig(), opts...)
 
 	if config.cleanupTimeout <= 0 {
