@@ -2,34 +2,7 @@ package config
 
 import (
 	"flag"
-	"time"
 )
-
-const (
-	defaultHTTPPort          = 8080
-	defaultGRPCPort          = 8081
-	defaultCACertDur         = 12
-	defaultDBCleanupTimeout  = 5 * time.Minute
-	defaultDBCleanupSchedule = "0 6 * * *"
-	defaultTracerTimeout     = 2 * time.Minute
-)
-
-func defaultConfig() *Config {
-	return &Config{
-		HTTPPort: defaultHTTPPort,
-		GRPCPort: defaultGRPCPort,
-		CA: CA{
-			CertDurMonths: defaultCACertDur,
-		},
-		Database: Database{
-			CleanupTimeout:  defaultDBCleanupTimeout,
-			CleanupSchedule: defaultDBCleanupSchedule,
-		},
-		Tracer: Tracer{
-			ConnTimeout: defaultTracerTimeout,
-		},
-	}
-}
 
 func Parse(args []string) (*Config, error) {
 	fs := flag.NewFlagSet("authz", flag.ExitOnError)
@@ -38,7 +11,12 @@ func Parse(args []string) (*Config, error) {
 	privateKey := fs.String("private-key", "", "the path to the ECDSA private key file to use for the certificate authority")
 	httpPort := fs.Int("http-port", 0, "the exposed HTTP port for the CA's API")
 	grpcPort := fs.Int("grpc-port", 0, "the exposed gRPC port for the CA's API")
-	dur := fs.Int("dur", 0, "duration to use on new certificate's expiry")
+	dur := fs.Int("cert-dur", 0, "duration to use on new certificate's expiry")
+	serviceName := fs.String("service-name", "", "service name to assign to an Authz service")
+	caURL := fs.String("ca-url", "", "address for the certificate authority that the Authz service should target")
+	randomSize := fs.Int("rand-size", 0, "size for random numbers when generated for a challenge")
+	challengeDur := fs.Duration("challenge-dur", 0, "duration for emitted challenges before they expire")
+	tokenDur := fs.Duration("token-dur", 0, "duration for emitted tokens before they expire")
 	cleanupTimeout := fs.Duration("cleanup-timeout", 0, "timeout duration when running DB cleanup on expired certificates")
 	cleanupSchedule := fs.String("cleanup-cron", "", "cron schedule to run DB cleanup on expired certificates")
 	tracerURL := fs.String("tracer-url", "", "URL for the tracing backend")
@@ -57,7 +35,14 @@ func Parse(args []string) (*Config, error) {
 		CA: CA{
 			CertDurMonths: *dur,
 		},
-		Authz: Authz{},
+		Authz: Authz{
+			Name:          *serviceName,
+			CAURL:         *caURL,
+			RandSize:      *randomSize,
+			CertDurMonths: *dur,
+			ChallengeDur:  *challengeDur,
+			TokenDur:      *tokenDur,
+		},
 		Database: Database{
 			URI:             *dbURI,
 			CleanupTimeout:  *cleanupTimeout,
