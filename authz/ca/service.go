@@ -95,12 +95,12 @@ func NewCertificateAuthority(
 
 	config := cfg.Set(defaultConfig(), opts...)
 
-	template := cfg.Set(keygen.DefaultTemplate(), config.template...)
+	template := cfg.Set(defaultTemplate(), config.template...)
 	if template.PrivateKey == nil {
 		template.PrivateKey = privateKey
 	}
 
-	ca, cert, err := keygen.NewCACertificate(template)
+	ca, cert, err := NewCACertificate(template)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (ca *CertificateAuthority) Register(
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	cert, err := keygen.NewCertFromCSR(ca.ca.Version, ca.durMonth, keygen.ToCSR(req.Service, pubKey, req.SigningRequest))
+	cert, err := NewCertFromCSR(ca.ca.Version, ca.durMonth, keygen.ToCSR(req.Service, pubKey, req.SigningRequest))
 	if err != nil {
 		return exit(codes.Internal, "failed to generate new serial number", err)
 	}
