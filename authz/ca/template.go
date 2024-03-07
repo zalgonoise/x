@@ -1,4 +1,4 @@
-package keygen
+package ca
 
 import (
 	"crypto/ecdsa"
@@ -62,4 +62,33 @@ func newInt(base, exp, sub int64) (*big.Int, error) {
 	maximum.Exp(big.NewInt(base), big.NewInt(exp), nil).Sub(maximum, big.NewInt(sub))
 
 	return rand.Int(rand.Reader, maximum)
+}
+
+func NewCertFromCSR(version, durMonth int, csr *x509.CertificateRequest) (*x509.Certificate, error) {
+	i, err := newInt(2, defaultExp, defaultSub)
+	if err != nil {
+		return nil, err
+	}
+
+	return &x509.Certificate{
+		Version:         version,
+		SerialNumber:    i,
+		Subject:         csr.Subject,
+		Extensions:      csr.Extensions,
+		ExtraExtensions: csr.ExtraExtensions,
+		DNSNames:        csr.DNSNames,
+		EmailAddresses:  csr.EmailAddresses,
+		IPAddresses:     csr.IPAddresses,
+		URIs:            csr.URIs,
+		NotBefore:       time.Now(),
+		NotAfter:        time.Now().AddDate(0, durMonth, 0),
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageCodeSigning,
+			x509.ExtKeyUsageServerAuth,
+			x509.ExtKeyUsageClientAuth,
+			x509.ExtKeyUsageOCSPSigning,
+			x509.ExtKeyUsageCodeSigning,
+		},
+		KeyUsage: x509.KeyUsageCertSign,
+	}, nil
 }

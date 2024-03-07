@@ -1,4 +1,4 @@
-package keygen
+package ca
 
 import (
 	"crypto/ecdsa"
@@ -8,7 +8,7 @@ import (
 	"github.com/zalgonoise/cfg"
 )
 
-func DefaultTemplate() Template {
+func defaultTemplate() Template {
 	return Template{
 		DurMonth:  defaultDurMonths,
 		SerialExp: defaultExp,
