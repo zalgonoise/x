@@ -1,16 +1,48 @@
-package keygen
+package certs
 
 import (
 	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"net"
 	"net/url"
-	"time"
 	"unsafe"
 
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
+	"github.com/zalgonoise/x/errs"
 )
+
+const (
+	errDomain = errs.Domain("x/authz/certs")
+
+	ErrInvalid = errs.Kind("invalid")
+
+	ErrPEM = errs.Entity("PEM key bytes")
+)
+
+var (
+	ErrInvalidPEM = errs.WithDomain(errDomain, ErrInvalid, ErrPEM)
+)
+
+func Encode(template, parent *x509.Certificate, pub *ecdsa.PublicKey, priv *ecdsa.PrivateKey) ([]byte, error) {
+	signedCertBytes, err := x509.CreateCertificate(rand.Reader, template, parent, pub, priv)
+	if err != nil {
+		return nil, err
+	}
+
+	return pem.EncodeToMemory(&pem.Block{Type: typeCertificate, Bytes: signedCertBytes}), nil
+}
+
+func Decode(cert []byte) (*x509.Certificate, error) {
+	block, _ := pem.Decode(cert)
+	if block == nil {
+		return nil, ErrInvalidPEM
+	}
+
+	return x509.ParseCertificate(block.Bytes)
+}
 
 func ToCSR(name string, pub *ecdsa.PublicKey, req *pb.CSR) *x509.CertificateRequest {
 	csr := &x509.CertificateRequest{
@@ -196,33 +228,4 @@ func ToCSR(name string, pub *ecdsa.PublicKey, req *pb.CSR) *x509.CertificateRequ
 	}
 
 	return csr
-}
-
-func NewCertFromCSR(version, durMonth int, csr *x509.CertificateRequest) (*x509.Certificate, error) {
-	i, err := newInt(2, defaultExp, defaultSub)
-	if err != nil {
-		return nil, err
-	}
-
-	return &x509.Certificate{
-		Version:         version,
-		SerialNumber:    i,
-		Subject:         csr.Subject,
-		Extensions:      csr.Extensions,
-		ExtraExtensions: csr.ExtraExtensions,
-		DNSNames:        csr.DNSNames,
-		EmailAddresses:  csr.EmailAddresses,
-		IPAddresses:     csr.IPAddresses,
-		URIs:            csr.URIs,
-		NotBefore:       time.Now(),
-		NotAfter:        time.Now().AddDate(0, durMonth, 0),
-		ExtKeyUsage: []x509.ExtKeyUsage{
-			x509.ExtKeyUsageCodeSigning,
-			x509.ExtKeyUsageServerAuth,
-			x509.ExtKeyUsageClientAuth,
-			x509.ExtKeyUsageOCSPSigning,
-			x509.ExtKeyUsageCodeSigning,
-		},
-		KeyUsage: x509.KeyUsageCertSign,
-	}, nil
 }
