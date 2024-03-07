@@ -9,10 +9,10 @@ import (
 	"syscall"
 
 	"github.com/zalgonoise/x/authz/ca"
+	"github.com/zalgonoise/x/authz/certs"
 	"github.com/zalgonoise/x/authz/config"
 	"github.com/zalgonoise/x/authz/database"
 	"github.com/zalgonoise/x/authz/httpserver"
-	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/authz/metrics"
 	"github.com/zalgonoise/x/authz/repository"
 	"github.com/zalgonoise/x/authz/tracing"
@@ -106,7 +106,7 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		ca.WithLogger(logger),
 		ca.WithMetrics(m),
 		ca.WithTracer(tracer),
-		ca.WithTemplate(keygen.WithDurMonth(conf.CA.CertDurMonths)),
+		ca.WithTemplate(certs.WithDurMonth(conf.CA.CertDurMonths)),
 	)
 
 	logger.DebugContext(ctx, "CA service is ready")
