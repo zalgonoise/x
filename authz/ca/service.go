@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/authz/certs"
 	"github.com/zalgonoise/x/authz/keygen"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/repository"
@@ -95,12 +96,12 @@ func NewCertificateAuthority(
 
 	config := cfg.Set(defaultConfig(), opts...)
 
-	template := cfg.Set(defaultTemplate(), config.template...)
+	template := cfg.Set(certs.DefaultTemplate(), config.template...)
 	if template.PrivateKey == nil {
 		template.PrivateKey = privateKey
 	}
 
-	ca, cert, err := NewCACertificate(template)
+	ca, cert, err := certs.NewCACertificate(template)
 	if err != nil {
 		return nil, err
 	}
@@ -160,12 +161,12 @@ func (ca *CertificateAuthority) Register(
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	cert, err := NewCertFromCSR(ca.ca.Version, ca.durMonth, keygen.ToCSR(req.Service, pubKey, req.SigningRequest))
+	cert, err := certs.NewCertFromCSR(ca.ca.Version, ca.durMonth, certs.ToCSR(req.Service, pubKey, req.SigningRequest))
 	if err != nil {
 		return exit(codes.Internal, "failed to generate new serial number", err)
 	}
 
-	signedCert, err := keygen.EncodeCertificate(cert, ca.ca, pubKey, ca.privateKey)
+	signedCert, err := certs.Encode(cert, ca.ca, pubKey, ca.privateKey)
 	if err != nil {
 		return exit(codes.Internal, "failed to generate new certificate", err)
 	}
@@ -264,7 +265,7 @@ func (ca *CertificateAuthority) VerifyCertificate(ctx context.Context, req *pb.V
 		return exit(codes.Internal, "failed to decode stored public key", err)
 	}
 
-	cert, err := keygen.DecodeCertificate(req.Certificate)
+	cert, err := certs.Decode(req.Certificate)
 	if err != nil {
 		return exit(codes.InvalidArgument, "failed to decode certificate", err)
 	}
