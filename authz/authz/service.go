@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/authz/ca"
+	"github.com/zalgonoise/x/authz/certs"
 	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/authz/randomizer"
 	"github.com/zalgonoise/x/authz/repository"
@@ -61,7 +62,7 @@ const (
 var (
 	ErrEmptyCAAddress        = errs.WithDomain(errDomain, ErrEmpty, ErrCAAddress)
 	ErrNilServicesRepository = errs.WithDomain(errDomain, ErrNil, ErrServicesRepo)
-	ErrNilTokensRepository   = errs.WithDomain(errDomain, ErrNil, ErrServicesRepo)
+	ErrNilTokensRepository   = errs.WithDomain(errDomain, ErrNil, ErrTokensRepo)
 	ErrNilPrivateKey         = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 	ErrInvalidPublicKey      = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
 	ErrInvalidCertificate    = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
@@ -205,7 +206,7 @@ func NewAuthz(
 
 	logger.InfoContext(ctx, "retrieved certificate from CA")
 
-	cert, err := keygen.DecodeCertificate(res.Certificate)
+	cert, err := certs.Decode(res.Certificate)
 	if err != nil {
 		return nil, err
 	}
@@ -279,12 +280,12 @@ func (a *Authz) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Regi
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	cert, err := keygen.NewCertFromCSR(a.cert.Version, a.durMonth, keygen.ToCSR(req.Name, pubKey, req.SigningRequest))
+	cert, err := certs.NewCertFromCSR(a.cert.Version, a.durMonth, certs.ToCSR(req.Name, pubKey, req.SigningRequest))
 	if err != nil {
 		return exit(codes.Internal, "failed to generate new serial number", err)
 	}
 
-	signedCert, err := keygen.EncodeCertificate(cert, a.cert, pubKey, a.privateKey)
+	signedCert, err := certs.Encode(cert, a.cert, pubKey, a.privateKey)
 	if err != nil {
 		return exit(codes.Internal, "failed to generate new certificate", err)
 	}
@@ -341,7 +342,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 		return exit(codes.InvalidArgument, "mismatching service public keys", ErrInvalidPublicKey)
 	}
 
-	serviceCert, err := keygen.DecodeCertificate(req.Service.Certificate)
+	serviceCert, err := certs.Decode(req.Service.Certificate)
 	if err != nil {
 		return exit(codes.InvalidArgument, "invalid service cert bytes", err)
 	}
@@ -355,7 +356,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 		return exit(codes.InvalidArgument, "invalid public key PEM bytes", err)
 	}
 
-	cert, err := keygen.DecodeCertificate(req.Id.Certificate)
+	cert, err := certs.Decode(req.Id.Certificate)
 	if err != nil {
 		return exit(codes.InvalidArgument, "invalid cert bytes", err)
 	}
@@ -612,7 +613,7 @@ func (a *Authz) VerifyCertificate(ctx context.Context, req *pb.VerificationReque
 		return exit(codes.Internal, "failed to decode stored public key", err)
 	}
 
-	cert, err := keygen.DecodeCertificate(req.Certificate)
+	cert, err := certs.Decode(req.Certificate)
 	if err != nil {
 		return exit(codes.InvalidArgument, "failed to decode certificate", err)
 	}
