@@ -1,0 +1,24 @@
+version: '3.7'
+services:
+
+  ca:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["/app/authz", "ca"]
+    container_name: authz-ca
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+
+  authz:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["/app/authz", "authz"]
+    container_name: authz-authz
+    ports:
+      - "8082:8080"
+      - "8083:8081"
+    environment:
+      AUTHZ_TARGET_CA_URL: "ca:8081"
