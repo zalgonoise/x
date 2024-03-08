@@ -116,6 +116,29 @@ func Merge(cur, next *Config) *Config {
 	}
 
 	// Authz
+	if next.Authz.Name != "" {
+		cur.Authz.Name = next.Authz.Name
+	}
+
+	if next.Authz.CAURL != "" {
+		cur.Authz.CAURL = next.Authz.CAURL
+	}
+
+	if next.Authz.RandSize > 0 {
+		cur.Authz.RandSize = next.Authz.RandSize
+	}
+
+	if next.Authz.CertDurMonths > 0 {
+		cur.Authz.CertDurMonths = next.Authz.CertDurMonths
+	}
+
+	if next.Authz.ChallengeDur > 0 {
+		cur.Authz.ChallengeDur = next.Authz.ChallengeDur
+	}
+
+	if next.Authz.TokenDur > 0 {
+		cur.Authz.TokenDur = next.Authz.TokenDur
+	}
 
 	// Database
 	if next.Database.URI != "" {
