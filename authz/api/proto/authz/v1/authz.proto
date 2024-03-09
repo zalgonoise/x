@@ -212,9 +212,9 @@ message PublicKeyResponse {
 }
 
 service Authz {
-  rpc Register(RegisterRequest) returns (RegisterResponse) {
+  rpc SignUp(SignUpRequest) returns (SignUpResponse) {
     option (google.api.http) = {
-      post: "/v1/register"
+      post: "/v1/signup"
       body: "*"
     };
 
@@ -267,13 +267,13 @@ service Authz {
 }
 
 
-message RegisterRequest {
+message SignUpRequest {
   string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
   bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
   CSR signing_request = 3 [json_name="signing_req"];
 }
 
-message RegisterResponse {
+message SignUpResponse {
   bytes certificate = 1 [json_name="certificate"];
   ID service = 2 [json_name="service"];
 }
