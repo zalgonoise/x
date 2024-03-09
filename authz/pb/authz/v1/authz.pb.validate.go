@@ -1938,22 +1938,22 @@ var _ interface {
 	ErrorName() string
 } = PublicKeyResponseValidationError{}
 
-// Validate checks the field values on RegisterRequest with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *RegisterRequest) Validate() error {
+// Validate checks the field values on SignUpRequest with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SignUpRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on RegisterRequest with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// RegisterRequestMultiError, or nil if none found.
-func (m *RegisterRequest) ValidateAll() error {
+// ValidateAll checks the field values on SignUpRequest with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SignUpRequestMultiError, or
+// nil if none found.
+func (m *SignUpRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *RegisterRequest) validate(all bool) error {
+func (m *SignUpRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -1961,7 +1961,7 @@ func (m *RegisterRequest) validate(all bool) error {
 	var errors []error
 
 	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := RegisterRequestValidationError{
+		err := SignUpRequestValidationError{
 			field:  "Name",
 			reason: "value length must be at least 1 runes",
 		}
@@ -1972,7 +1972,7 @@ func (m *RegisterRequest) validate(all bool) error {
 	}
 
 	if len(m.GetPublicKey()) < 1 {
-		err := RegisterRequestValidationError{
+		err := SignUpRequestValidationError{
 			field:  "PublicKey",
 			reason: "value length must be at least 1 bytes",
 		}
@@ -1986,7 +1986,7 @@ func (m *RegisterRequest) validate(all bool) error {
 		switch v := interface{}(m.GetSigningRequest()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RegisterRequestValidationError{
+				errors = append(errors, SignUpRequestValidationError{
 					field:  "SigningRequest",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -1994,7 +1994,7 @@ func (m *RegisterRequest) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, RegisterRequestValidationError{
+				errors = append(errors, SignUpRequestValidationError{
 					field:  "SigningRequest",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2003,7 +2003,7 @@ func (m *RegisterRequest) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetSigningRequest()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return RegisterRequestValidationError{
+			return SignUpRequestValidationError{
 				field:  "SigningRequest",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -2012,19 +2012,19 @@ func (m *RegisterRequest) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return RegisterRequestMultiError(errors)
+		return SignUpRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// RegisterRequestMultiError is an error wrapping multiple validation errors
-// returned by RegisterRequest.ValidateAll() if the designated constraints
+// SignUpRequestMultiError is an error wrapping multiple validation errors
+// returned by SignUpRequest.ValidateAll() if the designated constraints
 // aren't met.
-type RegisterRequestMultiError []error
+type SignUpRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m RegisterRequestMultiError) Error() string {
+func (m SignUpRequestMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2033,11 +2033,11 @@ func (m RegisterRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m RegisterRequestMultiError) AllErrors() []error { return m }
+func (m SignUpRequestMultiError) AllErrors() []error { return m }
 
-// RegisterRequestValidationError is the validation error returned by
-// RegisterRequest.Validate if the designated constraints aren't met.
-type RegisterRequestValidationError struct {
+// SignUpRequestValidationError is the validation error returned by
+// SignUpRequest.Validate if the designated constraints aren't met.
+type SignUpRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2045,22 +2045,22 @@ type RegisterRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e RegisterRequestValidationError) Field() string { return e.field }
+func (e SignUpRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e RegisterRequestValidationError) Reason() string { return e.reason }
+func (e SignUpRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e RegisterRequestValidationError) Cause() error { return e.cause }
+func (e SignUpRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e RegisterRequestValidationError) Key() bool { return e.key }
+func (e SignUpRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e RegisterRequestValidationError) ErrorName() string { return "RegisterRequestValidationError" }
+func (e SignUpRequestValidationError) ErrorName() string { return "SignUpRequestValidationError" }
 
 // Error satisfies the builtin error interface
-func (e RegisterRequestValidationError) Error() string {
+func (e SignUpRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2072,14 +2072,14 @@ func (e RegisterRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sRegisterRequest.%s: %s%s",
+		"invalid %sSignUpRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = RegisterRequestValidationError{}
+var _ error = SignUpRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -2087,24 +2087,24 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = RegisterRequestValidationError{}
+} = SignUpRequestValidationError{}
 
-// Validate checks the field values on RegisterResponse with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *RegisterResponse) Validate() error {
+// Validate checks the field values on SignUpResponse with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SignUpResponse) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on RegisterResponse with the rules
-// defined in the proto definition for this message. If any rules are
-// violated, the result is a list of violation errors wrapped in
-// RegisterResponseMultiError, or nil if none found.
-func (m *RegisterResponse) ValidateAll() error {
+// ValidateAll checks the field values on SignUpResponse with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SignUpResponseMultiError,
+// or nil if none found.
+func (m *SignUpResponse) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *RegisterResponse) validate(all bool) error {
+func (m *SignUpResponse) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -2117,7 +2117,7 @@ func (m *RegisterResponse) validate(all bool) error {
 		switch v := interface{}(m.GetService()).(type) {
 		case interface{ ValidateAll() error }:
 			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, RegisterResponseValidationError{
+				errors = append(errors, SignUpResponseValidationError{
 					field:  "Service",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2125,7 +2125,7 @@ func (m *RegisterResponse) validate(all bool) error {
 			}
 		case interface{ Validate() error }:
 			if err := v.Validate(); err != nil {
-				errors = append(errors, RegisterResponseValidationError{
+				errors = append(errors, SignUpResponseValidationError{
 					field:  "Service",
 					reason: "embedded message failed validation",
 					cause:  err,
@@ -2134,7 +2134,7 @@ func (m *RegisterResponse) validate(all bool) error {
 		}
 	} else if v, ok := interface{}(m.GetService()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
-			return RegisterResponseValidationError{
+			return SignUpResponseValidationError{
 				field:  "Service",
 				reason: "embedded message failed validation",
 				cause:  err,
@@ -2143,19 +2143,19 @@ func (m *RegisterResponse) validate(all bool) error {
 	}
 
 	if len(errors) > 0 {
-		return RegisterResponseMultiError(errors)
+		return SignUpResponseMultiError(errors)
 	}
 
 	return nil
 }
 
-// RegisterResponseMultiError is an error wrapping multiple validation errors
-// returned by RegisterResponse.ValidateAll() if the designated constraints
+// SignUpResponseMultiError is an error wrapping multiple validation errors
+// returned by SignUpResponse.ValidateAll() if the designated constraints
 // aren't met.
-type RegisterResponseMultiError []error
+type SignUpResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m RegisterResponseMultiError) Error() string {
+func (m SignUpResponseMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2164,11 +2164,11 @@ func (m RegisterResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m RegisterResponseMultiError) AllErrors() []error { return m }
+func (m SignUpResponseMultiError) AllErrors() []error { return m }
 
-// RegisterResponseValidationError is the validation error returned by
-// RegisterResponse.Validate if the designated constraints aren't met.
-type RegisterResponseValidationError struct {
+// SignUpResponseValidationError is the validation error returned by
+// SignUpResponse.Validate if the designated constraints aren't met.
+type SignUpResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2176,22 +2176,22 @@ type RegisterResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e RegisterResponseValidationError) Field() string { return e.field }
+func (e SignUpResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e RegisterResponseValidationError) Reason() string { return e.reason }
+func (e SignUpResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e RegisterResponseValidationError) Cause() error { return e.cause }
+func (e SignUpResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e RegisterResponseValidationError) Key() bool { return e.key }
+func (e SignUpResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e RegisterResponseValidationError) ErrorName() string { return "RegisterResponseValidationError" }
+func (e SignUpResponseValidationError) ErrorName() string { return "SignUpResponseValidationError" }
 
 // Error satisfies the builtin error interface
-func (e RegisterResponseValidationError) Error() string {
+func (e SignUpResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2203,14 +2203,14 @@ func (e RegisterResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sRegisterResponse.%s: %s%s",
+		"invalid %sSignUpResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = RegisterResponseValidationError{}
+var _ error = SignUpResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -2218,7 +2218,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = RegisterResponseValidationError{}
+} = SignUpResponseValidationError{}
 
 // Validate checks the field values on LoginRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, the first

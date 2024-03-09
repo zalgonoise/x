@@ -257,7 +257,7 @@ var CertificateAuthority_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	Authz_Register_FullMethodName    = "/authz.v1.Authz/Register"
+	Authz_SignUp_FullMethodName      = "/authz.v1.Authz/SignUp"
 	Authz_Login_FullMethodName       = "/authz.v1.Authz/Login"
 	Authz_Token_FullMethodName       = "/authz.v1.Authz/Token"
 	Authz_VerifyToken_FullMethodName = "/authz.v1.Authz/VerifyToken"
@@ -267,7 +267,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthzClient interface {
-	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	Token(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*TokenResponse, error)
 	VerifyToken(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
@@ -281,9 +281,9 @@ func NewAuthzClient(cc grpc.ClientConnInterface) AuthzClient {
 	return &authzClient{cc}
 }
 
-func (c *authzClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
-	out := new(RegisterResponse)
-	err := c.cc.Invoke(ctx, Authz_Register_FullMethodName, in, out, opts...)
+func (c *authzClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error) {
+	out := new(SignUpResponse)
+	err := c.cc.Invoke(ctx, Authz_SignUp_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +321,7 @@ func (c *authzClient) VerifyToken(ctx context.Context, in *AuthRequest, opts ...
 // All implementations must embed UnimplementedAuthzServer
 // for forward compatibility
 type AuthzServer interface {
-	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
+	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	Token(context.Context, *TokenRequest) (*TokenResponse, error)
 	VerifyToken(context.Context, *AuthRequest) (*AuthResponse, error)
@@ -332,8 +332,8 @@ type AuthzServer interface {
 type UnimplementedAuthzServer struct {
 }
 
-func (UnimplementedAuthzServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+func (UnimplementedAuthzServer) SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
 }
 func (UnimplementedAuthzServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
@@ -357,20 +357,20 @@ func RegisterAuthzServer(s grpc.ServiceRegistrar, srv AuthzServer) {
 	s.RegisterService(&Authz_ServiceDesc, srv)
 }
 
-func _Authz_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRequest)
+func _Authz_SignUp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignUpRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthzServer).Register(ctx, in)
+		return srv.(AuthzServer).SignUp(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Authz_Register_FullMethodName,
+		FullMethod: Authz_SignUp_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthzServer).Register(ctx, req.(*RegisterRequest))
+		return srv.(AuthzServer).SignUp(ctx, req.(*SignUpRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -437,8 +437,8 @@ var Authz_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthzServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Register",
-			Handler:    _Authz_Register_Handler,
+			MethodName: "SignUp",
+			Handler:    _Authz_SignUp_Handler,
 		},
 		{
 			MethodName: "Login",
