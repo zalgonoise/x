@@ -306,16 +306,16 @@
         ]
       }
     },
-    "/v1/register": {
+    "/v1/signup": {
       "post": {
         "summary": "Processes a user registry request",
         "description": "This endpoint receives user registry requests, which are replied to with a system's Certificate Authority issued certificate, unique to this user.",
-        "operationId": "Authz_Register",
+        "operationId": "Authz_SignUp",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1RegisterResponse"
+              "$ref": "#/definitions/v1SignUpResponse"
             }
           },
           "401": {
@@ -343,7 +343,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1RegisterRequest"
+              "$ref": "#/definitions/v1SignUpRequest"
             }
           }
         ],
@@ -683,7 +683,7 @@
         }
       }
     },
-    "v1RegisterRequest": {
+    "v1SignUpRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -698,7 +698,7 @@
         }
       }
     },
-    "v1RegisterResponse": {
+    "v1SignUpResponse": {
       "type": "object",
       "properties": {
         "certificate": {
