@@ -144,7 +144,7 @@ func ExecAuthz(ctx context.Context, logger *slog.Logger, args []string) (int, er
 	logger.DebugContext(ctx, "HTTP server is ready", slog.Int("port", conf.HTTPPort))
 	logger.DebugContext(ctx, "preparing gRPC server")
 
-	grpcServer, err := runGRPCServer(ctx, conf.GRPCPort, nil, authzService, httpServer, logger, m)
+	grpcServer, err := runGRPCServer(ctx, conf.GRPCPort, authzService, authzService, httpServer, logger, m)
 	if err != nil {
 		return 1, err
 	}
