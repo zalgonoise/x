@@ -124,6 +124,9 @@ type Metrics interface {
 
 type Authz struct {
 	pb.UnimplementedAuthzServer
+	// TODO: cannot embed both servers having similar Register RPCs, as an authz service cannot connect to
+	// 	an authz root; only another CA. Need to try to rename register to something different for CA and Authz services
+	//	 avoiding the embedded conflict / collision
 	pb.UnimplementedCertificateAuthorityServer
 
 	caClient pb.CertificateAuthorityClient
