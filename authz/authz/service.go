@@ -124,9 +124,6 @@ type Metrics interface {
 
 type Authz struct {
 	pb.UnimplementedAuthzServer
-	// TODO: cannot embed both servers having similar Register RPCs, as an authz service cannot connect to
-	// 	an authz root; only another CA. Need to try to rename register to something different for CA and Authz services
-	//	 avoiding the embedded conflict / collision
 	pb.UnimplementedCertificateAuthorityServer
 
 	caClient pb.CertificateAuthorityClient
@@ -232,8 +229,8 @@ func NewAuthz(
 	}, nil
 }
 
-func (a *Authz) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	ctx, span := a.tracer.Start(ctx, "Authz.Register", trace.WithAttributes(
+func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpResponse, error) {
+	ctx, span := a.tracer.Start(ctx, "Authz.SignUp", trace.WithAttributes(
 		attribute.String("service", req.Name),
 		attribute.String("pub_key", string(req.PublicKey)),
 		attribute.Bool("with_csr", req.SigningRequest != nil),
@@ -246,10 +243,10 @@ func (a *Authz) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Regi
 	}()
 
 	a.metrics.IncServiceRegistries()
-	a.logger.DebugContext(ctx, "new registry request",
+	a.logger.DebugContext(ctx, "new sign-up request",
 		slog.String("service", req.Name), slog.Bool("with_csr", req.SigningRequest != nil))
 
-	exit := withExit[pb.RegisterRequest, pb.RegisterResponse](
+	exit := withExit[pb.SignUpRequest, pb.SignUpResponse](
 		ctx, a.logger, req, a.metrics.IncServiceRegistryFailed, span,
 	)
 
@@ -269,7 +266,7 @@ func (a *Authz) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Regi
 			return exit(codes.Internal, "failed to encode public key", err)
 		}
 
-		return &pb.RegisterResponse{
+		return &pb.SignUpResponse{
 			Certificate: storedCert,
 			Service: &pb.ID{
 				PublicKey:   authzPub,
@@ -304,7 +301,7 @@ func (a *Authz) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Regi
 		return exit(codes.Internal, "failed to encode public key", err)
 	}
 
-	return &pb.RegisterResponse{
+	return &pb.SignUpResponse{
 		Certificate: signedCert,
 		Service: &pb.ID{
 			PublicKey:   authzPub,
@@ -529,6 +526,21 @@ func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthR
 	}
 
 	return &pb.AuthResponse{}, nil
+}
+
+func (a *Authz) Register(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
+	signUp, err := a.SignUp(ctx, &pb.SignUpRequest{
+		Name:           req.Service,
+		PublicKey:      req.PublicKey,
+		SigningRequest: req.SigningRequest,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CertificateResponse{
+		Certificate: signUp.Certificate,
+	}, nil
 }
 
 func (a *Authz) GetCertificate(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
