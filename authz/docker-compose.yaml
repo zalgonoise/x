@@ -11,14 +11,26 @@ services:
       - "8080:8080"
       - "8081:8081"
 
-  authz:
+  authz-root:
     build:
       context: .
       dockerfile: ./Dockerfile
     command: ["/app/authz", "authz"]
-    container_name: authz-authz
+    container_name: authz-root
     ports:
       - "8082:8080"
       - "8083:8081"
     environment:
-      AUTHZ_TARGET_CA_URL: "ca:8081"
+      AUTHZ_TARGET_CA_URL: "authz-ca:8081"
+
+  authz-service:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["/app/authz", "authz"]
+    container_name: authz-service
+    ports:
+      - "8084:8080"
+      - "8085:8081"
+    environment:
+      AUTHZ_TARGET_CA_URL: "authz-root:8081"
