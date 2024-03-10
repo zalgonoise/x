@@ -753,10 +753,10 @@ github.com/zalgonoise/micron v1.0.2 h1:5K5XrPAvx8U/143pOgJbjrIKwwvZRVlAWvfkRu/Uw
 github.com/zalgonoise/micron v1.0.2/go.mod h1:sHc5Z9ZIIK2Z61PrIsV1btAwpBBQTx7GYqJ6Kj8eP3I=
 github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5 h1:EBgljXGafLZA4PqRdmtHBzSlShSXp/XizEqBfFOEbSM=
 github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5/go.mod h1:gN5pXQ+VmE3Jmy4/gPhgD+4gEisXfMpuDrjHb1eertI=
-github.com/zalgonoise/x/cli v0.0.0-20240308001509-5fb2a19f6b2a h1:YAedTOXihsQ3zCHzytgB1+/LOSGDCHAxEPsSkwTGZic=
-github.com/zalgonoise/x/cli v0.0.0-20240308001509-5fb2a19f6b2a/go.mod h1:dRGdo9vd/EGZPa9zeJXC1gKCJbzOF1LtBSca9SUnERg=
-github.com/zalgonoise/x/errs v0.0.0-20240308001509-5fb2a19f6b2a h1:UZqhYO/sEdk5fVaeEfIMhsHsTbbw+NOVJDZJ6M+1p/I=
-github.com/zalgonoise/x/errs v0.0.0-20240308001509-5fb2a19f6b2a/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
+github.com/zalgonoise/x/cli v0.0.0-20240309143047-3a4e7b30c6ce h1:+2ukrx7pj/NklJEXulDoN4PK762UyT3Om11jU/nYLuU=
+github.com/zalgonoise/x/cli v0.0.0-20240309143047-3a4e7b30c6ce/go.mod h1:dRGdo9vd/EGZPa9zeJXC1gKCJbzOF1LtBSca9SUnERg=
+github.com/zalgonoise/x/errs v0.0.0-20240309143047-3a4e7b30c6ce h1:W6w58DrwJDIS/8dq8vBa1Dqn5BfNVDkAU/qy+lLaWeE=
+github.com/zalgonoise/x/errs v0.0.0-20240309143047-3a4e7b30c6ce/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/is v0.0.0-20231111152101-e78dd34855c9 h1:T5vOvDU82/a9YvwWFjWqRLK9pXNIm09sPa1Gu5higuA=
 github.com/zalgonoise/x/is v0.0.0-20231111152101-e78dd34855c9/go.mod h1:WvtGhofqpjEMLhn+qkpHVcBPBuIrC5vx6nwsa7mEqTU=
 gitlab.com/bosi/decorder v0.4.1 h1:VdsdfxhstabyhZovHafFw+9eJ6eU0d2CkFNJcZz/NU4=

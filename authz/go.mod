@@ -17,8 +17,8 @@ require (
 	github.com/vektra/mockery/v2 v2.42.0
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/micron v1.0.2
-	github.com/zalgonoise/x/cli v0.0.0-20240308001509-5fb2a19f6b2a
-	github.com/zalgonoise/x/errs v0.0.0-20240308001509-5fb2a19f6b2a
+	github.com/zalgonoise/x/cli v0.0.0-20240309143047-3a4e7b30c6ce
+	github.com/zalgonoise/x/errs v0.0.0-20240309143047-3a4e7b30c6ce
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0
 	go.opentelemetry.io/otel v1.24.0
