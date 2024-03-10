@@ -88,7 +88,7 @@ func NewToken(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
 
 	ctx, done := context.WithCancel(context.Background())
 
-	ca := &Tokens{
+	repo := &Tokens{
 		cleanupTimeout:  config.cleanupTimeout,
 		cleanupSchedule: config.cleanupSchedule,
 		db:              db,
@@ -98,11 +98,11 @@ func NewToken(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
 		tracer:          config.tracer,
 	}
 
-	if err := ca.runCron(ctx); err != nil {
+	if err := repo.runCron(ctx); err != nil {
 		return nil, err
 	}
 
-	return ca, nil
+	return repo, nil
 }
 
 func (r *Tokens) GetChallenge(ctx context.Context, service string) (challenge []byte, expiry time.Time, err error) {
