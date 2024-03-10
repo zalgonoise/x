@@ -21,13 +21,13 @@ const (
 	defaultMaxOpenConns = 16
 	defaultMaxIdleConns = 16
 
-	checkCATableExists = `
+	checkServicesTableExists = `
 	SELECT EXISTS(SELECT 1 FROM sqlite_master
 	WHERE type='table'
 	AND name='services');
 `
 
-	createCATables = `
+	createServicesTable = `
 CREATE TABLE services
 (
     id           INTEGER PRIMARY KEY NOT NULL,
@@ -36,6 +36,40 @@ CREATE TABLE services
     cert         BLOB                NULL,
     expiry 			 DATETIME 					 NULL
 );
+`
+
+	checkChallengesTableExists = `
+	SELECT EXISTS(SELECT 1 FROM sqlite_master
+	WHERE type='table'
+	AND name='challenges');
+`
+
+	createChallengesTable = `
+CREATE TABLE challenges
+(
+    service_id    INTEGER REFERENCES services (id) NOT NULL,
+    challenge     BLOB                             NULL,
+    expiry        INTEGER                          NULL
+);
+
+CREATE UNIQUE INDEX idx_challenges_service_id ON challenges (service_id);
+`
+
+	checkTokensTableExists = `
+	SELECT EXISTS(SELECT 1 FROM sqlite_master
+	WHERE type='table'
+	AND name='tokens');
+`
+
+	createTokensTable = `
+CREATE TABLE tokens
+(
+    service_id    INTEGER REFERENCES services (id) NOT NULL,
+    token         BLOB                             NULL,
+    expiry        INTEGER                          NULL
+);
+
+CREATE UNIQUE INDEX idx_tokens_service_id ON tokens (service_id);
 `
 )
 
@@ -103,9 +137,13 @@ func validateURI(uri string) error {
 func Migrate(ctx context.Context, db *sql.DB, service Service, log *slog.Logger) error {
 	switch service {
 	case AuthzService:
-		return runMigrations(ctx, db)
+		return runMigrations(ctx, db,
+			migration{checkServicesTableExists, createServicesTable},
+			migration{checkChallengesTableExists, createChallengesTable},
+			migration{checkTokensTableExists, createTokensTable},
+		)
 	case CAService:
-		return runMigrations(ctx, db, migration{checkCATableExists, createCATables})
+		return runMigrations(ctx, db, migration{checkServicesTableExists, createServicesTable})
 	default:
 		return fmt.Errorf("%w: %q", ErrInvalidServiceType, service)
 	}
