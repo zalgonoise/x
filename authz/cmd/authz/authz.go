@@ -77,7 +77,7 @@ func ExecAuthz(ctx context.Context, logger *slog.Logger, args []string) (int, er
 			return 1, err
 		}
 
-		conf.PrivateKey = defaultKey
+		conf.PrivateKey = defaultPrivateKey
 	}
 
 	key, err := openOrCreateKey(conf.PrivateKey)
