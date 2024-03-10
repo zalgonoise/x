@@ -47,9 +47,10 @@ func main() {
 }
 
 const (
-	defaultLocal = "local"
-	defaultDB    = "local/ca.db"
-	defaultKey   = "local/key.pem"
+	defaultLocal      = "local"
+	defaultDB         = "local/ca.db"
+	defaultPrivateKey = "local/key.pem"
+	defaultPublicKey  = "local/pub.pem"
 
 	shutdownTimeout = time.Minute
 )
@@ -181,25 +182,32 @@ func openOrCreateKey(path string) (*ecdsa.PrivateKey, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			f, err := os.Create(path)
+			keyFile, err := os.Create(path)
 			if err != nil {
 				return nil, err
 			}
-
-			defer f.Close()
 
 			key, err := keygen.New()
 			if err != nil {
 				return nil, err
 			}
 
-			keyPEM, err := keygen.EncodePrivate(key)
+			if err := writePrivate(key, keyFile); err != nil {
+				return nil, err
+			}
+
+			// also create a public key
+			pubPath := defaultPublicKey
+			if path != defaultPrivateKey {
+				pubPath = path + ".pub"
+			}
+
+			pubFile, err := os.Create(pubPath)
 			if err != nil {
 				return nil, err
 			}
 
-			_, err = f.Write(keyPEM)
-			if err != nil {
+			if err := writePublic(&key.PublicKey, pubFile); err != nil {
 				return nil, err
 			}
 
@@ -215,4 +223,34 @@ func openOrCreateKey(path string) (*ecdsa.PrivateKey, error) {
 	}
 
 	return keygen.DecodePrivate(buf)
+}
+
+func writePrivate(key *ecdsa.PrivateKey, w io.WriteCloser) error {
+	defer w.Close()
+
+	keyPEM, err := keygen.EncodePrivate(key)
+	if err != nil {
+		return err
+	}
+
+	if _, err := w.Write(keyPEM); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writePublic(key *ecdsa.PublicKey, w io.WriteCloser) error {
+	defer w.Close()
+
+	keyPEM, err := keygen.EncodePublic(key)
+	if err != nil {
+		return err
+	}
+
+	if _, err := w.Write(keyPEM); err != nil {
+		return err
+	}
+
+	return nil
 }
