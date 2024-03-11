@@ -1,10 +1,9 @@
 package authz
 
 import (
-	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/x509"
 	"errors"
 	"log/slog"
@@ -361,7 +360,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 		return exit(codes.InvalidArgument, "invalid cert bytes", err)
 	}
 
-	storedPub, _, err := a.services.GetService(ctx, req.Name)
+	storedPEM, _, err := a.services.GetService(ctx, req.Name)
 	if err != nil {
 		return exit(codes.Internal, "failed to fetch stored public key", err)
 	}
@@ -369,6 +368,11 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 	pub, ok := cert.PublicKey.(*ecdsa.PublicKey)
 	if !ok {
 		return exit(codes.InvalidArgument, "failed to retrieve public key from certificate", ErrInvalidCertificate)
+	}
+
+	storedPub, err := keygen.DecodePublic(storedPEM)
+	if err != nil {
+		return exit(codes.Internal, "failed to decode stored public key", err)
 	}
 
 	if !pub.Equal(storedPub) {
@@ -386,12 +390,29 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 		return exit(codes.InvalidArgument, "expired certificate", ErrInvalidCertificate)
 	}
 
-	challenge, err := a.random.Random()
+	// check if there is a valid challenge to provide
+	challenge, expiry, err := a.tokens.GetChallenge(ctx, req.Name)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return exit(codes.Internal, "failed to search for challenges in the database", err)
+	}
+
+	if err == nil && len(challenge) > 0 {
+		if expiry.After(start) {
+			return &pb.LoginResponse{Challenge: challenge, ExpiresOn: expiry.UnixMilli()}, nil
+		}
+
+		if err = a.tokens.DeleteChallenge(ctx, req.Name); err != nil {
+			return exit(codes.Internal, "failed to remove expired challenge", err)
+		}
+	}
+
+	// create a new challenge
+	challenge, err = a.random.Random()
 	if err != nil {
 		return exit(codes.Internal, "failed to generate challenge", err)
 	}
 
-	expiry := time.Now().Add(a.challengeExpiry)
+	expiry = time.Now().Add(a.challengeExpiry)
 
 	if err = a.tokens.CreateChallenge(ctx, req.Name, challenge, expiry); err != nil {
 		return exit(codes.Internal, "failed to store challenge", err)
@@ -444,7 +465,7 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.Internal, "failed to decode public key", err)
 	}
 
-	h := sha256.Sum256(challenge)
+	h := sha512.Sum512(challenge)
 
 	if !ecdsa.VerifyASN1(pub, h[:], req.SignedChallenge) {
 		return exit(codes.InvalidArgument, "invalid signature", ErrInvalidSignature)
@@ -464,7 +485,7 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 	}
 
 	return &pb.TokenResponse{
-		Token:     token,
+		Token:     string(token),
 		ExpiresOn: exp.UnixMilli(),
 	}, nil
 }
@@ -473,7 +494,7 @@ func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthR
 	ctx, span := a.tracer.Start(ctx, "Authz.VerifyToken")
 	defer span.End()
 
-	token, err := keygen.ParseToken(req.Token, &a.privateKey.PublicKey)
+	token, err := keygen.ParseToken([]byte(req.Token), &a.privateKey.PublicKey)
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
@@ -506,7 +527,7 @@ func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthR
 		return exit(codes.InvalidArgument, "invalid token", err)
 	}
 
-	if !bytes.Equal(storedToken, req.Token) {
+	if string(storedToken) != req.Token {
 		return exit(codes.InvalidArgument, "invalid token", err)
 	}
 
