@@ -56,6 +56,7 @@ const (
 	ErrSignature    = errs.Entity("signature")
 	ErrChallenge    = errs.Entity("challenge")
 	ErrToken        = errs.Entity("token")
+	ErrService      = errs.Entity("service")
 )
 
 var (
@@ -68,6 +69,7 @@ var (
 	ErrInvalidSignature      = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
 	ErrExpiredChallenge      = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
 	ErrExpiredToken          = errs.WithDomain(errDomain, ErrExpired, ErrToken)
+	ErrInvalidService        = errs.WithDomain(errDomain, ErrInvalid, ErrService)
 )
 
 type ServiceRepository interface {
@@ -255,7 +257,7 @@ func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpRe
 
 	storedPubKey, storedCert, err := a.services.GetService(ctx, req.Name)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
-		return exit(codes.Internal, "failed to get service from DB", err)
+		return exit(codes.Internal, "failed to get service from DB", ErrInvalidService)
 	}
 
 	// service is already registered, just return the stored certificate
@@ -332,6 +334,15 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
+	storedPEM, _, err := a.services.GetService(ctx, req.Name)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return exit(codes.InvalidArgument, "couldn't find service in the database", ErrInvalidService)
+		}
+
+		return exit(codes.Internal, "failed to fetch stored public key", err)
+	}
+
 	servicePubKey, err := keygen.DecodePublic(req.Service.PublicKey)
 	if err != nil {
 		return exit(codes.InvalidArgument, "invalid service public key PEM bytes", err)
@@ -358,11 +369,6 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 	cert, err := certs.Decode(req.Id.Certificate)
 	if err != nil {
 		return exit(codes.InvalidArgument, "invalid cert bytes", err)
-	}
-
-	storedPEM, _, err := a.services.GetService(ctx, req.Name)
-	if err != nil {
-		return exit(codes.Internal, "failed to fetch stored public key", err)
 	}
 
 	pub, ok := cert.PublicKey.(*ecdsa.PublicKey)
@@ -444,20 +450,26 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
+	storedPub, _, err := a.services.GetService(ctx, req.Name)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return exit(codes.InvalidArgument, "service does not exist", err)
+		}
+
+		return exit(codes.Internal, "failed to get service details", err)
+	}
+
 	challenge, expiry, err := a.tokens.GetChallenge(ctx, req.Name)
 	if err != nil {
-		// TODO: handle if not exists
+		if errors.Is(err, repository.ErrNotFound) {
+			return exit(codes.InvalidArgument, "couldn't find a challenge for this token request", err)
+		}
+
 		return exit(codes.Internal, "failed to get challenge", err)
 	}
 
 	if time.Now().After(expiry) {
 		return exit(codes.InvalidArgument, "challenge is expired", ErrExpiredChallenge)
-	}
-
-	storedPub, _, err := a.services.GetService(ctx, req.Name)
-	if err != nil {
-		// TODO: handle if not exists
-		return exit(codes.Internal, "failed to get service details", err)
 	}
 
 	pub, err := keygen.DecodePublic(storedPub)
