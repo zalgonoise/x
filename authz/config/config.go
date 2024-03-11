@@ -22,6 +22,7 @@ type Config struct {
 	PrivateKey string `envconfig:"AUTHZ_PRIVATE_KEY_PATH"`
 	HTTPPort   int    `envconfig:"AUTHZ_HTTP_PORT"`
 	GRPCPort   int    `envconfig:"AUTHZ_GRPC_PORT"`
+	Name       string `envconfig:"AUTHZ_SERVICE_NAME"`
 	CA         CA
 	Authz      Authz
 	Database   Database
@@ -33,7 +34,6 @@ type CA struct {
 }
 
 type Authz struct {
-	Name          string        `envconfig:"AUTHZ_SERVICE_NAME"`
 	CAURL         string        `envconfig:"AUTHZ_TARGET_CA_URL"`
 	RandSize      int           `envconfig:"AUTHZ_RANDOM_INT_SIZE"`
 	CertDurMonths int           `envconfig:"AUTHZ_SERVICE_CERT_DUR_MOTNHS"`
@@ -58,11 +58,11 @@ func defaultConfig() *Config {
 	return &Config{
 		HTTPPort: defaultHTTPPort,
 		GRPCPort: defaultGRPCPort,
+		Name:     defaultAuthzName,
 		CA: CA{
 			CertDurMonths: defaultCACertDur,
 		},
 		Authz: Authz{
-			Name:          defaultAuthzName,
 			RandSize:      defaultRandomSize,
 			CertDurMonths: defaultServiceCertDur,
 			ChallengeDur:  defaultChallengeDur,
@@ -110,16 +110,16 @@ func Merge(cur, next *Config) *Config {
 		cur.GRPCPort = next.GRPCPort
 	}
 
+	if next.Name != "" {
+		cur.Name = next.Name
+	}
+
 	// CA
 	if next.CA.CertDurMonths > 0 {
 		cur.CA.CertDurMonths = next.CA.CertDurMonths
 	}
 
 	// Authz
-	if next.Authz.Name != "" {
-		cur.Authz.Name = next.Authz.Name
-	}
-
 	if next.Authz.CAURL != "" {
 		cur.Authz.CAURL = next.Authz.CAURL
 	}
