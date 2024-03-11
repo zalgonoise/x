@@ -113,7 +113,7 @@ func ExecAuthz(ctx context.Context, logger *slog.Logger, args []string) (int, er
 	}
 
 	authzService, err := authz.NewAuthz(
-		conf.Authz.Name, conf.Authz.CAURL,
+		conf.Name, conf.Authz.CAURL,
 		key,
 		servicesRepo, tokensRepo,
 		randomizer.New(conf.Authz.RandSize),
@@ -122,7 +122,7 @@ func ExecAuthz(ctx context.Context, logger *slog.Logger, args []string) (int, er
 		authz.WithTokenExpiry(conf.Authz.TokenDur),
 		authz.WithCSR(&pb.CSR{
 			Subject: &pb.Subject{
-				CommonName: conf.Authz.Name,
+				CommonName: conf.Name,
 			},
 		}),
 		authz.WithLogger(logger),

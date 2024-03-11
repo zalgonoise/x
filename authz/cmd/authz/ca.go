@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/x509/pkix"
 	"fmt"
 	"log/slog"
 	"os"
@@ -106,7 +107,10 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		ca.WithLogger(logger),
 		ca.WithMetrics(m),
 		ca.WithTracer(tracer),
-		ca.WithTemplate(certs.WithDurMonth(conf.CA.CertDurMonths)),
+		ca.WithTemplate(
+			certs.WithName(pkix.Name{CommonName: conf.Name}),
+			certs.WithDurMonth(conf.CA.CertDurMonths),
+		),
 	)
 
 	logger.DebugContext(ctx, "CA service is ready")
