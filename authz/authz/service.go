@@ -47,29 +47,37 @@ const (
 	ErrExpired = errs.Kind("expired")
 	ErrEmpty   = errs.Kind("empty")
 
-	ErrCAAddress    = errs.Entity("CA address")
-	ErrPublicKey    = errs.Entity("public key")
-	ErrPrivateKey   = errs.Entity("private key")
-	ErrCertificate  = errs.Entity("certificate")
-	ErrServicesRepo = errs.Entity("services repository")
-	ErrTokensRepo   = errs.Entity("tokens repository")
-	ErrSignature    = errs.Entity("signature")
-	ErrChallenge    = errs.Entity("challenge")
-	ErrToken        = errs.Entity("token")
-	ErrService      = errs.Entity("service")
+	ErrCAAddress          = errs.Entity("CA address")
+	ErrPublicKey          = errs.Entity("public key")
+	ErrServicePublicKey   = errs.Entity("service public key")
+	ErrIDPublicKey        = errs.Entity("ID public key")
+	ErrPrivateKey         = errs.Entity("private key")
+	ErrCertificate        = errs.Entity("certificate")
+	ErrServiceCertificate = errs.Entity("service certificate")
+	ErrIDCertificate      = errs.Entity("ID certificate")
+	ErrServicesRepo       = errs.Entity("services repository")
+	ErrTokensRepo         = errs.Entity("tokens repository")
+	ErrSignature          = errs.Entity("signature")
+	ErrChallenge          = errs.Entity("challenge")
+	ErrToken              = errs.Entity("token")
+	ErrService            = errs.Entity("service")
 )
 
 var (
-	ErrEmptyCAAddress        = errs.WithDomain(errDomain, ErrEmpty, ErrCAAddress)
-	ErrNilServicesRepository = errs.WithDomain(errDomain, ErrNil, ErrServicesRepo)
-	ErrNilTokensRepository   = errs.WithDomain(errDomain, ErrNil, ErrTokensRepo)
-	ErrNilPrivateKey         = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
-	ErrInvalidPublicKey      = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
-	ErrInvalidCertificate    = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
-	ErrInvalidSignature      = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
-	ErrExpiredChallenge      = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
-	ErrExpiredToken          = errs.WithDomain(errDomain, ErrExpired, ErrToken)
-	ErrInvalidService        = errs.WithDomain(errDomain, ErrInvalid, ErrService)
+	ErrEmptyCAAddress            = errs.WithDomain(errDomain, ErrEmpty, ErrCAAddress)
+	ErrNilServicesRepository     = errs.WithDomain(errDomain, ErrNil, ErrServicesRepo)
+	ErrNilTokensRepository       = errs.WithDomain(errDomain, ErrNil, ErrTokensRepo)
+	ErrNilPrivateKey             = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
+	ErrInvalidPublicKey          = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
+	ErrInvalidCertificate        = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
+	ErrInvalidServicePublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrServicePublicKey)
+	ErrInvalidServiceCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrServiceCertificate)
+	ErrInvalidIDPublicKey        = errs.WithDomain(errDomain, ErrInvalid, ErrIDPublicKey)
+	ErrInvalidIDCertificate      = errs.WithDomain(errDomain, ErrInvalid, ErrIDCertificate)
+	ErrInvalidSignature          = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
+	ErrExpiredChallenge          = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
+	ErrExpiredToken              = errs.WithDomain(errDomain, ErrExpired, ErrToken)
+	ErrInvalidService            = errs.WithDomain(errDomain, ErrInvalid, ErrService)
 )
 
 type ServiceRepository interface {
@@ -349,7 +357,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 	}
 
 	if !a.privateKey.PublicKey.Equal(servicePubKey) {
-		return exit(codes.InvalidArgument, "mismatching service public keys", ErrInvalidPublicKey)
+		return exit(codes.InvalidArgument, "mismatching service public keys", ErrInvalidServicePublicKey)
 	}
 
 	serviceCert, err := certs.Decode(req.Service.Certificate)
@@ -358,7 +366,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 	}
 
 	if !a.cert.Equal(serviceCert) {
-		return exit(codes.InvalidArgument, "mismatching service cert", ErrInvalidCertificate)
+		return exit(codes.InvalidArgument, "mismatching service cert", ErrInvalidServiceCertificate)
 	}
 
 	pubKey, err := keygen.DecodePublic(req.Id.PublicKey)
@@ -373,7 +381,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 
 	pub, ok := cert.PublicKey.(*ecdsa.PublicKey)
 	if !ok {
-		return exit(codes.InvalidArgument, "failed to retrieve public key from certificate", ErrInvalidCertificate)
+		return exit(codes.InvalidArgument, "failed to retrieve public key from certificate", ErrInvalidIDCertificate)
 	}
 
 	storedPub, err := keygen.DecodePublic(storedPEM)
@@ -382,18 +390,18 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 	}
 
 	if !pub.Equal(storedPub) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
+		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidIDPublicKey)
 	}
 
 	if !pubKey.Equal(storedPub) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
+		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidIDPublicKey)
 	}
 
 	if time.Now().After(cert.NotAfter) {
 		a.logger.DebugContext(ctx, "expired certificate",
 			slog.Time("expiry", cert.NotAfter), slog.String("service", req.Name))
 
-		return exit(codes.InvalidArgument, "expired certificate", ErrInvalidCertificate)
+		return exit(codes.InvalidArgument, "expired certificate", ErrInvalidIDCertificate)
 	}
 
 	// check if there is a valid challenge to provide
