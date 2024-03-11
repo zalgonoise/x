@@ -40,18 +40,18 @@ func authzFunc(client pb.AuthzClient) func(ctx context.Context) (context.Context
 
 		var (
 			values = md.Get(authHeader)
-			token  []byte
+			token  string
 		)
 
 		if len(values) > 0 {
-			token = []byte(values[0])
+			token = values[0]
 		}
 
 		if _, err := client.VerifyToken(ctx, &pb.AuthRequest{Token: token}); err != nil {
 			return ctx, err
 		}
 
-		t, err := keygen.ParseToken(token, nil)
+		t, err := keygen.ParseToken([]byte(token), nil)
 		if err != nil {
 			return ctx, err
 		}
