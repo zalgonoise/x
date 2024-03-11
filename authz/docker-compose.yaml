@@ -17,6 +17,8 @@ services:
       dockerfile: ./Dockerfile
     command: ["/app/authz", "authz"]
     container_name: authz-root
+    depends_on:
+      - ca
     ports:
       - "8082:8080"
       - "8083:8081"
@@ -29,6 +31,8 @@ services:
       dockerfile: ./Dockerfile
     command: ["/app/authz", "authz"]
     container_name: authz-service
+    depends_on:
+      - authz-root
     ports:
       - "8084:8080"
       - "8085:8081"
