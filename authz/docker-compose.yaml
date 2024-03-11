@@ -10,6 +10,8 @@ services:
     ports:
       - "8080:8080"
       - "8081:8081"
+    environment:
+      AUTHZ_SERVICE_NAME: "certificate-authority"
 
   authz-root:
     build:
@@ -24,6 +26,7 @@ services:
       - "8083:8081"
     environment:
       AUTHZ_TARGET_CA_URL: "authz-ca:8081"
+      AUTHZ_SERVICE_NAME: "authz-root"
 
   authz-service:
     build:
@@ -38,3 +41,4 @@ services:
       - "8085:8081"
     environment:
       AUTHZ_TARGET_CA_URL: "authz-root:8081"
+      AUTHZ_SERVICE_NAME: "authz-service"
