@@ -523,8 +523,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         }
       }
     },
@@ -793,8 +792,7 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         },
         "expires_on": {
           "type": "string",
