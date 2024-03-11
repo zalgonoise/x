@@ -2859,10 +2859,10 @@ func (m *AuthRequest) validate(all bool) error {
 
 	var errors []error
 
-	if len(m.GetToken()) < 1 {
+	if utf8.RuneCountInString(m.GetToken()) < 1 {
 		err := AuthRequestValidationError{
 			field:  "Token",
-			reason: "value length must be at least 1 bytes",
+			reason: "value length must be at least 1 runes",
 		}
 		if !all {
 			return err
