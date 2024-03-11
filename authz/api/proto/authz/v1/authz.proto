@@ -300,12 +300,12 @@ message TokenRequest {
 }
 
 message TokenResponse{
-  bytes token = 1 [json_name="token"];
+  string token = 1 [json_name="token"];
   int64 expires_on = 2 [json_name="expires_on"];
 }
 
 message AuthRequest {
-  bytes token = 1 [json_name="token", (validate.rules).bytes.min_len = 1];
+  string token = 1 [json_name="token", (validate.rules).string.min_len = 1];
 }
 
 message AuthResponse {}
