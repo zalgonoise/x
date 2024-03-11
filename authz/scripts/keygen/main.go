@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"flag"
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -114,6 +114,7 @@ func ExecSign(ctx context.Context, logger *slog.Logger, args []string) (int, err
 
 	key := fs.String("key", "", "the private key to use when signing the data")
 	data := fs.String("data", "testkey", "the content to sign using the private key")
+	isBase64 := fs.Bool("b64", false, "accepts data in base-64 standard encoding")
 
 	if err := fs.Parse(args); err != nil {
 		return 1, err
@@ -128,15 +129,28 @@ func ExecSign(ctx context.Context, logger *slog.Logger, args []string) (int, err
 
 	s := keygen.ECDSASigner{Priv: publicKey}
 
-	plaintext := []byte(*data)
-	signature, hash, err := s.Sign(plaintext)
+	buf := []byte(*data)
+	if *isBase64 {
+		buf, err = base64.StdEncoding.DecodeString(*data)
+		if err != nil {
+			return 1, err
+		}
+	}
+
+	signature, hash, err := s.Sign(buf)
 	if err != nil {
 		return 1, err
 	}
 
+	sig := make([]byte, base64.StdEncoding.EncodedLen(len(signature)))
+	base64.StdEncoding.Encode(sig, signature)
+
+	h := make([]byte, base64.StdEncoding.EncodedLen(len(hash)))
+	base64.StdEncoding.Encode(h, hash)
+
 	logger.InfoContext(ctx, "signed input data successfully",
-		slog.String("signature", fmt.Sprintf("'%x'", signature)),
-		slog.String("hash", fmt.Sprintf("'%x'", hash)),
+		slog.String("signature", string(sig)),
+		slog.String("hash", string(h)),
 	)
 
 	return 0, nil
