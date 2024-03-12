@@ -12,7 +12,7 @@ func Parse(args []string) (*Config, error) {
 	httpPort := fs.Int("http-port", 0, "the exposed HTTP port for the CA's API")
 	grpcPort := fs.Int("grpc-port", 0, "the exposed gRPC port for the CA's API")
 	dur := fs.Int("cert-dur", 0, "duration to use on new certificate's expiry")
-	serviceName := fs.String("service-name", "", "service name to assign to an Authz service")
+	serviceName := fs.String("service-name", "", "service name to assign to a CA or Authz service")
 	caURL := fs.String("ca-url", "", "address for the certificate authority that the Authz service should target")
 	randomSize := fs.Int("rand-size", 0, "size for random numbers when generated for a challenge")
 	challengeDur := fs.Duration("challenge-dur", 0, "duration for emitted challenges before they expire")
@@ -32,11 +32,11 @@ func Parse(args []string) (*Config, error) {
 		PrivateKey: *privateKey,
 		HTTPPort:   *httpPort,
 		GRPCPort:   *grpcPort,
+		Name:       *serviceName,
 		CA: CA{
 			CertDurMonths: *dur,
 		},
 		Authz: Authz{
-			Name:          *serviceName,
 			CAURL:         *caURL,
 			RandSize:      *randomSize,
 			CertDurMonths: *dur,
