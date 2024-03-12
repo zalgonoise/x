@@ -17,19 +17,19 @@ require (
 	github.com/vektra/mockery/v2 v2.42.0
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/micron v1.0.2
-	github.com/zalgonoise/x/cli v0.0.0-20240309143047-3a4e7b30c6ce
-	github.com/zalgonoise/x/errs v0.0.0-20240309143047-3a4e7b30c6ce
+	github.com/zalgonoise/x/cli v0.0.0-20240311175153-dbc10d24c7f2
+	github.com/zalgonoise/x/errs v0.0.0-20240311175153-dbc10d24c7f2
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.49.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0
 	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.24.0
 	go.opentelemetry.io/otel/sdk v1.24.0
 	go.opentelemetry.io/otel/trace v1.24.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20240308144416-29370a3891b7
+	google.golang.org/genproto/googleapis/api v0.0.0-20240311173647-c811ad7063a7
 	google.golang.org/grpc v1.62.1
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.33.0
-	modernc.org/sqlite v1.29.3
+	modernc.org/sqlite v1.29.4
 )
 
 require (
@@ -78,7 +78,7 @@ require (
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
-	github.com/daixiang0/gci v0.13.0 // indirect
+	github.com/daixiang0/gci v0.13.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/denis-tingaikin/go-header v0.5.0 // indirect
@@ -277,13 +277,13 @@ require (
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.19.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240308144416-29370a3891b7 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240311173647-c811ad7063a7 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
-	modernc.org/libc v1.43.1 // indirect
+	modernc.org/libc v1.44.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.7.2 // indirect
 	modernc.org/strutil v1.2.0 // indirect
