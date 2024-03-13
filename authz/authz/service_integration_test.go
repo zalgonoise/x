@@ -79,37 +79,35 @@ func TestAuthz(t *testing.T) {
 
 	t.Run("SignUp", func(t *testing.T) {
 		for _, testcase := range []struct {
-			name  string
-			req   *pb.SignUpRequest
-			fails bool
+			name    string
+			service string
+			pubKey  []byte
+			fails   bool
 		}{
 			{
-				name: "Success/Simple",
-				req: &pb.SignUpRequest{
-					Name:      "test.simple",
-					PublicKey: pubPEM,
-				},
+				name:    "Success/Simple",
+				service: "test.signup.simple",
+				pubKey:  pubPEM,
 			},
 			{
-				name: "Success/FetchAgain",
-				req: &pb.SignUpRequest{
-					Name:      "test.simple",
-					PublicKey: pubPEM,
-				},
+				name:    "Success/FetchAgain",
+				service: "test.signup.simple",
+				pubKey:  pubPEM,
 			},
 			{
-				name: "Fail/PrivateInsteadOfPublic",
-				req: &pb.SignUpRequest{
-					Name:      "test.fail.priv-key",
-					PublicKey: privPEM,
-				},
-				fails: true,
+				name:    "Fail/PrivateInsteadOfPublic",
+				service: "test.signup.fail.priv-key",
+				pubKey:  privPEM,
+				fails:   true,
 			},
 		} {
 			t.Run(testcase.name, func(t *testing.T) {
 				ctx := context.Background()
 
-				res, err := service.SignUp(ctx, testcase.req)
+				res, err := service.SignUp(ctx, &pb.SignUpRequest{
+					Name:      testcase.service,
+					PublicKey: testcase.pubKey,
+				})
 				if err != nil {
 					require.True(t, testcase.fails)
 
@@ -122,9 +120,77 @@ func TestAuthz(t *testing.T) {
 			})
 		}
 	})
-	t.Run("Login", func(t *testing.T) {})
-	t.Run("Token", func(t *testing.T) {})
-	t.Run("VerifyToken", func(t *testing.T) {})
+
+	t.Run("FullCircle", func(t *testing.T) {
+		for _, testcase := range []struct {
+			name    string
+			service string
+			pubKey  []byte
+			privKey *ecdsa.PrivateKey
+			fails   bool
+		}{
+			{
+				name:    "Success/Simple",
+				service: "test.login.simple",
+				pubKey:  pubPEM,
+				privKey: key,
+			},
+			{
+				name:    "Success/Replay",
+				service: "test.login.simple",
+				pubKey:  pubPEM,
+				privKey: key,
+			},
+		} {
+			t.Run(testcase.name, func(t *testing.T) {
+				ctx := context.Background()
+
+				// signup
+				res, err := service.SignUp(ctx, &pb.SignUpRequest{
+					Name:      testcase.service,
+					PublicKey: testcase.pubKey,
+				})
+				require.NoError(t, err)
+
+				require.NotNil(t, res.Certificate)
+				require.NotNil(t, res.Service.PublicKey)
+				require.NotNil(t, res.Service.Certificate)
+
+				// login
+				loginRes, err := service.Login(ctx, &pb.LoginRequest{
+					Name:    testcase.service,
+					Service: res.Service,
+					Id: &pb.ID{
+						PublicKey:   testcase.pubKey,
+						Certificate: res.Certificate,
+					},
+				})
+				require.NoError(t, err)
+				require.NotNil(t, loginRes.Challenge)
+				require.NotZero(t, loginRes.ExpiresOn)
+
+				// get token
+				signature, _, err := keygen.ECDSASigner{Priv: testcase.privKey}.Sign(loginRes.Challenge)
+				require.NoError(t, err)
+
+				tokenRes, err := service.Token(ctx, &pb.TokenRequest{
+					Name:            testcase.service,
+					SignedChallenge: signature,
+				})
+
+				require.NoError(t, err)
+				require.NotEmpty(t, tokenRes.Token)
+				require.NotZero(t, tokenRes.ExpiresOn)
+
+				// verify token
+				_, err = service.VerifyToken(ctx, &pb.AuthRequest{
+					Token: tokenRes.Token,
+				})
+				require.NoError(t, err)
+			})
+		}
+	})
+
 	t.Run("Register", func(t *testing.T) {})
 	t.Run("GetCertificate", func(t *testing.T) {})
 	t.Run("VerifyCertificate", func(t *testing.T) {})
