@@ -125,9 +125,9 @@ func ExecSign(ctx context.Context, logger *slog.Logger, args []string) (int, err
 		return 1, err
 	}
 
-	publicKey, err := keygen.DecodePrivate(rawPrivateKey)
+	privateKey, err := keygen.DecodePrivate(rawPrivateKey)
 
-	s := keygen.ECDSASigner{Priv: publicKey}
+	s := keygen.ECDSASigner{Priv: privateKey}
 
 	buf := []byte(*data)
 	if *isBase64 {
