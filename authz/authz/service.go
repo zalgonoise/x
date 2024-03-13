@@ -447,7 +447,7 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 	}()
 
 	a.metrics.IncServiceTokenRequests(req.Name)
-	a.logger.DebugContext(ctx, "new certificate request",
+	a.logger.DebugContext(ctx, "new token request",
 		slog.String("service", req.Name))
 
 	exit := withExit[pb.TokenRequest, pb.TokenResponse](
@@ -491,8 +491,41 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.InvalidArgument, "invalid signature", ErrInvalidSignature)
 	}
 
-	exp := time.Now().Add(a.tokenExpiry)
-	token, err := keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
+	removeChallenge := func() {
+		if err := a.tokens.DeleteChallenge(ctx, req.Name); err != nil {
+			a.logger.ErrorContext(ctx, "failed to delete challenge in the database",
+				slog.String("service", req.Name), slog.String("error", err.Error()),
+			)
+		}
+	}
+
+	now := time.Now()
+
+	token, exp, err := a.tokens.GetToken(ctx, req.Name)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return exit(codes.Internal, "failed to lookup tokens for this service in the database", err)
+	}
+
+	if token != nil {
+		if exp.After(now) {
+			removeChallenge()
+
+			return &pb.TokenResponse{
+				Token:     string(token),
+				ExpiresOn: exp.UnixMilli(),
+			}, nil
+		}
+
+		if err := a.tokens.DeleteToken(ctx, req.Name); err != nil {
+			a.logger.ErrorContext(ctx, "failed to delete expired token in the database",
+				slog.String("service", req.Name), slog.String("error", err.Error()),
+			)
+		}
+	}
+
+	exp = now.Add(a.tokenExpiry)
+
+	token, err = keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
 		Service: req.Name,
 		Authz:   a.name,
 	}))
@@ -503,6 +536,8 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 	if err = a.tokens.CreateToken(ctx, req.Name, token, exp); err != nil {
 		return exit(codes.Internal, "failed to store token", err)
 	}
+
+	removeChallenge()
 
 	return &pb.TokenResponse{
 		Token:     string(token),
@@ -551,7 +586,8 @@ func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthR
 		return exit(codes.InvalidArgument, "invalid token", err)
 	}
 
-	if !exp.Equal(token.Expiry) {
+	// expiry comes in GMT time (+00:00), truncated to the seconds; ensure comparison matches format
+	if !exp.Truncate(time.Second).Equal(token.Expiry.In(time.Local)) {
 		return exit(codes.InvalidArgument, "invalid token", err)
 	}
 
