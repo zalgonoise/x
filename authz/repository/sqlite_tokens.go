@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	minAlloc = 10
+
 	queryChallengesCreate = `
 INSERT INTO challenges (service_id, challenge, expiry)
 VALUES ((SELECT id FROM services WHERE name = ?), ?, ?)
@@ -44,17 +46,17 @@ INSERT INTO tokens (service_id, token, expiry)
 VALUES ((SELECT id FROM services WHERE name = ?), ?, ?)
 `
 
-	queryTokensGet = `
+	queryTokensList = `
 SELECT token, expiry FROM tokens
 WHERE service_id = (
 	SELECT id FROM services WHERE name = ?
-)
+) AND expiry > ?
 `
 
 	queryTokensDelete = `
 DELETE FROM tokens WHERE service_id = (
 	SELECT id FROM services WHERE name = ?
-)
+) AND token = ?
 `
 
 	queryTokensCleanup = `
@@ -73,6 +75,11 @@ type Tokens struct {
 	logger *slog.Logger
 	m      Metrics
 	tracer trace.Tracer
+}
+
+type Token struct {
+	Raw    []byte
+	Expiry time.Time
 }
 
 func NewToken(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
@@ -169,18 +176,43 @@ func (r *Tokens) DeleteChallenge(ctx context.Context, service string) error {
 	return nil
 }
 
-func (r *Tokens) GetToken(ctx context.Context, service string) (token []byte, expiry time.Time, err error) {
-	var expiryMillis int64
+func (r *Tokens) ListTokens(ctx context.Context, service string) (tokens []Token, err error) {
+	rows, err := r.db.QueryContext(ctx, queryTokensList, service, time.Now().UnixMilli())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-	if err = r.db.QueryRowContext(ctx, queryTokensGet, service).Scan(&token, &expiryMillis); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, time.Time{}, ErrNotFound
+	tokens = make([]Token, 0, minAlloc)
+
+	for rows.Next() {
+		var (
+			token Token
+			exp   int64
+		)
+
+		if err = rows.Scan(&token.Raw, &exp); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, ErrNotFound
+			}
+
+			return nil, err
 		}
 
-		return nil, time.Time{}, err
+		token.Expiry = time.UnixMilli(exp)
+
+		tokens = append(tokens, token)
 	}
 
-	return token, time.UnixMilli(expiryMillis), nil
+	if rows.Err() != nil {
+		return nil, err
+	}
+
+	if len(tokens) == 0 {
+		return nil, ErrNotFound
+	}
+
+	return tokens, nil
 }
 
 func (r *Tokens) CreateToken(ctx context.Context, service string, token []byte, expiry time.Time) error {
@@ -201,27 +233,18 @@ func (r *Tokens) CreateToken(ctx context.Context, service string, token []byte, 
 	return nil
 }
 
-func (r *Tokens) DeleteToken(ctx context.Context, service string) error {
-	var (
-		pubKey       []byte
-		expiryMillis int64
-	)
-
-	if err := r.db.QueryRowContext(ctx, queryTokensGet, service).Scan(&pubKey, &expiryMillis); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil
-		}
-
-		return err
-	}
-
-	res, err := r.db.ExecContext(ctx, queryTokensDelete, service)
+func (r *Tokens) DeleteToken(ctx context.Context, service string, token []byte) error {
+	res, err := r.db.ExecContext(ctx, queryTokensDelete, service, token)
 	if err != nil {
 		return err
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+
 		return err
 	}
 
