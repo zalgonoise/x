@@ -69,7 +69,7 @@ CREATE TABLE tokens
     expiry        INTEGER                          NULL
 );
 
-CREATE UNIQUE INDEX idx_tokens_service_id ON tokens (service_id);
+CREATE INDEX idx_tokens_service_id ON tokens (service_id);
 `
 )
 
