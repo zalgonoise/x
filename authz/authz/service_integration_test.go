@@ -187,6 +187,13 @@ func TestAuthz(t *testing.T) {
 					Token: tokenRes.Token,
 				})
 				require.NoError(t, err)
+
+				token, err := keygen.ParseToken([]byte(tokenRes.Token), nil)
+				require.NoError(t, err)
+
+				t.Logf("success:\nservice: %q;\nauthz-service: %q;\ntoken: %q\n",
+					token.Claim.Service, token.Claim.Authz, tokenRes.Token,
+				)
 			})
 		}
 	})

@@ -92,8 +92,8 @@ type TokensRepository interface {
 	DeleteChallenge(ctx context.Context, service string) error
 
 	CreateToken(ctx context.Context, service string, token []byte, expiry time.Time) error
-	GetToken(ctx context.Context, service string) (token []byte, expiry time.Time, err error)
-	DeleteToken(ctx context.Context, service string) error
+	ListTokens(ctx context.Context, service string) (tokens []repository.Token, err error)
+	DeleteToken(ctx context.Context, service string, token []byte) error
 }
 
 type Randomizer interface {
@@ -491,41 +491,33 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.InvalidArgument, "invalid signature", ErrInvalidSignature)
 	}
 
-	removeChallenge := func() {
+	now := time.Now()
+
+	tokens, err := a.tokens.ListTokens(ctx, req.Name)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return exit(codes.Internal, "failed to lookup tokens for this service in the database", err)
+	}
+
+	if len(tokens) > 0 {
+		slices.SortFunc(tokens, func(a, b repository.Token) int {
+			return b.Expiry.Compare(a.Expiry)
+		})
+
 		if err := a.tokens.DeleteChallenge(ctx, req.Name); err != nil {
 			a.logger.ErrorContext(ctx, "failed to delete challenge in the database",
 				slog.String("service", req.Name), slog.String("error", err.Error()),
 			)
 		}
+
+		return &pb.TokenResponse{
+			Token:     string(tokens[0].Raw),
+			ExpiresOn: tokens[0].Expiry.UnixMilli(),
+		}, nil
 	}
 
-	now := time.Now()
+	exp := now.Add(a.tokenExpiry)
 
-	token, exp, err := a.tokens.GetToken(ctx, req.Name)
-	if err != nil && !errors.Is(err, repository.ErrNotFound) {
-		return exit(codes.Internal, "failed to lookup tokens for this service in the database", err)
-	}
-
-	if token != nil {
-		if exp.After(now) {
-			removeChallenge()
-
-			return &pb.TokenResponse{
-				Token:     string(token),
-				ExpiresOn: exp.UnixMilli(),
-			}, nil
-		}
-
-		if err := a.tokens.DeleteToken(ctx, req.Name); err != nil {
-			a.logger.ErrorContext(ctx, "failed to delete expired token in the database",
-				slog.String("service", req.Name), slog.String("error", err.Error()),
-			)
-		}
-	}
-
-	exp = now.Add(a.tokenExpiry)
-
-	token, err = keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
+	token, err := keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
 		Service: req.Name,
 		Authz:   a.name,
 	}))
@@ -537,7 +529,11 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return exit(codes.Internal, "failed to store token", err)
 	}
 
-	removeChallenge()
+	if err := a.tokens.DeleteChallenge(ctx, req.Name); err != nil {
+		a.logger.ErrorContext(ctx, "failed to delete challenge in the database",
+			slog.String("service", req.Name), slog.String("error", err.Error()),
+		)
+	}
 
 	return &pb.TokenResponse{
 		Token:     string(token),
@@ -577,32 +573,26 @@ func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthR
 		return exit(codes.InvalidArgument, "invalid request", err)
 	}
 
-	storedToken, exp, err := a.tokens.GetToken(ctx, token.Claim.Service)
+	tokens, err := a.tokens.ListTokens(ctx, token.Claim.Service)
 	if err != nil {
 		return exit(codes.InvalidArgument, "invalid token", err)
 	}
 
-	if string(storedToken) != req.Token {
-		return exit(codes.InvalidArgument, "invalid token", err)
-	}
+	idx := slices.IndexFunc(tokens, func(token repository.Token) bool {
+		return string(token.Raw) == req.Token
+	})
 
-	// expiry comes in GMT time (+00:00), truncated to the seconds; ensure comparison matches format
-	if !exp.Truncate(time.Second).Equal(token.Expiry.In(time.Local)) {
+	switch idx {
+	case -1:
 		return exit(codes.InvalidArgument, "invalid token", err)
-	}
-
-	if start.After(exp) {
-		if err = a.tokens.DeleteToken(ctx, token.Claim.Service); err != nil {
-			a.logger.WarnContext(ctx, "failed to remove expired token",
-				slog.String("error", err.Error()),
-				slog.String("service", token.Claim.Service),
-			)
+	default:
+		// expiry comes in GMT time (+00:00), truncated to the seconds; ensure comparison matches format
+		if !tokens[idx].Expiry.Truncate(time.Second).Equal(token.Expiry.In(time.Local)) {
+			return exit(codes.InvalidArgument, "invalid token", err)
 		}
 
-		return exit(codes.PermissionDenied, "token is expired", ErrExpiredToken)
+		return &pb.AuthResponse{}, nil
 	}
-
-	return &pb.AuthResponse{}, nil
 }
 
 func (a *Authz) Register(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
