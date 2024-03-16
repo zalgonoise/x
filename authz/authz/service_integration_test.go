@@ -121,7 +121,7 @@ func TestAuthz(t *testing.T) {
 		}
 	})
 
-	t.Run("FullCircle", func(t *testing.T) {
+	t.Run("Client/RoundTrip", func(t *testing.T) {
 		for _, testcase := range []struct {
 			name    string
 			service string
@@ -198,11 +198,56 @@ func TestAuthz(t *testing.T) {
 		}
 	})
 
-	t.Run("Register", func(t *testing.T) {})
-	t.Run("GetCertificate", func(t *testing.T) {})
-	t.Run("VerifyCertificate", func(t *testing.T) {})
-	t.Run("DeleteService", func(t *testing.T) {})
-	t.Run("PublicKey", func(t *testing.T) {})
+	t.Run("AuthzAsCA/RoundTrip", func(t *testing.T) {
+		for _, testcase := range []struct {
+			name    string
+			service string
+			pubKey  []byte
+		}{
+			{
+				name:    "Success/Simple",
+				service: "test.registry.simple",
+				pubKey:  pubPEM,
+			},
+		} {
+			t.Run(testcase.name, func(t *testing.T) {
+				ctx := context.Background()
+
+				registerRes, err := service.Register(ctx, &pb.CertificateRequest{
+					Service:   testcase.service,
+					PublicKey: testcase.pubKey,
+				})
+				require.NoError(t, err)
+
+				certRes, err := service.GetCertificate(ctx, &pb.CertificateRequest{
+					Service:   testcase.service,
+					PublicKey: testcase.pubKey,
+				})
+				require.NoError(t, err)
+
+				require.Equal(t, registerRes.Certificate, certRes.Certificate)
+
+				verifyRes, err := service.VerifyCertificate(ctx, &pb.VerificationRequest{
+					Service:     testcase.service,
+					Certificate: registerRes.Certificate,
+				})
+				require.NoError(t, err)
+				require.True(t, verifyRes.Valid)
+
+				_, err = service.DeleteService(ctx, &pb.DeletionRequest{
+					Service:   testcase.service,
+					PublicKey: testcase.pubKey,
+				})
+				require.NoError(t, err)
+			})
+		}
+	})
+
+	t.Run("PublicKey", func(t *testing.T) {
+		res, err := service.PublicKey(ctx, &pb.PublicKeyRequest{})
+		require.NoError(t, err)
+		require.NotNil(t, res.PublicKey)
+	})
 }
 
 func cleanup() error {
