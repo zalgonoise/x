@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/x509"
-	"errors"
 	"log/slog"
 	"time"
 
@@ -255,6 +254,9 @@ func dial(uri string, m Metrics) (*grpc.ClientConn, error) {
 	return conn, nil
 }
 
+// TODO: probably remove withExit since the log message's path element points to this function, instead of
+//
+//	the parent function calling withExit.
 func withExit[Req any, Res any](
 	ctx context.Context, logger *slog.Logger,
 	req *Req, metric func(), span trace.Span,
@@ -265,25 +267,14 @@ func withExit[Req any, Res any](
 		if req != nil {
 			logArgs = append(logArgs, slog.Any("request", req))
 		}
-
-		if err != nil {
-			logArgs = append(logArgs, slog.String("error", err.Error()))
-			logArgs = append(logArgs, args...)
-
-			span.SetStatus(otelcodes.Error, err.Error())
-			span.RecordError(err)
-			metric()
-			logger.WarnContext(ctx, message, logArgs...)
-
-			return nil, status.Error(code, err.Error())
-		}
-
+		logArgs = append(logArgs, slog.String("error", err.Error()))
 		logArgs = append(logArgs, args...)
-		span.SetStatus(otelcodes.Error, message)
-		span.RecordError(errors.New(message))
+
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
 		metric()
 		logger.WarnContext(ctx, message, logArgs...)
 
-		return nil, status.Error(code, message)
+		return nil, status.Error(code, err.Error())
 	}
 }
