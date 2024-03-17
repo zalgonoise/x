@@ -52,7 +52,7 @@ CREATE TABLE challenges
     expiry        INTEGER                          NULL
 );
 
-CREATE UNIQUE INDEX idx_challenges_service_id ON challenges (service_id);
+CREATE INDEX idx_challenges_service_id ON challenges (service_id);
 `
 
 	checkTokensTableExists = `
