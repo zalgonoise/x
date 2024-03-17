@@ -71,6 +71,7 @@ var (
 	ErrInvalidIDPublicKey        = errs.WithDomain(errDomain, ErrInvalid, ErrIDPublicKey)
 	ErrInvalidIDCertificate      = errs.WithDomain(errDomain, ErrInvalid, ErrIDCertificate)
 	ErrInvalidSignature          = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
+	ErrInvalidChallenge          = errs.WithDomain(errDomain, ErrInvalid, ErrChallenge)
 	ErrExpiredChallenge          = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
 	ErrExpiredToken              = errs.WithDomain(errDomain, ErrExpired, ErrToken)
 	ErrInvalidService            = errs.WithDomain(errDomain, ErrInvalid, ErrService)
@@ -84,8 +85,8 @@ type ServiceRepository interface {
 
 type TokensRepository interface {
 	CreateChallenge(ctx context.Context, service string, challenge []byte, expiry time.Time) error
-	GetChallenge(ctx context.Context, service string) (challenge []byte, expiry time.Time, err error)
-	DeleteChallenge(ctx context.Context, service string) error
+	ListChallenges(ctx context.Context, service string) (challenges []repository.Challenge, err error)
+	DeleteChallenge(ctx context.Context, service string, challenge []byte) error
 
 	CreateToken(ctx context.Context, service string, token []byte, expiry time.Time) error
 	ListTokens(ctx context.Context, service string) (tokens []repository.Token, err error)

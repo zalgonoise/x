@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+// TODO: SignUp / Register must support multiple certificates (up to two) to allow rotation
 func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpResponse, error) {
 	ctx, span := a.tracer.Start(ctx, "Authz.SignUp", trace.WithAttributes(
 		attribute.String("service", req.Name),
