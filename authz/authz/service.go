@@ -14,17 +14,13 @@ import (
 	"github.com/zalgonoise/x/authz/ca"
 	"github.com/zalgonoise/x/authz/certs"
 	"github.com/zalgonoise/x/authz/keygen"
+	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/randomizer"
 	"github.com/zalgonoise/x/authz/repository"
 	"github.com/zalgonoise/x/errs"
-	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
-
-	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 )
 
 const (
@@ -65,15 +61,12 @@ var (
 	ErrNilTokensRepository       = errs.WithDomain(errDomain, ErrNil, ErrTokensRepo)
 	ErrNilPrivateKey             = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 	ErrInvalidPublicKey          = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
-	ErrInvalidCertificate        = errs.WithDomain(errDomain, ErrInvalid, ErrCertificate)
 	ErrInvalidServicePublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrServicePublicKey)
 	ErrInvalidServiceCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrServiceCertificate)
 	ErrInvalidIDPublicKey        = errs.WithDomain(errDomain, ErrInvalid, ErrIDPublicKey)
 	ErrInvalidIDCertificate      = errs.WithDomain(errDomain, ErrInvalid, ErrIDCertificate)
 	ErrInvalidSignature          = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
 	ErrInvalidChallenge          = errs.WithDomain(errDomain, ErrInvalid, ErrChallenge)
-	ErrExpiredChallenge          = errs.WithDomain(errDomain, ErrExpired, ErrChallenge)
-	ErrExpiredToken              = errs.WithDomain(errDomain, ErrExpired, ErrToken)
 	ErrInvalidService            = errs.WithDomain(errDomain, ErrInvalid, ErrService)
 )
 
@@ -253,29 +246,4 @@ func dial(uri string, m Metrics) (*grpc.ClientConn, error) {
 	m.RegisterCollector(clientMetrics)
 
 	return conn, nil
-}
-
-// TODO: probably remove withExit since the log message's path element points to this function, instead of
-//
-//	the parent function calling withExit.
-func withExit[Req any, Res any](
-	ctx context.Context, logger *slog.Logger,
-	req *Req, metric func(), span trace.Span,
-) func(codes.Code, string, error, ...any) (*Res, error) {
-	return func(code codes.Code, message string, err error, args ...any) (*Res, error) {
-		logArgs := make([]any, 0, len(args)+2)
-
-		if req != nil {
-			logArgs = append(logArgs, slog.Any("request", req))
-		}
-		logArgs = append(logArgs, slog.String("error", err.Error()))
-		logArgs = append(logArgs, args...)
-
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		metric()
-		logger.WarnContext(ctx, message, logArgs...)
-
-		return nil, status.Error(code, err.Error())
-	}
 }

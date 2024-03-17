@@ -13,6 +13,7 @@ import (
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/repository"
 	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -35,28 +36,45 @@ func (a *Authz) GetCertificate(ctx context.Context, req *pb.CertificateRequest) 
 	a.logger.DebugContext(ctx, "new certificate request",
 		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
 
-	exit := withExit[pb.CertificateRequest, pb.CertificateResponse](
-		ctx, a.logger, req, func() { a.metrics.IncServiceCertsFetchFailed(req.Service) }, span,
-	)
-
 	if err := req.ValidateAll(); err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceCertsFetchFailed("")
+
+		a.logger.WarnContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	pubKey, cert, err := a.services.GetService(ctx, req.Service)
 	if err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceCertsFetchFailed(req.Service)
+
 		if errors.Is(err, repository.ErrNotFound) {
 			a.logger.DebugContext(ctx, "service was not found",
-				slog.String("error", err.Error()), slog.String("service", req.Service))
+				slog.String("service", req.Service), slog.String("error", err.Error()))
 
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 
-		return exit(codes.Internal, "failed to fetch service from the DB", err)
+		a.logger.ErrorContext(ctx, "failed to fetch service from the DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	if !slices.Equal(pubKey, req.PublicKey) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceCertsFetchFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "mismatching public keys",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	return &pb.CertificateResponse{Certificate: cert}, nil
@@ -78,43 +96,81 @@ func (a *Authz) VerifyCertificate(ctx context.Context, req *pb.VerificationReque
 	a.logger.DebugContext(ctx, "certificate verification request",
 		slog.String("service", req.Service))
 
-	exit := withExit[pb.VerificationRequest, pb.VerificationResponse](
-		ctx, a.logger, req, func() { a.metrics.IncVerificationFailed(req.Service) }, span,
-	)
-
 	if err := req.ValidateAll(); err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncVerificationFailed("")
+
+		a.logger.WarnContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	pubKey, _, err := a.services.GetService(ctx, req.Service)
 	if err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncVerificationFailed(req.Service)
+
 		if errors.Is(err, repository.ErrNotFound) {
 			a.logger.DebugContext(ctx, "service was not found",
-				slog.String("error", err.Error()), slog.String("service", req.Service))
+				slog.String("service", req.Service), slog.String("error", err.Error()))
 
-			return nil, status.Error(codes.NotFound, err.Error())
+			return nil, status.Error(codes.NotFound, ErrInvalidService.Error())
 		}
 
-		return exit(codes.Internal, "failed to fetch service from the DB", err)
+		a.logger.ErrorContext(ctx, "failed to fetch service from the DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	storedPub, err := keygen.DecodePublic(pubKey)
 	if err != nil {
-		return exit(codes.Internal, "failed to decode stored public key", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncVerificationFailed(req.Service)
+
+		a.logger.ErrorContext(ctx, "failed to decode stored public key",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	cert, err := certs.Decode(req.Certificate)
 	if err != nil {
-		return exit(codes.InvalidArgument, "failed to decode certificate", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncVerificationFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "failed to decode certificate",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidIDCertificate.Error())
 	}
 
 	pub, ok := cert.PublicKey.(*ecdsa.PublicKey)
 	if !ok {
-		return exit(codes.InvalidArgument, "failed to retrieve public key from certificate", ErrInvalidCertificate)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncVerificationFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "failed to retrieve public key from certificate",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidIDCertificate.Error())
 	}
 
 	if !pub.Equal(storedPub) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncVerificationFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "mismatching public keys",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.PermissionDenied, ErrInvalidPublicKey.Error())
 	}
 
 	if time.Now().After(cert.NotAfter) {
@@ -143,32 +199,56 @@ func (a *Authz) DeleteService(ctx context.Context, req *pb.DeletionRequest) (*pb
 	a.logger.DebugContext(ctx, "service deletion request",
 		slog.String("service", req.Service))
 
-	exit := withExit[pb.DeletionRequest, pb.DeletionResponse](
-		ctx, a.logger, req, a.metrics.IncServiceDeletionFailed, span,
-	)
-
 	if err := req.ValidateAll(); err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceDeletionFailed()
+
+		a.logger.ErrorContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	pubKey, _, err := a.services.GetService(ctx, req.Service)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			a.logger.DebugContext(ctx, "service was not found",
-				slog.String("error", err.Error()), slog.String("service", req.Service))
+				slog.String("service", req.Service), slog.String("error", err.Error()))
 
-			return nil, status.Error(codes.NotFound, err.Error())
+			return &pb.DeletionResponse{}, nil
 		}
 
-		return exit(codes.Internal, "failed to fetch service from the DB", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceDeletionFailed()
+
+		a.logger.ErrorContext(ctx, "failed to fetch service from the DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	if !slices.Equal(pubKey, req.PublicKey) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceDeletionFailed()
+
+		a.logger.ErrorContext(ctx, "mismatching public keys",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.PermissionDenied, ErrInvalidPublicKey.Error())
 	}
 
 	if err = a.services.DeleteService(ctx, req.Service); err != nil {
-		return exit(codes.Internal, "failed to remove service from DB", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceDeletionFailed()
+
+		a.logger.ErrorContext(ctx, "failed to remove service from DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.DeletionResponse{}, nil
@@ -186,13 +266,16 @@ func (a *Authz) PublicKey(ctx context.Context, req *pb.PublicKeyRequest) (*pb.Pu
 	a.metrics.IncPubKeyRequests()
 	a.logger.DebugContext(ctx, "authz service's public key request")
 
-	exit := withExit[pb.PublicKeyRequest, pb.PublicKeyResponse](
-		ctx, a.logger, nil, a.metrics.IncPubKeyRequestFailed, span,
-	)
-
 	key, err := keygen.EncodePublic(&a.privateKey.PublicKey)
 	if err != nil {
-		return exit(codes.Internal, "failed to encode authz service's public key", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncPubKeyRequestFailed()
+
+		a.logger.ErrorContext(ctx, "failed to encode authz service's public key",
+			slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.PublicKeyResponse{PublicKey: key}, nil
