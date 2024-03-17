@@ -20,6 +20,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	challengeLimit = 2
+	tokenLimit     = 10
+)
+
 // TODO: Login must support creating up to two challenges; not just retrieve the first valid one
 func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 	ctx, span := a.tracer.Start(ctx, "Authz.Login", trace.WithAttributes(
@@ -209,7 +214,8 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if len(challenges) > 0 {
+	// allow up to 2 challenges to exist simultaneously
+	if len(challenges) >= challengeLimit {
 		return &pb.LoginResponse{Challenge: challenges[0].Raw, ExpiresOn: challenges[0].Expiry.UnixMilli()}, nil
 	}
 
@@ -352,8 +358,6 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return nil, status.Error(codes.InvalidArgument, ErrInvalidSignature.Error())
 	}
 
-	now := time.Now()
-
 	tokens, err := a.tokens.ListTokens(ctx, req.Name)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		span.SetStatus(otelcodes.Error, err.Error())
@@ -366,7 +370,8 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if len(tokens) > 0 {
+	// allow up to 10 tokens to exist simultaneously
+	if len(tokens) >= tokenLimit {
 		if err = a.tokens.DeleteChallenge(ctx, req.Name, challenges[idx].Raw); err != nil {
 			a.logger.WarnContext(ctx, "failed to delete challenge in the database",
 				slog.String("service", req.Name), slog.String("error", err.Error()),
@@ -379,7 +384,7 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		}, nil
 	}
 
-	exp := now.Add(a.tokenExpiry)
+	exp := start.Add(a.tokenExpiry)
 
 	token, err := keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
 		Service: req.Name,
