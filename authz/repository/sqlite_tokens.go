@@ -17,24 +17,27 @@ import (
 )
 
 const (
-	minAlloc = 10
+	minAllocChallenges = 2
+	minAllocTokens     = 10
 
 	queryChallengesCreate = `
 INSERT INTO challenges (service_id, challenge, expiry)
 VALUES ((SELECT id FROM services WHERE name = ?), ?, ?)
 `
 
-	queryChallengesGet = `
+	queryChallengesList = `
 SELECT challenge, expiry FROM challenges
 WHERE service_id = (
 	SELECT id FROM services WHERE name = ?
 )
+  AND expiry > ?
+ORDER BY expiry DESC
 `
 
 	queryChallengesDelete = `
 DELETE FROM challenges WHERE service_id = (
 	SELECT id FROM services WHERE name = ?
-)
+) AND challenge = ?
 `
 
 	queryChallengesCleanup = `
@@ -50,7 +53,9 @@ VALUES ((SELECT id FROM services WHERE name = ?), ?, ?)
 SELECT token, expiry FROM tokens
 WHERE service_id = (
 	SELECT id FROM services WHERE name = ?
-) AND expiry > ?
+)
+  AND expiry > ?
+ORDER BY expiry DESC
 `
 
 	queryTokensDelete = `
@@ -78,6 +83,11 @@ type Tokens struct {
 }
 
 type Token struct {
+	Raw    []byte
+	Expiry time.Time
+}
+
+type Challenge struct {
 	Raw    []byte
 	Expiry time.Time
 }
@@ -112,18 +122,43 @@ func NewToken(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
 	return repo, nil
 }
 
-func (r *Tokens) GetChallenge(ctx context.Context, service string) (challenge []byte, expiry time.Time, err error) {
-	var expiryMillis int64
-
-	if err = r.db.QueryRowContext(ctx, queryChallengesGet, service).Scan(&challenge, &expiryMillis); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, time.Time{}, ErrNotFound
-		}
-
-		return nil, time.Time{}, err
+func (r *Tokens) ListChallenges(ctx context.Context, service string) (challenges []Challenge, err error) {
+	rows, err := r.db.QueryContext(ctx, queryChallengesList, service)
+	if err != nil {
+		return nil, err
 	}
 
-	return challenge, time.UnixMilli(expiryMillis), nil
+	defer rows.Close()
+	challenges = make([]Challenge, 0, minAllocChallenges)
+
+	for rows.Next() {
+		var (
+			expiryMillis int64
+			challenge    = Challenge{}
+		)
+
+		if rows.Scan(&challenge.Raw, &expiryMillis); err != nil {
+			return nil, err
+		}
+
+		challenge.Expiry = time.UnixMilli(expiryMillis)
+
+		challenges = append(challenges, challenge)
+	}
+
+	if err = rows.Close(); err != nil {
+		return nil, err
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(challenges) == 0 {
+		return nil, ErrNotFound
+	}
+
+	return challenges, nil
 }
 
 func (r *Tokens) CreateChallenge(
@@ -145,21 +180,8 @@ func (r *Tokens) CreateChallenge(
 	return nil
 }
 
-func (r *Tokens) DeleteChallenge(ctx context.Context, service string) error {
-	var (
-		pubKey       []byte
-		expiryMillis int64
-	)
-
-	if err := r.db.QueryRowContext(ctx, queryChallengesGet, service).Scan(&pubKey, &expiryMillis); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil
-		}
-
-		return err
-	}
-
-	res, err := r.db.ExecContext(ctx, queryChallengesDelete, service)
+func (r *Tokens) DeleteChallenge(ctx context.Context, service string, challenge []byte) error {
+	res, err := r.db.ExecContext(ctx, queryChallengesDelete, service, challenge)
 	if err != nil {
 		return err
 	}
@@ -183,7 +205,7 @@ func (r *Tokens) ListTokens(ctx context.Context, service string) (tokens []Token
 	}
 	defer rows.Close()
 
-	tokens = make([]Token, 0, minAlloc)
+	tokens = make([]Token, 0, minAllocTokens)
 
 	for rows.Next() {
 		var (
@@ -192,10 +214,6 @@ func (r *Tokens) ListTokens(ctx context.Context, service string) (tokens []Token
 		)
 
 		if err = rows.Scan(&token.Raw, &exp); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, ErrNotFound
-			}
-
 			return nil, err
 		}
 
@@ -204,7 +222,11 @@ func (r *Tokens) ListTokens(ctx context.Context, service string) (tokens []Token
 		tokens = append(tokens, token)
 	}
 
-	if rows.Err() != nil {
+	if err = rows.Close(); err != nil {
+		return nil, err
+	}
+
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
