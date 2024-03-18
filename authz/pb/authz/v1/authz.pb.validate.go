@@ -1202,6 +1202,8 @@ func (m *CertificateResponse) validate(all bool) error {
 
 	// no validation rules for Certificate
 
+	// no validation rules for ExpiresOn
+
 	if len(errors) > 0 {
 		return CertificateResponseMultiError(errors)
 	}
@@ -1281,6 +1283,142 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CertificateResponseValidationError{}
+
+// Validate checks the field values on ListCertificatesResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *ListCertificatesResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ListCertificatesResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// ListCertificatesResponseMultiError, or nil if none found.
+func (m *ListCertificatesResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ListCertificatesResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	for idx, item := range m.GetCertificates() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, ListCertificatesResponseValidationError{
+						field:  fmt.Sprintf("Certificates[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, ListCertificatesResponseValidationError{
+						field:  fmt.Sprintf("Certificates[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListCertificatesResponseValidationError{
+					field:  fmt.Sprintf("Certificates[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return ListCertificatesResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// ListCertificatesResponseMultiError is an error wrapping multiple validation
+// errors returned by ListCertificatesResponse.ValidateAll() if the designated
+// constraints aren't met.
+type ListCertificatesResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ListCertificatesResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ListCertificatesResponseMultiError) AllErrors() []error { return m }
+
+// ListCertificatesResponseValidationError is the validation error returned by
+// ListCertificatesResponse.Validate if the designated constraints aren't met.
+type ListCertificatesResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ListCertificatesResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ListCertificatesResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ListCertificatesResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ListCertificatesResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ListCertificatesResponseValidationError) ErrorName() string {
+	return "ListCertificatesResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e ListCertificatesResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sListCertificatesResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ListCertificatesResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ListCertificatesResponseValidationError{}
 
 // Validate checks the field values on VerificationRequest with the rules
 // defined in the proto definition for this message. If any rules are
@@ -1511,6 +1649,244 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = VerificationResponseValidationError{}
+
+// Validate checks the field values on CertificateDeletionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CertificateDeletionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CertificateDeletionRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CertificateDeletionRequestMultiError, or nil if none found.
+func (m *CertificateDeletionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CertificateDeletionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetService()) < 1 {
+		err := CertificateDeletionRequestValidationError{
+			field:  "Service",
+			reason: "value length must be at least 1 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetPublicKey()) < 1 {
+		err := CertificateDeletionRequestValidationError{
+			field:  "PublicKey",
+			reason: "value length must be at least 1 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetCertificate()) < 1 {
+		err := CertificateDeletionRequestValidationError{
+			field:  "Certificate",
+			reason: "value length must be at least 1 bytes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return CertificateDeletionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CertificateDeletionRequestMultiError is an error wrapping multiple
+// validation errors returned by CertificateDeletionRequest.ValidateAll() if
+// the designated constraints aren't met.
+type CertificateDeletionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CertificateDeletionRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CertificateDeletionRequestMultiError) AllErrors() []error { return m }
+
+// CertificateDeletionRequestValidationError is the validation error returned
+// by CertificateDeletionRequest.Validate if the designated constraints aren't met.
+type CertificateDeletionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CertificateDeletionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CertificateDeletionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CertificateDeletionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CertificateDeletionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CertificateDeletionRequestValidationError) ErrorName() string {
+	return "CertificateDeletionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CertificateDeletionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCertificateDeletionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CertificateDeletionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CertificateDeletionRequestValidationError{}
+
+// Validate checks the field values on CertificateDeletionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CertificateDeletionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CertificateDeletionResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CertificateDeletionResponseMultiError, or nil if none found.
+func (m *CertificateDeletionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CertificateDeletionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return CertificateDeletionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// CertificateDeletionResponseMultiError is an error wrapping multiple
+// validation errors returned by CertificateDeletionResponse.ValidateAll() if
+// the designated constraints aren't met.
+type CertificateDeletionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CertificateDeletionResponseMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CertificateDeletionResponseMultiError) AllErrors() []error { return m }
+
+// CertificateDeletionResponseValidationError is the validation error returned
+// by CertificateDeletionResponse.Validate if the designated constraints
+// aren't met.
+type CertificateDeletionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CertificateDeletionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CertificateDeletionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CertificateDeletionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CertificateDeletionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CertificateDeletionResponseValidationError) ErrorName() string {
+	return "CertificateDeletionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CertificateDeletionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCertificateDeletionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CertificateDeletionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CertificateDeletionResponseValidationError{}
 
 // Validate checks the field values on DeletionRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the

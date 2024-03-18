@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	CertificateAuthority_Register_FullMethodName          = "/authz.v1.CertificateAuthority/Register"
-	CertificateAuthority_GetCertificate_FullMethodName    = "/authz.v1.CertificateAuthority/GetCertificate"
+	CertificateAuthority_RegisterService_FullMethodName   = "/authz.v1.CertificateAuthority/RegisterService"
+	CertificateAuthority_CreateCertificate_FullMethodName = "/authz.v1.CertificateAuthority/CreateCertificate"
+	CertificateAuthority_ListCertificates_FullMethodName  = "/authz.v1.CertificateAuthority/ListCertificates"
+	CertificateAuthority_DeleteCertificate_FullMethodName = "/authz.v1.CertificateAuthority/DeleteCertificate"
 	CertificateAuthority_VerifyCertificate_FullMethodName = "/authz.v1.CertificateAuthority/VerifyCertificate"
 	CertificateAuthority_DeleteService_FullMethodName     = "/authz.v1.CertificateAuthority/DeleteService"
 	CertificateAuthority_PublicKey_FullMethodName         = "/authz.v1.CertificateAuthority/PublicKey"
@@ -30,8 +32,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CertificateAuthorityClient interface {
-	Register(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error)
-	GetCertificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error)
+	RegisterService(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error)
+	CreateCertificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error)
+	ListCertificates(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*ListCertificatesResponse, error)
+	DeleteCertificate(ctx context.Context, in *CertificateDeletionRequest, opts ...grpc.CallOption) (*CertificateDeletionResponse, error)
 	VerifyCertificate(ctx context.Context, in *VerificationRequest, opts ...grpc.CallOption) (*VerificationResponse, error)
 	DeleteService(ctx context.Context, in *DeletionRequest, opts ...grpc.CallOption) (*DeletionResponse, error)
 	PublicKey(ctx context.Context, in *PublicKeyRequest, opts ...grpc.CallOption) (*PublicKeyResponse, error)
@@ -45,18 +49,36 @@ func NewCertificateAuthorityClient(cc grpc.ClientConnInterface) CertificateAutho
 	return &certificateAuthorityClient{cc}
 }
 
-func (c *certificateAuthorityClient) Register(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error) {
+func (c *certificateAuthorityClient) RegisterService(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error) {
 	out := new(CertificateResponse)
-	err := c.cc.Invoke(ctx, CertificateAuthority_Register_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, CertificateAuthority_RegisterService_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *certificateAuthorityClient) GetCertificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error) {
+func (c *certificateAuthorityClient) CreateCertificate(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*CertificateResponse, error) {
 	out := new(CertificateResponse)
-	err := c.cc.Invoke(ctx, CertificateAuthority_GetCertificate_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, CertificateAuthority_CreateCertificate_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *certificateAuthorityClient) ListCertificates(ctx context.Context, in *CertificateRequest, opts ...grpc.CallOption) (*ListCertificatesResponse, error) {
+	out := new(ListCertificatesResponse)
+	err := c.cc.Invoke(ctx, CertificateAuthority_ListCertificates_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *certificateAuthorityClient) DeleteCertificate(ctx context.Context, in *CertificateDeletionRequest, opts ...grpc.CallOption) (*CertificateDeletionResponse, error) {
+	out := new(CertificateDeletionResponse)
+	err := c.cc.Invoke(ctx, CertificateAuthority_DeleteCertificate_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +116,10 @@ func (c *certificateAuthorityClient) PublicKey(ctx context.Context, in *PublicKe
 // All implementations must embed UnimplementedCertificateAuthorityServer
 // for forward compatibility
 type CertificateAuthorityServer interface {
-	Register(context.Context, *CertificateRequest) (*CertificateResponse, error)
-	GetCertificate(context.Context, *CertificateRequest) (*CertificateResponse, error)
+	RegisterService(context.Context, *CertificateRequest) (*CertificateResponse, error)
+	CreateCertificate(context.Context, *CertificateRequest) (*CertificateResponse, error)
+	ListCertificates(context.Context, *CertificateRequest) (*ListCertificatesResponse, error)
+	DeleteCertificate(context.Context, *CertificateDeletionRequest) (*CertificateDeletionResponse, error)
 	VerifyCertificate(context.Context, *VerificationRequest) (*VerificationResponse, error)
 	DeleteService(context.Context, *DeletionRequest) (*DeletionResponse, error)
 	PublicKey(context.Context, *PublicKeyRequest) (*PublicKeyResponse, error)
@@ -106,11 +130,17 @@ type CertificateAuthorityServer interface {
 type UnimplementedCertificateAuthorityServer struct {
 }
 
-func (UnimplementedCertificateAuthorityServer) Register(context.Context, *CertificateRequest) (*CertificateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+func (UnimplementedCertificateAuthorityServer) RegisterService(context.Context, *CertificateRequest) (*CertificateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterService not implemented")
 }
-func (UnimplementedCertificateAuthorityServer) GetCertificate(context.Context, *CertificateRequest) (*CertificateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCertificate not implemented")
+func (UnimplementedCertificateAuthorityServer) CreateCertificate(context.Context, *CertificateRequest) (*CertificateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateCertificate not implemented")
+}
+func (UnimplementedCertificateAuthorityServer) ListCertificates(context.Context, *CertificateRequest) (*ListCertificatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCertificates not implemented")
+}
+func (UnimplementedCertificateAuthorityServer) DeleteCertificate(context.Context, *CertificateDeletionRequest) (*CertificateDeletionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCertificate not implemented")
 }
 func (UnimplementedCertificateAuthorityServer) VerifyCertificate(context.Context, *VerificationRequest) (*VerificationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyCertificate not implemented")
@@ -134,38 +164,74 @@ func RegisterCertificateAuthorityServer(s grpc.ServiceRegistrar, srv Certificate
 	s.RegisterService(&CertificateAuthority_ServiceDesc, srv)
 }
 
-func _CertificateAuthority_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CertificateAuthority_RegisterService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CertificateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CertificateAuthorityServer).Register(ctx, in)
+		return srv.(CertificateAuthorityServer).RegisterService(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CertificateAuthority_Register_FullMethodName,
+		FullMethod: CertificateAuthority_RegisterService_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CertificateAuthorityServer).Register(ctx, req.(*CertificateRequest))
+		return srv.(CertificateAuthorityServer).RegisterService(ctx, req.(*CertificateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CertificateAuthority_GetCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CertificateAuthority_CreateCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CertificateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CertificateAuthorityServer).GetCertificate(ctx, in)
+		return srv.(CertificateAuthorityServer).CreateCertificate(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: CertificateAuthority_GetCertificate_FullMethodName,
+		FullMethod: CertificateAuthority_CreateCertificate_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CertificateAuthorityServer).GetCertificate(ctx, req.(*CertificateRequest))
+		return srv.(CertificateAuthorityServer).CreateCertificate(ctx, req.(*CertificateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CertificateAuthority_ListCertificates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CertificateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CertificateAuthorityServer).ListCertificates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CertificateAuthority_ListCertificates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CertificateAuthorityServer).ListCertificates(ctx, req.(*CertificateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CertificateAuthority_DeleteCertificate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CertificateDeletionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CertificateAuthorityServer).DeleteCertificate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CertificateAuthority_DeleteCertificate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CertificateAuthorityServer).DeleteCertificate(ctx, req.(*CertificateDeletionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -232,12 +298,20 @@ var CertificateAuthority_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CertificateAuthorityServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Register",
-			Handler:    _CertificateAuthority_Register_Handler,
+			MethodName: "RegisterService",
+			Handler:    _CertificateAuthority_RegisterService_Handler,
 		},
 		{
-			MethodName: "GetCertificate",
-			Handler:    _CertificateAuthority_GetCertificate_Handler,
+			MethodName: "CreateCertificate",
+			Handler:    _CertificateAuthority_CreateCertificate_Handler,
+		},
+		{
+			MethodName: "ListCertificates",
+			Handler:    _CertificateAuthority_ListCertificates_Handler,
+		},
+		{
+			MethodName: "DeleteCertificate",
+			Handler:    _CertificateAuthority_DeleteCertificate_Handler,
 		},
 		{
 			MethodName: "VerifyCertificate",
