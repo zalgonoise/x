@@ -54,7 +54,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 };
 
 service CertificateAuthority {
-  rpc Register(CertificateRequest) returns (CertificateResponse) {
+  rpc RegisterService(CertificateRequest) returns (CertificateResponse) {
     option (google.api.http) = {
       post: "/v1/ca/registry"
       body: "*"
@@ -67,15 +67,41 @@ service CertificateAuthority {
     };
   }
 
-  rpc GetCertificate(CertificateRequest) returns (CertificateResponse) {
+  rpc CreateCertificate(CertificateRequest) returns (CertificateResponse) {
     option (google.api.http) = {
-      post: "/v1/ca/services/{service}/cert"
+      post: "/v1/ca/services/{service}/certs/create"
       body: "*"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Fetches a service's certificate, based on their service name and public key"
-      description: "This endpoint receives service certificate requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service."
+      summary: "Processes a service's certificate creation request"
+      description: "This endpoint receives service certificate creation requests, which are replied to with a system's Certificate Authority issued certificate, unique to this service."
+      tags: "Certificates"
+    };
+  }
+
+  rpc ListCertificates(CertificateRequest) returns (ListCertificatesResponse) {
+    option (google.api.http) = {
+      post: "/v1/ca/services/{service}/certs"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Fetches a service's certificates, based on their service name and public key"
+      description: "This endpoint receives service certificate requests, which are replied to with a system's Certificate Authority issued certificates, unique to this service."
+      tags: "Certificates"
+    };
+  }
+
+  rpc DeleteCertificate(CertificateDeletionRequest) returns (CertificateDeletionResponse) {
+    option (google.api.http) = {
+      post: "/v1/ca/services/{service}/certs/delete"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Removes a service's certificate, based on their service name and public key."
+      description: "This endpoint receives service certificate deletion requests, which in turn removes the referred certificates for this service (or all of them)."
       tags: "Certificates"
     };
   }
@@ -186,6 +212,11 @@ message Attribute {
 
 message CertificateResponse {
   bytes certificate = 1 [json_name="certificate"];
+  int64 expires_on = 2 [json_name="expires_on"];
+}
+
+message ListCertificatesResponse {
+  repeated CertificateResponse certificates = 1 [json_name="certificates"];
 }
 
 message VerificationRequest {
@@ -197,6 +228,14 @@ message VerificationResponse {
   bool valid = 1 [json_name="valid"];
   string reason = 2 [json_name="reason"];
 }
+
+message CertificateDeletionRequest {
+  string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
+  bytes public_key = 2 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
+  bytes certificate = 3 [json_name="certificate", (validate.rules).bytes.min_len = 1];
+}
+
+message CertificateDeletionResponse {}
 
 message DeletionRequest {
   string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
