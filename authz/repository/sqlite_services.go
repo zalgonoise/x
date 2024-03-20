@@ -13,18 +13,43 @@ import (
 	"github.com/zalgonoise/micron/executor"
 	"github.com/zalgonoise/micron/schedule"
 	"github.com/zalgonoise/micron/selector"
+	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"go.opentelemetry.io/otel/trace"
 )
 
 const (
+	minAllocCertificates = 2
+
 	queryServicesGet = `
-SELECT pub_key, cert FROM services
+SELECT pub_key FROM services 
 WHERE name = ?
 `
 
 	queryServicesCreate = `
-INSERT INTO services (name, pub_key, cert, expiry)
-VALUES (?, ?, ?, ?)
+INSERT INTO services (name, pub_key)
+VALUES (?, ?)
+`
+
+	queryCertificatesList = `
+SELECT cert, expiry FROM certificates 
+WHERE service_id = (SELECT id FROM services WHERE name = ?)
+AND expiry > ?
+ORDER BY expiry DESC
+`
+
+	queryCertificatesCreate = `
+INSERT INTO certificates (service_id, cert, expiry)
+VALUES ((SELECT id FROM services WHERE name = ?),  ?, ?)
+`
+
+	queryCertificatesDeleteAll = `
+DELETE FROM certificates WHERE service_id = (SELECT id FROM services WHERE name = ?)
+`
+
+	queryCertificatesDelete = `
+DELETE FROM certificates 
+	WHERE service_id = (SELECT id FROM services WHERE name = ?)
+	AND cert = ?
 `
 
 	queryServicesDelete = `
@@ -32,7 +57,7 @@ DELETE FROM services WHERE name = ?
 `
 
 	queryServicesCleanup = `
-DELETE FROM services WHERE expiry < ?
+DELETE FROM certificates WHERE expiry < ?
 `
 )
 
@@ -65,6 +90,11 @@ type Services struct {
 	tracer trace.Tracer
 }
 
+type Certificate struct {
+	Raw    []byte
+	Expiry time.Time
+}
+
 func NewService(db *sql.DB, opts ...cfg.Option[Config]) (*Services, error) {
 	config := cfg.Set(defaultConfig(), opts...)
 
@@ -95,22 +125,22 @@ func NewService(db *sql.DB, opts ...cfg.Option[Config]) (*Services, error) {
 	return repo, nil
 }
 
-func (r *Services) GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error) {
-	if err = r.db.QueryRowContext(ctx, queryServicesGet, service).Scan(&pubKey, &cert); err != nil {
+func (r *Services) GetService(ctx context.Context, service string) (pubKey []byte, err error) {
+	if err = r.db.QueryRowContext(
+		ctx, queryServicesGet, service, time.Now().UnixMilli(),
+	).Scan(&pubKey); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil, ErrNotFound
+			return nil, ErrNotFound
 		}
 
-		return nil, nil, err
+		return nil, err
 	}
 
-	return pubKey, cert, nil
+	return pubKey, nil
 }
 
-func (r *Services) CreateService(
-	ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time,
-) (err error) {
-	res, err := r.db.ExecContext(ctx, queryServicesCreate, service, pubKey, cert, expiry)
+func (r *Services) CreateService(ctx context.Context, service string, pubKey []byte) (err error) {
+	res, err := r.db.ExecContext(ctx, queryServicesCreate, service, pubKey)
 	if err != nil {
 		return err
 	}
@@ -128,9 +158,9 @@ func (r *Services) CreateService(
 }
 
 func (r *Services) DeleteService(ctx context.Context, service string) error {
-	var pubKey, cert []byte
+	var pubKey []byte
 
-	if err := r.db.QueryRowContext(ctx, queryServicesGet, service).Scan(&pubKey, &cert); err != nil {
+	if err := r.db.QueryRowContext(ctx, queryServicesGet, service).Scan(&pubKey); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
@@ -138,7 +168,79 @@ func (r *Services) DeleteService(ctx context.Context, service string) error {
 		return err
 	}
 
+	_, err := r.db.ExecContext(ctx, queryCertificatesDeleteAll, service)
+	if err != nil {
+		return err
+	}
+
 	res, err := r.db.ExecContext(ctx, queryServicesDelete, service)
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows != 1 {
+		return fmt.Errorf("%w: %s", ErrFailedDBDelete, service)
+	}
+
+	return nil
+}
+
+func (r *Services) ListCertificates(ctx context.Context, service string) (certs []*pb.CertificateResponse, err error) {
+	rows, err := r.db.QueryContext(ctx, queryCertificatesList, service, time.Now().UnixMilli())
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	certs = make([]*pb.CertificateResponse, 0, minAllocCertificates)
+
+	for rows.Next() {
+		cert := &pb.CertificateResponse{}
+
+		if err = rows.Scan(&cert.Certificate, &cert.ExpiresOn); err != nil {
+			return nil, err
+		}
+
+		certs = append(certs, cert)
+	}
+
+	if err = rows.Close(); err != nil {
+		return nil, err
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return certs, nil
+}
+
+func (r *Services) CreateCertificate(ctx context.Context, service string, cert []byte, expiry time.Time) error {
+	res, err := r.db.ExecContext(ctx, queryCertificatesCreate, service, cert, expiry.UnixMilli())
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows != 1 {
+		return fmt.Errorf("%w: %s", ErrFailedDBWrite, service)
+	}
+
+	return nil
+}
+
+func (r *Services) DeleteCertificate(ctx context.Context, service string, cert []byte) error {
+	res, err := r.db.ExecContext(ctx, queryCertificatesDelete, service, cert)
 	if err != nil {
 		return err
 	}
@@ -167,7 +269,7 @@ func (r *Services) cleanup(ctx context.Context) error {
 	ctx, done := context.WithTimeout(context.Background(), r.cleanupTimeout)
 	defer done()
 
-	_, err := r.db.ExecContext(ctx, queryServicesCleanup, time.Now())
+	_, err := r.db.ExecContext(ctx, queryServicesCleanup, time.Now().UnixMilli())
 
 	return err
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/zalgonoise/micron/executor"
 	"github.com/zalgonoise/micron/schedule"
 	"github.com/zalgonoise/micron/selector"
+	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -122,26 +123,21 @@ func NewToken(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
 	return repo, nil
 }
 
-func (r *Tokens) ListChallenges(ctx context.Context, service string) (challenges []Challenge, err error) {
+func (r *Tokens) ListChallenges(ctx context.Context, service string) (challenges []*pb.LoginResponse, err error) {
 	rows, err := r.db.QueryContext(ctx, queryChallengesList, service)
 	if err != nil {
 		return nil, err
 	}
 
 	defer rows.Close()
-	challenges = make([]Challenge, 0, minAllocChallenges)
+	challenges = make([]*pb.LoginResponse, 0, minAllocChallenges)
 
 	for rows.Next() {
-		var (
-			expiryMillis int64
-			challenge    = Challenge{}
-		)
+		challenge := &pb.LoginResponse{}
 
-		if rows.Scan(&challenge.Raw, &expiryMillis); err != nil {
+		if err = rows.Scan(&challenge.Challenge, &challenge.ExpiresOn); err != nil {
 			return nil, err
 		}
-
-		challenge.Expiry = time.UnixMilli(expiryMillis)
 
 		challenges = append(challenges, challenge)
 	}
@@ -198,26 +194,22 @@ func (r *Tokens) DeleteChallenge(ctx context.Context, service string, challenge 
 	return nil
 }
 
-func (r *Tokens) ListTokens(ctx context.Context, service string) (tokens []Token, err error) {
+func (r *Tokens) ListTokens(ctx context.Context, service string) (tokens []*pb.TokenResponse, err error) {
 	rows, err := r.db.QueryContext(ctx, queryTokensList, service, time.Now().UnixMilli())
 	if err != nil {
 		return nil, err
 	}
+
 	defer rows.Close()
 
-	tokens = make([]Token, 0, minAllocTokens)
+	tokens = make([]*pb.TokenResponse, 0, minAllocTokens)
 
 	for rows.Next() {
-		var (
-			token Token
-			exp   int64
-		)
+		token := &pb.TokenResponse{}
 
-		if err = rows.Scan(&token.Raw, &exp); err != nil {
+		if err = rows.Scan(&token.Token, &token.ExpiresOn); err != nil {
 			return nil, err
 		}
-
-		token.Expiry = time.UnixMilli(exp)
 
 		tokens = append(tokens, token)
 	}
