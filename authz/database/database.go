@@ -32,10 +32,25 @@ CREATE TABLE services
 (
     id           INTEGER PRIMARY KEY NOT NULL,
     name         TEXT                NOT NULL UNIQUE,
-    pub_key      BLOB                NOT NULL,
-    cert         BLOB                NULL,
-    expiry 			 DATETIME 					 NULL
+    pub_key      BLOB                NOT NULL
 );
+`
+
+	checkCertificatesTableExists = `
+	SELECT EXISTS(SELECT 1 FROM sqlite_master
+	WHERE type='table'
+	AND name='certificates');
+`
+
+	createCertificatesTable = `
+CREATE TABLE certificates
+(
+    service_id    INTEGER REFERENCES services (id) NOT NULL,
+    cert         	BLOB                						 NULL,
+    expiry 			 	INTEGER 					 							 NULL
+);
+
+CREATE INDEX idx_certificates_service_id ON certificates (service_id);
 `
 
 	checkChallengesTableExists = `
@@ -139,11 +154,15 @@ func Migrate(ctx context.Context, db *sql.DB, service Service, log *slog.Logger)
 	case AuthzService:
 		return runMigrations(ctx, db,
 			migration{checkServicesTableExists, createServicesTable},
+			migration{checkCertificatesTableExists, createCertificatesTable},
 			migration{checkChallengesTableExists, createChallengesTable},
 			migration{checkTokensTableExists, createTokensTable},
 		)
 	case CAService:
-		return runMigrations(ctx, db, migration{checkServicesTableExists, createServicesTable})
+		return runMigrations(ctx, db,
+			migration{checkServicesTableExists, createServicesTable},
+			migration{checkCertificatesTableExists, createCertificatesTable},
+		)
 	default:
 		return fmt.Errorf("%w: %q", ErrInvalidServiceType, service)
 	}
