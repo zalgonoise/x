@@ -14,6 +14,7 @@ const (
 	defaultExp       int64 = 130
 	defaultSub       int64 = 1
 	defaultDurMonths int   = 24
+	defaultCACN            = "authz.certificate_authority"
 
 	typeCertificate = "CERTIFICATE"
 )
@@ -28,17 +29,17 @@ type Template struct {
 	SerialSub int64
 }
 
-func NewCACertificate(t Template) (ca *x509.Certificate, cert *pem.Block, err error) {
+func NewCACertificate(t Template) (cert []byte, err error) {
 	if t.Serial == nil {
 		bigInt, err := newInt(2, t.SerialExp, t.SerialSub)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		t.Serial = bigInt
 	}
 
-	ca = &x509.Certificate{
+	ca := &x509.Certificate{
 		SerialNumber:          t.Serial,
 		Subject:               t.Name,
 		NotBefore:             time.Now(),
@@ -47,14 +48,15 @@ func NewCACertificate(t Template) (ca *x509.Certificate, cert *pem.Block, err er
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
+		Issuer:                pkix.Name{CommonName: defaultCACN},
 	}
 
 	data, err := x509.CreateCertificate(rand.Reader, ca, ca, &t.PrivateKey.PublicKey, t.PrivateKey)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return ca, &pem.Block{Type: typeCertificate, Bytes: data}, nil
+	return pem.EncodeToMemory(&pem.Block{Type: typeCertificate, Bytes: data}), nil
 }
 
 func newInt(base, exp, sub int64) (*big.Int, error) {

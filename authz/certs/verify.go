@@ -24,17 +24,13 @@ func Verify(certPEM []byte, inter, root *x509.Certificate) error {
 	}
 
 	if root != nil {
-		pool := x509.NewCertPool()
-		pool.AddCert(root)
-
-		opts.Roots = pool
+		opts.Roots = x509.NewCertPool()
+		opts.Roots.AddCert(root)
 	}
 
 	if inter != nil {
-		pool := x509.NewCertPool()
-		pool.AddCert(inter)
-
-		opts.Intermediates = pool
+		opts.Intermediates = x509.NewCertPool()
+		opts.Intermediates.AddCert(inter)
 	}
 
 	chains, err := certificate.Verify(opts)
