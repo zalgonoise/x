@@ -4,10 +4,8 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"log/slog"
-	"slices"
 	"time"
 
 	"github.com/zalgonoise/cfg"
@@ -22,6 +20,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+const certificateLimit = 2
 
 const (
 	errDomain = errs.Domain("x/authz/ca")
@@ -43,24 +43,34 @@ var (
 )
 
 type Repository interface {
-	GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error)
-	CreateService(ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time) (err error)
+	GetService(ctx context.Context, service string) (pubKey []byte, err error)
+	CreateService(ctx context.Context, service string, pubKey []byte) (err error)
 	DeleteService(ctx context.Context, service string) error
+
+	ListCertificates(ctx context.Context, service string) (certs []*pb.CertificateResponse, err error)
+	CreateCertificate(ctx context.Context, service string, cert []byte, expiry time.Time) error
+	DeleteCertificate(ctx context.Context, service string, cert []byte) error
 }
 
 type Metrics interface {
 	IncServiceRegistries()
 	IncServiceRegistryFailed()
 	ObserveServiceRegistryLatency(ctx context.Context, duration time.Duration)
-	IncServiceCertsFetched(service string)
-	IncServiceCertsFetchFailed(service string)
-	ObserveServiceCertsFetchLatency(ctx context.Context, service string, duration time.Duration)
-	IncVerificationRequests(service string)
-	IncVerificationFailed(service string)
-	ObserveVerificationLatency(ctx context.Context, service string, duration time.Duration)
 	IncServiceDeletions()
 	IncServiceDeletionFailed()
 	ObserveServiceDeletionLatency(ctx context.Context, duration time.Duration)
+	IncCertificatesCreated(service string)
+	IncCertificatesCreateFailed(service string)
+	ObserveCertificatesCreateLatency(ctx context.Context, service string, duration time.Duration)
+	IncCertificatesListed(service string)
+	IncCertificatesListFailed(service string)
+	ObserveCertificatesListLatency(ctx context.Context, service string, duration time.Duration)
+	IncCertificatesDeleted(service string)
+	IncCertificatesDeleteFailed(service string)
+	ObserveCertificatesDeleteLatency(ctx context.Context, service string, duration time.Duration)
+	IncCertificatesVerified(service string)
+	IncCertificateVerificationFailed(service string)
+	ObserveCertificateVerificationLatency(ctx context.Context, service string, duration time.Duration)
 	IncPubKeyRequests()
 	IncPubKeyRequestFailed()
 	ObservePubKeyRequestLatency(ctx context.Context, duration time.Duration)
@@ -71,7 +81,6 @@ type CertificateAuthority struct {
 
 	privateKey *ecdsa.PrivateKey
 	ca         *x509.Certificate
-	cert       *pem.Block
 	durMonth   int
 
 	repository Repository
@@ -101,7 +110,12 @@ func NewCertificateAuthority(
 		template.PrivateKey = privateKey
 	}
 
-	ca, cert, err := certs.NewCACertificate(template)
+	cert, err := certs.NewCACertificate(template)
+	if err != nil {
+		return nil, err
+	}
+
+	ca, err := certs.Decode(cert)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +123,6 @@ func NewCertificateAuthority(
 	return &CertificateAuthority{
 		privateKey: privateKey,
 		ca:         ca,
-		cert:       cert,
 		durMonth:   template.DurMonth,
 		repository: repo,
 		logger:     slog.New(config.logHandler),
@@ -118,9 +131,9 @@ func NewCertificateAuthority(
 	}, nil
 }
 
-func (ca *CertificateAuthority) Register(
+func (ca *CertificateAuthority) RegisterService(
 	ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
-	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.Register", trace.WithAttributes(
+	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.RegisterService", trace.WithAttributes(
 		attribute.String("service", req.Service),
 		attribute.String("pub_key", string(req.PublicKey)),
 		attribute.Bool("with_csr", req.SigningRequest != nil),
@@ -136,52 +149,62 @@ func (ca *CertificateAuthority) Register(
 	ca.logger.DebugContext(ctx, "new registry request",
 		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
 
-	exit := withExit[pb.CertificateRequest, pb.CertificateResponse](
-		ctx, ca.logger, req, ca.metrics.IncServiceRegistryFailed, span,
-	)
-
 	if err := req.ValidateAll(); err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncServiceRegistryFailed()
+
+		ca.logger.WarnContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	storedPubKey, storedCert, err := ca.repository.GetService(ctx, req.Service)
-	if err != nil && !errors.Is(err, repository.ErrNotFound) {
-		return exit(codes.Internal, "failed to get service from DB", err)
-	}
-
-	// service is already registered, just return the stored certificate
-	if err == nil && len(storedPubKey) > 0 && len(storedCert) > 0 {
-		return &pb.CertificateResponse{
-			Certificate: storedCert,
-		}, nil
-	}
-
-	pubKey, err := keygen.DecodePublic(req.PublicKey)
+	err := ca.validatePublicKeys(ctx, req.Service, req.PublicKey)
 	if err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		switch {
+		// create the service if not exists
+		case errors.Is(err, repository.ErrNotFound):
+			if err := ca.repository.CreateService(ctx, req.Service, req.PublicKey); err != nil {
+				span.SetStatus(otelcodes.Error, err.Error())
+				span.RecordError(err)
+				ca.metrics.IncServiceRegistryFailed()
+
+				ca.logger.ErrorContext(ctx, "failed to write service to DB",
+					slog.String("service", req.Service), slog.String("error", err.Error()))
+
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+
+		// service exists, invalid public keys
+		case errors.Is(err, ErrInvalidPublicKey):
+			span.SetStatus(otelcodes.Error, err.Error())
+			span.RecordError(err)
+			ca.metrics.IncServiceRegistryFailed()
+
+			ca.logger.WarnContext(ctx, "mismatching public keys",
+				slog.String("service", req.Service), slog.String("error", err.Error()))
+
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+
+		// internal error
+		default:
+			span.SetStatus(otelcodes.Error, err.Error())
+			span.RecordError(err)
+			ca.metrics.IncServiceRegistryFailed()
+
+			ca.logger.ErrorContext(ctx, "failed to validate public keys",
+				slog.String("service", req.Service), slog.String("error", err.Error()))
+
+			return nil, status.Error(codes.Internal, err.Error())
+		}
 	}
 
-	cert, err := certs.NewCertFromCSR(ca.ca.Version, ca.durMonth, certs.ToCSR(req.Service, pubKey, req.SigningRequest))
-	if err != nil {
-		return exit(codes.Internal, "failed to generate new serial number", err)
-	}
-
-	signedCert, err := certs.Encode(cert, ca.ca, pubKey, ca.privateKey)
-	if err != nil {
-		return exit(codes.Internal, "failed to generate new certificate", err)
-	}
-
-	if err := ca.repository.CreateService(ctx, req.Service, req.PublicKey, signedCert, cert.NotAfter); err != nil {
-		return exit(codes.Internal, "failed to write certificate to DB", err,
-			slog.String("certificate", string(signedCert)),
-		)
-	}
-
-	return &pb.CertificateResponse{Certificate: signedCert}, nil
+	return ca.CreateCertificate(ctx, req)
 }
 
-func (ca *CertificateAuthority) GetCertificate(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
-	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.GetCertificate", trace.WithAttributes(
+func (ca *CertificateAuthority) CreateCertificate(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
+	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.CreateCertificate", trace.WithAttributes(
 		attribute.String("service", req.Service),
 		attribute.String("pub_key", string(req.PublicKey)),
 		attribute.Bool("with_csr", req.SigningRequest != nil),
@@ -190,38 +213,207 @@ func (ca *CertificateAuthority) GetCertificate(ctx context.Context, req *pb.Cert
 
 	start := time.Now()
 	defer func() {
-		ca.metrics.ObserveServiceCertsFetchLatency(ctx, req.Service, time.Since(start))
+		ca.metrics.ObserveCertificatesCreateLatency(ctx, req.Service, time.Since(start))
 	}()
 
-	ca.metrics.IncServiceCertsFetched(req.Service)
-	ca.logger.DebugContext(ctx, "new certificate request",
+	ca.metrics.IncCertificatesCreated(req.Service)
+	ca.logger.DebugContext(ctx, "new certificate creation request",
 		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
 
-	exit := withExit[pb.CertificateRequest, pb.CertificateResponse](
-		ctx, ca.logger, req, func() { ca.metrics.IncServiceCertsFetchFailed(req.Service) }, span,
-	)
-
 	if err := req.ValidateAll(); err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesCreateFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pubKey, cert, err := ca.repository.GetService(ctx, req.Service)
+	certificates, err := ca.repository.ListCertificates(ctx, req.Service)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			ca.logger.DebugContext(ctx, "service was not found",
-				slog.String("error", err.Error()), slog.String("service", req.Service))
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncServiceRegistryFailed()
+		ca.metrics.IncCertificatesCreateFailed(req.Service)
 
-			return nil, status.Error(codes.NotFound, err.Error())
+		ca.logger.ErrorContext(ctx, "failed to get service certificates from DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// max number of certificates, return the stored certificate with the biggest validity
+	if len(certificates) >= certificateLimit {
+		return certificates[0], nil
+	}
+
+	certificate, expiry, err := ca.newCertificate(ctx, req)
+	if err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncServiceRegistryFailed()
+		ca.metrics.IncCertificatesCreateFailed(req.Service)
+
+		if errors.Is(err, ErrInvalidPublicKey) {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		return exit(codes.Internal, "failed to fetch service from the DB", err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if !slices.Equal(pubKey, req.PublicKey) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
+	if err := ca.repository.CreateCertificate(ctx, req.Service, certificate, expiry); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncServiceRegistryFailed()
+		ca.metrics.IncCertificatesCreateFailed(req.Service)
+
+		ca.logger.ErrorContext(ctx, "failed to write certificate to DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pb.CertificateResponse{Certificate: cert}, nil
+	return &pb.CertificateResponse{
+		Certificate: certificate,
+		ExpiresOn:   expiry.UnixMilli(),
+	}, nil
+}
+
+func (ca *CertificateAuthority) ListCertificates(ctx context.Context, req *pb.CertificateRequest) (*pb.ListCertificatesResponse, error) {
+	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.ListCertificates", trace.WithAttributes(
+		attribute.String("service", req.Service),
+		attribute.String("pub_key", string(req.PublicKey)),
+		attribute.Bool("with_csr", req.SigningRequest != nil),
+	))
+	defer span.End()
+
+	start := time.Now()
+	defer func() {
+		ca.metrics.ObserveCertificatesListLatency(ctx, req.Service, time.Since(start))
+	}()
+
+	ca.metrics.IncCertificatesListed(req.Service)
+	ca.logger.DebugContext(ctx, "new certificate listing request",
+		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
+
+	if err := req.ValidateAll(); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesListFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := ca.validatePublicKeys(ctx, req.Service, req.PublicKey); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesListFailed(req.Service)
+
+		if errors.Is(err, ErrInvalidPublicKey) {
+			ca.logger.WarnContext(ctx, "mismatching public keys",
+				slog.String("service", req.Service), slog.String("error", err.Error()))
+
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		ca.logger.ErrorContext(ctx, "failed to validate public keys",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	certificates, err := ca.repository.ListCertificates(ctx, req.Service)
+	if err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesListFailed(req.Service)
+
+		ca.logger.ErrorContext(ctx, "failed to get service certificates from DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if len(certificates) == 0 {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesListFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "no certificates were found",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	return &pb.ListCertificatesResponse{Certificates: certificates}, nil
+}
+
+func (ca *CertificateAuthority) DeleteCertificate(ctx context.Context, req *pb.CertificateDeletionRequest) (*pb.CertificateDeletionResponse, error) {
+	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.DeleteCertificate", trace.WithAttributes(
+		attribute.String("service", req.Service),
+		attribute.String("certificate", string(req.Certificate)),
+	))
+	defer span.End()
+
+	start := time.Now()
+	defer func() {
+		ca.metrics.ObserveCertificatesDeleteLatency(ctx, req.Service, time.Since(start))
+	}()
+
+	ca.metrics.IncCertificatesDeleted(req.Service)
+	ca.logger.DebugContext(ctx, "certificate deletion request",
+		slog.String("service", req.Service))
+
+	if err := req.ValidateAll(); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := ca.validatePublicKeys(ctx, req.Service, req.PublicKey); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "invalid public keys",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidPublicKey.Error())
+	}
+
+	if err := certs.Verify(req.Certificate, nil, ca.ca); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "invalid certificate",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidCertificate.Error())
+	}
+
+	if err := ca.repository.DeleteCertificate(ctx, req.Service, req.Certificate); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "failed to remove stored certificate",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.CertificateDeletionResponse{}, nil
 }
 
 func (ca *CertificateAuthority) VerifyCertificate(ctx context.Context, req *pb.VerificationRequest) (*pb.VerificationResponse, error) {
@@ -233,57 +425,33 @@ func (ca *CertificateAuthority) VerifyCertificate(ctx context.Context, req *pb.V
 
 	start := time.Now()
 	defer func() {
-		ca.metrics.ObserveVerificationLatency(ctx, req.Service, time.Since(start))
+		ca.metrics.ObserveCertificateVerificationLatency(ctx, req.Service, time.Since(start))
 	}()
 
-	ca.metrics.IncVerificationRequests(req.Service)
+	ca.metrics.IncCertificatesDeleteFailed(req.Service)
 	ca.logger.DebugContext(ctx, "certificate verification request",
 		slog.String("service", req.Service))
 
-	exit := withExit[pb.VerificationRequest, pb.VerificationResponse](
-		ctx, ca.logger, req, func() { ca.metrics.IncVerificationFailed(req.Service) }, span,
-	)
-
 	if err := req.ValidateAll(); err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificateVerificationFailed(req.Service)
+
+		ca.logger.WarnContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pubKey, _, err := ca.repository.GetService(ctx, req.Service)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			ca.logger.DebugContext(ctx, "service was not found",
-				slog.String("error", err.Error()), slog.String("service", req.Service))
+	if err := certs.Verify(req.Certificate, nil, ca.ca); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncCertificateVerificationFailed(req.Service)
 
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
+		ca.logger.WarnContext(ctx, "invalid certificate",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
 
-		return exit(codes.Internal, "failed to fetch service from the DB", err)
-	}
-
-	storedPub, err := keygen.DecodePublic(pubKey)
-	if err != nil {
-		return exit(codes.Internal, "failed to decode stored public key", err)
-	}
-
-	cert, err := certs.Decode(req.Certificate)
-	if err != nil {
-		return exit(codes.InvalidArgument, "failed to decode certificate", err)
-	}
-
-	pub, ok := cert.PublicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return exit(codes.InvalidArgument, "failed to retrieve public key from certificate", ErrInvalidCertificate)
-	}
-
-	if !pub.Equal(storedPub) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
-	}
-
-	if time.Now().After(cert.NotAfter) {
-		ca.logger.DebugContext(ctx, "expired certificate",
-			slog.Time("expiry", cert.NotAfter), slog.String("service", req.Service))
-
-		return &pb.VerificationResponse{Reason: "expired"}, nil
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidCertificate.Error())
 	}
 
 	return &pb.VerificationResponse{Valid: true}, nil
@@ -305,32 +473,37 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 	ca.logger.DebugContext(ctx, "service deletion request",
 		slog.String("service", req.Service))
 
-	exit := withExit[pb.DeletionRequest, pb.DeletionResponse](
-		ctx, ca.logger, req, ca.metrics.IncServiceDeletionFailed, span,
-	)
-
 	if err := req.ValidateAll(); err != nil {
-		return exit(codes.InvalidArgument, "invalid request", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncServiceDeletionFailed()
+
+		ca.logger.ErrorContext(ctx, "invalid request",
+			slog.Any("request", req), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	pubKey, _, err := ca.repository.GetService(ctx, req.Service)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			ca.logger.DebugContext(ctx, "service was not found",
-				slog.String("error", err.Error()), slog.String("service", req.Service))
+	if err := ca.validatePublicKeys(ctx, req.Service, req.PublicKey); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncServiceDeletionFailed()
 
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
+		ca.logger.WarnContext(ctx, "mismatching public keys",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
 
-		return exit(codes.Internal, "failed to fetch service from the DB", err)
+		return nil, status.Error(codes.PermissionDenied, ErrInvalidPublicKey.Error())
 	}
 
-	if !slices.Equal(pubKey, req.PublicKey) {
-		return exit(codes.PermissionDenied, "mismatching public keys", ErrInvalidPublicKey)
-	}
+	if err := ca.repository.DeleteService(ctx, req.Service); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncServiceDeletionFailed()
 
-	if err = ca.repository.DeleteService(ctx, req.Service); err != nil {
-		return exit(codes.Internal, "failed to remove service from DB", err)
+		ca.logger.ErrorContext(ctx, "failed to remove service from DB",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.DeletionResponse{}, nil
@@ -348,47 +521,68 @@ func (ca *CertificateAuthority) PublicKey(ctx context.Context, _ *pb.PublicKeyRe
 	ca.metrics.IncPubKeyRequests()
 	ca.logger.DebugContext(ctx, "CA's public key request")
 
-	exit := withExit[pb.PublicKeyRequest, pb.PublicKeyResponse](
-		ctx, ca.logger, nil, ca.metrics.IncPubKeyRequestFailed, span,
-	)
-
 	key, err := keygen.EncodePublic(&ca.privateKey.PublicKey)
 	if err != nil {
-		return exit(codes.Internal, "failed to encode CA's public key", err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		ca.metrics.IncPubKeyRequestFailed()
+
+		ca.logger.ErrorContext(ctx, "failed to encode CA's public key",
+			slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.PublicKeyResponse{PublicKey: key}, nil
 }
 
-func withExit[Req any, Res any](
-	ctx context.Context, logger *slog.Logger,
-	req *Req, metric func(), span trace.Span,
-) func(codes.Code, string, error, ...any) (*Res, error) {
-	return func(code codes.Code, message string, err error, args ...any) (*Res, error) {
-		logArgs := make([]any, 0, len(args)+2)
+func (ca *CertificateAuthority) newCertificate(ctx context.Context, req *pb.CertificateRequest) ([]byte, time.Time, error) {
+	pubKey, err := keygen.DecodePublic(req.PublicKey)
+	if err != nil {
+		ca.logger.WarnContext(ctx, "invalid public key",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
 
-		if req != nil {
-			logArgs = append(logArgs, slog.Any("request", req))
-		}
-
-		if err != nil {
-			logArgs = append(logArgs, slog.String("error", err.Error()))
-			logArgs = append(logArgs, args...)
-
-			span.SetStatus(otelcodes.Error, err.Error())
-			span.RecordError(err)
-			metric()
-			logger.WarnContext(ctx, message, logArgs...)
-
-			return nil, status.Error(code, err.Error())
-		}
-
-		logArgs = append(logArgs, args...)
-		span.SetStatus(otelcodes.Error, message)
-		span.RecordError(errors.New(message))
-		metric()
-		logger.WarnContext(ctx, message, logArgs...)
-
-		return nil, status.Error(code, message)
+		return nil, time.Time{}, ErrInvalidPublicKey
 	}
+
+	cert, err := certs.NewCertFromCSR(ca.ca.Version, ca.durMonth, certs.ToCSR(req.Service, pubKey, req.SigningRequest))
+	if err != nil {
+		ca.logger.ErrorContext(ctx, "failed to generate new certificate",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, time.Time{}, err
+	}
+
+	signedCert, err := certs.Encode(cert, ca.ca, pubKey, ca.privateKey)
+	if err != nil {
+		ca.logger.ErrorContext(ctx, "failed to encode the new certificate",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, time.Time{}, err
+	}
+
+	return signedCert, cert.NotAfter, nil
+}
+
+func (ca *CertificateAuthority) validatePublicKeys(ctx context.Context, service string, key []byte) error {
+	storedPub, err := ca.repository.GetService(ctx, service)
+	if err != nil {
+		return err
+	}
+
+	pub, err := keygen.DecodePublic(storedPub)
+	if err != nil {
+		return err
+	}
+
+	reqPub, err := keygen.DecodePublic(key)
+	if err != nil {
+		return err
+	}
+
+	if !pub.Equal(reqPub) {
+		return ErrInvalidPublicKey
+	}
+
+	return nil
 }
