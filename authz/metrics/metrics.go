@@ -26,17 +26,25 @@ type Metrics struct {
 	servicesRegisteredFailed       prometheus.Counter
 	servicesRegistryLatencySeconds prometheus.Histogram
 
-	servicesCertsFetchedTotal          *prometheus.CounterVec
-	servicesCertsFetchedFailed         *prometheus.CounterVec
-	servicesCertsFetchedLatencySeconds *prometheus.HistogramVec
-
-	servicesCertsVerifiedTotal          *prometheus.CounterVec
-	servicesCertsVerifiedFailed         *prometheus.CounterVec
-	servicesCertsVerifiedLatencySeconds *prometheus.HistogramVec
-
 	servicesDeletedTotal          prometheus.Counter
 	servicesDeletedFailed         prometheus.Counter
 	servicesDeletedLatencySeconds prometheus.Histogram
+
+	certificatesCreatedTotal          *prometheus.CounterVec
+	certificatesCreatedFailed         *prometheus.CounterVec
+	certificatesCreatedLatencySeconds *prometheus.HistogramVec
+
+	certificatesListedTotal          *prometheus.CounterVec
+	certificatesListedFailed         *prometheus.CounterVec
+	certificatesListedLatencySeconds *prometheus.HistogramVec
+
+	certificatesDeletedTotal          *prometheus.CounterVec
+	certificatesDeletedFailed         *prometheus.CounterVec
+	certificatesDeletedLatencySeconds *prometheus.HistogramVec
+
+	certificatesVerifiedTotal          *prometheus.CounterVec
+	certificatesVerifiedFailed         *prometheus.CounterVec
+	certificatesVerifiedLatencySeconds *prometheus.HistogramVec
 
 	publicKeyRequestsTotal          prometheus.Counter
 	publicKeyRequestsFailed         prometheus.Counter
@@ -84,32 +92,6 @@ func NewMetrics() *Metrics {
 			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		}),
 
-		servicesCertsFetchedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "services_certs_fetched_total",
-			Help: "Count of service certificates requested",
-		}, []string{"service"}),
-		servicesCertsFetchedFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "services_certs_fetched_failed",
-			Help: "Count of service certificate requests that failed",
-		}, []string{"service"}),
-		servicesCertsFetchedLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "services_certs_fetched_latency_seconds",
-			Help:    "Histogram of service certificate request processing times",
-			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
-		}, []string{"service"}),
-		servicesCertsVerifiedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "services_certs_verified_total",
-			Help: "Count of services' certificates verified by this CA",
-		}, []string{"service"}),
-		servicesCertsVerifiedFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "services_certs_verified_failed",
-			Help: "Count of services' certificates verification requests that failed",
-		}, []string{"service"}),
-		servicesCertsVerifiedLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "services_certs_verified_latency_seconds",
-			Help:    "Histogram of service certificate verification processing times",
-			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
-		}, []string{"service"}),
 		servicesDeletedTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "services_deleted_total",
 			Help: "Count of services deleted from this CA",
@@ -123,6 +105,63 @@ func NewMetrics() *Metrics {
 			Help:    "Histogram of service deletion processing times",
 			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		}),
+
+		certificatesCreatedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_created_total",
+			Help: "Count of service certificate creation requests",
+		}, []string{"service"}),
+		certificatesCreatedFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_created_failed",
+			Help: "Count of service certificate creation requests that failed",
+		}, []string{"service"}),
+		certificatesCreatedLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "certificates_created_latency_seconds",
+			Help:    "Histogram of service certificate creation processing times",
+			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		}, []string{"service"}),
+
+		certificatesListedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_listed_total",
+			Help: "Count of service certificate listings requested",
+		}, []string{"service"}),
+		certificatesListedFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_listed_failed",
+			Help: "Count of service certificate listings that failed",
+		}, []string{"service"}),
+		certificatesListedLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "certificates_listed_latency_seconds",
+			Help:    "Histogram of service certificate listing processing times",
+			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		}, []string{"service"}),
+
+		certificatesDeletedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_deleted_total",
+			Help: "Count of service certificate deletion requests",
+		}, []string{"service"}),
+		certificatesDeletedFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_deleted_failed",
+			Help: "Count of service certificate deletion requests that failed",
+		}, []string{"service"}),
+		certificatesDeletedLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "certificates_deleted_latency_seconds",
+			Help:    "Histogram of service certificate deletion processing times",
+			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		}, []string{"service"}),
+
+		certificatesVerifiedTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_verified_total",
+			Help: "Count of services' certificates verified by this CA",
+		}, []string{"service"}),
+		certificatesVerifiedFailed: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "certificates_verified_failed",
+			Help: "Count of services' certificates verification requests that failed",
+		}, []string{"service"}),
+		certificatesVerifiedLatencySeconds: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "certificates_verified_latency_seconds",
+			Help:    "Histogram of service certificate verification processing times",
+			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		}, []string{"service"}),
+
 		publicKeyRequestsTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "public_key_requests_total",
 			Help: "Count of CA public key requests",
@@ -229,50 +268,6 @@ func (m *Metrics) ObserveServiceRegistryLatency(ctx context.Context, duration ti
 	m.servicesRegistryLatencySeconds.Observe(duration.Seconds())
 }
 
-func (m *Metrics) IncServiceCertsFetched(service string) {
-	m.servicesCertsFetchedTotal.WithLabelValues(service).Inc()
-}
-
-func (m *Metrics) IncServiceCertsFetchFailed(service string) {
-	m.servicesCertsFetchedFailed.WithLabelValues(service).Inc()
-}
-
-func (m *Metrics) ObserveServiceCertsFetchLatency(ctx context.Context, service string, duration time.Duration) {
-	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
-		if eo, ok := m.servicesCertsFetchedLatencySeconds.WithLabelValues(service).(prometheus.ExemplarObserver); ok {
-			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
-				traceIDKey: sc.TraceID().String(),
-			})
-
-			return
-		}
-	}
-
-	m.servicesCertsFetchedLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
-}
-
-func (m *Metrics) IncVerificationRequests(service string) {
-	m.servicesCertsVerifiedTotal.WithLabelValues(service).Inc()
-}
-
-func (m *Metrics) IncVerificationFailed(service string) {
-	m.servicesCertsVerifiedFailed.WithLabelValues(service).Inc()
-}
-
-func (m *Metrics) ObserveVerificationLatency(ctx context.Context, service string, duration time.Duration) {
-	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
-		if eo, ok := m.servicesCertsVerifiedLatencySeconds.WithLabelValues(service).(prometheus.ExemplarObserver); ok {
-			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
-				traceIDKey: sc.TraceID().String(),
-			})
-
-			return
-		}
-	}
-
-	m.servicesCertsVerifiedLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
-}
-
 func (m *Metrics) IncServiceDeletions() {
 	m.servicesDeletedTotal.Inc()
 }
@@ -293,6 +288,94 @@ func (m *Metrics) ObserveServiceDeletionLatency(ctx context.Context, duration ti
 	}
 
 	m.servicesDeletedLatencySeconds.Observe(duration.Seconds())
+}
+
+func (m *Metrics) IncCertificatesCreated(service string) {
+	m.certificatesCreatedTotal.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) IncCertificatesCreateFailed(service string) {
+	m.certificatesCreatedFailed.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) ObserveCertificatesCreateLatency(ctx context.Context, service string, duration time.Duration) {
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		if eo, ok := m.certificatesCreatedLatencySeconds.WithLabelValues(service).(prometheus.ExemplarObserver); ok {
+			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
+				traceIDKey: sc.TraceID().String(),
+			})
+
+			return
+		}
+	}
+
+	m.certificatesCreatedLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
+}
+
+func (m *Metrics) IncCertificatesListed(service string) {
+	m.certificatesListedTotal.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) IncCertificatesListFailed(service string) {
+	m.certificatesListedFailed.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) ObserveCertificatesListLatency(ctx context.Context, service string, duration time.Duration) {
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		if eo, ok := m.certificatesListedLatencySeconds.WithLabelValues(service).(prometheus.ExemplarObserver); ok {
+			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
+				traceIDKey: sc.TraceID().String(),
+			})
+
+			return
+		}
+	}
+
+	m.certificatesListedLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
+}
+
+func (m *Metrics) IncCertificatesDeleted(service string) {
+	m.certificatesDeletedTotal.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) IncCertificatesDeleteFailed(service string) {
+	m.certificatesDeletedFailed.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) ObserveCertificatesDeleteLatency(ctx context.Context, service string, duration time.Duration) {
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		if eo, ok := m.certificatesDeletedLatencySeconds.WithLabelValues(service).(prometheus.ExemplarObserver); ok {
+			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
+				traceIDKey: sc.TraceID().String(),
+			})
+
+			return
+		}
+	}
+
+	m.certificatesDeletedLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
+}
+
+func (m *Metrics) IncCertificatesVerified(service string) {
+	m.certificatesVerifiedTotal.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) IncCertificateVerificationFailed(service string) {
+	m.certificatesVerifiedFailed.WithLabelValues(service).Inc()
+}
+
+func (m *Metrics) ObserveCertificateVerificationLatency(ctx context.Context, service string, duration time.Duration) {
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		if eo, ok := m.certificatesVerifiedLatencySeconds.WithLabelValues(service).(prometheus.ExemplarObserver); ok {
+			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
+				traceIDKey: sc.TraceID().String(),
+			})
+
+			return
+		}
+	}
+
+	m.certificatesVerifiedLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
 }
 
 func (m *Metrics) IncPubKeyRequests() {
@@ -431,24 +514,34 @@ func (m *Metrics) Registry() (*prometheus.Registry, error) {
 		m.servicesRegisteredTotal,
 		m.servicesRegisteredFailed,
 		m.servicesRegistryLatencySeconds,
-		m.servicesCertsFetchedTotal,
-		m.servicesCertsFetchedFailed,
-		m.servicesCertsFetchedLatencySeconds,
-		m.servicesCertsVerifiedTotal,
-		m.servicesCertsVerifiedFailed,
-		m.servicesCertsVerifiedLatencySeconds,
 		m.servicesDeletedTotal,
 		m.servicesDeletedFailed,
 		m.servicesDeletedLatencySeconds,
+
+		m.certificatesCreatedTotal,
+		m.certificatesCreatedFailed,
+		m.certificatesCreatedLatencySeconds,
+		m.certificatesListedTotal,
+		m.certificatesListedFailed,
+		m.certificatesListedLatencySeconds,
+		m.certificatesDeletedTotal,
+		m.certificatesDeletedFailed,
+		m.certificatesDeletedLatencySeconds,
+		m.certificatesVerifiedTotal,
+		m.certificatesVerifiedFailed,
+		m.certificatesVerifiedLatencySeconds,
+
+		m.publicKeyRequestsTotal,
+		m.publicKeyRequestsFailed,
+		m.publicKeyRequestsLatencySeconds,
+
 		m.serviceTokenRequestsTotal,
 		m.serviceTokenRequestsFailed,
 		m.serviceTokenRequestsLatencySeconds,
 		m.serviceTokenVerifyTotal,
 		m.serviceTokenVerifyFailed,
 		m.serviceTokenVerifyLatencySeconds,
-		m.publicKeyRequestsTotal,
-		m.publicKeyRequestsFailed,
-		m.publicKeyRequestsLatencySeconds,
+
 		m.schedulerNextTotal,
 		m.executorExecTotal,
 		m.executorExecFailed,

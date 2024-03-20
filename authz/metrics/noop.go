@@ -16,15 +16,21 @@ type noOp struct{}
 func (noOp) IncServiceRegistries()                                                         {}
 func (noOp) IncServiceRegistryFailed()                                                     {}
 func (noOp) ObserveServiceRegistryLatency(context.Context, time.Duration)                  {}
-func (noOp) IncServiceCertsFetched(string)                                                 {}
-func (noOp) IncServiceCertsFetchFailed(string)                                             {}
-func (noOp) ObserveServiceCertsFetchLatency(context.Context, string, time.Duration)        {}
-func (noOp) IncVerificationRequests(string)                                                {}
-func (noOp) IncVerificationFailed(string)                                                  {}
-func (noOp) ObserveVerificationLatency(context.Context, string, time.Duration)             {}
 func (noOp) IncServiceDeletions()                                                          {}
 func (noOp) IncServiceDeletionFailed()                                                     {}
 func (noOp) ObserveServiceDeletionLatency(context.Context, time.Duration)                  {}
+func (noOp) IncCertificatesCreated(string)                                                 {}
+func (noOp) IncCertificatesCreateFailed(string)                                            {}
+func (noOp) ObserveCertificatesCreateLatency(context.Context, string, time.Duration)       {}
+func (noOp) IncCertificatesListed(string)                                                  {}
+func (noOp) IncCertificatesListFailed(string)                                              {}
+func (noOp) ObserveCertificatesListLatency(context.Context, string, time.Duration)         {}
+func (noOp) IncCertificatesDeleted(string)                                                 {}
+func (noOp) IncCertificatesDeleteFailed(string)                                            {}
+func (noOp) ObserveCertificatesDeleteLatency(context.Context, string, time.Duration)       {}
+func (noOp) IncCertificatesVerified(string)                                                {}
+func (noOp) IncCertificateVerificationFailed(string)                                       {}
+func (noOp) ObserveCertificateVerificationLatency(context.Context, string, time.Duration)  {}
 func (noOp) IncPubKeyRequests()                                                            {}
 func (noOp) IncPubKeyRequestFailed()                                                       {}
 func (noOp) ObservePubKeyRequestLatency(context.Context, time.Duration)                    {}
@@ -45,4 +51,4 @@ func (noOp) IncExecutorNextCalls(string)                                        
 func (noOp) IncSelectorSelectCalls()                                                       {}
 func (noOp) IncSelectorSelectErrors()                                                      {}
 func (noOp) RegisterCollector(prometheus.Collector)                                        {}
-func (noOp) Registry() (*prometheus.Registry, error)                                       { return nil, nil }
+func (noOp) Registry() (*prometheus.Registry, error)                                       { return prometheus.NewRegistry(), nil }
