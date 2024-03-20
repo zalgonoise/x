@@ -18,12 +18,19 @@ const (
 	errDomain = errs.Domain("x/authz/certs")
 
 	ErrInvalid = errs.Kind("invalid")
+	ErrNil     = errs.Kind("nil")
 
-	ErrPEM = errs.Entity("PEM key bytes")
+	ErrPEM           = errs.Entity("PEM key bytes")
+	ErrCertificate   = errs.Entity("certificate")
+	ErrCACertificate = errs.Entity("CA certificate")
+	ErrNumChains     = errs.Entity("number of certificate chains")
 )
 
 var (
-	ErrInvalidPEM = errs.WithDomain(errDomain, ErrInvalid, ErrPEM)
+	ErrInvalidPEM       = errs.WithDomain(errDomain, ErrInvalid, ErrPEM)
+	ErrNilCertificate   = errs.WithDomain(errDomain, ErrNil, ErrCertificate)
+	ErrNilCACertificate = errs.WithDomain(errDomain, ErrNil, ErrCACertificate)
+	ErrInvalidNumChains = errs.WithDomain(errDomain, ErrInvalid, ErrNumChains)
 )
 
 func Encode(template, parent *x509.Certificate, pub *ecdsa.PublicKey, priv *ecdsa.PrivateKey) ([]byte, error) {
@@ -101,10 +108,10 @@ func ToCSR(name string, pub *ecdsa.PublicKey, req *pb.CSR) *x509.CertificateRequ
 			Names:              pkixNames,
 			ExtraNames:         pkixExtraNames,
 		}
+	}
 
-		if csr.Subject.CommonName == "" {
-			csr.Subject.CommonName = name
-		}
+	if csr.Subject.CommonName == "" {
+		csr.Subject.CommonName = name
 	}
 
 	if len(req.Extensions) > 0 {
