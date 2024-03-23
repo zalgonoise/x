@@ -20,7 +20,7 @@ func Verify(certPEM []byte, inter, root *x509.Certificate) error {
 	}
 
 	opts := x509.VerifyOptions{
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageAny},
 	}
 
 	if root != nil {

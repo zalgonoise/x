@@ -89,8 +89,9 @@ func NewCertFromCSR(version, durMonth int, csr *x509.CertificateRequest) (*x509.
 			x509.ExtKeyUsageServerAuth,
 			x509.ExtKeyUsageClientAuth,
 			x509.ExtKeyUsageOCSPSigning,
-			x509.ExtKeyUsageCodeSigning,
+			x509.ExtKeyUsageTimeStamping,
 		},
-		KeyUsage: x509.KeyUsageCertSign,
+		IsCA:     true,
+		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 	}, nil
 }
