@@ -43,7 +43,7 @@ func Verify(certPEM []byte, inter, root *x509.Certificate) error {
 	switch {
 	case inter != nil && root == nil && l == 1,
 		inter == nil && root != nil && l == 1,
-		inter != nil && root != nil && l == 2:
+		inter != nil && root != nil && l == 1:
 		return nil
 	default:
 		return fmt.Errorf("%w: %d", ErrInvalidNumChains, l)

@@ -48,7 +48,7 @@ func NewCACertificate(t Template) (cert []byte, err error) {
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
-		Issuer:                pkix.Name{CommonName: defaultCACN},
+		Issuer:                t.Name,
 	}
 
 	data, err := x509.CreateCertificate(rand.Reader, ca, ca, &t.PrivateKey.PublicKey, t.PrivateKey)
@@ -84,6 +84,7 @@ func NewCertFromCSR(version, durMonth int, csr *x509.CertificateRequest) (*x509.
 		URIs:            csr.URIs,
 		NotBefore:       time.Now(),
 		NotAfter:        time.Now().AddDate(0, durMonth, 0),
+		IsCA:            true,
 		ExtKeyUsage: []x509.ExtKeyUsage{
 			x509.ExtKeyUsageCodeSigning,
 			x509.ExtKeyUsageServerAuth,
@@ -91,7 +92,8 @@ func NewCertFromCSR(version, durMonth int, csr *x509.CertificateRequest) (*x509.
 			x509.ExtKeyUsageOCSPSigning,
 			x509.ExtKeyUsageTimeStamping,
 		},
-		IsCA:     true,
-		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+		Issuer:                csr.Subject,
 	}, nil
 }

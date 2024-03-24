@@ -37,7 +37,7 @@ func TestVerify(t *testing.T) {
 		authzCert, err := Decode(authzSignedCert)
 		require.NoError(t, err)
 
-		require.NoError(t, Verify(authzSignedCert, nil, caCert))
+		require.NoError(t, Verify(authzSignedCert, authzCert, caCert))
 
 		signedCert := newAuthzCert(t, "authz.authz-service.test", authzRootPriv, authzCert, authzSvcPub)
 
