@@ -826,7 +826,7 @@
     "v1SignUpRequest": {
       "type": "object",
       "properties": {
-        "name": {
+        "service": {
           "type": "string"
         },
         "pub_key": {
