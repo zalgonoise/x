@@ -124,7 +124,7 @@ func NewToken(db *sql.DB, opts ...cfg.Option[Config]) (*Tokens, error) {
 }
 
 func (r *Tokens) ListChallenges(ctx context.Context, service string) (challenges []*pb.LoginResponse, err error) {
-	rows, err := r.db.QueryContext(ctx, queryChallengesList, service)
+	rows, err := r.db.QueryContext(ctx, queryChallengesList, service, time.Now().UnixMilli())
 	if err != nil {
 		return nil, err
 	}
