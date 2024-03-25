@@ -19,29 +19,76 @@ func TestVerify(t *testing.T) {
 		_, authzPub := getKeys(t, "authz")
 
 		caCert := newCACert(t, caPriv)
+
 		authzCert := newAuthzCert(t, "authz.authz-root.test", caPriv, caCert, authzPub)
 
 		roots := x509.NewCertPool()
 		roots.AddCert(caCert)
 
-		require.NoError(t, Verify(authzCert, nil, caCert))
+		require.NoError(t, Verify(authzCert, caCert, nil))
 	})
 
-	t.Run("AuthzOnAuthzOnCA", func(t *testing.T) {
+	t.Run("NestedOnce", func(t *testing.T) {
 		caPriv, _ := getKeys(t, "ca")
 		authzRootPriv, authzRootPub := getKeys(t, "authz")
 		_, authzSvcPub := getKeys(t, "svc")
 
 		caCert := newCACert(t, caPriv)
+
 		authzSignedCert := newAuthzCert(t, "authz.authz-root.test", caPriv, caCert, authzRootPub)
 		authzCert, err := Decode(authzSignedCert)
 		require.NoError(t, err)
 
-		require.NoError(t, Verify(authzSignedCert, authzCert, caCert))
+		inter := x509.NewCertPool()
+		inter.AddCert(authzCert)
 
 		signedCert := newAuthzCert(t, "authz.authz-service.test", authzRootPriv, authzCert, authzSvcPub)
 
-		require.NoError(t, Verify(signedCert, authzCert, caCert))
+		require.NoError(t, Verify(signedCert, caCert, inter))
+	})
+
+	t.Run("NestedThreeTimes", func(t *testing.T) {
+		caPriv, _ := getKeys(t, "ca")
+		authzRootPriv, authzRootPub := getKeys(t, "authz")
+		authzSvcPriv, authzSvcPub := getKeys(t, "svc")
+		authzSubSvcPriv, authzSubSvcPub := getKeys(t, "subsvc")
+		_, authzSubSvc2Pub := getKeys(t, "subsvc2")
+
+		caCert := newCACert(t, caPriv)
+
+		authzSignedCert := newAuthzCert(t, "authz.authz-root.test", caPriv, caCert, authzRootPub)
+		authzCert, err := Decode(authzSignedCert)
+		require.NoError(t, err)
+
+		inter1 := x509.NewCertPool()
+		inter1.AddCert(authzCert)
+
+		svcSignedCert := newAuthzCert(t, "authz.authz-service.test", authzRootPriv, authzCert, authzSvcPub)
+
+		require.NoError(t, Verify(svcSignedCert, caCert, inter1))
+
+		svcCert, err := Decode(svcSignedCert)
+		require.NoError(t, err)
+
+		inter2 := x509.NewCertPool()
+		inter2.AddCert(authzCert)
+		inter2.AddCert(svcCert)
+
+		subSignedCert := newAuthzCert(t, "authz.authz-service-sub.test", authzSvcPriv, svcCert, authzSubSvcPub)
+
+		require.NoError(t, Verify(subSignedCert, caCert, inter2))
+
+		svc2Cert, err := Decode(subSignedCert)
+		require.NoError(t, err)
+
+		inter3 := x509.NewCertPool()
+		inter3.AddCert(authzCert)
+		inter3.AddCert(svcCert)
+		inter3.AddCert(svc2Cert)
+
+		signedCert := newAuthzCert(t, "authz.authz-service-sub-2.test", authzSubSvcPriv, svc2Cert, authzSubSvc2Pub)
+
+		require.NoError(t, Verify(signedCert, caCert, inter3))
 	})
 }
 

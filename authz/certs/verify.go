@@ -2,10 +2,9 @@ package certs
 
 import (
 	"crypto/x509"
-	"fmt"
 )
 
-func Verify(certPEM []byte, inter, root *x509.Certificate) error {
+func Verify(certPEM []byte, root *x509.Certificate, intermediates *x509.CertPool) error {
 	if certPEM == nil {
 		return ErrNilCertificate
 	}
@@ -15,12 +14,13 @@ func Verify(certPEM []byte, inter, root *x509.Certificate) error {
 		return err
 	}
 
-	if inter == nil && root == nil {
+	if root == nil {
 		return ErrNilCACertificate
 	}
 
 	opts := x509.VerifyOptions{
-		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageAny},
+		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		Intermediates: intermediates,
 	}
 
 	if root != nil {
@@ -28,24 +28,7 @@ func Verify(certPEM []byte, inter, root *x509.Certificate) error {
 		opts.Roots.AddCert(root)
 	}
 
-	if inter != nil {
-		opts.Intermediates = x509.NewCertPool()
-		opts.Intermediates.AddCert(inter)
-	}
+	_, err = certificate.Verify(opts)
 
-	chains, err := certificate.Verify(opts)
-	if err != nil {
-		return err
-	}
-
-	l := len(chains)
-
-	switch {
-	case inter != nil && root == nil && l == 1,
-		inter == nil && root != nil && l == 1,
-		inter != nil && root != nil && l == 1:
-		return nil
-	default:
-		return fmt.Errorf("%w: %d", ErrInvalidNumChains, l)
-	}
+	return err
 }
