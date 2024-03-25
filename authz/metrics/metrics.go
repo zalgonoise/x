@@ -46,9 +46,9 @@ type Metrics struct {
 	certificatesVerifiedFailed         *prometheus.CounterVec
 	certificatesVerifiedLatencySeconds *prometheus.HistogramVec
 
-	publicKeyRequestsTotal          prometheus.Counter
-	publicKeyRequestsFailed         prometheus.Counter
-	publicKeyRequestsLatencySeconds prometheus.Histogram
+	rootCertificateRequestsTotal          prometheus.Counter
+	rootCertificateRequestsFailed         prometheus.Counter
+	rootCertificateRequestsLatencySeconds prometheus.Histogram
 
 	// Authz metrics
 	serviceLoginRequestsTotal          *prometheus.CounterVec
@@ -162,17 +162,17 @@ func NewMetrics() *Metrics {
 			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		}, []string{"service"}),
 
-		publicKeyRequestsTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "public_key_requests_total",
-			Help: "Count of CA public key requests",
+		rootCertificateRequestsTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "root_certificate_requests_total",
+			Help: "Count of root certificate requests",
 		}),
-		publicKeyRequestsFailed: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "public_key_requests_failed",
-			Help: "Count of CA public key requests that failed",
+		rootCertificateRequestsFailed: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "root_certificate_requests_failed",
+			Help: "Count of root certificate requests that failed",
 		}),
-		publicKeyRequestsLatencySeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Name:    "public_key_requests_latency_seconds",
-			Help:    "Histogram of CA public key request processing times",
+		rootCertificateRequestsLatencySeconds: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name:    "root_certificate_requests_latency_seconds",
+			Help:    "Histogram of root certificate request processing times",
 			Buckets: []float64{.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
 		}),
 		serviceLoginRequestsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -378,17 +378,17 @@ func (m *Metrics) ObserveCertificateVerificationLatency(ctx context.Context, ser
 	m.certificatesVerifiedLatencySeconds.WithLabelValues(service).Observe(duration.Seconds())
 }
 
-func (m *Metrics) IncPubKeyRequests() {
-	m.publicKeyRequestsTotal.Inc()
+func (m *Metrics) IncRootCertificateRequests() {
+	m.rootCertificateRequestsTotal.Inc()
 }
 
-func (m *Metrics) IncPubKeyRequestFailed() {
-	m.publicKeyRequestsFailed.Inc()
+func (m *Metrics) IncRootCertificateRequestFailed() {
+	m.rootCertificateRequestsFailed.Inc()
 }
 
-func (m *Metrics) ObservePubKeyRequestLatency(ctx context.Context, duration time.Duration) {
+func (m *Metrics) ObserveRootCertificateRequestLatency(ctx context.Context, duration time.Duration) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
-		if eo, ok := m.publicKeyRequestsLatencySeconds.(prometheus.ExemplarObserver); ok {
+		if eo, ok := m.rootCertificateRequestsLatencySeconds.(prometheus.ExemplarObserver); ok {
 			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
 				traceIDKey: sc.TraceID().String(),
 			})
@@ -397,7 +397,7 @@ func (m *Metrics) ObservePubKeyRequestLatency(ctx context.Context, duration time
 		}
 	}
 
-	m.publicKeyRequestsLatencySeconds.Observe(duration.Seconds())
+	m.rootCertificateRequestsLatencySeconds.Observe(duration.Seconds())
 }
 
 func (m *Metrics) IncServiceLoginRequests(service string) {
@@ -531,9 +531,9 @@ func (m *Metrics) Registry() (*prometheus.Registry, error) {
 		m.certificatesVerifiedFailed,
 		m.certificatesVerifiedLatencySeconds,
 
-		m.publicKeyRequestsTotal,
-		m.publicKeyRequestsFailed,
-		m.publicKeyRequestsLatencySeconds,
+		m.rootCertificateRequestsTotal,
+		m.rootCertificateRequestsFailed,
+		m.rootCertificateRequestsLatencySeconds,
 
 		m.serviceTokenRequestsTotal,
 		m.serviceTokenRequestsFailed,

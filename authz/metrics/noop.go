@@ -31,9 +31,9 @@ func (noOp) ObserveCertificatesDeleteLatency(context.Context, string, time.Durat
 func (noOp) IncCertificatesVerified(string)                                                {}
 func (noOp) IncCertificateVerificationFailed(string)                                       {}
 func (noOp) ObserveCertificateVerificationLatency(context.Context, string, time.Duration)  {}
-func (noOp) IncPubKeyRequests()                                                            {}
-func (noOp) IncPubKeyRequestFailed()                                                       {}
-func (noOp) ObservePubKeyRequestLatency(context.Context, time.Duration)                    {}
+func (noOp) IncRootCertificateRequests()                                                   {}
+func (noOp) IncRootCertificateRequestFailed()                                              {}
+func (noOp) ObserveRootCertificateRequestLatency(context.Context, time.Duration)           {}
 func (noOp) IncServiceLoginRequests(string)                                                {}
 func (noOp) IncServiceLoginFailed(string)                                                  {}
 func (noOp) ObserveServiceLoginLatency(context.Context, string, time.Duration)             {}
