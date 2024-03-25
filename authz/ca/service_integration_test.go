@@ -161,7 +161,7 @@ func TestCertificateAuthority(t *testing.T) {
 				require.Equal(t, registerRes.Certificate, listRes.Certificates[0].Certificate)
 				require.Equal(t, registerRes.ExpiresOn, listRes.Certificates[0].ExpiresOn)
 
-				verifyRes, err := service.VerifyCertificate(ctx, &pb.VerificationRequest{
+				_, err = service.VerifyCertificate(ctx, &pb.VerificationRequest{
 					Service:     testcase.req.Service,
 					Certificate: registerRes.Certificate,
 				})
@@ -170,8 +170,6 @@ func TestCertificateAuthority(t *testing.T) {
 
 					return
 				}
-
-				require.True(t, verifyRes.Valid)
 
 				_, err = service.DeleteCertificate(ctx, &pb.CertificateDeletionRequest{
 					Service:     testcase.req.Service,

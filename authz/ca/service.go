@@ -81,6 +81,7 @@ type CertificateAuthority struct {
 
 	privateKey *ecdsa.PrivateKey
 	ca         *x509.Certificate
+	raw        []byte
 	durMonth   int
 
 	repository Repository
@@ -123,6 +124,7 @@ func NewCertificateAuthority(
 	return &CertificateAuthority{
 		privateKey: privateKey,
 		ca:         ca,
+		raw:        cert,
 		durMonth:   template.DurMonth,
 		repository: repo,
 		logger:     slog.New(config.logHandler),
@@ -391,7 +393,7 @@ func (ca *CertificateAuthority) DeleteCertificate(ctx context.Context, req *pb.C
 		return nil, status.Error(codes.InvalidArgument, ErrInvalidPublicKey.Error())
 	}
 
-	if err := certs.Verify(req.Certificate, nil, ca.ca); err != nil {
+	if err := certs.Verify(req.Certificate, ca.ca, nil); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		ca.metrics.IncCertificatesDeleteFailed(req.Service)
@@ -443,7 +445,7 @@ func (ca *CertificateAuthority) VerifyCertificate(ctx context.Context, req *pb.V
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := certs.Verify(req.Certificate, nil, ca.ca); err != nil {
+	if err := certs.Verify(req.Certificate, ca.ca, nil); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		ca.metrics.IncCertificateVerificationFailed(req.Service)
@@ -454,7 +456,7 @@ func (ca *CertificateAuthority) VerifyCertificate(ctx context.Context, req *pb.V
 		return nil, status.Error(codes.InvalidArgument, ErrInvalidCertificate.Error())
 	}
 
-	return &pb.VerificationResponse{Valid: true}, nil
+	return &pb.VerificationResponse{}, nil
 }
 
 func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.DeletionRequest) (*pb.DeletionResponse, error) {
@@ -509,8 +511,8 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 	return &pb.DeletionResponse{}, nil
 }
 
-func (ca *CertificateAuthority) PublicKey(ctx context.Context, _ *pb.PublicKeyRequest) (*pb.PublicKeyResponse, error) {
-	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.PublicKeyRequest")
+func (ca *CertificateAuthority) RootCertificate(ctx context.Context, _ *pb.RootCertificateRequest) (*pb.RootCertificateResponse, error) {
+	ctx, span := ca.tracer.Start(ctx, "CertificateAuthority.RootCertificate")
 	defer span.End()
 
 	start := time.Now()
@@ -519,21 +521,9 @@ func (ca *CertificateAuthority) PublicKey(ctx context.Context, _ *pb.PublicKeyRe
 	}()
 
 	ca.metrics.IncPubKeyRequests()
-	ca.logger.DebugContext(ctx, "CA's public key request")
+	ca.logger.DebugContext(ctx, "CA certificate request")
 
-	key, err := keygen.EncodePublic(&ca.privateKey.PublicKey)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		ca.metrics.IncPubKeyRequestFailed()
-
-		ca.logger.ErrorContext(ctx, "failed to encode CA's public key",
-			slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &pb.PublicKeyResponse{PublicKey: key}, nil
+	return &pb.RootCertificateResponse{Root: ca.raw}, nil
 }
 
 func (ca *CertificateAuthority) newCertificate(ctx context.Context, req *pb.CertificateRequest) ([]byte, time.Time, error) {
