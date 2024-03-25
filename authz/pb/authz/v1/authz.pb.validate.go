@@ -1566,10 +1566,6 @@ func (m *VerificationResponse) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Valid
-
-	// no validation rules for Reason
-
 	if len(errors) > 0 {
 		return VerificationResponseMultiError(errors)
 	}
@@ -2110,22 +2106,22 @@ var _ interface {
 	ErrorName() string
 } = DeletionResponseValidationError{}
 
-// Validate checks the field values on PublicKeyRequest with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *PublicKeyRequest) Validate() error {
+// Validate checks the field values on RootCertificateRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RootCertificateRequest) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PublicKeyRequest with the rules
+// ValidateAll checks the field values on RootCertificateRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// PublicKeyRequestMultiError, or nil if none found.
-func (m *PublicKeyRequest) ValidateAll() error {
+// RootCertificateRequestMultiError, or nil if none found.
+func (m *RootCertificateRequest) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PublicKeyRequest) validate(all bool) error {
+func (m *RootCertificateRequest) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
@@ -2133,19 +2129,19 @@ func (m *PublicKeyRequest) validate(all bool) error {
 	var errors []error
 
 	if len(errors) > 0 {
-		return PublicKeyRequestMultiError(errors)
+		return RootCertificateRequestMultiError(errors)
 	}
 
 	return nil
 }
 
-// PublicKeyRequestMultiError is an error wrapping multiple validation errors
-// returned by PublicKeyRequest.ValidateAll() if the designated constraints
-// aren't met.
-type PublicKeyRequestMultiError []error
+// RootCertificateRequestMultiError is an error wrapping multiple validation
+// errors returned by RootCertificateRequest.ValidateAll() if the designated
+// constraints aren't met.
+type RootCertificateRequestMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PublicKeyRequestMultiError) Error() string {
+func (m RootCertificateRequestMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2154,11 +2150,11 @@ func (m PublicKeyRequestMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PublicKeyRequestMultiError) AllErrors() []error { return m }
+func (m RootCertificateRequestMultiError) AllErrors() []error { return m }
 
-// PublicKeyRequestValidationError is the validation error returned by
-// PublicKeyRequest.Validate if the designated constraints aren't met.
-type PublicKeyRequestValidationError struct {
+// RootCertificateRequestValidationError is the validation error returned by
+// RootCertificateRequest.Validate if the designated constraints aren't met.
+type RootCertificateRequestValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2166,22 +2162,24 @@ type PublicKeyRequestValidationError struct {
 }
 
 // Field function returns field value.
-func (e PublicKeyRequestValidationError) Field() string { return e.field }
+func (e RootCertificateRequestValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PublicKeyRequestValidationError) Reason() string { return e.reason }
+func (e RootCertificateRequestValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PublicKeyRequestValidationError) Cause() error { return e.cause }
+func (e RootCertificateRequestValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PublicKeyRequestValidationError) Key() bool { return e.key }
+func (e RootCertificateRequestValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PublicKeyRequestValidationError) ErrorName() string { return "PublicKeyRequestValidationError" }
+func (e RootCertificateRequestValidationError) ErrorName() string {
+	return "RootCertificateRequestValidationError"
+}
 
 // Error satisfies the builtin error interface
-func (e PublicKeyRequestValidationError) Error() string {
+func (e RootCertificateRequestValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2193,14 +2191,14 @@ func (e PublicKeyRequestValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPublicKeyRequest.%s: %s%s",
+		"invalid %sRootCertificateRequest.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PublicKeyRequestValidationError{}
+var _ error = RootCertificateRequestValidationError{}
 
 var _ interface {
 	Field() string
@@ -2208,46 +2206,46 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PublicKeyRequestValidationError{}
+} = RootCertificateRequestValidationError{}
 
-// Validate checks the field values on PublicKeyResponse with the rules defined
-// in the proto definition for this message. If any rules are violated, the
-// first error encountered is returned, or nil if there are no violations.
-func (m *PublicKeyResponse) Validate() error {
+// Validate checks the field values on RootCertificateResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *RootCertificateResponse) Validate() error {
 	return m.validate(false)
 }
 
-// ValidateAll checks the field values on PublicKeyResponse with the rules
-// defined in the proto definition for this message. If any rules are
+// ValidateAll checks the field values on RootCertificateResponse with the
+// rules defined in the proto definition for this message. If any rules are
 // violated, the result is a list of violation errors wrapped in
-// PublicKeyResponseMultiError, or nil if none found.
-func (m *PublicKeyResponse) ValidateAll() error {
+// RootCertificateResponseMultiError, or nil if none found.
+func (m *RootCertificateResponse) ValidateAll() error {
 	return m.validate(true)
 }
 
-func (m *PublicKeyResponse) validate(all bool) error {
+func (m *RootCertificateResponse) validate(all bool) error {
 	if m == nil {
 		return nil
 	}
 
 	var errors []error
 
-	// no validation rules for PublicKey
+	// no validation rules for Root
 
 	if len(errors) > 0 {
-		return PublicKeyResponseMultiError(errors)
+		return RootCertificateResponseMultiError(errors)
 	}
 
 	return nil
 }
 
-// PublicKeyResponseMultiError is an error wrapping multiple validation errors
-// returned by PublicKeyResponse.ValidateAll() if the designated constraints
-// aren't met.
-type PublicKeyResponseMultiError []error
+// RootCertificateResponseMultiError is an error wrapping multiple validation
+// errors returned by RootCertificateResponse.ValidateAll() if the designated
+// constraints aren't met.
+type RootCertificateResponseMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
-func (m PublicKeyResponseMultiError) Error() string {
+func (m RootCertificateResponseMultiError) Error() string {
 	var msgs []string
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
@@ -2256,11 +2254,11 @@ func (m PublicKeyResponseMultiError) Error() string {
 }
 
 // AllErrors returns a list of validation violation errors.
-func (m PublicKeyResponseMultiError) AllErrors() []error { return m }
+func (m RootCertificateResponseMultiError) AllErrors() []error { return m }
 
-// PublicKeyResponseValidationError is the validation error returned by
-// PublicKeyResponse.Validate if the designated constraints aren't met.
-type PublicKeyResponseValidationError struct {
+// RootCertificateResponseValidationError is the validation error returned by
+// RootCertificateResponse.Validate if the designated constraints aren't met.
+type RootCertificateResponseValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -2268,24 +2266,24 @@ type PublicKeyResponseValidationError struct {
 }
 
 // Field function returns field value.
-func (e PublicKeyResponseValidationError) Field() string { return e.field }
+func (e RootCertificateResponseValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PublicKeyResponseValidationError) Reason() string { return e.reason }
+func (e RootCertificateResponseValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PublicKeyResponseValidationError) Cause() error { return e.cause }
+func (e RootCertificateResponseValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PublicKeyResponseValidationError) Key() bool { return e.key }
+func (e RootCertificateResponseValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PublicKeyResponseValidationError) ErrorName() string {
-	return "PublicKeyResponseValidationError"
+func (e RootCertificateResponseValidationError) ErrorName() string {
+	return "RootCertificateResponseValidationError"
 }
 
 // Error satisfies the builtin error interface
-func (e PublicKeyResponseValidationError) Error() string {
+func (e RootCertificateResponseValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -2297,14 +2295,14 @@ func (e PublicKeyResponseValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPublicKeyResponse.%s: %s%s",
+		"invalid %sRootCertificateResponse.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PublicKeyResponseValidationError{}
+var _ error = RootCertificateResponseValidationError{}
 
 var _ interface {
 	Field() string
@@ -2312,7 +2310,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PublicKeyResponseValidationError{}
+} = RootCertificateResponseValidationError{}
 
 // Validate checks the field values on SignUpRequest with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -2489,33 +2487,15 @@ func (m *SignUpResponse) validate(all bool) error {
 
 	// no validation rules for Certificate
 
-	if all {
-		switch v := interface{}(m.GetService()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, SignUpResponseValidationError{
-					field:  "Service",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, SignUpResponseValidationError{
-					field:  "Service",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if len(m.GetServiceCertificate()) < 1 {
+		err := SignUpResponseValidationError{
+			field:  "ServiceCertificate",
+			reason: "value length must be at least 1 bytes",
 		}
-	} else if v, ok := interface{}(m.GetService()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return SignUpResponseValidationError{
-				field:  "Service",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
@@ -2618,10 +2598,10 @@ func (m *LoginRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if len(m.GetIdCertificate()) < 1 {
 		err := LoginRequestValidationError{
-			field:  "Name",
-			reason: "value length must be at least 1 runes",
+			field:  "IdCertificate",
+			reason: "value length must be at least 1 bytes",
 		}
 		if !all {
 			return err
@@ -2629,62 +2609,15 @@ func (m *LoginRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if all {
-		switch v := interface{}(m.GetService()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, LoginRequestValidationError{
-					field:  "Service",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, LoginRequestValidationError{
-					field:  "Service",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
+	if len(m.GetServiceCertificate()) < 1 {
+		err := LoginRequestValidationError{
+			field:  "ServiceCertificate",
+			reason: "value length must be at least 1 bytes",
 		}
-	} else if v, ok := interface{}(m.GetService()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return LoginRequestValidationError{
-				field:  "Service",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
+		if !all {
+			return err
 		}
-	}
-
-	if all {
-		switch v := interface{}(m.GetId()).(type) {
-		case interface{ ValidateAll() error }:
-			if err := v.ValidateAll(); err != nil {
-				errors = append(errors, LoginRequestValidationError{
-					field:  "Id",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		case interface{ Validate() error }:
-			if err := v.Validate(); err != nil {
-				errors = append(errors, LoginRequestValidationError{
-					field:  "Id",
-					reason: "embedded message failed validation",
-					cause:  err,
-				})
-			}
-		}
-	} else if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return LoginRequestValidationError{
-				field:  "Id",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
+		errors = append(errors, err)
 	}
 
 	if len(errors) > 0 {
@@ -2763,126 +2696,6 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = LoginRequestValidationError{}
-
-// Validate checks the field values on ID with the rules defined in the proto
-// definition for this message. If any rules are violated, the first error
-// encountered is returned, or nil if there are no violations.
-func (m *ID) Validate() error {
-	return m.validate(false)
-}
-
-// ValidateAll checks the field values on ID with the rules defined in the
-// proto definition for this message. If any rules are violated, the result is
-// a list of violation errors wrapped in IDMultiError, or nil if none found.
-func (m *ID) ValidateAll() error {
-	return m.validate(true)
-}
-
-func (m *ID) validate(all bool) error {
-	if m == nil {
-		return nil
-	}
-
-	var errors []error
-
-	if len(m.GetPublicKey()) < 1 {
-		err := IDValidationError{
-			field:  "PublicKey",
-			reason: "value length must be at least 1 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(m.GetCertificate()) < 1 {
-		err := IDValidationError{
-			field:  "Certificate",
-			reason: "value length must be at least 1 bytes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if len(errors) > 0 {
-		return IDMultiError(errors)
-	}
-
-	return nil
-}
-
-// IDMultiError is an error wrapping multiple validation errors returned by
-// ID.ValidateAll() if the designated constraints aren't met.
-type IDMultiError []error
-
-// Error returns a concatenation of all the error messages it wraps.
-func (m IDMultiError) Error() string {
-	var msgs []string
-	for _, err := range m {
-		msgs = append(msgs, err.Error())
-	}
-	return strings.Join(msgs, "; ")
-}
-
-// AllErrors returns a list of validation violation errors.
-func (m IDMultiError) AllErrors() []error { return m }
-
-// IDValidationError is the validation error returned by ID.Validate if the
-// designated constraints aren't met.
-type IDValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e IDValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e IDValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e IDValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e IDValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e IDValidationError) ErrorName() string { return "IDValidationError" }
-
-// Error satisfies the builtin error interface
-func (e IDValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sID.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = IDValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = IDValidationError{}
 
 // Validate checks the field values on LoginResponse with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -3010,16 +2823,7 @@ func (m *TokenRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
-		err := TokenRequestValidationError{
-			field:  "Name",
-			reason: "value length must be at least 1 runes",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
+	// no validation rules for Certificate
 
 	if len(m.GetSignedChallenge()) < 1 {
 		err := TokenRequestValidationError{
