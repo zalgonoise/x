@@ -24,14 +24,14 @@
   "paths": {
     "/v1/ca": {
       "get": {
-        "summary": "Returns the Certificate Authority's public key",
-        "description": "This endpoint returns the Certificate Authority's public key.",
-        "operationId": "CertificateAuthority_PublicKey",
+        "summary": "Returns the Certificate Authority's root certificate and any existing intermediates in this chain-of-trust",
+        "description": "This endpoint returns the Certificate Authority's certificate, as well as any existing intermediate certificates in this chain-of-trust.",
+        "operationId": "CertificateAuthority_RootCertificate",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1PublicKeyResponse"
+              "$ref": "#/definitions/v1RootCertificateResponse"
             }
           },
           "401": {
@@ -760,19 +760,6 @@
         }
       }
     },
-    "v1ID": {
-      "type": "object",
-      "properties": {
-        "pub_key": {
-          "type": "string",
-          "format": "byte"
-        },
-        "certificate": {
-          "type": "string",
-          "format": "byte"
-        }
-      }
-    },
     "v1IPAddress": {
       "type": "object",
       "properties": {
@@ -797,14 +784,13 @@
     "v1LoginRequest": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
+        "id_certificate": {
+          "type": "string",
+          "format": "byte"
         },
-        "service": {
-          "$ref": "#/definitions/v1ID"
-        },
-        "id": {
-          "$ref": "#/definitions/v1ID"
+        "chain_of_trust": {
+          "type": "string",
+          "format": "byte"
         }
       }
     },
@@ -821,12 +807,19 @@
         }
       }
     },
-    "v1PublicKeyResponse": {
+    "v1RootCertificateResponse": {
       "type": "object",
       "properties": {
-        "pub_key": {
+        "root_certificate": {
           "type": "string",
           "format": "byte"
+        },
+        "intermediates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "byte"
+          }
         }
       }
     },
@@ -852,8 +845,9 @@
           "type": "string",
           "format": "byte"
         },
-        "service": {
-          "$ref": "#/definitions/v1ID"
+        "chain_of_trust": {
+          "type": "string",
+          "format": "byte"
         }
       }
     },
@@ -927,8 +921,9 @@
     "v1TokenRequest": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
+        "certificate": {
+          "type": "string",
+          "format": "byte"
         },
         "signed_challenge": {
           "type": "string",
@@ -1001,15 +996,7 @@
       }
     },
     "v1VerificationResponse": {
-      "type": "object",
-      "properties": {
-        "valid": {
-          "type": "boolean"
-        },
-        "reason": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     }
   }
 }
