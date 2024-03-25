@@ -11,12 +11,10 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zalgonoise/cfg"
-	"github.com/zalgonoise/x/authz/ca"
 	"github.com/zalgonoise/x/authz/certs"
 	"github.com/zalgonoise/x/authz/keygen"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/randomizer"
-	"github.com/zalgonoise/x/authz/repository"
 	"github.com/zalgonoise/x/errs"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -68,21 +66,26 @@ var (
 	ErrInvalidSignature          = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
 	ErrInvalidChallenge          = errs.WithDomain(errDomain, ErrInvalid, ErrChallenge)
 	ErrInvalidService            = errs.WithDomain(errDomain, ErrInvalid, ErrService)
+	ErrExpiredToken              = errs.WithDomain(errDomain, ErrExpired, ErrToken)
 )
 
 type ServiceRepository interface {
-	CreateService(ctx context.Context, service string, pubKey []byte, cert []byte, expiry time.Time) (err error)
-	GetService(ctx context.Context, service string) (pubKey []byte, cert []byte, err error)
+	GetService(ctx context.Context, service string) (pubKey []byte, err error)
+	CreateService(ctx context.Context, service string, pubKey []byte) (err error)
 	DeleteService(ctx context.Context, service string) error
+
+	ListCertificates(ctx context.Context, service string) (certs []*pb.CertificateResponse, err error)
+	CreateCertificate(ctx context.Context, service string, cert []byte, expiry time.Time) error
+	DeleteCertificate(ctx context.Context, service string, cert []byte) error
 }
 
 type TokensRepository interface {
 	CreateChallenge(ctx context.Context, service string, challenge []byte, expiry time.Time) error
-	ListChallenges(ctx context.Context, service string) (challenges []repository.Challenge, err error)
+	ListChallenges(ctx context.Context, service string) (challenges []*pb.LoginResponse, err error)
 	DeleteChallenge(ctx context.Context, service string, challenge []byte) error
 
 	CreateToken(ctx context.Context, service string, token []byte, expiry time.Time) error
-	ListTokens(ctx context.Context, service string) (tokens []repository.Token, err error)
+	ListTokens(ctx context.Context, service string) (tokens []*pb.TokenResponse, err error)
 	DeleteToken(ctx context.Context, service string, token []byte) error
 }
 
@@ -106,18 +109,25 @@ type Metrics interface {
 	IncServiceRegistries()
 	IncServiceRegistryFailed()
 	ObserveServiceRegistryLatency(ctx context.Context, duration time.Duration)
-	IncServiceCertsFetched(service string)
-	IncServiceCertsFetchFailed(service string)
-	ObserveServiceCertsFetchLatency(ctx context.Context, service string, duration time.Duration)
-	IncVerificationRequests(service string)
-	IncVerificationFailed(service string)
-	ObserveVerificationLatency(ctx context.Context, service string, duration time.Duration)
 	IncServiceDeletions()
 	IncServiceDeletionFailed()
 	ObserveServiceDeletionLatency(ctx context.Context, duration time.Duration)
+	IncCertificatesCreated(service string)
+	IncCertificatesCreateFailed(service string)
+	ObserveCertificatesCreateLatency(ctx context.Context, service string, duration time.Duration)
+	IncCertificatesListed(service string)
+	IncCertificatesListFailed(service string)
+	ObserveCertificatesListLatency(ctx context.Context, service string, duration time.Duration)
+	IncCertificatesDeleted(service string)
+	IncCertificatesDeleteFailed(service string)
+	ObserveCertificatesDeleteLatency(ctx context.Context, service string, duration time.Duration)
+	IncCertificatesVerified(service string)
+	IncCertificateVerificationFailed(service string)
+	ObserveCertificateVerificationLatency(ctx context.Context, service string, duration time.Duration)
 	IncPubKeyRequests()
 	IncPubKeyRequestFailed()
 	ObservePubKeyRequestLatency(ctx context.Context, duration time.Duration)
+
 	RegisterCollector(collector prometheus.Collector)
 }
 
@@ -130,13 +140,17 @@ type Authz struct {
 	name       string
 	privateKey *ecdsa.PrivateKey
 	cert       *x509.Certificate
-	caCert     []byte
-	durMonth   int
+	certRaw    []byte
 
+	root             *x509.Certificate
+	rootRaw          []byte
+	intermediates    *x509.CertPool
+	intermediatesRaw [][]byte
+
+	durMonth        int
 	challengeExpiry time.Duration
 	tokenExpiry     time.Duration
 
-	ca       *ca.CertificateAuthority
 	services ServiceRepository
 	tokens   TokensRepository
 	random   Randomizer
@@ -194,7 +208,7 @@ func NewAuthz(
 	ctx, done := context.WithTimeout(context.Background(), defaultConnTimeout)
 	defer done()
 
-	res, err := caClient.Register(ctx, &pb.CertificateRequest{
+	registry, err := caClient.RegisterService(ctx, &pb.CertificateRequest{
 		Service:        name,
 		PublicKey:      pub,
 		SigningRequest: config.csr,
@@ -203,28 +217,61 @@ func NewAuthz(
 		return nil, err
 	}
 
-	logger.InfoContext(ctx, "retrieved certificate from CA")
+	logger.InfoContext(ctx, "service registered in CA")
 
-	cert, err := certs.Decode(res.Certificate)
+	caID, err := caClient.RootCertificate(ctx, &pb.RootCertificateRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	rootCert, err := certs.Decode(caID.Root)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(caID.Intermediates) == 0 {
+		caID.Intermediates = make([][]byte, 0, 1)
+	}
+
+	caID.Intermediates = append(caID.Intermediates, registry.Certificate)
+
+	pool := x509.NewCertPool()
+
+	for i := range caID.Intermediates {
+		cert, err := certs.Decode(caID.Intermediates[i])
+		if err != nil {
+			return nil, err
+		}
+
+		pool.AddCert(cert)
+	}
+
+	logger.InfoContext(ctx, "retrieved certificate chain from CA")
+
+	cert, err := certs.Decode(registry.Certificate)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Authz{
-		caClient:        caClient,
-		name:            name,
-		privateKey:      privateKey,
-		cert:            cert,
-		caCert:          res.Certificate,
-		durMonth:        config.durMonth,
-		challengeExpiry: config.challengeExpiry,
-		tokenExpiry:     config.tokenExpiry,
-		services:        services,
-		tokens:          tokens,
-		random:          random,
-		metrics:         config.m,
-		logger:          logger,
-		tracer:          config.tracer,
+		caClient:         caClient,
+		name:             name,
+		privateKey:       privateKey,
+		cert:             cert,
+		certRaw:          registry.Certificate,
+		root:             rootCert,
+		rootRaw:          caID.Root,
+		intermediates:    pool,
+		intermediatesRaw: caID.Intermediates,
+		durMonth:         config.durMonth,
+		challengeExpiry:  config.challengeExpiry,
+		tokenExpiry:      config.tokenExpiry,
+		services:         services,
+		tokens:           tokens,
+		random:           random,
+		metrics:          config.m,
+		logger:           logger,
+		tracer:           config.tracer,
 	}, nil
 }
 

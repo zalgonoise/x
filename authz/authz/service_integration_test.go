@@ -3,16 +3,19 @@
 package authz_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 	"testing"
 	"time"
@@ -39,33 +42,77 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func TestAuthz(t *testing.T) {
-	defer cleanup()
+var caHTTPPort string
+var caGRPCPort string
 
-	ctx, cancel := context.WithCancel(context.Background())
+func TestMain(m *testing.M) {
+	exitCode := func() int {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		logger := log.New("debug")
+		errs := make(chan error)
+
+		go initCA(ctx, 8080, 8081, logger, errs)
+
+		go func() {
+			for {
+				select {
+				case err, ok := <-errs:
+					if ok && err != nil {
+						logger.Error("init error", slog.String("error", err.Error()))
+
+						os.Exit(1)
+					}
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+
+		return m.Run()
+	}()
+
+	os.Exit(exitCode)
+}
+
+func TestAuthz(t *testing.T) {
+	// cleanup before and after running the tests
+	require.NoError(t, cleanup())
+	defer func() {
+		require.NoError(t, cleanup())
+	}()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	logger := log.New("debug")
 
-	service, done, errs := initServices(ctx, logger)
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case err := <-errs:
-				t.Error(err)
-				t.Fail()
-			}
-		}
+	service, done, err := initAuthz(ctx, "service", "127.0.0.1:8081", 8082, 8083, logger)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, done())
 	}()
 
-	defer func() {
-		if err := done(); err != nil {
-			t.Error(err)
-			t.Fail()
-		}
-	}()
+	//service, done, errs := initServices(ctx, logger)
+	//go func() {
+	//	for {
+	//		select {
+	//		case <-ctx.Done():
+	//			return
+	//		case err := <-errs:
+	//			t.Error(err)
+	//			t.Fail()
+	//		}
+	//	}
+	//}()
+
+	//defer func() {
+	//	if err := done(); err != nil {
+	//		t.Error(err)
+	//		t.Fail()
+	//	}
+	//}()
 
 	// sample keys
 	key, err := keygen.New()
@@ -90,7 +137,7 @@ func TestAuthz(t *testing.T) {
 				pubKey:  pubPEM,
 			},
 			{
-				name:    "Success/FetchAgain",
+				name:    "Success/SignupAgain",
 				service: "test.signup.simple",
 				pubKey:  pubPEM,
 			},
@@ -115,8 +162,7 @@ func TestAuthz(t *testing.T) {
 				}
 
 				require.NotNil(t, res.Certificate)
-				require.NotNil(t, res.Service.PublicKey)
-				require.NotNil(t, res.Service.Certificate)
+				require.NotNil(t, res.ServiceCertificate)
 			})
 		}
 	})
@@ -153,17 +199,12 @@ func TestAuthz(t *testing.T) {
 				require.NoError(t, err)
 
 				require.NotNil(t, res.Certificate)
-				require.NotNil(t, res.Service.PublicKey)
-				require.NotNil(t, res.Service.Certificate)
+				require.NotNil(t, res.ServiceCertificate)
 
 				// login
 				loginRes, err := service.Login(ctx, &pb.LoginRequest{
-					Name:    testcase.service,
-					Service: res.Service,
-					Id: &pb.ID{
-						PublicKey:   testcase.pubKey,
-						Certificate: res.Certificate,
-					},
+					IdCertificate:      res.Certificate,
+					ServiceCertificate: res.ServiceCertificate,
 				})
 				require.NoError(t, err)
 				require.NotNil(t, loginRes.Challenge)
@@ -174,7 +215,7 @@ func TestAuthz(t *testing.T) {
 				require.NoError(t, err)
 
 				tokenRes, err := service.Token(ctx, &pb.TokenRequest{
-					Name:            testcase.service,
+					Certificate:     res.Certificate,
 					SignedChallenge: signature,
 				})
 
@@ -219,20 +260,21 @@ func TestAuthz(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				certRes, err := service.GetCertificate(ctx, &pb.CertificateRequest{
+				certRes, err := service.ListCertificates(ctx, &pb.CertificateRequest{
 					Service:   testcase.service,
 					PublicKey: testcase.pubKey,
 				})
 				require.NoError(t, err)
 
-				require.Equal(t, registerRes.Certificate, certRes.Certificate)
+				require.True(t, slices.ContainsFunc(certRes.Certificates, func(response *pb.CertificateResponse) bool {
+					return bytes.Equal(response.Certificate, registerRes.Certificate)
+				}))
 
-				verifyRes, err := service.VerifyCertificate(ctx, &pb.VerificationRequest{
+				_, err = service.VerifyCertificate(ctx, &pb.VerificationRequest{
 					Service:     testcase.service,
 					Certificate: registerRes.Certificate,
 				})
 				require.NoError(t, err)
-				require.True(t, verifyRes.Valid)
 
 				_, err = service.DeleteService(ctx, &pb.DeletionRequest{
 					Service:   testcase.service,
@@ -244,30 +286,36 @@ func TestAuthz(t *testing.T) {
 	})
 
 	t.Run("PublicKey", func(t *testing.T) {
-		res, err := service.PublicKey(ctx, &pb.PublicKeyRequest{})
+		res, err := service.RootCertificate(ctx, &pb.RootCertificateRequest{})
 		require.NoError(t, err)
-		require.NotNil(t, res.PublicKey)
+		require.NotNil(t, res.Root)
 	})
 }
 
 func cleanup() error {
-	if err := os.RemoveAll("./testdata"); err != nil {
+	if err := os.Remove("./testdata/ca.db"); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if err := os.Remove("./testdata/authz.db"); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 
-	return os.Mkdir("./testdata", 0755)
+	return nil
 }
 
 func initServices(ctx context.Context, logger *slog.Logger) (*authz.Authz, func() error, <-chan error) {
 	errs := make(chan error)
+	//
+	//caContainer, err := startCA()
+	//if err != nil {
+	//	errs <- err
+	//
+	//	return nil, nil, errs
+	//}
 
-	go func() {
-		if err := initCA(ctx, 8080, 8081, logger); err != nil {
-			errs <- err
-		}
-	}()
+	//go initCA(ctx, 8080, 8081, logger, errs)
 
-	service, done, err := initAuthz(ctx, "service", "localhost:8081", 8082, 8083, logger)
+	service, done, err := initAuthz(ctx, "service", "127.0.0.1:8081", 8082, 8083, logger)
 	if err != nil {
 		errs <- err
 
@@ -277,15 +325,31 @@ func initServices(ctx context.Context, logger *slog.Logger) (*authz.Authz, func(
 	return service, done, errs
 }
 
+func getKey(path string) (*ecdsa.PrivateKey, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	pem, err := io.ReadAll(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return keygen.DecodePrivate(pem)
+}
+
 func initCA(
 	ctx context.Context,
 	httpPort, grpcPort int,
 	logger *slog.Logger,
-) error {
-	_, privateKey, err := newKeys("ca")
-	if err != nil {
-		return err
-	}
+	errs chan<- error,
+) {
+	m := metrics.NewMetrics()
+	tracer := noop.NewTracerProvider().Tracer(tracing.ServiceNameCA)
+	tracingDone := func(context.Context) error { return nil }
+
+	closerFuncs := make([]func() error, 0, 5)
 
 	conf := config.Config{
 		HTTPPort: httpPort,
@@ -301,19 +365,32 @@ func initCA(
 		},
 	}
 
-	tracer := noop.NewTracerProvider().Tracer(tracing.ServiceNameCA)
-	tracingDone := func(context.Context) error { return nil }
+	privateKey, err := getKey("./testdata/ca.testkey_private.pem")
+	if err != nil {
+		errs <- err
+
+		return
+	}
 
 	db, err := database.Open(conf.Database.URI)
 	if err != nil {
-		return err
+		errs <- err
+
+		return
 	}
+	closerFuncs = append(closerFuncs, db.Close)
 
 	if err = database.Migrate(ctx, db, database.CAService, logger); err != nil {
-		return err
-	}
+		errs <- err
 
-	m := metrics.NewMetrics()
+		for i := range closerFuncs {
+			if err := closerFuncs[i](); err != nil {
+				errs <- err
+			}
+		}
+
+		return
+	}
 
 	repo, err := repository.NewService(db,
 		repository.WithLogger(logger),
@@ -322,6 +399,19 @@ func initCA(
 		repository.WithCleanupTimeout(conf.Database.CleanupTimeout),
 		repository.WithCleanupSchedule(conf.Database.CleanupSchedule),
 	)
+	if err != nil {
+		errs <- err
+
+		for i := range closerFuncs {
+			if err := closerFuncs[i](); err != nil {
+				errs <- err
+			}
+		}
+
+		return
+	}
+
+	closerFuncs = append(closerFuncs, repo.Close)
 
 	caService, err := ca.NewCertificateAuthority(
 		repo,
@@ -334,19 +424,64 @@ func initCA(
 			certs.WithDurMonth(conf.CA.CertDurMonths),
 		),
 	)
+	if err != nil {
+		errs <- err
+
+		for i := range closerFuncs {
+			if err := closerFuncs[i](); err != nil {
+				errs <- err
+			}
+		}
+
+		return
+	}
 
 	httpServer, err := httpserver.NewServer(fmt.Sprintf(":%d", conf.HTTPPort))
 	if err != nil {
-		return err
+		errs <- err
+
+		for i := range closerFuncs {
+			if err := closerFuncs[i](); err != nil {
+				errs <- err
+			}
+		}
+
+		return
 	}
+
+	closerFuncs = append(closerFuncs, func() error {
+		return httpServer.Shutdown(context.Background())
+	})
 
 	grpcServer, err := runGRPCServer(ctx, conf.GRPCPort, caService, nil, httpServer, logger, m)
 	if err != nil {
-		return err
+		errs <- err
+
+		for i := range closerFuncs {
+			if err := closerFuncs[i](); err != nil {
+				errs <- err
+			}
+		}
+
+		return
 	}
 
+	closerFuncs = append(closerFuncs, func() error {
+		grpcServer.Shutdown(context.Background())
+
+		return nil
+	})
+
 	if err = registerMetrics(m, httpServer); err != nil {
-		return err
+		errs <- err
+
+		for i := range closerFuncs {
+			if err := closerFuncs[i](); err != nil {
+				errs <- err
+			}
+		}
+
+		return
 	}
 
 	go runHTTPServer(ctx, conf.HTTPPort, httpServer, logger)
@@ -357,6 +492,12 @@ func initCA(
 	done := func() error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
+
+		for i := range closerFuncs {
+			if err := closerFuncs[i](); err != nil {
+				errs <- err
+			}
+		}
 
 		if err = httpServer.Shutdown(shutdownCtx); err != nil {
 			return err
@@ -378,14 +519,19 @@ func initCA(
 	for {
 		select {
 		case <-ctx.Done():
-			return done()
+			if err := done(); err != nil {
+				errs <- err
+			}
+
+			return
 		case sig := <-signalChannel:
 			errSignal := fmt.Errorf("received exit signal: %s", sig.String())
 
-			return errors.Join(errSignal, done())
+			errs <- errors.Join(errSignal, done())
+
+			return
 		}
 	}
-
 }
 
 func initAuthz(
@@ -394,10 +540,9 @@ func initAuthz(
 	httpPort, grpcPort int,
 	logger *slog.Logger,
 ) (*authz.Authz, func() error, error) {
-	_, privateKey, err := newKeys(name)
-	if err != nil {
-		return nil, nil, err
-	}
+	m := metrics.NewMetrics()
+	tracer := noop.NewTracerProvider().Tracer(tracing.ServiceNameCA)
+	tracingDone := func(context.Context) error { return nil }
 
 	conf := config.Config{
 		HTTPPort: httpPort,
@@ -417,8 +562,10 @@ func initAuthz(
 		},
 	}
 
-	tracer := noop.NewTracerProvider().Tracer(tracing.ServiceNameCA)
-	tracingDone := func(context.Context) error { return nil }
+	privateKey, err := getKey("./testdata/authz.testkey_private.pem")
+	if err != nil {
+		return nil, nil, err
+	}
 
 	db, err := database.Open(conf.Database.URI)
 	if err != nil {
@@ -428,8 +575,6 @@ func initAuthz(
 	if err = database.Migrate(ctx, db, database.AuthzService, logger); err != nil {
 		return nil, nil, err
 	}
-
-	m := metrics.NewMetrics()
 
 	servicesRepo, err := repository.NewService(db,
 		repository.WithLogger(logger),
@@ -564,7 +709,7 @@ func runGRPCServer(
 	}()
 
 	grpcClient, err := grpc.Dial(
-		fmt.Sprintf("localhost:%d", port),
+		fmt.Sprintf(":%d", port),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {

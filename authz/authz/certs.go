@@ -44,7 +44,12 @@ func (a *Authz) ListCertificates(ctx context.Context, req *pb.CertificateRequest
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := a.validatePublicKeys(ctx, req.Service, req.PublicKey); err != nil {
+	pubKey, err := keygen.DecodePublic(req.PublicKey)
+	if err != nil {
+		//TODO:add error
+	}
+
+	if err := a.validatePublicKeys(ctx, req.Service, pubKey); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		a.metrics.IncCertificatesListFailed(req.Service)
@@ -115,7 +120,12 @@ func (a *Authz) DeleteCertificate(ctx context.Context, req *pb.CertificateDeleti
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := a.validatePublicKeys(ctx, req.Service, req.PublicKey); err != nil {
+	pubKey, err := keygen.DecodePublic(req.PublicKey)
+	if err != nil {
+		//TODO:add error
+	}
+
+	if err := a.validatePublicKeys(ctx, req.Service, pubKey); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		a.metrics.IncCertificatesDeleteFailed(req.Service)
@@ -126,19 +136,7 @@ func (a *Authz) DeleteCertificate(ctx context.Context, req *pb.CertificateDeleti
 		return nil, status.Error(codes.InvalidArgument, ErrInvalidPublicKey.Error())
 	}
 
-	caCert, err := certs.Decode(a.caCert)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncCertificateVerificationFailed(req.Service)
-
-		a.logger.WarnContext(ctx, "failed to decode CA certificate",
-			slog.String("service", req.Service), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if err := certs.Verify(req.Certificate, a.cert, caCert); err != nil {
+	if err := certs.Verify(req.Certificate, a.root, a.intermediates); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		a.metrics.IncCertificatesDeleteFailed(req.Service)
@@ -190,19 +188,7 @@ func (a *Authz) VerifyCertificate(ctx context.Context, req *pb.VerificationReque
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	caCert, err := certs.Decode(a.caCert)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncCertificateVerificationFailed(req.Service)
-
-		a.logger.WarnContext(ctx, "failed to decode CA certificate",
-			slog.String("service", req.Service), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if err := certs.Verify(req.Certificate, a.cert, caCert); err != nil {
+	if err := certs.Verify(req.Certificate, a.root, a.intermediates); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		a.metrics.IncCertificateVerificationFailed(req.Service)
@@ -213,7 +199,7 @@ func (a *Authz) VerifyCertificate(ctx context.Context, req *pb.VerificationReque
 		return nil, status.Error(codes.InvalidArgument, ErrInvalidIDCertificate.Error())
 	}
 
-	return &pb.VerificationResponse{Valid: true}, nil
+	return &pb.VerificationResponse{}, nil
 }
 
 func (a *Authz) DeleteService(ctx context.Context, req *pb.DeletionRequest) (*pb.DeletionResponse, error) {
@@ -243,7 +229,12 @@ func (a *Authz) DeleteService(ctx context.Context, req *pb.DeletionRequest) (*pb
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if err := a.validatePublicKeys(ctx, req.Service, req.PublicKey); err != nil {
+	pubKey, err := keygen.DecodePublic(req.PublicKey)
+	if err != nil {
+		//TODO:add error
+	}
+
+	if err := a.validatePublicKeys(ctx, req.Service, pubKey); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
 		a.metrics.IncServiceDeletionFailed()
@@ -268,8 +259,8 @@ func (a *Authz) DeleteService(ctx context.Context, req *pb.DeletionRequest) (*pb
 	return &pb.DeletionResponse{}, nil
 }
 
-func (a *Authz) PublicKey(ctx context.Context, _ *pb.PublicKeyRequest) (*pb.PublicKeyResponse, error) {
-	ctx, span := a.tracer.Start(ctx, "Authz.PublicKeyRequest")
+func (a *Authz) RootCertificate(ctx context.Context, _ *pb.RootCertificateRequest) (*pb.RootCertificateResponse, error) {
+	ctx, span := a.tracer.Start(ctx, "Authz.RootCertificate")
 	defer span.End()
 
 	start := time.Now()
@@ -278,19 +269,7 @@ func (a *Authz) PublicKey(ctx context.Context, _ *pb.PublicKeyRequest) (*pb.Publ
 	}()
 
 	a.metrics.IncPubKeyRequests()
-	a.logger.DebugContext(ctx, "authz service's public key request")
+	a.logger.DebugContext(ctx, "authz service's root certificate request")
 
-	key, err := keygen.EncodePublic(&a.privateKey.PublicKey)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncPubKeyRequestFailed()
-
-		a.logger.ErrorContext(ctx, "failed to encode authz service's public key",
-			slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &pb.PublicKeyResponse{PublicKey: key}, nil
+	return &pb.RootCertificateResponse{Root: a.rootRaw, Intermediates: a.intermediatesRaw}, nil
 }

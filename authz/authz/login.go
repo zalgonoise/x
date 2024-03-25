@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/sha512"
+	"crypto/x509"
 	"errors"
 	"log/slog"
 	"slices"
@@ -25,198 +26,99 @@ const (
 	tokenLimit     = 10
 )
 
-// TODO: Login must support creating up to two challenges; not just retrieve the first valid one
 func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
+	idCert, service, err := a.validateCertificate(ctx, req.IdCertificate)
+	if err != nil {
+		a.metrics.IncServiceLoginRequests(service)
+		a.metrics.IncServiceLoginFailed(service)
+		a.logger.WarnContext(ctx, "invalid request", slog.Any("request", req))
+
+		if errors.Is(err, ErrInvalidPublicKey) {
+			a.logger.WarnContext(ctx, "invalid ID public key",
+				slog.String("service", service), slog.String("error", err.Error()))
+
+			return nil, status.Error(codes.InvalidArgument, ErrInvalidIDPublicKey.Error())
+		}
+
+		a.logger.ErrorContext(ctx, "error matching public keys",
+			slog.String("service", service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	ctx, span := a.tracer.Start(ctx, "Authz.Login", trace.WithAttributes(
-		attribute.String("service", req.Name),
-		attribute.String("id.pub_key", string(req.Id.PublicKey)),
+		attribute.String("service", service),
 	))
 	defer span.End()
 
 	start := time.Now()
 	defer func() {
-		a.metrics.ObserveServiceLoginLatency(ctx, req.Name, time.Since(start))
+		a.metrics.ObserveServiceLoginLatency(ctx, service, time.Since(start))
 	}()
 
-	a.metrics.IncServiceLoginRequests(req.Name)
-	a.logger.DebugContext(ctx, "new login request", slog.String("service", req.Name))
+	a.metrics.IncServiceLoginRequests(service)
+	a.logger.DebugContext(ctx, "new login request", slog.String("service", service))
 
 	if err := req.ValidateAll(); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
+		a.metrics.IncServiceLoginFailed(service)
 
 		a.logger.WarnContext(ctx, "invalid request", slog.Any("request", req))
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	storedPEM, _, err := a.services.GetService(ctx, req.Name)
+	// validate authz certificate
+	serviceCert, err := certs.Decode(req.ServiceCertificate)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			span.SetStatus(otelcodes.Error, err.Error())
-			span.RecordError(err)
-			a.metrics.IncServiceLoginFailed(req.Name)
-
-			a.logger.WarnContext(ctx, "couldn't find service in the database", slog.String("service", req.Name))
-
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.ErrorContext(ctx, "failed to fetch stored public key",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	servicePubKey, err := keygen.DecodePublic(req.Service.PublicKey)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "invalid service public key PEM bytes",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.InvalidArgument, ErrInvalidServicePublicKey.Error())
-	}
-
-	if !a.privateKey.PublicKey.Equal(servicePubKey) {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "mismatching service public keys",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.InvalidArgument, ErrInvalidServicePublicKey.Error())
-	}
-
-	serviceCert, err := certs.Decode(req.Service.Certificate)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "invalid service certificate bytes",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.InvalidArgument, ErrInvalidServiceCertificate.Error())
+		// TODO: err invalid service cert
 	}
 
 	if !a.cert.Equal(serviceCert) {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "mismatching service cert",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.InvalidArgument, ErrInvalidServiceCertificate.Error())
+		// TODO : err invalid service cert
 	}
 
-	pubKey, err := keygen.DecodePublic(req.Id.PublicKey)
-	if err != nil {
+	// validate client certificate
+	if err := certs.Verify(req.IdCertificate, a.root, a.intermediates); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
+		a.metrics.IncServiceLoginFailed(service)
 
-		a.logger.WarnContext(ctx, "invalid public key PEM bytes",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.InvalidArgument, ErrInvalidIDPublicKey.Error())
-	}
-
-	cert, err := certs.Decode(req.Id.Certificate)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "invalid cert bytes",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+		a.logger.WarnContext(ctx, "invalid ID certificate",
+			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.InvalidArgument, ErrInvalidIDCertificate.Error())
 	}
 
-	pub, ok := cert.PublicKey.(*ecdsa.PublicKey)
-	if !ok {
+	if time.Now().After(idCert.NotAfter) {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "failed to retrieve public key from certificate",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.InvalidArgument, ErrInvalidIDCertificate.Error())
-	}
-
-	storedPub, err := keygen.DecodePublic(storedPEM)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.ErrorContext(ctx, "failed to decode stored public key",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if !pub.Equal(storedPub) {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "mismatching public keys",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.PermissionDenied, ErrInvalidIDPublicKey.Error())
-	}
-
-	if !pubKey.Equal(storedPub) {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
-
-		a.logger.WarnContext(ctx, "mismatching public keys",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.PermissionDenied, ErrInvalidIDPublicKey.Error())
-	}
-
-	if time.Now().After(cert.NotAfter) {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
+		a.metrics.IncServiceLoginFailed(service)
 
 		a.logger.WarnContext(ctx, "expired certificate",
-			slog.String("service", req.Name), slog.Time("expiry", cert.NotAfter),
+			slog.String("service", service), slog.Time("expiry", idCert.NotAfter),
 			slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.InvalidArgument, ErrInvalidIDCertificate.Error())
 	}
 
 	// check if there is a valid challenge to provide
-	challenges, err := a.tokens.ListChallenges(ctx, req.Name)
+	challenges, err := a.tokens.ListChallenges(ctx, service)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
+		a.metrics.IncServiceLoginFailed(service)
 
 		a.logger.ErrorContext(ctx, "failed to search for challenges in the database",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// allow up to 2 challenges to exist simultaneously
 	if len(challenges) >= challengeLimit {
-		return &pb.LoginResponse{Challenge: challenges[0].Raw, ExpiresOn: challenges[0].Expiry.UnixMilli()}, nil
+		return challenges[0], nil
 	}
 
 	// create a new challenge
@@ -224,23 +126,23 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
+		a.metrics.IncServiceLoginFailed(service)
 
 		a.logger.ErrorContext(ctx, "failed to generate challenge",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	expiry := time.Now().Add(a.challengeExpiry)
 
-	if err = a.tokens.CreateChallenge(ctx, req.Name, challenge, expiry); err != nil {
+	if err = a.tokens.CreateChallenge(ctx, service, challenge, expiry); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceLoginFailed(req.Name)
+		a.metrics.IncServiceLoginFailed(service)
 
 		a.logger.ErrorContext(ctx, "failed to store challenge",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -249,24 +151,43 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 }
 
 func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenResponse, error) {
+	_, service, err := a.validateCertificate(ctx, req.Certificate)
+	if err != nil {
+		a.metrics.IncServiceTokenRequests(service)
+		a.metrics.IncServiceTokenFailed(service)
+		a.logger.WarnContext(ctx, "invalid request", slog.Any("request", req))
+
+		if errors.Is(err, ErrInvalidPublicKey) {
+			a.logger.WarnContext(ctx, "invalid ID public key",
+				slog.String("service", service), slog.String("error", err.Error()))
+
+			return nil, status.Error(codes.InvalidArgument, ErrInvalidIDPublicKey.Error())
+		}
+
+		a.logger.ErrorContext(ctx, "error matching public keys",
+			slog.String("service", service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	ctx, span := a.tracer.Start(ctx, "Authz.Token", trace.WithAttributes(
-		attribute.String("service", req.Name),
+		attribute.String("service", service),
 	))
 	defer span.End()
 
 	start := time.Now()
 	defer func() {
-		a.metrics.ObserveServiceTokenLatency(ctx, req.Name, time.Since(start))
+		a.metrics.ObserveServiceTokenLatency(ctx, service, time.Since(start))
 	}()
 
-	a.metrics.IncServiceTokenRequests(req.Name)
+	a.metrics.IncServiceTokenRequests(service)
 	a.logger.DebugContext(ctx, "new token request",
-		slog.String("service", req.Name))
+		slog.String("service", service))
 
 	if err := req.ValidateAll(); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
+		a.metrics.IncServiceTokenFailed(service)
 
 		a.logger.WarnContext(ctx, "invalid request",
 			slog.Any("request", req), slog.String("error", err.Error()))
@@ -274,154 +195,84 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	storedPub, _, err := a.services.GetService(ctx, req.Name)
+	challenges, err := a.tokens.ListChallenges(ctx, service)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			span.SetStatus(otelcodes.Error, err.Error())
 			span.RecordError(err)
-			a.metrics.IncServiceTokenFailed(req.Name)
-
-			a.logger.WarnContext(ctx, "service does not exist",
-				slog.String("service", req.Name), slog.String("error", err.Error()))
-
-			return nil, status.Error(codes.InvalidArgument, ErrInvalidService.Error())
-		}
-
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
-
-		a.logger.ErrorContext(ctx, "failed to get service details",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	pub, err := keygen.DecodePublic(storedPub)
-	if err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
-
-		a.logger.ErrorContext(ctx, "failed to decode public key",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	challenges, err := a.tokens.ListChallenges(ctx, req.Name)
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			span.SetStatus(otelcodes.Error, err.Error())
-			span.RecordError(err)
-			a.metrics.IncServiceTokenFailed(req.Name)
+			a.metrics.IncServiceTokenFailed(service)
 
 			a.logger.WarnContext(ctx, "couldn't find a challenge for this token request",
-				slog.String("service", req.Name), slog.String("error", err.Error()))
+				slog.String("service", service), slog.String("error", err.Error()))
 
 			return nil, status.Error(codes.InvalidArgument, ErrInvalidChallenge.Error())
 		}
 
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
+		a.metrics.IncServiceTokenFailed(service)
 
 		a.logger.ErrorContext(ctx, "failed to get challenge",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	var (
-		idx   int
-		valid bool
-	)
-
-	for idx = range challenges {
-		h := sha512.Sum512(challenges[idx].Raw)
-
-		if ecdsa.VerifyASN1(pub, h[:], req.SignedChallenge) {
-			valid = true
-
-			break
-		}
-	}
-
-	if !valid {
+	idx, err := a.verifyChallenge(ctx, service, req.SignedChallenge, challenges)
+	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
+		a.metrics.IncServiceTokenFailed(service)
 
-		a.logger.WarnContext(ctx, "invalid signature",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+		if errors.Is(err, ErrInvalidChallenge) {
+			a.logger.WarnContext(ctx, "couldn't match a challenge for this signed response",
+				slog.String("service", service), slog.String("error", err.Error()))
 
-		return nil, status.Error(codes.InvalidArgument, ErrInvalidSignature.Error())
+			return nil, status.Error(codes.InvalidArgument, ErrInvalidChallenge.Error())
+		}
+
+		a.logger.ErrorContext(ctx, "failed to verify signature",
+			slog.String("service", service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	tokens, err := a.tokens.ListTokens(ctx, req.Name)
+	tokens, err := a.tokens.ListTokens(ctx, service)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
+		a.metrics.IncServiceTokenFailed(service)
 
 		a.logger.ErrorContext(ctx, "failed to lookup tokens for this service in the database",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// allow up to 10 tokens to exist simultaneously
 	if len(tokens) >= tokenLimit {
-		if err = a.tokens.DeleteChallenge(ctx, req.Name, challenges[idx].Raw); err != nil {
+		if err = a.tokens.DeleteChallenge(ctx, service, challenges[idx].Challenge); err != nil {
 			a.logger.WarnContext(ctx, "failed to delete challenge in the database",
-				slog.String("service", req.Name), slog.String("error", err.Error()),
+				slog.String("service", service), slog.String("error", err.Error()),
 			)
 		}
 
-		return &pb.TokenResponse{
-			Token:     string(tokens[0].Raw),
-			ExpiresOn: tokens[0].Expiry.UnixMilli(),
-		}, nil
+		return tokens[0], nil
 	}
 
-	exp := start.Add(a.tokenExpiry)
-
-	token, err := keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
-		Service: req.Name,
-		Authz:   a.name,
-	}))
+	token, err := a.newToken(ctx, service, start)
 	if err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
 		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
+		a.metrics.IncServiceTokenFailed(service)
 
 		a.logger.ErrorContext(ctx, "failed to generate JWT",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
+			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if err = a.tokens.CreateToken(ctx, req.Name, token, exp); err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		a.metrics.IncServiceTokenFailed(req.Name)
-
-		a.logger.ErrorContext(ctx, "failed to store token",
-			slog.String("service", req.Name), slog.String("error", err.Error()))
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if err = a.tokens.DeleteChallenge(ctx, req.Name, challenges[idx].Raw); err != nil {
-		a.logger.WarnContext(ctx, "failed to delete challenge in the database",
-			slog.String("service", req.Name), slog.String("error", err.Error()),
-		)
-	}
-
-	return &pb.TokenResponse{
-		Token:     string(token),
-		ExpiresOn: exp.UnixMilli(),
-	}, nil
+	return token, nil
 }
 
 func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthResponse, error) {
@@ -466,8 +317,8 @@ func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthR
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	idx := slices.IndexFunc(tokens, func(token repository.Token) bool {
-		return string(token.Raw) == req.Token
+	idx := slices.IndexFunc(tokens, func(response *pb.TokenResponse) bool {
+		return response.Token == req.Token
 	})
 
 	switch idx {
@@ -479,16 +330,88 @@ func (a *Authz) VerifyToken(ctx context.Context, req *pb.AuthRequest) (*pb.AuthR
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	default:
-		// expiry comes in GMT time (+00:00), truncated to the seconds; ensure comparison matches format
-		if !tokens[idx].Expiry.Truncate(time.Second).Equal(token.Expiry.In(time.Local)) {
-			span.SetStatus(otelcodes.Error, err.Error())
-			span.RecordError(err)
+		if token.Expiry.Before(start) {
+			span.SetStatus(otelcodes.Error, ErrExpiredToken.Error())
+			span.RecordError(ErrExpiredToken)
 			a.metrics.IncServiceTokenVerificationFailed(token.Claim.Service)
-			a.logger.WarnContext(ctx, "invalid token")
+			a.logger.WarnContext(ctx, "expired token")
 
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+			return nil, status.Error(codes.InvalidArgument, ErrExpiredToken.Error())
 		}
 
 		return &pb.AuthResponse{}, nil
 	}
+}
+
+func (a *Authz) validateCertificate(ctx context.Context, raw []byte) (*x509.Certificate, string, error) {
+	cert, err := certs.Decode(raw)
+	if err != nil {
+		return nil, "", err
+	}
+
+	pubKey, ok := cert.PublicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, cert.Subject.CommonName, ErrInvalidIDPublicKey
+	}
+
+	// validate client ID
+	if err := a.validatePublicKeys(ctx, cert.Subject.CommonName, pubKey); err != nil {
+		return nil, cert.Subject.CommonName, err
+	}
+
+	return cert, cert.Subject.CommonName, nil
+}
+
+func (a *Authz) verifyChallenge(ctx context.Context, name string, signed []byte, challenges []*pb.LoginResponse) (int, error) {
+	storedPub, err := a.services.GetService(ctx, name)
+	if err != nil {
+		return -1, err
+	}
+
+	pub, err := keygen.DecodePublic(storedPub)
+	if err != nil {
+		return -1, err
+	}
+
+	var (
+		idx   int
+		valid bool
+	)
+
+	for idx = range challenges {
+		h := sha512.Sum512(challenges[idx].Challenge)
+
+		if ecdsa.VerifyASN1(pub, h[:], signed) {
+			valid = true
+
+			break
+		}
+	}
+
+	if !valid {
+		return -1, ErrInvalidChallenge
+	}
+
+	return idx, nil
+}
+
+func (a *Authz) newToken(ctx context.Context, name string, start time.Time) (*pb.TokenResponse, error) {
+	exp := start.Add(a.tokenExpiry)
+
+	token, err := keygen.NewToken(a.privateKey, a.name, exp, keygen.WithClaim(keygen.Claim{
+		Service: name,
+		Authz:   a.name,
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	if err = a.tokens.CreateToken(ctx, name, token, exp); err != nil {
+		return nil, err
+	}
+
+	return &pb.TokenResponse{
+		Token:     string(token),
+		ExpiresOn: exp.UnixMilli(),
+	}, nil
 }
