@@ -132,14 +132,14 @@ service CertificateAuthority {
     };
   }
 
-  rpc PublicKey(PublicKeyRequest) returns (PublicKeyResponse) {
+  rpc RootCertificate(RootCertificateRequest) returns (RootCertificateResponse) {
     option (google.api.http) = {
       get: "/v1/ca"
     };
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Returns the Certificate Authority's public key"
-      description: "This endpoint returns the Certificate Authority's public key."
+      summary: "Returns the Certificate Authority's root certificate and any existing intermediates in this chain-of-trust"
+      description: "This endpoint returns the Certificate Authority's certificate, as well as any existing intermediate certificates in this chain-of-trust."
       tags: "Certificates"
     };
   }
@@ -224,10 +224,7 @@ message VerificationRequest {
   bytes certificate = 2 [json_name="certificate", (validate.rules).bytes.min_len = 1];
 }
 
-message VerificationResponse {
-  bool valid = 1 [json_name="valid"];
-  string reason = 2 [json_name="reason"];
-}
+message VerificationResponse {}
 
 message CertificateDeletionRequest {
   string service = 1 [json_name="service", (validate.rules).string.min_len = 1];
@@ -244,10 +241,11 @@ message DeletionRequest {
 
 message DeletionResponse {}
 
-message PublicKeyRequest {}
+message RootCertificateRequest {}
 
-message PublicKeyResponse {
-  bytes public_key = 1 [json_name="pub_key"];
+message RootCertificateResponse {
+  bytes root = 1 [json_name="root_certificate"];
+  repeated bytes intermediates = 2 [json_name="intermediates"];
 }
 
 service Authz {
@@ -314,18 +312,12 @@ message SignUpRequest {
 
 message SignUpResponse {
   bytes certificate = 1 [json_name="certificate"];
-  ID service = 2 [json_name="service"];
+  bytes service_certificate = 2 [json_name="chain_of_trust", (validate.rules).bytes.min_len = 1];
 }
 
 message LoginRequest {
-  string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
-  ID service = 2 [json_name="service"];
-  ID id = 3 [json_name="id"];
-}
-
-message ID {
-  bytes public_key = 1 [json_name="pub_key", (validate.rules).bytes.min_len = 1];
-  bytes certificate = 2 [json_name="certificate", (validate.rules).bytes.min_len = 1];
+  bytes id_certificate = 1 [json_name="id_certificate", (validate.rules).bytes.min_len = 1];
+  bytes service_certificate = 2 [json_name="chain_of_trust", (validate.rules).bytes.min_len = 1];
 }
 
 message LoginResponse {
@@ -334,7 +326,7 @@ message LoginResponse {
 }
 
 message TokenRequest {
-  string name = 1 [json_name="name", (validate.rules).string.min_len = 1];
+  bytes certificate = 1 [json_name="certificate"];
   bytes signed_challenge = 2 [json_name="signed_challenge", (validate.rules).bytes.min_len = 1];
 }
 
