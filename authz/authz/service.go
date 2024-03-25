@@ -39,18 +39,14 @@ const (
 
 	ErrCAAddress          = errs.Entity("CA address")
 	ErrPublicKey          = errs.Entity("public key")
-	ErrServicePublicKey   = errs.Entity("service public key")
 	ErrIDPublicKey        = errs.Entity("ID public key")
 	ErrPrivateKey         = errs.Entity("private key")
-	ErrCertificate        = errs.Entity("certificate")
 	ErrServiceCertificate = errs.Entity("service certificate")
 	ErrIDCertificate      = errs.Entity("ID certificate")
 	ErrServicesRepo       = errs.Entity("services repository")
 	ErrTokensRepo         = errs.Entity("tokens repository")
-	ErrSignature          = errs.Entity("signature")
 	ErrChallenge          = errs.Entity("challenge")
 	ErrToken              = errs.Entity("token")
-	ErrService            = errs.Entity("service")
 )
 
 var (
@@ -59,13 +55,10 @@ var (
 	ErrNilTokensRepository       = errs.WithDomain(errDomain, ErrNil, ErrTokensRepo)
 	ErrNilPrivateKey             = errs.WithDomain(errDomain, ErrNil, ErrPrivateKey)
 	ErrInvalidPublicKey          = errs.WithDomain(errDomain, ErrInvalid, ErrPublicKey)
-	ErrInvalidServicePublicKey   = errs.WithDomain(errDomain, ErrInvalid, ErrServicePublicKey)
 	ErrInvalidServiceCertificate = errs.WithDomain(errDomain, ErrInvalid, ErrServiceCertificate)
 	ErrInvalidIDPublicKey        = errs.WithDomain(errDomain, ErrInvalid, ErrIDPublicKey)
 	ErrInvalidIDCertificate      = errs.WithDomain(errDomain, ErrInvalid, ErrIDCertificate)
-	ErrInvalidSignature          = errs.WithDomain(errDomain, ErrInvalid, ErrSignature)
 	ErrInvalidChallenge          = errs.WithDomain(errDomain, ErrInvalid, ErrChallenge)
-	ErrInvalidService            = errs.WithDomain(errDomain, ErrInvalid, ErrService)
 	ErrExpiredToken              = errs.WithDomain(errDomain, ErrExpired, ErrToken)
 )
 
@@ -124,9 +117,9 @@ type Metrics interface {
 	IncCertificatesVerified(service string)
 	IncCertificateVerificationFailed(service string)
 	ObserveCertificateVerificationLatency(ctx context.Context, service string, duration time.Duration)
-	IncPubKeyRequests()
-	IncPubKeyRequestFailed()
-	ObservePubKeyRequestLatency(ctx context.Context, duration time.Duration)
+	IncRootCertificateRequests()
+	IncRootCertificateRequestFailed()
+	ObserveRootCertificateRequestLatency(ctx context.Context, duration time.Duration)
 
 	RegisterCollector(collector prometheus.Collector)
 }

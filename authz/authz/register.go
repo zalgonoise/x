@@ -22,10 +22,9 @@ const (
 	certificateLimit = 2
 )
 
-// TODO: SignUp / Register must support multiple certificates (up to two) to allow rotation
 func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpResponse, error) {
 	ctx, span := a.tracer.Start(ctx, "Authz.SignUp", trace.WithAttributes(
-		attribute.String("service", req.Name),
+		attribute.String("service", req.Service),
 		attribute.String("pub_key", string(req.PublicKey)),
 		attribute.Bool("with_csr", req.SigningRequest != nil),
 	))
@@ -38,7 +37,7 @@ func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpRe
 
 	a.metrics.IncServiceRegistries()
 	a.logger.DebugContext(ctx, "new sign-up request",
-		slog.String("service", req.Name), slog.Bool("with_csr", req.SigningRequest != nil))
+		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
 
 	if err := req.ValidateAll(); err != nil {
 		span.SetStatus(otelcodes.Error, err.Error())
@@ -53,20 +52,27 @@ func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpRe
 
 	pubKey, err := keygen.DecodePublic(req.PublicKey)
 	if err != nil {
-		//TODO:add error
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "invalid public key",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidPublicKey.Error())
 	}
 
-	if err = a.validatePublicKeys(ctx, req.Name, pubKey); err != nil {
+	if err = a.validatePublicKeys(ctx, req.Service, pubKey); err != nil {
 		switch {
 		// create the service if not exists
 		case errors.Is(err, repository.ErrNotFound):
-			if err := a.services.CreateService(ctx, req.Name, req.PublicKey); err != nil {
+			if err := a.services.CreateService(ctx, req.Service, req.PublicKey); err != nil {
 				span.SetStatus(otelcodes.Error, err.Error())
 				span.RecordError(err)
 				a.metrics.IncServiceRegistryFailed()
 
 				a.logger.ErrorContext(ctx, "failed to write service to DB",
-					slog.String("service", req.Name), slog.String("error", err.Error()))
+					slog.String("service", req.Service), slog.String("error", err.Error()))
 
 				return nil, status.Error(codes.Internal, err.Error())
 			}
@@ -78,7 +84,7 @@ func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpRe
 			a.metrics.IncServiceRegistryFailed()
 
 			a.logger.WarnContext(ctx, "mismatching public keys",
-				slog.String("service", req.Name), slog.String("error", err.Error()))
+				slog.String("service", req.Service), slog.String("error", err.Error()))
 
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 
@@ -89,14 +95,14 @@ func (a *Authz) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpRe
 			a.metrics.IncServiceRegistryFailed()
 
 			a.logger.ErrorContext(ctx, "failed to validate public keys",
-				slog.String("service", req.Name), slog.String("error", err.Error()))
+				slog.String("service", req.Service), slog.String("error", err.Error()))
 
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 
 	certRes, err := a.CreateCertificate(ctx, &pb.CertificateRequest{
-		Service:        req.Name,
+		Service:        req.Service,
 		PublicKey:      req.PublicKey,
 		SigningRequest: req.SigningRequest,
 	})
@@ -187,7 +193,7 @@ func (a *Authz) CreateCertificate(ctx context.Context, req *pb.CertificateReques
 
 func (a *Authz) Register(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
 	signUp, err := a.SignUp(ctx, &pb.SignUpRequest{
-		Name:           req.Service,
+		Service:        req.Service,
 		PublicKey:      req.PublicKey,
 		SigningRequest: req.SigningRequest,
 	})

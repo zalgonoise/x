@@ -46,7 +46,14 @@ func (a *Authz) ListCertificates(ctx context.Context, req *pb.CertificateRequest
 
 	pubKey, err := keygen.DecodePublic(req.PublicKey)
 	if err != nil {
-		//TODO:add error
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "invalid public key",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidPublicKey.Error())
 	}
 
 	if err := a.validatePublicKeys(ctx, req.Service, pubKey); err != nil {
@@ -122,7 +129,14 @@ func (a *Authz) DeleteCertificate(ctx context.Context, req *pb.CertificateDeleti
 
 	pubKey, err := keygen.DecodePublic(req.PublicKey)
 	if err != nil {
-		//TODO:add error
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "invalid public key",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidPublicKey.Error())
 	}
 
 	if err := a.validatePublicKeys(ctx, req.Service, pubKey); err != nil {
@@ -231,7 +245,14 @@ func (a *Authz) DeleteService(ctx context.Context, req *pb.DeletionRequest) (*pb
 
 	pubKey, err := keygen.DecodePublic(req.PublicKey)
 	if err != nil {
-		//TODO:add error
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncCertificatesDeleteFailed(req.Service)
+
+		a.logger.WarnContext(ctx, "invalid public key",
+			slog.String("service", req.Service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidPublicKey.Error())
 	}
 
 	if err := a.validatePublicKeys(ctx, req.Service, pubKey); err != nil {
@@ -265,10 +286,10 @@ func (a *Authz) RootCertificate(ctx context.Context, _ *pb.RootCertificateReques
 
 	start := time.Now()
 	defer func() {
-		a.metrics.ObservePubKeyRequestLatency(ctx, time.Since(start))
+		a.metrics.ObserveRootCertificateRequestLatency(ctx, time.Since(start))
 	}()
 
-	a.metrics.IncPubKeyRequests()
+	a.metrics.IncRootCertificateRequests()
 	a.logger.DebugContext(ctx, "authz service's root certificate request")
 
 	return &pb.RootCertificateResponse{Root: a.rootRaw, Intermediates: a.intermediatesRaw}, nil

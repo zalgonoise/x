@@ -40,7 +40,7 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 			return nil, status.Error(codes.InvalidArgument, ErrInvalidIDPublicKey.Error())
 		}
 
-		a.logger.ErrorContext(ctx, "error matching public keys",
+		a.logger.ErrorContext(ctx, "error validating certificate",
 			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
@@ -72,11 +72,25 @@ func (a *Authz) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginRespo
 	// validate authz certificate
 	serviceCert, err := certs.Decode(req.ServiceCertificate)
 	if err != nil {
-		// TODO: err invalid service cert
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		a.metrics.IncServiceLoginFailed(service)
+
+		a.logger.WarnContext(ctx, "invalid service certificate",
+			slog.String("service", service), slog.String("error", err.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidServiceCertificate.Error())
 	}
 
 	if !a.cert.Equal(serviceCert) {
-		// TODO : err invalid service cert
+		span.SetStatus(otelcodes.Error, ErrInvalidServiceCertificate.Error())
+		span.RecordError(ErrInvalidServiceCertificate)
+		a.metrics.IncServiceLoginFailed(service)
+
+		a.logger.WarnContext(ctx, "service certificate mismatch",
+			slog.String("service", service), slog.String("error", ErrInvalidServiceCertificate.Error()))
+
+		return nil, status.Error(codes.InvalidArgument, ErrInvalidServiceCertificate.Error())
 	}
 
 	// validate client certificate
@@ -164,7 +178,7 @@ func (a *Authz) Token(ctx context.Context, req *pb.TokenRequest) (*pb.TokenRespo
 			return nil, status.Error(codes.InvalidArgument, ErrInvalidIDPublicKey.Error())
 		}
 
-		a.logger.ErrorContext(ctx, "error matching public keys",
+		a.logger.ErrorContext(ctx, "error validating certificate",
 			slog.String("service", service), slog.String("error", err.Error()))
 
 		return nil, status.Error(codes.Internal, err.Error())
