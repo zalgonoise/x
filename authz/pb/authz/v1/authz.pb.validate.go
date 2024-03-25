@@ -2334,9 +2334,9 @@ func (m *SignUpRequest) validate(all bool) error {
 
 	var errors []error
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if utf8.RuneCountInString(m.GetService()) < 1 {
 		err := SignUpRequestValidationError{
-			field:  "Name",
+			field:  "Service",
 			reason: "value length must be at least 1 runes",
 		}
 		if !all {
