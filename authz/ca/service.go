@@ -71,9 +71,9 @@ type Metrics interface {
 	IncCertificatesVerified(service string)
 	IncCertificateVerificationFailed(service string)
 	ObserveCertificateVerificationLatency(ctx context.Context, service string, duration time.Duration)
-	IncPubKeyRequests()
-	IncPubKeyRequestFailed()
-	ObservePubKeyRequestLatency(ctx context.Context, duration time.Duration)
+	IncRootCertificateRequests()
+	IncRootCertificateRequestFailed()
+	ObserveRootCertificateRequestLatency(ctx context.Context, duration time.Duration)
 }
 
 type CertificateAuthority struct {
@@ -517,10 +517,10 @@ func (ca *CertificateAuthority) RootCertificate(ctx context.Context, _ *pb.RootC
 
 	start := time.Now()
 	defer func() {
-		ca.metrics.ObservePubKeyRequestLatency(ctx, time.Since(start))
+		ca.metrics.ObserveRootCertificateRequestLatency(ctx, time.Since(start))
 	}()
 
-	ca.metrics.IncPubKeyRequests()
+	ca.metrics.IncRootCertificateRequests()
 	ca.logger.DebugContext(ctx, "CA certificate request")
 
 	return &pb.RootCertificateResponse{Root: ca.raw}, nil
