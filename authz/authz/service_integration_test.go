@@ -94,26 +94,6 @@ func TestAuthz(t *testing.T) {
 		require.NoError(t, done())
 	}()
 
-	//service, done, errs := initServices(ctx, logger)
-	//go func() {
-	//	for {
-	//		select {
-	//		case <-ctx.Done():
-	//			return
-	//		case err := <-errs:
-	//			t.Error(err)
-	//			t.Fail()
-	//		}
-	//	}
-	//}()
-
-	//defer func() {
-	//	if err := done(); err != nil {
-	//		t.Error(err)
-	//		t.Fail()
-	//	}
-	//}()
-
 	// sample keys
 	key, err := keygen.New()
 	require.NoError(t, err)
@@ -152,7 +132,7 @@ func TestAuthz(t *testing.T) {
 				ctx := context.Background()
 
 				res, err := service.SignUp(ctx, &pb.SignUpRequest{
-					Name:      testcase.service,
+					Service:   testcase.service,
 					PublicKey: testcase.pubKey,
 				})
 				if err != nil {
@@ -193,7 +173,7 @@ func TestAuthz(t *testing.T) {
 
 				// signup
 				res, err := service.SignUp(ctx, &pb.SignUpRequest{
-					Name:      testcase.service,
+					Service:   testcase.service,
 					PublicKey: testcase.pubKey,
 				})
 				require.NoError(t, err)
@@ -301,28 +281,6 @@ func cleanup() error {
 	}
 
 	return nil
-}
-
-func initServices(ctx context.Context, logger *slog.Logger) (*authz.Authz, func() error, <-chan error) {
-	errs := make(chan error)
-	//
-	//caContainer, err := startCA()
-	//if err != nil {
-	//	errs <- err
-	//
-	//	return nil, nil, errs
-	//}
-
-	//go initCA(ctx, 8080, 8081, logger, errs)
-
-	service, done, err := initAuthz(ctx, "service", "127.0.0.1:8081", 8082, 8083, logger)
-	if err != nil {
-		errs <- err
-
-		return nil, nil, errs
-	}
-
-	return service, done, errs
 }
 
 func getKey(path string) (*ecdsa.PrivateKey, error) {
@@ -636,30 +594,6 @@ func initAuthz(
 		}
 		return nil
 	}, nil
-}
-
-func newKeys(name string) (string, *ecdsa.PrivateKey, error) {
-	path := "./testdata/" + name + ".key.pem"
-
-	keyF, err := os.Create(path)
-	if err != nil {
-		return "", nil, err
-	}
-
-	defer keyF.Close()
-
-	key, err := keygen.New()
-
-	keyPEM, err := keygen.EncodePrivate(key)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if _, err := keyF.Write(keyPEM); err != nil {
-		return "", nil, err
-	}
-
-	return path, key, nil
 }
 
 func runGRPCServer(

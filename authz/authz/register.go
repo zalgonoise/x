@@ -216,7 +216,7 @@ func (a *Authz) newCertificate(ctx context.Context, req *pb.CertificateRequest) 
 	}
 
 	csr := certs.ToCSR(req.Service, pubKey, req.SigningRequest)
-	cert, err := certs.NewCertFromCSR(a.cert.Version, a.durMonth, csr)
+	cert, err := certs.NewCertFromCSR(a.cert.Version, a.durMonth, a.cert.Subject, csr)
 	if err != nil {
 		a.logger.ErrorContext(ctx, "failed to generate new certificate",
 			slog.String("service", req.Service), slog.String("error", err.Error()))
