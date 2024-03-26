@@ -23,14 +23,12 @@ const (
 	ErrPEM           = errs.Entity("PEM key bytes")
 	ErrCertificate   = errs.Entity("certificate")
 	ErrCACertificate = errs.Entity("CA certificate")
-	ErrNumChains     = errs.Entity("number of certificate chains")
 )
 
 var (
 	ErrInvalidPEM       = errs.WithDomain(errDomain, ErrInvalid, ErrPEM)
 	ErrNilCertificate   = errs.WithDomain(errDomain, ErrNil, ErrCertificate)
 	ErrNilCACertificate = errs.WithDomain(errDomain, ErrNil, ErrCACertificate)
-	ErrInvalidNumChains = errs.WithDomain(errDomain, ErrInvalid, ErrNumChains)
 )
 
 func Encode(template, parent *x509.Certificate, pub *ecdsa.PublicKey, priv *ecdsa.PrivateKey) ([]byte, error) {

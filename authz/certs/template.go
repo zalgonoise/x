@@ -14,7 +14,6 @@ const (
 	defaultExp       int64 = 130
 	defaultSub       int64 = 1
 	defaultDurMonths int   = 24
-	defaultCACN            = "authz.certificate_authority"
 
 	typeCertificate = "CERTIFICATE"
 )
@@ -66,7 +65,7 @@ func newInt(base, exp, sub int64) (*big.Int, error) {
 	return rand.Int(rand.Reader, maximum)
 }
 
-func NewCertFromCSR(version, durMonth int, csr *x509.CertificateRequest) (*x509.Certificate, error) {
+func NewCertFromCSR(version, durMonth int, issuer pkix.Name, csr *x509.CertificateRequest) (*x509.Certificate, error) {
 	i, err := newInt(2, defaultExp, defaultSub)
 	if err != nil {
 		return nil, err
@@ -94,6 +93,6 @@ func NewCertFromCSR(version, durMonth int, csr *x509.CertificateRequest) (*x509.
 		},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
-		Issuer:                csr.Subject,
+		Issuer:                issuer,
 	}, nil
 }

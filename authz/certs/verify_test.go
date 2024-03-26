@@ -126,6 +126,7 @@ func newCACert(t *testing.T, key *ecdsa.PrivateKey) *x509.Certificate {
 
 func newAuthzCert(t *testing.T, name string, caPrivKey *ecdsa.PrivateKey, caCert *x509.Certificate, authzPubKey *ecdsa.PublicKey) []byte {
 	signingReq, err := NewCertFromCSR(caCert.Version, 24,
+		caCert.Subject,
 		ToCSR(name, authzPubKey, nil),
 	)
 	require.NoError(t, err)
