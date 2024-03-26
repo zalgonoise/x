@@ -535,7 +535,7 @@ func (ca *CertificateAuthority) newCertificate(ctx context.Context, req *pb.Cert
 		return nil, time.Time{}, ErrInvalidPublicKey
 	}
 
-	cert, err := certs.NewCertFromCSR(ca.ca.Version, ca.durMonth, certs.ToCSR(req.Service, pubKey, req.SigningRequest))
+	cert, err := certs.NewCertFromCSR(ca.ca.Version, ca.durMonth, ca.ca.Subject, certs.ToCSR(req.Service, pubKey, req.SigningRequest))
 	if err != nil {
 		ca.logger.ErrorContext(ctx, "failed to generate new certificate",
 			slog.String("service", req.Service), slog.String("error", err.Error()))
