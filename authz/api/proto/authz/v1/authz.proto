@@ -312,12 +312,12 @@ message SignUpRequest {
 
 message SignUpResponse {
   bytes certificate = 1 [json_name="certificate"];
-  bytes service_certificate = 2 [json_name="chain_of_trust", (validate.rules).bytes.min_len = 1];
+  bytes service_certificate = 2 [json_name="service_certificate", (validate.rules).bytes.min_len = 1];
 }
 
 message LoginRequest {
-  bytes id_certificate = 1 [json_name="id_certificate", (validate.rules).bytes.min_len = 1];
-  bytes service_certificate = 2 [json_name="chain_of_trust", (validate.rules).bytes.min_len = 1];
+  bytes id_certificate = 1 [json_name="certificate", (validate.rules).bytes.min_len = 1];
+  bytes service_certificate = 2 [json_name="service_certificate", (validate.rules).bytes.min_len = 1];
 }
 
 message LoginResponse {
