@@ -269,7 +269,7 @@ func (r *Tokens) DeleteToken(ctx context.Context, service string, token []byte) 
 	return nil
 }
 
-func (r *Tokens) Close() error {
+func (r *Tokens) Shutdown(_ context.Context) error {
 	if r.done != nil {
 		r.done()
 	}

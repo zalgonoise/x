@@ -257,7 +257,7 @@ func (r *Services) DeleteCertificate(ctx context.Context, service string, cert [
 	return nil
 }
 
-func (r *Services) Close() error {
+func (r *Services) Shutdown(_ context.Context) error {
 	if r.done != nil {
 		r.done()
 	}
