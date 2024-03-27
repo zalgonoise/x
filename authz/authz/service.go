@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/x509"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -70,6 +71,8 @@ type ServiceRepository interface {
 	ListCertificates(ctx context.Context, service string) (certs []*pb.CertificateResponse, err error)
 	CreateCertificate(ctx context.Context, service string, cert []byte, expiry time.Time) error
 	DeleteCertificate(ctx context.Context, service string, cert []byte) error
+
+	Shutdown(ctx context.Context) error
 }
 
 type TokensRepository interface {
@@ -80,6 +83,8 @@ type TokensRepository interface {
 	CreateToken(ctx context.Context, service string, token []byte, expiry time.Time) error
 	ListTokens(ctx context.Context, service string) (tokens []*pb.TokenResponse, err error)
 	DeleteToken(ctx context.Context, service string, token []byte) error
+
+	Shutdown(ctx context.Context) error
 }
 
 type Randomizer interface {
@@ -266,6 +271,13 @@ func NewAuthz(
 		logger:           logger,
 		tracer:           config.tracer,
 	}, nil
+}
+
+func (a *Authz) Shutdown(ctx context.Context) error {
+	return errors.Join(
+		a.services.Shutdown(ctx),
+		a.tokens.Shutdown(ctx),
+	)
 }
 
 func dial(uri string, m Metrics) (*grpc.ClientConn, error) {

@@ -191,7 +191,7 @@ func (a *Authz) CreateCertificate(ctx context.Context, req *pb.CertificateReques
 	return &pb.CertificateResponse{Certificate: certificate}, nil
 }
 
-func (a *Authz) Register(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
+func (a *Authz) RegisterService(ctx context.Context, req *pb.CertificateRequest) (*pb.CertificateResponse, error) {
 	signUp, err := a.SignUp(ctx, &pb.SignUpRequest{
 		Service:        req.Service,
 		PublicKey:      req.PublicKey,
