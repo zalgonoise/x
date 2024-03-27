@@ -12,6 +12,11 @@ services:
       - "8081:8081"
     environment:
       AUTHZ_SERVICE_NAME: "certificate-authority"
+      AUTHZ_DATABASE_URI: "/data/authz.db"
+      AUTHZ_PRIVATE_KEY_PATH: "/data/private_key.pem"
+      AUTHZ_CA_CERT_DUR_MOTNHS: "24"
+    volumes:
+      - ./local/ca:/data:rw
 
   authz-root:
     build:
@@ -22,11 +27,20 @@ services:
     depends_on:
       - ca
     ports:
-      - "8082:8080"
-      - "8083:8081"
+      - "8082:8082"
+      - "8083:8083"
     environment:
       AUTHZ_TARGET_CA_URL: "authz-ca:8081"
       AUTHZ_SERVICE_NAME: "authz-root"
+      AUTHZ_DATABASE_URI: "/data/authz.db"
+      AUTHZ_PRIVATE_KEY_PATH: "/data/private_key.pem"
+      AUTHZ_HTTP_PORT: "8082"
+      AUTHZ_GRPC_PORT: "8083"
+      AUTHZ_SERVICE_CERT_DUR_MOTNHS: "24"
+      AUTHZ_CHALLENGE_DURATION: "30m"
+      AUTHZ_TOKEN_DURATION: "2h"
+    volumes:
+      - ./local/authz-root:/data:rw
 
   authz-service:
     build:
@@ -37,8 +51,17 @@ services:
     depends_on:
       - authz-root
     ports:
-      - "8084:8080"
-      - "8085:8081"
+      - "8084:8084"
+      - "8085:8085"
     environment:
-      AUTHZ_TARGET_CA_URL: "authz-root:8081"
+      AUTHZ_TARGET_CA_URL: "authz-root:8083"
       AUTHZ_SERVICE_NAME: "authz-service"
+      AUTHZ_DATABASE_URI: "/data/authz.db"
+      AUTHZ_PRIVATE_KEY_PATH: "/data/private_key.pem"
+      AUTHZ_HTTP_PORT: "8084"
+      AUTHZ_GRPC_PORT: "8085"
+      AUTHZ_SERVICE_CERT_DUR_MOTNHS: "24"
+      AUTHZ_CHALLENGE_DURATION: "30m"
+      AUTHZ_TOKEN_DURATION: "2h"
+    volumes:
+      - ./local/authz-service:/data:rw
