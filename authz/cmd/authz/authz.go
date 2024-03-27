@@ -181,11 +181,7 @@ func ExecAuthz(ctx context.Context, logger *slog.Logger, args []string) (int, er
 		return 1, err
 	}
 
-	if err = servicesRepo.Close(); err != nil {
-		return 1, err
-	}
-
-	if err = tokensRepo.Close(); err != nil {
+	if err = authzService.Shutdown(shutdownCtx); err != nil {
 		return 1, err
 	}
 

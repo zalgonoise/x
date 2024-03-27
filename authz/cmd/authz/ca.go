@@ -161,7 +161,7 @@ func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []s
 		return 1, err
 	}
 
-	if err = repo.Close(); err != nil {
+	if err = caService.Shutdown(shutdownCtx); err != nil {
 		return 1, err
 	}
 
