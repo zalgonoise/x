@@ -784,11 +784,11 @@
     "v1LoginRequest": {
       "type": "object",
       "properties": {
-        "id_certificate": {
+        "certificate": {
           "type": "string",
           "format": "byte"
         },
-        "chain_of_trust": {
+        "service_certificate": {
           "type": "string",
           "format": "byte"
         }
@@ -845,7 +845,7 @@
           "type": "string",
           "format": "byte"
         },
-        "chain_of_trust": {
+        "service_certificate": {
           "type": "string",
           "format": "byte"
         }
