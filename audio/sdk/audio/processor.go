@@ -20,6 +20,9 @@ import (
 // approach to how the caller wants to use the incoming audio. This implies that the Processor pipes all processed audio
 // data to its Exporters alike, which in place will run these audio chunks through any configured Compactor(s)
 // (if applicable).
+//
+// parent: Consumer
+// child: Exporter
 type Processor interface {
 	// Process reads the byte stream from the input io.Reader and extracts parsed audio, as chunks of float64 values.
 	// These chunks are sent to and consumed by any configured Exporter in the Processor

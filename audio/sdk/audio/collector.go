@@ -12,6 +12,9 @@ package audio
 //
 // It is the responsibility of the Exporter to store collected values emitted by a Collector's Loader
 // and push them to the appropriate backend.
+//
+// parent: Exporter
+// child: Loader, Extractor, Registry
 type Collector[T any] interface {
 	// Collect processes audio data by chunks, with its header metadata as reference. It returns an error if raised.
 	//

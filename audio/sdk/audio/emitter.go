@@ -22,6 +22,9 @@ import (
 //
 // Note: not all implementations need to use the base Exporter logic, therefore they may skip this
 // requirement and dependency.
+//
+// parent: Exporter
+// child:
 type Emitter interface {
 	// EmitPeaks registers peak audio levels, as received by a Registry in an Exporter.
 	EmitPeaks(float64)

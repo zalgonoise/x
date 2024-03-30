@@ -14,6 +14,9 @@ import (
 // Be whatever the audio source it may be, the byte streamer should be valid audio encoded in a supported format. This is
 // the sole responsibility of the Consumer -- anything regarding the actual content of the byte streamer would fall on a
 // Processor's scope.
+//
+// parent:
+// child:
 type Consumer interface {
 	// Consume interacts with the audio source to extract its audio content or streamer as an io.Reader.
 	//

@@ -7,6 +7,9 @@ package audio
 //
 // Its Extract method is intended to be executed multiple times on each audio chunk received from a stream, and it is
 // configured with a Collector in mind.
+//
+// parent: Collector
+// child:
 type Extractor[T any] interface {
 	// Extract will analyze the audio chunk (as a slice of float64 values), optionally referring to the audio header's
 	// metadata, to extract a value of a given type.

@@ -35,6 +35,9 @@ type streamExporter struct {
 //
 // The resulting type is a simple struct embedding both interfaces, allowing access to all StreamExporter methods
 // with no alterations or method overloading involved.
+//
+// parent: wav.Stream
+// child:
 func NewStreamExporter(streamer Streamer, exporter Exporter) StreamExporter {
 	switch {
 	case streamer == nil && exporter == nil:
