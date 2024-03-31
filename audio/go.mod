@@ -5,6 +5,7 @@ go 1.22.0
 toolchain go1.22.1
 
 require (
+	github.com/blushft/go-diagrams v0.0.0-20201006005127-c78c821223d9
 	github.com/golangci/golangci-lint v1.55.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
@@ -13,8 +14,9 @@ require (
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/errs v0.0.0-20240329135848-0abdf366e924
-	github.com/zalgonoise/x/ptr v0.0.0-20240329135848-0abdf366e924
+	github.com/zalgonoise/x/cli v0.0.0-20240330010426-c66972528b61
+	github.com/zalgonoise/x/errs v0.0.0-20240330010426-c66972528b61
+	github.com/zalgonoise/x/ptr v0.0.0-20240330010426-c66972528b61
 )
 
 require (
@@ -36,6 +38,7 @@ require (
 	github.com/alingse/asasalint v0.0.11 // indirect
 	github.com/ashanbrown/forbidigo v1.6.0 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
+	github.com/awalterschulze/gographviz v2.0.3+incompatible // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bkielbasa/cyclop v1.2.1 // indirect
 	github.com/blizzy78/varnamelen v0.8.0 // indirect
@@ -82,6 +85,7 @@ require (
 	github.com/golangci/revgrep v0.5.2 // indirect
 	github.com/golangci/unconvert v0.0.0-20180507085042-28b1c447d1f4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20230610083614-0e73809eb601 // indirect
 	github.com/gostaticanalysis/analysisutil v0.7.1 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
@@ -184,6 +188,7 @@ require (
 	golang.org/x/exp v0.0.0-20230510235704-dd950f8aeaea // indirect
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/mod v0.13.0 // indirect
+	golang.org/x/net v0.22.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
