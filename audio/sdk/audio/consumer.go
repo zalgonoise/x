@@ -16,7 +16,7 @@ import (
 // Processor's scope.
 //
 // parent:
-// child:
+// child: Processor
 type Consumer interface {
 	// Consume interacts with the audio source to extract its audio content or streamer as an io.Reader.
 	//
