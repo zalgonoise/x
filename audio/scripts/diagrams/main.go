@@ -28,31 +28,31 @@ func ExecGenerate(_ context.Context, _ *slog.Logger, _ []string) (int, error) {
 	d, err := diagram.New(
 		diagram.Direction("LR"),
 		diagram.Filename("sdk"),
+		diagram.Label("Audio SDK components and workflow"),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	source := apps.Client.Client().Label("Audio source")
-	stream := oci.Database.Stream().Label("PCM Byte Stream")
+	stream := oci.Database.Stream().Label("PCM byte stream")
 
-	consumer := oci.Compute.Functions().Label("Consumer")
+	consumer := oci.Database.Dis().Label("Consumer")
 
 	src := diagram.NewGroup("source").Label("Source").
 		Add(source)
-	//Connect(source, stream).Connect(stream, consumer)
 
-	processor := oci.Compute.Functions().Label("Processor")
+	processor := oci.Database.DatabaseService().Label("Processor")
 
-	exporter := oci.Compute.Functions().Label("Exporter")
-	emitter := oci.Compute.Functions().Label("Emitter")
-	collector := oci.Compute.Functions().Label("Collector")
+	exporter := oci.Monitoring.Queue().Label("Exporter")
+	emitter := oci.Network.ServiceGateway().Label("Emitter")
+	collector := oci.Governance.Compartments().Label("Collector")
 
 	output := oci.Database.Stream().Label("Output format")
 
-	registry := oci.Compute.Functions().Label("Registry")
-	extractor := oci.Compute.Functions().Label("Extractor")
-	compactor := oci.Compute.Functions().Label("Compactor")
+	registry := oci.Governance.Ocid().Label("Registry")
+	extractor := oci.Database.Science().Label("Extractor")
+	compactor := oci.Storage.BlockStorage().Label("Compactor")
 
 	expMods := diagram.NewGroup("exp_modules").Label("Exporter modules").
 		Connect(emitter, collector, diagram.Bidirectional())
@@ -61,14 +61,17 @@ func ExecGenerate(_ context.Context, _ *slog.Logger, _ []string) (int, error) {
 		Connect(registry, extractor, diagram.Bidirectional()).
 		Connect(registry, compactor)
 
-	core := diagram.NewGroup("sdk_core").Label("Audio SDK").
+	core := diagram.NewGroup("sdk_core").Label("Audio SDK Core").
 		Connect(consumer, processor).
 		Connect(processor, exporter)
 
+	aSDK := diagram.NewGroup("sdk").Label("Audio SDK")
+	aSDK.Group(core)
+	aSDK.Group(expMods)
+	aSDK.Group(colMods)
+
 	d.Group(src)
-	d.Group(core)
-	d.Group(expMods)
-	d.Group(colMods)
+	d.Group(aSDK)
 	d.Connect(exporter, collector)
 	d.Connect(collector, extractor)
 	d.Connect(collector, registry)
