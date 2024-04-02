@@ -120,6 +120,7 @@ func generateEncoding() error {
 
 	wavChunk := diagram.NewGroup("chunk").Label("Data Chunk").
 		Add(chunkHeader, chunkConverter, chunkData)
+	wavChunk.Connect(chunkData, chunkConverter, diagram.Bidirectional())
 
 	junkHeader := oci.Governance.Audit().Label("Header")
 	junkData := oci.Storage.BlockStorage().Label("Data")
@@ -133,6 +134,13 @@ func generateEncoding() error {
 
 	wavRingChunk := diagram.NewGroup("ring_chunk").Label("Ring-buffer Data Chunk").
 		Add(ringHeader, ringConverter, ringData)
+	wavRingChunk.Connect(ringData, ringConverter, diagram.Bidirectional())
+
+	chunksType := oci.Governance.Compartments().Label("Data Chunk")
+	chunks := diagram.NewGroup("chunks").Label("Chunks").Add(chunksType)
+	chunks.Group(wavJunk)
+	chunks.Group(wavChunk)
+	chunks.Group(wavRingChunk)
 
 	conv8bit := oci.Database.DatabaseService().Label("8bit PCM")
 	conv16bit := oci.Database.DatabaseService().Label("16bit PCM")
@@ -158,20 +166,19 @@ func generateEncoding() error {
 
 	wavGroup.Group(wavEnc)
 	wavGroup.Group(wavIOGroup)
-	wavGroup.Connect(wavIO, wavChunks)
-	wavGroup.Connect(wavStreamIO, wavChunks)
-	wavGroup.Group(wavChunk)
-	wavGroup.Group(wavRingChunk)
-	wavGroup.Group(wavJunk)
-	wavGroup.Group(converterGroup)
-	wavGroup.Connect(chunkConverter, convPlaceholder)
-	wavGroup.Connect(ringConverter, convPlaceholder)
-	wavGroup.Connect(wavChunks, chunkData)
-	wavGroup.Connect(wavChunks, ringData)
-	wavGroup.Connect(wavChunks, junkData)
+	d.Connect(wavIO, wavChunks)
+	d.Connect(wavStreamIO, wavChunks)
+	d.Group(chunks)
+	d.Group(converterGroup)
+	d.Connect(chunkConverter, convPlaceholder)
+	d.Connect(ringConverter, convPlaceholder)
+	d.Connect(wavChunks, chunksType)
+	d.Connect(chunksType, chunkData)
+	d.Connect(chunksType, ringData)
+	d.Connect(chunksType, junkData)
 
 	client := apps.Client.Client().Label("Audio source")
-	clientGroup := diagram.NewGroup("client").Label("Source")
+	clientGroup := diagram.NewGroup("client").Label("Source").Add(client)
 
 	audioFile := oci.Storage.FileStorage().Label("Audio file or buffer")
 	audioStream := oci.Database.Stream().Label("Audio stream")
