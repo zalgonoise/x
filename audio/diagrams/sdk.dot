@@ -8,17 +8,17 @@ digraph root {
 	rankdir=LR;
 	ranksep=0.75;
 	splines=ortho;
-	flbtescg->hoxhawmc[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	guecaebq->cioyhcvn[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	eqpxbxtg->razlynbs[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	razlynbs->hvgfcnka[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	razlynbs->lyskttka[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	sgkztwml->flbtescg[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	hoxhawmc->ncqkcqej[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	ncqkcqej->eqpxbxtg[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	guecaebq->razlynbs[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lyskttka->hvgfcnka[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lyskttka->tikyenix[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	anccunsx->xvbrlzbd[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	anccunsx->rgvmunvu[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	oxlmoxob->cgtzpecf[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	cgtzpecf->qwmzxhzc[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	cphjihuy->yngcnpuh[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	jkumtuyq->anccunsx[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	eqwecpql->jkumtuyq[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	qwmzxhzc->eqwecpql[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	cphjihuy->anccunsx[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	rgvmunvu->xvbrlzbd[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	rgvmunvu->pgyoqdgb[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
 	subgraph cluster_sdk {
 	bgcolor="#E5F5FD";
 	fontcolor="#2D3436";
@@ -39,9 +39,9 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	hvgfcnka [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/science.png", imagescale=true, label=Extractor, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	lyskttka [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/ocid.png", imagescale=true, label=Registry, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	tikyenix [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/storage/block-storage.png", imagescale=true, label=Compactor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	pgyoqdgb [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/storage/block-storage.png", imagescale=true, label=Compactor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	rgvmunvu [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/ocid.png", imagescale=true, label=Registry, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	xvbrlzbd [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/science.png", imagescale=true, label=Extractor, labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
@@ -55,8 +55,8 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	guecaebq [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/network/service-gateway.png", imagescale=true, label=Emitter, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	razlynbs [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label=Collector, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	anccunsx [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label=Collector, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	cphjihuy [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/network/service-gateway.png", imagescale=true, label=Emitter, labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
@@ -70,9 +70,9 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	eqpxbxtg [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/monitoring/queue.png", imagescale=true, label=Exporter, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	hoxhawmc [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label=Consumer, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	ncqkcqej [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label=Processor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	eqwecpql [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label=Processor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	jkumtuyq [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/monitoring/queue.png", imagescale=true, label=Exporter, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	qwmzxhzc [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label=Consumer, labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
@@ -89,11 +89,11 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	sgkztwml [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/apps/client/client.png", imagescale=true, label="Audio source", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	oxlmoxob [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/apps/client/client.png", imagescale=true, label="Audio source", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
-	cioyhcvn [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="Output format", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	flbtescg [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="PCM byte stream", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	cgtzpecf [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="PCM byte stream", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	yngcnpuh [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="Output format", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }

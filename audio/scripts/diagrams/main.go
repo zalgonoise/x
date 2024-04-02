@@ -108,40 +108,40 @@ func generateEncoding() error {
 		return err
 	}
 
-	wavHeader := oci.Database.Stream().Label("Header")
-	wavChunks := oci.Database.Stream().Label("Data Chunks")
+	wavHeader := oci.Governance.Audit().Label("Header")
+	wavChunks := oci.Governance.Compartments().Label("Data Chunks")
 
 	wavEnc := diagram.NewGroup("wav").Label("WAV").
 		Add(wavHeader, wavChunks)
 
-	chunkHeader := oci.Database.Stream().Label("Header")
-	chunkData := oci.Database.Stream().Label("Data")
-	chunkConverter := oci.Database.Stream().Label("Converter")
+	chunkHeader := oci.Governance.Audit().Label("Header")
+	chunkData := oci.Storage.BlockStorage().Label("Data")
+	chunkConverter := oci.Database.Science().Label("Converter")
 
 	wavChunk := diagram.NewGroup("chunk").Label("Data Chunk").
 		Add(chunkHeader, chunkConverter, chunkData)
 
-	junkHeader := oci.Database.Stream().Label("Header")
-	junkData := oci.Database.Stream().Label("Data")
+	junkHeader := oci.Governance.Audit().Label("Header")
+	junkData := oci.Storage.BlockStorage().Label("Data")
 
 	wavJunk := diagram.NewGroup("junk").Label("Junk Chunk").
 		Add(junkHeader, junkData)
 
-	ringHeader := oci.Database.Stream().Label("Header")
-	ringData := oci.Database.Stream().Label("Data")
-	ringConverter := oci.Database.Stream().Label("Converter")
+	ringHeader := oci.Governance.Audit().Label("Header")
+	ringData := oci.Storage.BlockStorage().Label("Data")
+	ringConverter := oci.Database.Science().Label("Converter")
 
 	wavRingChunk := diagram.NewGroup("ring_chunk").Label("Ring-buffer Data Chunk").
 		Add(ringHeader, ringConverter, ringData)
 
-	conv8bit := oci.Database.Stream().Label("8bit PCM")
-	conv16bit := oci.Database.Stream().Label("16bit PCM")
-	conv24bit := oci.Database.Stream().Label("32bit PCM")
-	conv32bit := oci.Database.Stream().Label("64bit PCM")
-	conv32bitFloat := oci.Database.Stream().Label("32bit FPA")
-	conv64bitFloat := oci.Database.Stream().Label("64bit FPA")
+	conv8bit := oci.Database.DatabaseService().Label("8bit PCM")
+	conv16bit := oci.Database.DatabaseService().Label("16bit PCM")
+	conv24bit := oci.Database.DatabaseService().Label("32bit PCM")
+	conv32bit := oci.Database.DatabaseService().Label("64bit PCM")
+	conv32bitFloat := oci.Database.DatabaseService().Label("32bit FPA")
+	conv64bitFloat := oci.Database.DatabaseService().Label("64bit FPA")
 
-	convPlaceholder := oci.Database.Stream().Label("Raw Audio Data Converter")
+	convPlaceholder := oci.Database.Science().Label("Raw Audio Data Converter")
 	converters := diagram.NewGroup("conv").Label("Encodings").
 		Add(conv8bit, conv16bit, conv24bit, conv32bit, conv32bitFloat, conv64bitFloat)
 	converters.ConnectAllFrom(convPlaceholder.ID())
@@ -152,8 +152,8 @@ func generateEncoding() error {
 
 	wavGroup := diagram.NewGroup("wav_group").Label("WAV encoding")
 
-	wavIO := oci.Database.Stream().Label("WAV I/O")
-	wavStreamIO := oci.Database.Stream().Label("WAV Stream I/O")
+	wavIO := oci.Database.Dis().Label("WAV I/O")
+	wavStreamIO := oci.Database.Dis().Label("WAV Stream I/O")
 	wavIOGroup := diagram.NewGroup("wav_io").Label("I/O").Add(wavIO, wavStreamIO)
 
 	wavGroup.Group(wavEnc)
@@ -173,7 +173,7 @@ func generateEncoding() error {
 	client := apps.Client.Client().Label("Audio source")
 	clientGroup := diagram.NewGroup("client").Label("Source")
 
-	audioFile := oci.Database.Stream().Label("Audio file or buffer")
+	audioFile := oci.Storage.FileStorage().Label("Audio file or buffer")
 	audioStream := oci.Database.Stream().Label("Audio stream")
 
 	d.Group(wavGroup)
