@@ -5,18 +5,18 @@ go 1.22.0
 toolchain go1.22.1
 
 require (
-	github.com/blushft/go-diagrams v0.0.0-20201006005127-c78c821223d9
 	github.com/golangci/golangci-lint v1.55.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/prometheus/client_golang v1.19.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.1.0
+	github.com/zalgonoise/go-diagrams v0.0.0-20240402163748-679905331697
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240330010426-c66972528b61
-	github.com/zalgonoise/x/errs v0.0.0-20240330010426-c66972528b61
-	github.com/zalgonoise/x/ptr v0.0.0-20240330010426-c66972528b61
+	github.com/zalgonoise/x/cli v0.0.0-20240402162112-0065d6d132bc
+	github.com/zalgonoise/x/errs v0.0.0-20240402162112-0065d6d132bc
+	github.com/zalgonoise/x/ptr v0.0.0-20240402162112-0065d6d132bc
 )
 
 require (
@@ -162,7 +162,7 @@ require (
 	github.com/spf13/viper v1.12.0 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.1.1 // indirect
-	github.com/stretchr/objx v0.5.1 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
