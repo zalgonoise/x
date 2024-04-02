@@ -14,4 +14,5 @@ generate:
 	rm -rf ./diagrams && \
 		mkdir -p ./diagrams && \
 		go run ./scripts/diagrams generate && \
-		docker run --rm -ti -v ./diagrams:/diagrams -w /diagrams docker.io/zalgonoise/graphviz:ubuntu sh -c 'dot -Tpng sdk.dot > sdk.png'
+		docker run --rm -ti -v ./diagrams:/diagrams -w /diagrams docker.io/zalgonoise/graphviz:ubuntu sh -c \
+			'dot -Tpng sdk.dot > sdk.png; dot -Tpng encoding.dot > encoding.png'
