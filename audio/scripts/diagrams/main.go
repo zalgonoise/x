@@ -5,9 +5,9 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/blushft/go-diagrams/diagram"
-	"github.com/blushft/go-diagrams/nodes/apps"
-	"github.com/blushft/go-diagrams/nodes/oci"
+	"github.com/zalgonoise/go-diagrams/diagram"
+	"github.com/zalgonoise/go-diagrams/nodes/apps"
+	"github.com/zalgonoise/go-diagrams/nodes/oci"
 	"github.com/zalgonoise/x/cli"
 )
 
@@ -26,6 +26,7 @@ func main() {
 
 func ExecGenerate(_ context.Context, _ *slog.Logger, _ []string) (int, error) {
 	d, err := diagram.New(
+		diagram.BaseDir("diagrams"),
 		diagram.Direction("LR"),
 		diagram.Filename("sdk"),
 		diagram.Label("Audio SDK components and workflow"),
