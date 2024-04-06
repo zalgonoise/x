@@ -8,17 +8,17 @@ digraph root {
 	rankdir=LR;
 	ranksep=0.75;
 	splines=ortho;
-	ldoaywkp->htrresgj[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	kycmsabh->rupgvbto[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	jxctokui->wmrjmudu[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	wmrjmudu->cjruhgxw[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	wmrjmudu->hjgtycrp[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	urqiqbpw->ldoaywkp[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	htrresgj->ohpwqhja[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	ohpwqhja->jxctokui[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	kycmsabh->wmrjmudu[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	hjgtycrp->cjruhgxw[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	hjgtycrp->ydtgezgl[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	vubvsdun->mrofgunh[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	mrofgunh->drahekuh[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	mrofgunh->gpewtpqx[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	slqtffqn->fwfiaquu[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	fwfiaquu->jnnskhvl[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	ssdqqpvr->coeawjxe[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	ssdqqpvr->mrofgunh[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	gpewtpqx->pyndhobd[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	gpewtpqx->drahekuh[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	jnnskhvl->rlspbmcg[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	rlspbmcg->vubvsdun[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
 	subgraph cluster_sdk {
 	bgcolor="#E5F5FD";
 	fontcolor="#2D3436";
@@ -29,8 +29,8 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	subgraph cluster_col_modules {
-	bgcolor="#E5F5FD";
+	subgraph clustercol_modules {
+	bgcolor="#ECE8F6";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
@@ -39,14 +39,14 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	cjruhgxw [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/science.png", imagescale=true, label=Extractor, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	hjgtycrp [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/ocid.png", imagescale=true, label=Registry, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	ydtgezgl [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/storage/block-storage.png", imagescale=true, label=Compactor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	drahekuh [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/science.png", imagescale=true, label=Extractor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	gpewtpqx [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/ocid.png", imagescale=true, label=Registry, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	pyndhobd [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/storage/block-storage.png", imagescale=true, label=Compactor, labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
-	subgraph cluster_exp_modules {
-	bgcolor="#E5F5FD";
+	subgraph clusterexp_modules {
+	bgcolor="#ECE8F6";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
@@ -55,13 +55,13 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	kycmsabh [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/network/service-gateway.png", imagescale=true, label=Emitter, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	wmrjmudu [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label=Collector, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	mrofgunh [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label=Collector, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	ssdqqpvr [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/network/service-gateway.png", imagescale=true, label=Emitter, labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
-	subgraph cluster_sdk_core {
-	bgcolor="#E5F5FD";
+	subgraph clustersdk_core {
+	bgcolor="#EBF3E7";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
@@ -70,9 +70,9 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	htrresgj [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label=Consumer, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	jxctokui [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/monitoring/queue.png", imagescale=true, label=Exporter, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	ohpwqhja [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label=Processor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	jnnskhvl [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label=Consumer, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	rlspbmcg [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label=Processor, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	vubvsdun [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/monitoring/queue.png", imagescale=true, label=Exporter, labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
@@ -89,11 +89,11 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	urqiqbpw [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/apps/client/client.png", imagescale=true, label="Audio source", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	slqtffqn [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/apps/client/client.png", imagescale=true, label="Audio source", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
-	ldoaywkp [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="PCM byte stream", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	rupgvbto [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="Output format", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	coeawjxe [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="Output format", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	fwfiaquu [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="PCM byte stream", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
