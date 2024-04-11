@@ -36,6 +36,7 @@ func TestSawtoothUp(t *testing.T) {
 			chunk := wav.NewChunk(nil, 16, 1)
 
 			chunk.Generate(osc.SawtoothUpWave, testFreq, sampleRate, 500*time.Millisecond)
+
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}
@@ -87,6 +88,7 @@ func TestSawtoothDown(t *testing.T) {
 			chunk := wav.NewChunk(nil, 16, 1)
 
 			chunk.Generate(osc.SawtoothDownWave, testFreq, sampleRate, 500*time.Millisecond)
+
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}
@@ -185,7 +187,9 @@ func BenchmarkSawtoothCompare(b *testing.B) {
 							buffer[i] = sampleInt
 						}
 					}
+
 					b.ResetTimer()
+
 					for i := 0; i < b.N; i++ {
 						var (
 							halfPeriod = int(sampleRate / freq)

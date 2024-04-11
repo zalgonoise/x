@@ -36,6 +36,7 @@ func TestSquare(t *testing.T) {
 			chunk := wav.NewChunk(nil, 16, 1)
 
 			chunk.Generate(osc.SquareWave, testFreq, sampleRate, 500*time.Millisecond)
+
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}

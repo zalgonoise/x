@@ -36,6 +36,7 @@ func TestSine(t *testing.T) {
 			// generate wave
 			chunk := wav.NewChunk(nil, 16, 1)
 			chunk.Generate(osc.SineWave, testFreq, sampleRate, 750*time.Millisecond)
+
 			if len(chunk.Value()) == 0 {
 				t.Errorf("expected chunk data to be generated")
 			}
@@ -59,6 +60,7 @@ func TestSine(t *testing.T) {
 					testFreq, spectrum[0].Freq,
 				)
 			}
+
 			t.Log(chunk.Float()[:128])
 			t.Logf("got %dHz with magnitude %v", spectrum[0].Freq, spectrum[0].Mag)
 		})
