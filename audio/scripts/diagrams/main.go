@@ -10,6 +10,7 @@ import (
 	"github.com/zalgonoise/x/cli"
 )
 
+//nolint:gochecknoglobals // immutable, private set of supported modes
 var modes = []string{"generate"}
 
 func main() {
@@ -91,6 +92,7 @@ func generateSDK() error {
 	return nil
 }
 
+//nolint:funlen // diagram creation logic can be long, but is intertwined
 func generateEncoding() error {
 	d, err := diagram.New(
 		diagram.BaseDir("diagrams"),
