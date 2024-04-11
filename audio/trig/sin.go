@@ -70,6 +70,7 @@ func Sin(x float64) float64 {
 			j++
 			y++
 		}
+
 		j &= 7                               // octant modulo 2Pi radians (360 degrees)
 		z = ((x - y*PI4A) - y*PI4B) - y*PI4C // Extended precision modular arithmetic
 	}

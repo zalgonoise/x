@@ -27,6 +27,7 @@ func BenchmarkCos(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			resultA = Cos(input)
 		}
+
 		_ = resultA
 	})
 
@@ -34,6 +35,7 @@ func BenchmarkCos(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			resultB = math.Cos(input)
 		}
+
 		_ = resultB
 	})
 
@@ -46,6 +48,7 @@ func FuzzCos(f *testing.F) {
 	f.Fuzz(func(t *testing.T, a float64) {
 		resA := Cos(a)
 		resB := math.Cos(a)
+
 		if resA != resB {
 			t.Errorf("output mismatch error: A: %v ; B: %v", resA, resB)
 		}

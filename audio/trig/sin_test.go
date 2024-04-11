@@ -27,6 +27,7 @@ func BenchmarkSin(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			resultA = Sin(input)
 		}
+
 		_ = resultA
 	})
 
@@ -34,6 +35,7 @@ func BenchmarkSin(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			resultB = math.Sin(input)
 		}
+
 		_ = resultB
 	})
 
@@ -46,6 +48,7 @@ func FuzzSin(f *testing.F) {
 	f.Fuzz(func(t *testing.T, a float64) {
 		resA := Sin(a)
 		resB := math.Sin(a)
+
 		if resA != resB {
 			t.Errorf("output mismatch error: A: %v ; B: %v", resA, resB)
 		}
