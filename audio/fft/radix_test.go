@@ -83,9 +83,11 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 		)
 
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			outputA = fn(input)
 		}
+
 		_ = outputA
 	})
 
@@ -122,9 +124,11 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 		)
 
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			outputB = fn(input)
 		}
+
 		_ = outputB
 	})
 
@@ -160,9 +164,11 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 		)
 
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			outputC = fn(input)
 		}
+
 		_ = outputC
 	})
 	b.Run("Self/GetRadix2Factors/Original", func(b *testing.B) {
@@ -206,10 +212,13 @@ func BenchmarkGetRadix2Factors(b *testing.B) {
 				return radix2Factors[input_len]
 			}
 		)
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			outputD = fn(input)
 		}
+
 		_ = outputD
 	})
 

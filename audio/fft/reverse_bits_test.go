@@ -32,12 +32,14 @@ func BenchmarkReverseBits(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			outputA = fft.ReverseBits(input)
 		}
+
 		_ = outputA
 	})
 	b.Run("Self/WithSize", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			outputB = fft.ReverseFirstBits(input, amount)
 		}
+
 		_ = outputB
 	})
 	b.Run("GoDSPFFT", func(b *testing.B) {
@@ -88,6 +90,7 @@ func BenchmarkReorderData(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			spectrumA = fft.ReorderData(data)
 		}
+
 		_ = spectrumA
 	})
 

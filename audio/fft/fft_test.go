@@ -36,18 +36,23 @@ func BenchmarkHypotenuse(b *testing.B) {
 
 	b.Run("Simplified", func(b *testing.B) {
 		var out [4]float64
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			for idx := range complexData {
 				out[idx] = math.Hypot(real(complexData[idx]), imag(complexData[idx]))
 			}
 		}
+
 		_ = out
 	})
 
 	b.Run("Minimal", func(b *testing.B) {
 		var out [4]float64
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			for idx := range complexData {
 				re := real(complexData[idx])
@@ -55,12 +60,15 @@ func BenchmarkHypotenuse(b *testing.B) {
 				out[idx] = math.Sqrt(re*re + im*im)
 			}
 		}
+
 		_ = out
 	})
 
 	b.Run("Extended", func(b *testing.B) {
 		var out [4]float64
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			for idx := range complexData {
 				out[idx] = math.Sqrt(
@@ -69,6 +77,7 @@ func BenchmarkHypotenuse(b *testing.B) {
 				)
 			}
 		}
+
 		_ = out
 	})
 }
@@ -113,19 +122,23 @@ func BenchmarkFFT(b *testing.B) {
 
 	b.Run("Self/FFT", func(b *testing.B) {
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			spectrumA = fft.FFT(data)
 		}
 		b.StopTimer()
+
 		_ = spectrumA
 	})
 
 	b.Run("GoDSP/FFT", func(b *testing.B) {
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			spectrumB = dspfft.FFT(data)
 		}
 		b.StopTimer()
+
 		_ = spectrumB
 	})
 
@@ -203,6 +216,7 @@ func BenchmarkApply(b *testing.B) {
 
 	b.Run("2kSineFirstChunk", func(b *testing.B) {
 		var spectrum []fft.FrequencyPower
+
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {

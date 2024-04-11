@@ -235,6 +235,7 @@ func BenchmarkConv(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			c = goDSPToComplex(testSineWave)
 		}
+
 		_ = c
 	})
 	b.Run("Fast", func(b *testing.B) {
@@ -242,6 +243,7 @@ func BenchmarkConv(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			c = fft.ToComplex(testSineWave)
 		}
+
 		_ = c
 	})
 }
