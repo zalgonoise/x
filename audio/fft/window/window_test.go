@@ -112,6 +112,7 @@ func BenchmarkHann(b *testing.B) {
 
 			return
 		}
+
 		for i := range outA {
 			if outA[i] != outB[i] {
 				b.Errorf("output mismatch error: A: %v ; B: %v", outA[i], outB[i])
