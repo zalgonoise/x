@@ -4,13 +4,18 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/sdk/audio"
 	"github.com/zalgonoise/x/audio/sdk/audio/extractors"
 )
 
 const (
-	defaultDuration = time.Minute
-	numSeconds      = 60
+	defaultDuration    = time.Minute
+	defaultSampleRate  = 44100
+	defaultNumChannels = 2
+	defaultBitDepth    = 32
+
+	numSeconds = 60
 )
 
 type Config struct {
@@ -26,9 +31,9 @@ type Config struct {
 
 func defaultConfig() Config {
 	return Config{
-		sampleRate:  44100,
-		numChannels: 2,
-		bitDepth:    32,
+		sampleRate:  defaultSampleRate,
+		numChannels: defaultNumChannels,
+		bitDepth:    defaultBitDepth,
 		extractor:   extractors.MaxAbsPeak(),
 		maxDuration: defaultDuration,
 		threshold:   audio.NoOpThreshold[float64](),

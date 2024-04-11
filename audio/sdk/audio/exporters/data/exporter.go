@@ -7,15 +7,12 @@ import (
 	"sync/atomic"
 
 	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 )
 
 type exporter struct {
-	sampleRate  uint32
-	bitDepth    uint16
-	numChannels uint16
-
 	numSamples int64
 	maxSamples int64
 	recording  *atomic.Bool
@@ -45,6 +42,7 @@ func (e *exporter) Export(header audio.Header, data []float64) error {
 
 	return nil
 }
+
 func (e *exporter) ForceFlush() error {
 	if e.writer == nil {
 		return nil
@@ -54,6 +52,7 @@ func (e *exporter) ForceFlush() error {
 
 	return err
 }
+
 func (e *exporter) Shutdown(context.Context) error {
 	if e.writer == nil {
 		return nil
@@ -98,7 +97,6 @@ func NewDataExporter(writer io.Writer, options ...cfg.Option[Config]) (audio.Exp
 	config := cfg.Set(defaultConfig(), options...)
 
 	w, err := wav.New(config.sampleRate, config.bitDepth, config.numChannels, 1)
-
 	if err != nil {
 		return audio.NoOpExporter(), err
 	}
