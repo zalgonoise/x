@@ -132,13 +132,16 @@ func BenchmarkWav(b *testing.B) {
 					w   *wav.Wav
 					err error
 				)
+
 				b.ResetTimer()
+
 				for i := 0; i < b.N; i++ {
 					w, err = wav.Decode(tc.data)
 					if err != nil {
 						b.Error(err)
 					}
 				}
+
 				_ = w
 			},
 		)
@@ -147,9 +150,11 @@ func BenchmarkWav(b *testing.B) {
 				var buf []byte
 
 				b.ResetTimer()
+
 				for i := 0; i < b.N; i++ {
 					buf = loadedWav.Bytes()
 				}
+
 				_ = buf
 			},
 		)
@@ -160,15 +165,19 @@ func BenchmarkWav(b *testing.B) {
 					w   *wav.Wav
 					err error
 				)
+
 				b.ResetTimer()
+
 				for i := 0; i < b.N; i++ {
 					w = new(wav.Wav)
+
 					_, err = w.Write(tc.data)
 					if err != nil {
 						b.Error(err)
 						return
 					}
 				}
+
 				_ = w
 			},
 		)
@@ -178,14 +187,17 @@ func BenchmarkWav(b *testing.B) {
 				var buf []byte
 
 				b.ResetTimer()
+
 				for i := 0; i < b.N; i++ {
 					buf = make([]byte, len(tc.data))
+
 					_, err = loadedWav.Read(buf)
 					if err != nil {
 						b.Error(err)
 						return
 					}
 				}
+
 				_ = buf
 			},
 		)
@@ -462,6 +474,7 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 
 		b.Run("All", func(b *testing.B) {
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				// Write
 				if _, err = w.Write(test.data); err != nil {
@@ -482,6 +495,7 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 
 		b.Run("WriteRead", func(b *testing.B) {
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				// Write
 				if _, err = w.Write(test.data); err != nil {
@@ -499,6 +513,7 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 
 		b.Run("Write", func(b *testing.B) {
 			b.ResetTimer()
+
 			for i := 0; i < b.N; i++ {
 				// Write
 				if _, err = w.Write(test.data); err != nil {
@@ -511,6 +526,7 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 		b.Run("Read", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
+
 				w = new(wav.Wav)
 
 				// Write once

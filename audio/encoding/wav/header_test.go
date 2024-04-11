@@ -199,12 +199,14 @@ func BenchmarkHeader_ReadWrite(b *testing.B) {
 		out := make([]byte, wav.Size)
 
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			_, err := h.Read(out)
 			if err != nil {
 				b.Error(err)
 			}
 		}
+
 		_ = out
 	})
 
@@ -224,13 +226,16 @@ func BenchmarkHeader_ReadWrite(b *testing.B) {
 		}
 
 		h := new(wav.Header)
+
 		b.ResetTimer()
+
 		for i := 0; i < b.N; i++ {
 			_, err := h.Write(input)
 			if err != nil {
 				b.Error(err)
 			}
 		}
+
 		_ = h
 	})
 }
