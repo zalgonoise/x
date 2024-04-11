@@ -20,7 +20,7 @@ type writer struct {
 
 func (w *writer) Write(p []byte) (n int, err error) {
 	if w.w == nil {
-		if err = w.open(); err != nil {
+		if err := w.open(); err != nil {
 			return 0, err
 		}
 	}
