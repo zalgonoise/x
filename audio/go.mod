@@ -5,6 +5,7 @@ go 1.22.0
 toolchain go1.22.1
 
 require (
+	github.com/bombsimon/wsl/v4 v4.2.1
 	github.com/golangci/golangci-lint v1.57.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
@@ -14,9 +15,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240406135321-61c54f843619
-	github.com/zalgonoise/x/errs v0.0.0-20240406135321-61c54f843619
-	github.com/zalgonoise/x/ptr v0.0.0-20240406135321-61c54f843619
+	github.com/zalgonoise/x/cli v0.0.0-20240411175806-d4dc91daf0b3
+	github.com/zalgonoise/x/errs v0.0.0-20240411175806-d4dc91daf0b3
+	github.com/zalgonoise/x/ptr v0.0.0-20240411175806-d4dc91daf0b3
 )
 
 require (
@@ -42,7 +43,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bkielbasa/cyclop v1.2.1 // indirect
 	github.com/blizzy78/varnamelen v0.8.0 // indirect
-	github.com/bombsimon/wsl/v4 v4.2.1 // indirect
 	github.com/breml/bidichk v0.2.7 // indirect
 	github.com/breml/errchkjson v0.3.6 // indirect
 	github.com/butuzov/ireturn v0.3.0 // indirect
