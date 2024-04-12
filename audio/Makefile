@@ -1,6 +1,8 @@
 lint:
-	go run github.com/bombsimon/wsl/v4/cmd/wsl --fix ./...  2>&1; echo "exit code: $$?"
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
+
+fmt:
+	go run github.com/bombsimon/wsl/v4/cmd/wsl --fix ./...  2>&1; echo "exit code: $$?"
 
 test-unit: lint
 	mkdir -p reports/coverage
