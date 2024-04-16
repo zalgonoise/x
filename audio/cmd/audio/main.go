@@ -155,17 +155,17 @@ func newExporter(ctx context.Context, config *Config, logHandler slog.Handler) (
 	return exporter, nil
 }
 
-func newExporterOpts(config *Config, logHandler slog.Handler) []cfg.Option[*exporters.Config] {
-	return []cfg.Option[*exporters.Config]{
+func newExporterOpts(config *Config, logHandler slog.Handler) []cfg.Option[*exporters.StatsConfig] {
+	return []cfg.Option[*exporters.StatsConfig]{
 		exporters.WithLogHandler(logHandler),
 		newPeaksOpt(config),
 		newSpectrumOpt(config),
 	}
 }
 
-func newPeaksOpt(config *Config) cfg.Option[*exporters.Config] {
+func newPeaksOpt(config *Config) cfg.Option[*exporters.StatsConfig] {
 	if config.Mode == "spectrum" {
-		return cfg.NoOp[*exporters.Config]{}
+		return cfg.NoOp[*exporters.StatsConfig]{}
 	}
 
 	if config.Batch {
@@ -179,9 +179,9 @@ func newPeaksOpt(config *Config) cfg.Option[*exporters.Config] {
 	return exporters.WithPeaks()
 }
 
-func newSpectrumOpt(config *Config) cfg.Option[*exporters.Config] {
+func newSpectrumOpt(config *Config) cfg.Option[*exporters.StatsConfig] {
 	if config.Mode == "peaks" {
-		return cfg.NoOp[*exporters.Config]{}
+		return cfg.NoOp[*exporters.StatsConfig]{}
 	}
 
 	if config.Batch {
