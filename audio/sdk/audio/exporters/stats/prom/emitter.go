@@ -49,7 +49,7 @@ func (e emitter) Shutdown(ctx context.Context) error {
 	return e.server.Shutdown(ctx)
 }
 
-func ToProm(port int, options ...cfg.Option[*exporters.Config]) (audio.Exporter, error) {
+func ToProm(port int, options ...cfg.Option[*exporters.StatsConfig]) (audio.Exporter, error) {
 	e := emitter{
 		peaks: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: "audio",
@@ -70,7 +70,7 @@ func ToProm(port int, options ...cfg.Option[*exporters.Config]) (audio.Exporter,
 
 	e.server = newServer(port, reg)
 
-	return exporters.NewExporter(e, options...)
+	return exporters.NewStatsExporter(e, options...)
 }
 
 func newRegistry(exporter emitter) (*prometheus.Registry, error) {
