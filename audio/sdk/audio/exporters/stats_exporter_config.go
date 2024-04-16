@@ -14,13 +14,13 @@ const (
 	defaultBlockSize = 64
 )
 
-func DefaultConfig() *Config {
-	return &Config{
+func DefaultStatsConfig() *StatsConfig {
+	return &StatsConfig{
 		spectrumBlockSize: defaultBlockSize,
 	}
 }
 
-type Config struct {
+type StatsConfig struct {
 	withPeaks         bool
 	withSpectrum      bool
 	spectrumBlockSize int
@@ -34,8 +34,8 @@ type Config struct {
 	LogHandler slog.Handler
 }
 
-func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Option[*Config] {
-	return cfg.Register(func(config *Config) *Config {
+func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Option[*StatsConfig] {
+	return cfg.Register(func(config *StatsConfig) *StatsConfig {
 		config.withPeaks = true
 		config.batchedPeaks = true
 		config.batchedPeaksOptions = options
@@ -47,8 +47,8 @@ func WithBatchedPeaks(options ...cfg.Option[batchreg.Config[float64]]) cfg.Optio
 func WithBatchedSpectrum(
 	blockSize int,
 	options ...cfg.Option[batchreg.Config[[]fft.FrequencyPower]],
-) cfg.Option[*Config] {
-	return cfg.Register(func(config *Config) *Config {
+) cfg.Option[*StatsConfig] {
+	return cfg.Register(func(config *StatsConfig) *StatsConfig {
 		if blockSize < minBlockSize {
 			blockSize = defaultBlockSize
 		}
@@ -62,16 +62,16 @@ func WithBatchedSpectrum(
 	})
 }
 
-func WithPeaks() cfg.Option[*Config] {
-	return cfg.Register(func(config *Config) *Config {
+func WithPeaks() cfg.Option[*StatsConfig] {
+	return cfg.Register(func(config *StatsConfig) *StatsConfig {
 		config.withPeaks = true
 
 		return config
 	})
 }
 
-func WithSpectrum(blockSize int) cfg.Option[*Config] {
-	return cfg.Register(func(config *Config) *Config {
+func WithSpectrum(blockSize int) cfg.Option[*StatsConfig] {
+	return cfg.Register(func(config *StatsConfig) *StatsConfig {
 		config.withSpectrum = true
 
 		if blockSize < minBlockSize {
@@ -84,24 +84,24 @@ func WithSpectrum(blockSize int) cfg.Option[*Config] {
 	})
 }
 
-func WithLogger(logger *slog.Logger) cfg.Option[*Config] {
+func WithLogger(logger *slog.Logger) cfg.Option[*StatsConfig] {
 	if logger == nil {
-		return cfg.NoOp[*Config]{}
+		return cfg.NoOp[*StatsConfig]{}
 	}
 
-	return cfg.Register(func(config *Config) *Config {
+	return cfg.Register(func(config *StatsConfig) *StatsConfig {
 		config.LogHandler = logger.Handler()
 
 		return config
 	})
 }
 
-func WithLogHandler(h slog.Handler) cfg.Option[*Config] {
+func WithLogHandler(h slog.Handler) cfg.Option[*StatsConfig] {
 	if h == nil {
-		return cfg.NoOp[*Config]{}
+		return cfg.NoOp[*StatsConfig]{}
 	}
 
-	return cfg.Register(func(config *Config) *Config {
+	return cfg.Register(func(config *StatsConfig) *StatsConfig {
 		config.LogHandler = h
 
 		return config

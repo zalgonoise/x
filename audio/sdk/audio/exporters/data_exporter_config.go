@@ -1,4 +1,4 @@
-package data
+package exporters
 
 import (
 	"time"
@@ -18,7 +18,7 @@ const (
 	numSeconds = 60
 )
 
-type Config struct {
+type DataConfig struct {
 	sampleRate  uint32
 	numChannels uint16
 	bitDepth    uint16
@@ -29,8 +29,8 @@ type Config struct {
 	threshold   func(float64) bool
 }
 
-func defaultConfig() Config {
-	return Config{
+func defaultDataConfig() DataConfig {
+	return DataConfig{
 		sampleRate:  defaultSampleRate,
 		numChannels: defaultNumChannels,
 		bitDepth:    defaultBitDepth,
@@ -40,8 +40,8 @@ func defaultConfig() Config {
 	}
 }
 
-func AsWAV(sampleRate uint32, numChannels, bitDepth uint16) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func AsWAV(sampleRate uint32, numChannels, bitDepth uint16) cfg.Option[DataConfig] {
+	return cfg.Register(func(config DataConfig) DataConfig {
 		config.sampleRate = sampleRate
 		config.numChannels = numChannels
 		config.bitDepth = bitDepth
@@ -50,32 +50,32 @@ func AsWAV(sampleRate uint32, numChannels, bitDepth uint16) cfg.Option[Config] {
 	})
 }
 
-func WithDuration(dur time.Duration) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func WithDuration(dur time.Duration) cfg.Option[DataConfig] {
+	return cfg.Register(func(config DataConfig) DataConfig {
 		config.maxDuration = dur
 
 		return config
 	})
 }
 
-func WithMaxSamples(samples int64) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func WithMaxSamples(samples int64) cfg.Option[DataConfig] {
+	return cfg.Register(func(config DataConfig) DataConfig {
 		config.maxSamples = samples
 
 		return config
 	})
 }
 
-func WithExtractor(extractor audio.Extractor[float64]) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func WithExtractor(extractor audio.Extractor[float64]) cfg.Option[DataConfig] {
+	return cfg.Register(func(config DataConfig) DataConfig {
 		config.extractor = extractor
 
 		return config
 	})
 }
 
-func WithThreshold(threshold audio.Threshold[float64]) cfg.Option[Config] {
-	return cfg.Register(func(config Config) Config {
+func WithThreshold(threshold audio.Threshold[float64]) cfg.Option[DataConfig] {
+	return cfg.Register(func(config DataConfig) DataConfig {
 		config.threshold = threshold
 
 		return config

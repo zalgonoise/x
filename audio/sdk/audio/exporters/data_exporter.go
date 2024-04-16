@@ -1,4 +1,4 @@
-package data
+package exporters
 
 import (
 	"context"
@@ -7,12 +7,48 @@ import (
 	"sync/atomic"
 
 	"github.com/zalgonoise/cfg"
-
 	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/sdk/audio"
 )
 
-type exporter struct {
+func NewDataExporter(writer io.Writer, options ...cfg.Option[DataConfig]) (audio.Exporter, error) {
+	config := cfg.Set(defaultDataConfig(), options...)
+
+	w, err := wav.New(config.sampleRate, config.bitDepth, config.numChannels, 1)
+	if err != nil {
+		return audio.NoOpExporter(), err
+	}
+
+	var maxSamples int64
+
+	switch {
+	case config.maxDuration != 0 && config.maxSamples == 0:
+		maxSamples = int64(config.maxDuration.Seconds() * float64(config.sampleRate*uint32(config.numChannels)))
+	case config.maxDuration == defaultDuration && config.maxSamples != 0:
+		maxSamples = config.maxSamples
+	default:
+		maxSamples = numSeconds * int64(config.sampleRate*uint32(config.numChannels))
+	}
+
+	if config.extractor == nil {
+		config.extractor = audio.NoOpExtractor[float64]()
+	}
+
+	if config.threshold == nil {
+		config.threshold = audio.NoOpThreshold[float64]()
+	}
+
+	return &dataExporter{
+		buffer:     w,
+		writer:     writer,
+		maxSamples: maxSamples,
+		recording:  &atomic.Bool{},
+		extractor:  config.extractor,
+		threshold:  config.threshold,
+	}, nil
+}
+
+type dataExporter struct {
 	numSamples int64
 	maxSamples int64
 	recording  *atomic.Bool
@@ -23,7 +59,7 @@ type exporter struct {
 	threshold audio.Threshold[float64]
 }
 
-func (e *exporter) Export(header audio.Header, data []float64) error {
+func (e *dataExporter) Export(header audio.Header, data []float64) error {
 	value := e.extractor.Extract(header, data)
 
 	if e.threshold(value) {
@@ -43,7 +79,7 @@ func (e *exporter) Export(header audio.Header, data []float64) error {
 	return nil
 }
 
-func (e *exporter) ForceFlush() error {
+func (e *dataExporter) ForceFlush() error {
 	if e.writer == nil {
 		return nil
 	}
@@ -53,7 +89,7 @@ func (e *exporter) ForceFlush() error {
 	return err
 }
 
-func (e *exporter) Shutdown(context.Context) error {
+func (e *dataExporter) Shutdown(context.Context) error {
 	if e.writer == nil {
 		return nil
 	}
@@ -61,7 +97,7 @@ func (e *exporter) Shutdown(context.Context) error {
 	return e.close()
 }
 
-func (e *exporter) close() error {
+func (e *dataExporter) close() error {
 	if _, err := io.Copy(e.writer, e.buffer); err != nil {
 		var closeErr error
 
@@ -91,41 +127,4 @@ func (e *exporter) close() error {
 	}
 
 	return nil
-}
-
-func NewDataExporter(writer io.Writer, options ...cfg.Option[Config]) (audio.Exporter, error) {
-	config := cfg.Set(defaultConfig(), options...)
-
-	w, err := wav.New(config.sampleRate, config.bitDepth, config.numChannels, 1)
-	if err != nil {
-		return audio.NoOpExporter(), err
-	}
-
-	var maxSamples int64
-
-	switch {
-	case config.maxDuration != 0 && config.maxSamples == 0:
-		maxSamples = int64(config.maxDuration.Seconds() * float64(config.sampleRate*uint32(config.numChannels)))
-	case config.maxDuration == defaultDuration && config.maxSamples != 0:
-		maxSamples = config.maxSamples
-	default:
-		maxSamples = numSeconds * int64(config.sampleRate*uint32(config.numChannels))
-	}
-
-	if config.extractor == nil {
-		config.extractor = audio.NoOpExtractor[float64]()
-	}
-
-	if config.threshold == nil {
-		config.threshold = audio.NoOpThreshold[float64]()
-	}
-
-	return &exporter{
-		buffer:     w,
-		writer:     writer,
-		maxSamples: maxSamples,
-		recording:  &atomic.Bool{},
-		extractor:  config.extractor,
-		threshold:  config.threshold,
-	}, nil
 }
