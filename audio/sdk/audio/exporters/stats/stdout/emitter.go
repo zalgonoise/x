@@ -35,11 +35,11 @@ func (e emitter) Shutdown(context.Context) error {
 	return nil
 }
 
-func ToLogger(options ...cfg.Option[*exporters.Config]) (audio.Exporter, error) {
+func ToLogger(options ...cfg.Option[*exporters.StatsConfig]) (audio.Exporter, error) {
 	// re-use log handler from general exporter config
-	config := cfg.Set[*exporters.Config](exporters.DefaultConfig(), options...)
+	config := cfg.Set[*exporters.StatsConfig](exporters.DefaultStatsConfig(), options...)
 
-	return exporters.NewExporter(
+	return exporters.NewStatsExporter(
 		emitter{logger: slog.New(config.LogHandler)},
 		options...,
 	)
