@@ -7,6 +7,7 @@ toolchain go1.22.1
 require (
 	github.com/bombsimon/wsl/v4 v4.2.1
 	github.com/golangci/golangci-lint v1.57.2
+	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/prometheus/client_golang v1.19.0
@@ -15,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240411175806-d4dc91daf0b3
-	github.com/zalgonoise/x/errs v0.0.0-20240411175806-d4dc91daf0b3
-	github.com/zalgonoise/x/ptr v0.0.0-20240411175806-d4dc91daf0b3
+	github.com/zalgonoise/x/cli v0.0.0-20240416165019-3b9bf6c10bd7
+	github.com/zalgonoise/x/errs v0.0.0-20240416165019-3b9bf6c10bd7
+	github.com/zalgonoise/x/ptr v0.0.0-20240416165019-3b9bf6c10bd7
 )
 
 require (
@@ -83,7 +84,6 @@ require (
 	github.com/golangci/revgrep v0.5.2 // indirect
 	github.com/golangci/unconvert v0.0.0-20240309020433-c5143eacb3ed // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gordonklaus/ineffassign v0.1.0 // indirect
 	github.com/gostaticanalysis/analysisutil v0.7.1 // indirect
 	github.com/gostaticanalysis/comment v1.4.2 // indirect
