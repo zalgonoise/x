@@ -3,6 +3,8 @@ package audio
 import (
 	"context"
 	"log/slog"
+
+	"github.com/zalgonoise/x/audio/encoding/wav"
 )
 
 type loggedExporter struct {
@@ -21,7 +23,7 @@ type loggedExporter struct {
 // a Compactor.
 //
 // The returned error is a wrapped error of both peaks and spectrum Collector Collect method call, if raised.
-func (e loggedExporter) Export(h Header, data []float64) error { return e.e.Export(h, data) }
+func (e loggedExporter) Export(h *wav.Header, data []float64) error { return e.e.Export(h, data) }
 
 // ForceFlush implements the Exporter and StreamCloser interfaces.
 //

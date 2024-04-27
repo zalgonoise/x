@@ -1,5 +1,7 @@
 package audio
 
+import "github.com/zalgonoise/x/audio/encoding/wav"
+
 // Exporter is responsible for pushing the processed data into a certain destination.
 //
 // It is of the implementer's responsibility to comply with any requirements needed to export the audio,
@@ -26,7 +28,7 @@ type Exporter interface {
 	//
 	// The returned error from an Export call is related to an error raised when pushing the values or items to the
 	// target, or from any errors raised by the configured Collector types.
-	Export(header Header, data []float64) error
+	Export(header *wav.Header, data []float64) error
 	// StreamCloser defines common methods when interacting with a streaming module, targeting actions to either flush
 	// the module or to shut it down gracefully.
 	StreamCloser

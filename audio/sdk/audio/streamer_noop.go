@@ -3,6 +3,8 @@ package audio
 import (
 	"context"
 	"io"
+
+	"github.com/zalgonoise/x/audio/encoding/wav"
 )
 
 type noOpStreamer struct{}
@@ -27,7 +29,7 @@ func (noOpStreamExporter) Stream(context.Context, io.Reader, chan<- error) {}
 // Export implements the Exporter interface.
 //
 // This is a no-op call and the returned error is always nil.
-func (noOpStreamExporter) Export(Header, []float64) error { return nil }
+func (noOpStreamExporter) Export(*wav.Header, []float64) error { return nil }
 
 // ForceFlush implements the Exporter and StreamCloser interfaces.
 //

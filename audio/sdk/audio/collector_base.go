@@ -3,6 +3,8 @@ package audio
 import (
 	"context"
 	"errors"
+
+	"github.com/zalgonoise/x/audio/encoding/wav"
 )
 
 const (
@@ -20,7 +22,7 @@ type collector[T any] struct {
 //
 // Collect involves using the Collector's Extractor to retrieve meaningful data from the signal (of a given
 // data type) and passing this value to its Registry to store, cache or buffer it, for instance.
-func (c collector[T]) Collect(header Header, data []float64) error {
+func (c collector[T]) Collect(header *wav.Header, data []float64) error {
 	return c.registry.Register(c.extractor.Extract(header, data))
 }
 
