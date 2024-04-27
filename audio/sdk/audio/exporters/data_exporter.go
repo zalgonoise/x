@@ -59,7 +59,7 @@ type dataExporter struct {
 	threshold audio.Threshold[float64]
 }
 
-func (e *dataExporter) Export(header audio.Header, data []float64) error {
+func (e *dataExporter) Export(header *wav.Header, data []float64) error {
 	value := e.extractor.Extract(header, data)
 
 	if e.threshold(value) {
