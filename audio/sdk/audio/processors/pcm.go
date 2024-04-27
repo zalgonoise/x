@@ -16,12 +16,7 @@ func PCM(exporters []audio.Exporter, opts ...cfg.Option[wav.Config]) audio.Proce
 
 	return audio.NewProcessor(
 		audio.NewStreamExporter(
-			wav.NewStream(
-				func(h *wav.Header, data []float64) error {
-					return exporter.Export(h, data)
-				},
-				opts...,
-			),
+			wav.NewStream(exporter.Export, opts...),
 			exporter,
 		),
 	)
