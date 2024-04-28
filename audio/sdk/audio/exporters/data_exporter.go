@@ -59,8 +59,8 @@ type dataExporter struct {
 	threshold audio.Threshold[float64]
 }
 
-func (e *dataExporter) Export(header *wav.Header, data []float64) error {
-	value := e.extractor.Extract(header, data)
+func (e *dataExporter) Export(ctx context.Context, header *wav.Header, data []float64) error {
+	value := e.extractor.Extract(ctx, header, data)
 
 	if e.threshold(value) {
 		e.recording.Store(true)
