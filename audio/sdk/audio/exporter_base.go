@@ -42,10 +42,10 @@ type exporter struct {
 // a Compactor.
 //
 // The returned error is a wrapped error of both peaks and spectrum Collector Collect method call, if raised.
-func (e exporter) Export(h *wav.Header, data []float64) error {
+func (e exporter) Export(ctx context.Context, h *wav.Header, data []float64) error {
 	return errors.Join(
-		e.peaks.Collect(h, data),
-		e.spectrum.Collect(h, data),
+		e.peaks.Collect(ctx, h, data),
+		e.spectrum.Collect(ctx, h, data),
 	)
 }
 

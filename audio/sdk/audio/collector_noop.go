@@ -11,7 +11,7 @@ type noOpCollector[T any] struct{}
 // Collect implements the Collector interface.
 //
 // This is a no-op call and the returned error is always nil.
-func (noOpCollector[T]) Collect(*wav.Header, []float64) error { return nil }
+func (noOpCollector[T]) Collect(context.Context, *wav.Header, []float64) error { return nil }
 
 // Load implements the Collector and Loader interfaces.
 //

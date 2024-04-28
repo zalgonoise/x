@@ -1,6 +1,10 @@
 package audio
 
-import "github.com/zalgonoise/x/audio/encoding/wav"
+import (
+	"context"
+
+	"github.com/zalgonoise/x/audio/encoding/wav"
+)
 
 // Collector is a generic type that is able to parse incoming audio chunks to retrieve
 // meaningful information about the signal.
@@ -22,7 +26,7 @@ type Collector[T any] interface {
 	//
 	// Collect involves using the Collector's Extractor to retrieve meaningful data from the signal (of a given
 	// data type) and passing this value to its Registry to store, cache or buffer it, for instance.
-	Collect(header *wav.Header, data []float64) error
+	Collect(ctx context.Context, header *wav.Header, data []float64) error
 
 	// Loader returns a receive-only channel of a given type, that is used by the Exporter to retrieve processed data
 	// from a Collector. Depending on the configured Registry strategy, the Loader will provide data based off of that

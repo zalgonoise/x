@@ -1,6 +1,10 @@
 package audio
 
-import "github.com/zalgonoise/x/audio/encoding/wav"
+import (
+	"context"
+
+	"github.com/zalgonoise/x/audio/encoding/wav"
+)
 
 // Extractor is a generic interface for a type that implements the Extract method, which can return a value from
 // parsing an audio chunk.
@@ -20,7 +24,7 @@ type Extractor[T any] interface {
 	//
 	// Extract method is intended to be executed multiple times on each audio chunk received from a stream, and it is
 	// configured with a Collector in mind.
-	Extract(*wav.Header, []float64) T
+	Extract(context.Context, *wav.Header, []float64) T
 }
 
 // Extraction is a generic function type that serves as an audio processor function,
@@ -32,13 +36,13 @@ type Extractor[T any] interface {
 // The sole responsibility of an Extractor is to convert raw audio (as chunks of float64 values) into anything
 // meaningful, that is exported / handled separately. Not all Exporter will need one or more Extractor, however
 // these are supposed to be perceived as preset building blocks to work with the incoming audio chunks.
-type Extraction[T any] func(*wav.Header, []float64) T
+type Extraction[T any] func(context.Context, *wav.Header, []float64) T
 
 // Extract implements the Extractor interface.
 //
 // It will call itself as a function, using the input parameters as its arguments.
-func (e Extraction[T]) Extract(header *wav.Header, data []float64) T {
-	return e(header, data)
+func (e Extraction[T]) Extract(ctx context.Context, header *wav.Header, data []float64) T {
+	return e(ctx, header, data)
 }
 
 // Threshold evaluates a given input value and determines whether it crosses a certain limit or threshold,

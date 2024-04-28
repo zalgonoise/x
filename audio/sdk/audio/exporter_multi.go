@@ -17,11 +17,11 @@ type multiExporter struct {
 // from the Export call.
 //
 // This call is both blocking and sequential, as all Exporters are iterated through.
-func (m multiExporter) Export(header *wav.Header, data []float64) error {
+func (m multiExporter) Export(ctx context.Context, header *wav.Header, data []float64) error {
 	errs := make([]error, 0, len(m.exporters))
 
 	for i := range m.exporters {
-		if err := m.exporters[i].Export(header, data); err != nil {
+		if err := m.exporters[i].Export(ctx, header, data); err != nil {
 			errs = append(errs, err)
 		}
 	}

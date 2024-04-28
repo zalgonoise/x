@@ -11,7 +11,7 @@ type noOpExporter struct{}
 // Export implements the Exporter interface.
 //
 // This is a no-op call and the returned error is always nil.
-func (noOpExporter) Export(*wav.Header, []float64) error { return nil }
+func (noOpExporter) Export(context.Context, *wav.Header, []float64) error { return nil }
 
 // ForceFlush implements the Exporter and StreamCloser interfaces.
 //

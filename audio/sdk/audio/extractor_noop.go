@@ -1,11 +1,15 @@
 package audio
 
-import "github.com/zalgonoise/x/audio/encoding/wav"
+import (
+	"context"
+
+	"github.com/zalgonoise/x/audio/encoding/wav"
+)
 
 // NoOpExtractor returns an Extractor for a given type, that does not perform any operations on the input values,
 // and only returns zero values for a given type.
 func NoOpExtractor[T any]() Extractor[T] {
-	return Extraction[T](func(header *wav.Header, float64s []float64) T {
+	return Extraction[T](func(ctx context.Context, header *wav.Header, float64s []float64) T {
 		return *new(T)
 	})
 }
