@@ -16,7 +16,7 @@ func PCM(exporters []audio.Exporter, opts ...cfg.Option[wav.Config]) audio.Proce
 
 	return audio.NewProcessor(
 		audio.NewStreamExporter(
-			wav.NewStream(exporter.Export, opts...),
+			wav.NewStreamContext(exporter.Export, opts...),
 			exporter,
 		),
 	)
