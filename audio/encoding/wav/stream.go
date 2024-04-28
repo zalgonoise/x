@@ -43,7 +43,7 @@ type Stream struct {
 	*Wav
 
 	Size int
-	proc ProcessFunc
+	proc ProcessContextFunc
 
 	cfg Config
 }
@@ -52,6 +52,20 @@ type Stream struct {
 //
 // The size is in bytes and can be calculated through one of the available *ToBufferSize functions.
 func NewStream(proc ProcessFunc, opts ...cfg.Option[Config]) *Stream {
+	config := cfg.New(opts...)
+
+	return &Stream{
+		Wav:  new(Wav),
+		cfg:  config,
+		proc: processFuncWithContext(proc),
+	}
+}
+
+// NewStreamContext creates a Stream with a certain StreamConfig `cfg` and context-based
+// processor function `proc`.
+//
+// The size is in bytes and can be calculated through one of the available *ToBufferSize functions.
+func NewStreamContext(proc ProcessContextFunc, opts ...cfg.Option[Config]) *Stream {
 	config := cfg.New(opts...)
 
 	return &Stream{
@@ -66,7 +80,7 @@ func NewStream(proc ProcessFunc, opts ...cfg.Option[Config]) *Stream {
 // Any errors raised either during reading the data or processing it are piped to the input
 // errors channel `errCh`.
 func (w *Stream) Stream(ctx context.Context, r io.Reader, errCh chan<- error) {
-	w.proc = ErrorPipe(w.proc, errCh)
+	w.proc = ErrorPipeContext(w.proc, errCh)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -148,6 +162,8 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 	// correct Stream.Size if it is off with the bit-depth in the signal
 	w.checkSize()
 
+	ctx := WithID(context.Background())
+
 	for w.Data == nil {
 		h := new(data.Header)
 
@@ -158,7 +174,7 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 		n += num
 
 		chunk := NewRingChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
-			return w.proc(w.Header, data)
+			return w.proc(ctx, w.Header, data)
 		})
 
 		w.Chunks = append(w.Chunks, chunk)
@@ -248,6 +264,7 @@ func (w *Stream) decodeNewSubChunk(n int) (int, error) {
 		err            error
 		subchunk       *data.Header
 		subchunkBuffer = make([]byte, data.Size)
+		ctx            = WithID(context.Background())
 	)
 
 	if _, err = w.buf.Read(subchunkBuffer); err != nil {
@@ -258,7 +275,7 @@ func (w *Stream) decodeNewSubChunk(n int) (int, error) {
 		n += data.Size
 
 		chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
-			return w.proc(w.Header, data)
+			return w.proc(ctx, w.Header, data)
 		})
 
 		if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
