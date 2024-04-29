@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
+	"github.com/zalgonoise/x/audio/sdk/audio/exporters/database"
 
 	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/fft"
@@ -66,17 +67,29 @@ func run() (int, error) {
 		return 1, err
 	}
 
-	logger.InfoContext(ctx, "setting up exporter")
+	logger.InfoContext(ctx, "setting up exporters")
 
-	exporter, err := newExporter(ctx, config, logHandler)
+	var exp = make([]audio.Exporter, 0, 2)
+
+	stats, err := newStatsExporter(ctx, config, logHandler)
 	if err != nil {
 		return 1, err
 	}
 
+	exp = append(exp, stats)
+
+	if config.StorageURI != "" {
+		data, err := newDataExporter(ctx, config, logHandler)
+		if err != nil {
+			return 1, err
+		}
+
+		exp = append(exp, data)
+	}
+
 	logger.InfoContext(ctx, "setting up processor")
 
-	proc := processors.PCM(
-		[]audio.Exporter{exporter},
+	proc := processors.PCM(exp,
 		wav.WithSize(config.BufferSize),
 		wav.WithDuration(config.BufferDur),
 		wav.WithRatio(config.BufferRatio),
@@ -122,7 +135,17 @@ func run() (int, error) {
 	}
 }
 
-func newExporter(ctx context.Context, config *Config, logHandler slog.Handler) (audio.Exporter, error) {
+func newDataExporter(_ context.Context, config *Config, logHandler slog.Handler) (audio.Exporter, error) {
+	logger := slog.New(logHandler)
+	db, err := database.OpenSQLite(config.StorageURI, database.ReadWritePragmas(), logger)
+	if err != nil {
+		return audio.NoOpExporter(), err
+	}
+
+	return exporters.NewSQLiteExporter(database.NewRepository(db), exporters.WithFlushSize(config.StorageFlushSize))
+}
+
+func newStatsExporter(ctx context.Context, config *Config, logHandler slog.Handler) (audio.Exporter, error) {
 	var (
 		logger       = slog.New(logHandler)
 		exporterOpts = newExporterOpts(config, logHandler)
