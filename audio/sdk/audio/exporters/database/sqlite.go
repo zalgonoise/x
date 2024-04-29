@@ -44,7 +44,6 @@ CREATE TABLE chunks (
     header_id TEXT REFERENCES headers (uuid) NOT NULL,
     timestamp INTEGER NOT NULL,
     
-    subchunk_2_id BLOB NOT NULL,
     subchunk_data BLOB
 ) STRICT;
 `
