@@ -6,40 +6,137 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/zalgonoise/cfg"
-	"github.com/zalgonoise/x/audio/encoding/wav/data"
+	"github.com/zalgonoise/x/audio/encoding/wav"
+	"github.com/zalgonoise/x/audio/encoding/wav/data/conv"
 	"github.com/zalgonoise/x/audio/sdk/audio"
+	"github.com/zalgonoise/x/audio/sdk/audio/exporters/data"
+	"github.com/zalgonoise/x/errs"
+)
+
+const (
+	errDomain = errs.Domain("x/audio/sdk/audio/exporters")
+
+	ErrUnsupported = errs.Kind("unsupported")
+
+	ErrFormat = errs.Entity("audio format")
+)
+
+var (
+	ErrUnsupportedFormat = errs.WithDomain(errDomain, ErrUnsupported, ErrFormat)
 )
 
 type Repository interface {
-	Save(id string, header audio.Header, data []byte) error
+	Save(ctx context.Context, id string, header *wav.Header, data []byte) (string, error)
 }
 
-func NewSQLiteExporter(db Repository, options ...cfg.Option[SQLiteConfig]) (audio.Exporter, error) {
-	// TODO:
+type Converter interface {
+	Bytes(buf []float64) []byte
+}
 
-	return nil, nil
+const (
+	defaultSize = 1 << 24
+
+	bitDepth8  uint16 = 8
+	bitDepth16 uint16 = 16
+	bitDepth24 uint16 = 24
+	bitDepth32 uint16 = 32
+	bitDepth64 uint16 = 64
+)
+
+func NewSQLiteExporter(db Repository, options ...cfg.Option[SQLiteConfig]) (audio.Exporter, error) {
+	config := cfg.Set(defaultConfig(), options...)
+
+	e := &sqliteExporter{
+		recordID: &atomic.Pointer[string]{},
+		repo:     db,
+	}
+
+	e.flusher = data.NewFlusher(
+		config.size,
+		func(id string, h *wav.Header, data []byte) error {
+			id, err := e.repo.Save(context.Background(), id, h, data)
+			if err != nil {
+				return err
+			}
+
+			e.recordID.Store(&id)
+
+			return nil
+		})
+
+	return e, nil
 }
 
 type sqliteExporter struct {
-	recording *atomic.Bool
+	recordID *atomic.Pointer[string]
+	flusher  *data.Flusher
 
-	converter data.Converter
+	converter Converter
 	repo      Repository
-	extractor audio.Extractor[float64]
-	threshold audio.Threshold[float64]
 }
 
-func (e *sqliteExporter) Export(header audio.Header, data []float64) error {
-	// TODO: is the converter set once the first audio chunk comes in?
+func (e *sqliteExporter) Export(ctx context.Context, header *wav.Header, data []float64) error {
+	id := e.recordID.Load()
+	recID, ok := wav.GetID(ctx)
+	if !ok {
+		recID = uuid.New().String()
+	}
 
-	// TODO: we may want to buffer a chunk of audio data before flushing it all at once into a row's bytes blob
-	//   then, ForceFlush is also responsible for flushing the remaining bytes into the database if they exist.
+	_ = e.recordID.CompareAndSwap(id, &recID)
 
-	return e.repo.Save(uuid.New().String(), header, e.converter.Bytes(data))
+	if e.converter == nil {
+		var err error
+
+		e.converter, err = converterFrom(header)
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err := e.flusher.Write(recID, header, e.converter.Bytes(data))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func converterFrom(h *wav.Header) (Converter, error) {
+	switch h.AudioFormat {
+	case wav.UnsetFormat, wav.PCMFormat:
+		switch h.BitsPerSample {
+		case bitDepth8:
+			return conv.PCM8Bit{}, nil
+		case bitDepth16:
+			return conv.PCM16Bit{}, nil
+		case bitDepth24:
+			return conv.PCM24Bit{}, nil
+		case bitDepth32:
+			return conv.PCM32Bit{}, nil
+		default:
+			return nil, ErrUnsupportedFormat
+		}
+	case wav.FloatFormat:
+		switch h.BitsPerSample {
+		case bitDepth32:
+			return conv.Float32{}, nil
+		case bitDepth64:
+			return conv.Float64{}, nil
+		default:
+			return nil, ErrUnsupportedFormat
+		}
+	}
+
+	return nil, ErrUnsupportedFormat
 }
 
 func (e *sqliteExporter) ForceFlush() error {
-	return nil
+	id := e.recordID.Load()
+	if id == nil {
+		return nil
+	}
+
+	return e.flusher.FlushIfFull(*id, nil)
 }
 
 func (e *sqliteExporter) Shutdown(ctx context.Context) error {
