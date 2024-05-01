@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+
+	_ "modernc.org/sqlite"
 )
 
 const (
 	sqlDriver = "sqlite3"
-	maxAlloc  = 5_000_000
 
 	uriFormat = "file:%s?_readonly=true&_txlock=immediate&cache=shared"
 	inMemory  = ":memory:"

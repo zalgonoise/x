@@ -25,11 +25,11 @@ INSERT INTO headers (
 
 	queryInsertChunk = `
 	INSERT INTO chunks (
-	uuid, header_id, timestamp,
-	subchunk_2_id, subchunk_data
+	 header_id, uuid, timestamp,
+	subchunk_data
 ) VALUES (
 	?, ?, ?,
-	?, ?
+	?
 );
 `
 
@@ -58,7 +58,7 @@ func (r *Repository) Save(ctx context.Context, id string, header *wav.Header, da
 }
 
 func insertAudioData(ctx context.Context, db *sql.DB, id string, data []byte) error {
-	res, err := db.ExecContext(ctx, queryInsertChunk, id, uuid.New().String(), time.Now(), data)
+	res, err := db.ExecContext(ctx, queryInsertChunk, id, uuid.New().String(), time.Now().UnixMilli(), data)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func getOrCreateUUID(ctx context.Context, db *sql.DB, id string, header *wav.Hea
 	row := db.QueryRowContext(ctx, querySelectHeaderWhereID, id)
 	if err := row.Scan(&dbID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return createHeader(ctx, db, header)
+			return createHeader(ctx, db, id, header)
 		}
 
 		return "", err
@@ -90,11 +90,9 @@ func getOrCreateUUID(ctx context.Context, db *sql.DB, id string, header *wav.Hea
 	return dbID, nil
 }
 
-func createHeader(ctx context.Context, db *sql.DB, header *wav.Header) (string, error) {
-	id := uuid.New().String()
-
+func createHeader(ctx context.Context, db *sql.DB, id string, header *wav.Header) (string, error) {
 	res, err := db.ExecContext(ctx, queryInsertHeader,
-		id, time.Now(), header.ChunkID[:],
+		id, time.Now().UnixMilli(), header.ChunkID[:],
 		int64(header.ChunkSize), header.Format[:], header.Subchunk1ID[:], int64(header.Subchunk1Size),
 		int64(header.AudioFormat), int64(header.NumChannels), int64(header.SampleRate),
 		int64(header.SampleRate), int64(header.ByteRate), int64(header.BlockAlign), int64(header.BitsPerSample),
