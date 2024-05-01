@@ -1,24 +1,31 @@
 package exporters
 
-import "github.com/zalgonoise/cfg"
+import (
+	"time"
+
+	"github.com/zalgonoise/cfg"
+)
 
 type SQLiteConfig struct {
-	size int
+	dur time.Duration
 }
 
 func defaultConfig() SQLiteConfig {
-	return SQLiteConfig{size: defaultSize}
+	return SQLiteConfig{dur: defaultDur}
 }
 
-const minSize = 1 << 12
+const (
+	minDur     = 5 * time.Second
+	defaultDur = time.Minute
+)
 
-func WithFlushSize(size int) cfg.Option[SQLiteConfig] {
-	if size < minSize {
+func WithFlushDuration(dur time.Duration) cfg.Option[SQLiteConfig] {
+	if dur < minDur {
 		return cfg.NoOp[SQLiteConfig]{}
 	}
 
 	return cfg.Register[SQLiteConfig](func(config SQLiteConfig) SQLiteConfig {
-		config.size = size
+		config.dur = dur
 
 		return config
 	})

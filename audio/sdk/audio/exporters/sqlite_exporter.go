@@ -34,8 +34,6 @@ type Converter interface {
 }
 
 const (
-	defaultSize = 1 << 24
-
 	bitDepth8  uint16 = 8
 	bitDepth16 uint16 = 16
 	bitDepth24 uint16 = 24
@@ -52,7 +50,7 @@ func NewSQLiteExporter(db Repository, options ...cfg.Option[SQLiteConfig]) (audi
 	}
 
 	e.flusher = data.NewFlusher(
-		config.size,
+		config.dur,
 		func(id string, h *wav.Header, data []byte) error {
 			id, err := e.repo.Save(context.Background(), id, h, data)
 			if err != nil {
