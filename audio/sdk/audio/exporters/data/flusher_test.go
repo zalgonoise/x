@@ -16,7 +16,6 @@ func TestFlusher(t *testing.T) {
 
 	for _, testcase := range []struct {
 		name      string
-		size      int
 		outSize   int
 		data      []byte
 		numWrites int
@@ -24,7 +23,6 @@ func TestFlusher(t *testing.T) {
 	}{
 		{
 			name:      "Success/Small",
-			size:      10,
 			outSize:   20,
 			data:      []byte("gold!"),
 			numWrites: 1,
@@ -32,7 +30,6 @@ func TestFlusher(t *testing.T) {
 		},
 		{
 			name:      "Success/FilledOnce",
-			size:      10,
 			outSize:   20,
 			data:      []byte("gold!"),
 			numWrites: 2,
@@ -40,7 +37,6 @@ func TestFlusher(t *testing.T) {
 		},
 		{
 			name:      "Success/DoubleRun",
-			size:      10,
 			outSize:   20,
 			data:      []byte("gold!"),
 			numWrites: 5,
@@ -49,12 +45,15 @@ func TestFlusher(t *testing.T) {
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			output := make([]byte, 0, testcase.outSize)
-			f := NewFlusher(testcase.size, func(id string, _ *wav.Header, data []byte) error {
+			f := NewFlusher(10, func(id string, _ *wav.Header, data []byte) error {
 				t.Log(id)
 				output = append(output, data...)
 
 				return nil
 			})
+
+			f.cap = 10
+			f.data = make([]byte, 10)
 
 			for i := 0; i < testcase.numWrites; i++ {
 				_, err = f.Write(id, h, testcase.data)
