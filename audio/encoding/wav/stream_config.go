@@ -11,6 +11,8 @@ type Config struct {
 	size  int
 	dur   time.Duration
 	ratio float64
+
+	hook HookContextFunc
 }
 
 // WithSize defines a concrete value for the Stream's buffer size (in bytes).
@@ -48,6 +50,18 @@ func WithRatio(ratio float64) cfg.Option[Config] {
 
 	return cfg.Register(func(config Config) Config {
 		config.ratio = ratio
+
+		return config
+	})
+}
+
+func WithHook(fn HookContextFunc) cfg.Option[Config] {
+	if fn == nil {
+		return cfg.NoOp[Config]{}
+	}
+
+	return cfg.Register[Config](func(config Config) Config {
+		config.hook = fn
 
 		return config
 	})

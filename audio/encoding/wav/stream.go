@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
-
 	"github.com/zalgonoise/x/audio/encoding/wav/data"
 )
 
@@ -181,6 +180,10 @@ func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 
 		if chunk.BitDepth() > 0 {
 			w.Data = chunk
+		}
+
+		if w.cfg.hook != nil {
+			r = NewReaderContextHook(ctx, w.Header, r, w.cfg.hook)
 		}
 
 		if num, err = chunk.ReadFrom(r); err != nil {
