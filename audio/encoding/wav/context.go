@@ -29,3 +29,13 @@ func GetID(ctx context.Context) (string, bool) {
 
 	return "", false
 }
+
+func GetOrCreateID(ctx context.Context) string {
+	if idValue := ctx.Value(ContextStreamID); idValue != nil {
+		if id, ok := idValue.(string); ok {
+			return id
+		}
+	}
+
+	return uuid.New().String()
+}
