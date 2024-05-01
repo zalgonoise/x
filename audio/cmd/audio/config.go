@@ -37,19 +37,17 @@ var (
 )
 
 const (
-	minBucketSize           = 8
-	defaultBucketSize       = 64
-	minBatchSize            = 8
-	defaultBatchSize        = 64
-	minBatchFrequency       = 20 * time.Millisecond
-	maxBatchFrequency       = 5 * time.Minute
-	defaultBatchFrequency   = 200 * time.Millisecond
-	minDuration             = 15 * time.Second
-	maxDuration             = 365 * 24 * time.Hour
-	defaultDuration         = 4 * time.Hour
-	minStorageFlushSize     = 1 << 12
-	defaultStorageFlushSize = 1 << 24
-	defaultPort             = 13088
+	minBucketSize         = 8
+	defaultBucketSize     = 64
+	minBatchSize          = 8
+	defaultBatchSize      = 64
+	minBatchFrequency     = 20 * time.Millisecond
+	maxBatchFrequency     = 5 * time.Minute
+	defaultBatchFrequency = 200 * time.Millisecond
+	minDuration           = 15 * time.Second
+	maxDuration           = 365 * 24 * time.Hour
+	defaultDuration       = 4 * time.Hour
+	defaultPort           = 13088
 
 	urlSchemeHTTP  = "http"
 	urlSchemeHTTPS = "https"
@@ -114,8 +112,7 @@ type Config struct {
 	// ExitCode forces a custom exit code on the processor when done or errored
 	ExitCode int `envconfig:"X_AUDIO_EXIT_CODE"`
 
-	StorageURI       string `envconfig:"X_AUDIO_SQLITE_URI"`
-	StorageFlushSize int    `envconfig:"X_AUDIO_SQLITE_FLUSH_SIZE"`
+	StorageURI string `envconfig:"X_AUDIO_SQLITE_URI"`
 }
 
 func NewConfig() (*Config, error) {
@@ -164,27 +161,25 @@ func newFlagsConfig() *Config {
 	exitCode := flag.Int("exit", 0, "")
 
 	storageURI := flag.String("db.uri", "", "path to the SQLite instance to persist audio data")
-	storageFlushSize := flag.Int("db.flush-size", 0, "size of the buffer to flush to the DB, when full")
 
 	flag.Parse()
 
 	config := &Config{
-		BufferSize:       *bufferSize,
-		BufferDur:        *bufferDur,
-		BufferRatio:      *bufferRatio,
-		Input:            *input,
-		OutputType:       *outputType,
-		Output:           *output,
-		Mode:             *mode,
-		BucketSize:       *bucketSize,
-		Batch:            *batch,
-		BatchSize:        *batchSize,
-		BatchFrequency:   *batchFrequency,
-		BatchCompactor:   *batchCompactor,
-		Duration:         *duration,
-		ExitCode:         *exitCode,
-		StorageURI:       *storageURI,
-		StorageFlushSize: *storageFlushSize,
+		BufferSize:     *bufferSize,
+		BufferDur:      *bufferDur,
+		BufferRatio:    *bufferRatio,
+		Input:          *input,
+		OutputType:     *outputType,
+		Output:         *output,
+		Mode:           *mode,
+		BucketSize:     *bucketSize,
+		Batch:          *batch,
+		BatchSize:      *batchSize,
+		BatchFrequency: *batchFrequency,
+		BatchCompactor: *batchCompactor,
+		Duration:       *duration,
+		ExitCode:       *exitCode,
+		StorageURI:     *storageURI,
 	}
 
 	if *config == emptyConfig {
@@ -264,10 +259,6 @@ func merge(base, input *Config) *Config {
 		base.StorageURI = input.StorageURI
 	}
 
-	if input.StorageFlushSize > 0 {
-		base.StorageFlushSize = input.StorageFlushSize
-	}
-
 	return base
 }
 
@@ -339,10 +330,6 @@ func validate(config *Config) error {
 	// validate runtime duration
 	if config.Duration < minDuration || config.Duration > maxDuration {
 		config.Duration = defaultDuration
-	}
-
-	if config.StorageFlushSize < minStorageFlushSize {
-		config.StorageFlushSize = defaultStorageFlushSize
 	}
 
 	return nil
