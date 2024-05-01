@@ -80,7 +80,8 @@ func (p *processor) ForceFlush() error {
 // It allows a graceful shutdown of the Processor. It starts by stopping its runtime, and then gracefully shutting down
 // the configured Exporter (or, StreamExporter).
 func (p *processor) Shutdown(ctx context.Context) error {
-	defer close(p.errCh)
+	//TODO: why does it panic on closing a closed channel? Double-shutdown where?
+	// defer close(p.errCh)
 	p.cancel()
 
 	return p.streamExporter.Shutdown(ctx)
