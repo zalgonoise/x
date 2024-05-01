@@ -17,6 +17,8 @@ services:
       - X_AUDIO_BATCH_FREQUENCY=200ms
     env_file:
       - "./.env"
+    volumes:
+      - "./local:/local"
     ports:
       - "13088:13088"
     networks:
