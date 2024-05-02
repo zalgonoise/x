@@ -15,11 +15,14 @@ type ReaderHook struct {
 }
 
 func (r ReaderHook) Read(p []byte) (n int, err error) {
-	if err = r.fn(r.h, p); err != nil {
-		return 0, err
+	n, err = r.Reader.Read(p)
+	if err != nil {
+		return n, err
 	}
 
-	return r.Reader.Read(p)
+	err = r.fn(r.h, p)
+
+	return n, err
 }
 
 func NewReaderHook(h *Header, r io.Reader, fn HookFunc) ReaderHook {
@@ -41,11 +44,14 @@ type ReaderContextHook struct {
 }
 
 func (r ReaderContextHook) Read(p []byte) (n int, err error) {
-	if err = r.fn(r.ctx, r.h, p); err != nil {
-		return 0, err
+	n, err = r.Reader.Read(p)
+	if err != nil {
+		return n, err
 	}
 
-	return r.Reader.Read(p)
+	err = r.fn(r.ctx, r.h, p)
+
+	return n, err
 }
 
 func NewReaderContextHook(ctx context.Context, h *Header, r io.Reader, fn HookContextFunc) ReaderContextHook {
