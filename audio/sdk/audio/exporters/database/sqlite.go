@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	sqlDriver = "sqlite3"
+	sqlDriver = "sqlite"
 
 	uriFormat = "file:%s?_readonly=true&_txlock=immediate&cache=shared"
 	inMemory  = ":memory:"
