@@ -54,7 +54,7 @@ func NewSQLiteExporter(db Repository, options ...cfg.Option[SQLiteConfig]) (audi
 		repo:     db,
 	}
 
-	e.flusher = data.NewGZipFlusher(
+	e.flusher = data.NewFlusher(
 		config.dur,
 		func(id string, h *wav.Header, data []byte) error {
 			id, err := e.repo.Save(context.Background(), id, h, data)
