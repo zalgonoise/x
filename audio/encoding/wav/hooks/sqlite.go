@@ -35,7 +35,7 @@ func NewSQLiteHook(db Repository, dur time.Duration) *SQLiteHook {
 		repo: db,
 	}
 
-	s.flusher = data.NewGZipFlusher(dur, func(id string, h *wav.Header, data []byte) error {
+	s.flusher = data.NewFlusher(dur, func(id string, h *wav.Header, data []byte) error {
 		_, err := s.repo.Save(context.Background(), id, h, data)
 		if err != nil {
 			return err
