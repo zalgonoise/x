@@ -12,10 +12,14 @@ type Repository interface {
 	Save(ctx context.Context, id string, header *wav.Header, data []byte) (string, error)
 }
 
-type SQLiteHook struct {
-	flusher *data.Flusher
+type Flusher interface {
+	Write(id string, h *wav.Header, data []byte) (int, error)
+	ForceFlush(id string, h *wav.Header) error
+}
 
-	repo Repository
+type SQLiteHook struct {
+	repo    Repository
+	flusher Flusher
 }
 
 func (s *SQLiteHook) Save(ctx context.Context, h *wav.Header, data []byte) error {
@@ -31,7 +35,7 @@ func NewSQLiteHook(db Repository, dur time.Duration) *SQLiteHook {
 		repo: db,
 	}
 
-	s.flusher = data.NewFlusher(dur, func(id string, h *wav.Header, data []byte) error {
+	s.flusher = data.NewGZipFlusher(dur, func(id string, h *wav.Header, data []byte) error {
 		_, err := s.repo.Save(context.Background(), id, h, data)
 		if err != nil {
 			return err
