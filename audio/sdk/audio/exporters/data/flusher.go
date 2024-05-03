@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"compress/zlib"
-	"io"
 	"time"
 
 	"github.com/zalgonoise/x/audio/encoding/wav"
@@ -117,7 +116,7 @@ func (f *Flusher) ForceFlush(id string, h *wav.Header) error {
 
 type ZLibFlusher struct {
 	b   *bytes.Buffer
-	w   io.Writer
+	w   *zlib.Writer
 	len int
 	cap int
 
@@ -159,7 +158,7 @@ func (f *ZLibFlusher) Write(id string, h *wav.Header, b []byte) (n int, err erro
 
 	f.len += n
 
-	return n, nil
+	return n, f.flush(id, h)
 }
 
 func (f *ZLibFlusher) flush(id string, h *wav.Header) error {
@@ -170,6 +169,10 @@ func (f *ZLibFlusher) flush(id string, h *wav.Header) error {
 	}
 
 	for f.len > f.cap {
+		if err := f.w.Flush(); err != nil {
+			return err
+		}
+
 		maximum := f.cap
 		if f.b.Len() < maximum {
 			maximum = f.b.Len()
@@ -198,7 +201,7 @@ func (f *ZLibFlusher) ForceFlush(id string, h *wav.Header) error {
 
 type GZipFlusher struct {
 	b   *bytes.Buffer
-	w   io.Writer
+	w   *gzip.Writer
 	len int
 	cap int
 
@@ -230,7 +233,6 @@ func (f *GZipFlusher) init(h *wav.Header) error {
 }
 
 func (f *GZipFlusher) Write(id string, h *wav.Header, b []byte) (n int, err error) {
-
 	if err = f.flush(id, h); err != nil {
 		return 0, err
 	}
@@ -241,7 +243,7 @@ func (f *GZipFlusher) Write(id string, h *wav.Header, b []byte) (n int, err erro
 
 	f.len += n
 
-	return n, nil
+	return n, f.flush(id, h)
 }
 
 func (f *GZipFlusher) flush(id string, h *wav.Header) error {
@@ -252,6 +254,10 @@ func (f *GZipFlusher) flush(id string, h *wav.Header) error {
 	}
 
 	for f.len > f.cap {
+		if err := f.w.Flush(); err != nil {
+			return err
+		}
+
 		maximum := f.cap
 		if f.b.Len() < maximum {
 			maximum = f.b.Len()
