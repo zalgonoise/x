@@ -33,6 +33,11 @@ type Converter interface {
 	Bytes(buf []float64) []byte
 }
 
+type Flusher interface {
+	Write(id string, h *wav.Header, data []byte) (int, error)
+	ForceFlush(id string, h *wav.Header) error
+}
+
 const (
 	bitDepth8  uint16 = 8
 	bitDepth16 uint16 = 16
@@ -49,7 +54,7 @@ func NewSQLiteExporter(db Repository, options ...cfg.Option[SQLiteConfig]) (audi
 		repo:     db,
 	}
 
-	e.flusher = data.NewFlusher(
+	e.flusher = data.NewGZipFlusher(
 		config.dur,
 		func(id string, h *wav.Header, data []byte) error {
 			id, err := e.repo.Save(context.Background(), id, h, data)
@@ -67,8 +72,8 @@ func NewSQLiteExporter(db Repository, options ...cfg.Option[SQLiteConfig]) (audi
 
 type sqliteExporter struct {
 	recordID *atomic.Pointer[string]
-	flusher  *data.Flusher
 
+	flusher   Flusher
 	converter Converter
 	repo      Repository
 }
@@ -134,7 +139,7 @@ func (e *sqliteExporter) ForceFlush() error {
 		return nil
 	}
 
-	return e.flusher.FlushIfFull(*id, nil)
+	return e.flusher.ForceFlush(*id, nil)
 }
 
 func (e *sqliteExporter) Shutdown(ctx context.Context) error {
