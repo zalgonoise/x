@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/zalgonoise/cfg"
-	"github.com/zalgonoise/x/audio/encoding/wav/hooks"
 	"github.com/zalgonoise/x/audio/sdk/audio/exporters/database"
 
 	"github.com/zalgonoise/x/audio/encoding/wav"
@@ -79,17 +78,15 @@ func run() (int, error) {
 
 	exp = append(exp, stats)
 
-	var hookFn wav.HookContextFunc
-
 	if config.StorageURI != "" {
 		logger.InfoContext(ctx, "setting up SQLite data hook")
 
-		hook, err := newDataHook(ctx, config, logHandler)
+		dataExporter, err := newDataExporter(ctx, config, logHandler)
 		if err != nil {
 			return 1, err
 		}
 
-		hookFn = hook.Save
+		exp = append(exp, dataExporter)
 	}
 
 	logger.InfoContext(ctx, "setting up processor")
@@ -98,7 +95,6 @@ func run() (int, error) {
 		wav.WithSize(config.BufferSize),
 		wav.WithDuration(config.BufferDur),
 		wav.WithRatio(config.BufferRatio),
-		wav.WithHook(hookFn),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.Duration)
@@ -141,7 +137,7 @@ func run() (int, error) {
 	}
 }
 
-func newDataHook(ctx context.Context, config *Config, logHandler slog.Handler) (*hooks.SQLiteHook, error) {
+func newDataExporter(ctx context.Context, config *Config, logHandler slog.Handler) (audio.Exporter, error) {
 	logger := slog.New(logHandler)
 	db, err := database.OpenSQLite(config.StorageURI, database.ReadWritePragmas(), logger)
 	if err != nil {
@@ -152,7 +148,7 @@ func newDataHook(ctx context.Context, config *Config, logHandler slog.Handler) (
 		return nil, err
 	}
 
-	return hooks.NewSQLiteHook(database.NewRepository(db), config.BufferDur), nil
+	return exporters.NewSQLiteExporter(database.NewRepository(db), exporters.WithFlushDuration(config.BufferDur))
 }
 
 func newStatsExporter(ctx context.Context, config *Config, logHandler slog.Handler) (audio.Exporter, error) {
