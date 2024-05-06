@@ -10,6 +10,7 @@ import (
 	"github.com/zalgonoise/cfg"
 	"github.com/zalgonoise/x/cli"
 	"github.com/zalgonoise/x/pokedex-data/config"
+	"github.com/zalgonoise/x/pokedex-data/database"
 	"github.com/zalgonoise/x/pokedex-data/pokemon"
 )
 
@@ -101,7 +102,7 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 
 	logger.InfoContext(ctx, "connecting to Postgres")
 
-	db, err := pokemon.OpenPostgres(ctx, *uri, 8, logger)
+	db, err := database.OpenPostgres(ctx, *uri, 8, logger)
 	if err != nil {
 		return 1, err
 	}
