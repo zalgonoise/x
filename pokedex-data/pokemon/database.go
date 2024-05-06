@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib" // Postgres driver
 )
 
@@ -15,10 +15,10 @@ func buildInsert(summaries []Summary) (string, []any, error) {
 	b := sq.Insert("items").Columns("id", "image_source", "name")
 
 	for i := range summaries {
-		b = b.Values(strconv.Itoa(summaries[i].ID), summaries[i].Sprite, summaries[i].Name)
+		b = b.Values(uuid.New(), summaries[i].Sprite, summaries[i].Name)
 	}
 
-	return b.PlaceholderFormat(sq.Dollar).ToSql()
+	return b.PlaceholderFormat(typeCast{[]string{"$1,", "$1::uuid,"}}).ToSql()
 }
 
 func Load(ctx context.Context, db *sql.DB, summaries []Summary) error {
