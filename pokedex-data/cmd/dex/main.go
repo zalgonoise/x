@@ -101,7 +101,7 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 
 	logger.InfoContext(ctx, "connecting to Postgres")
 
-	db, err := pokemon.OpenPostgres(*uri, 8)
+	db, err := pokemon.OpenPostgres(ctx, *uri, 8, logger)
 	if err != nil {
 		return 1, err
 	}
