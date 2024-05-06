@@ -4,11 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log/slog"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/zalgonoise/x/pokedex-data/database"
-
 	_ "github.com/jackc/pgx/v5/stdlib" // Postgres driver
 )
 
@@ -19,7 +17,7 @@ func buildInsert(summaries []Summary) (string, []any, error) {
 		b = b.Values(summaries[i].ID, summaries[i].Sprite, summaries[i].Name)
 	}
 
-	return b.PlaceholderFormat(sq.Dollar).ToSql()
+	return b.PlaceholderFormat(typeCast{[]string{"$1,", "$1::uuid,"}}).ToSql()
 }
 
 func Load(ctx context.Context, db *sql.DB, summaries []Summary) error {
@@ -45,18 +43,30 @@ func Load(ctx context.Context, db *sql.DB, summaries []Summary) error {
 	return nil
 }
 
-func OpenPostgres(ctx context.Context, uri string, maxConns int, logger *slog.Logger) (*sql.DB, error) {
-	db, err := sql.Open("pgx", uri)
+// typeCast decorates a squirrel.Dollar squirrel.PlaceholderFormat, that also replaces certain
+// placeholders with a type-cast one (e.g. $1 --> $1::uuid) using a simple strings.Replacer approach.
+type typeCast struct {
+	oldnew []string
+}
+
+// ReplacePlaceholders implements squirrel.PlaceholderFormat
+//
+// It calls sq.Dollar.ReplacePlaceholders on the input sql string, and then replaces
+// certain target placeholders with a type-cast version of it (e.g. $1 --> $1::uuid).
+//
+// If typeCast f does not contain any replacement pairs of strings, it will simply return the formatted string
+// from a squirrel.Dollar's ReplacePlaceholders call. Otherwise, it will use a strings.Replacer to find a match and
+// replace it with another value. In the context of type casting, a caller would configure typeCast with a slice of
+// old-new pairs of strings such as `[]string{"$1,", "$1::uuid,"}`.
+func (f typeCast) ReplacePlaceholders(s string) (string, error) {
+	formatted, err := sq.Dollar.ReplacePlaceholders(s)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	db.SetMaxOpenConns(maxConns)
-	db.SetMaxIdleConns(maxConns)
-
-	if err = database.Migrate(ctx, db, logger); err != nil {
-		return nil, err
+	if f.oldnew == nil {
+		return formatted, nil
 	}
 
-	return db, nil
+	return strings.NewReplacer(f.oldnew...).Replace(formatted), nil
 }
