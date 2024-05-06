@@ -16,25 +16,27 @@ type Service struct {
 	w *csv.Writer
 }
 
-func (s Service) Load(ctx context.Context, min, max int) error {
+func (s Service) Load(ctx context.Context, min, max int) ([]Summary, error) {
 	items := make([][]string, 0, max)
+	summaries := make([]Summary, 0, max)
 
 	for i := min; i < max; i++ {
 		summary, err := getPokemon(ctx, i)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		items = append(items, []string{strconv.Itoa(summary.ID), summary.Name, summary.Sprite})
+		summaries = append(summaries, summary)
 	}
 
 	if err := s.w.WriteAll(items); err != nil {
-		return err
+		return nil, err
 	}
 
 	s.w.Flush()
 
-	return nil
+	return summaries, nil
 }
 
 func (s Service) Close() error {
