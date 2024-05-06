@@ -20,7 +20,7 @@ func main() {
 		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"build": cli.Executable(ExecBuild),
-			"load":  cli.Executable(ExecBuild),
+			"load":  cli.Executable(ExecLoad),
 		}),
 	)
 
@@ -68,6 +68,7 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 	fs := flag.NewFlagSet("load", flag.ExitOnError)
 
 	uri := fs.String("uri", "", "Postgres DB URI to execute the initial load to")
+	output := fs.String("output", "", "path to place the CSV file in. Default is 'pokemon.csv'")
 	minimum := fs.Int("min", 0, "minimum pokemon ID to query")
 	maximum := fs.Int("max", 0, "maximum pokemon ID to query")
 
@@ -77,9 +78,10 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 
 	c := cfg.Set[config.Config](
 		config.DefaultConfig(),
-		config.WithOutput(*uri), config.WithMin(*minimum), config.WithMax(*maximum),
+		config.WithOutput(*output), config.WithMin(*minimum), config.WithMax(*maximum),
 	)
 
+	logger.InfoContext(ctx, "setting up CSV w/ local data")
 	f, err := os.Create(c.Output)
 	if err != nil {
 		return 1, err
@@ -90,19 +92,27 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
+	logger.InfoContext(ctx, "loading data from source")
+
 	summaries, err := service.Load(ctx, c.Min, c.Max)
 	if err != nil {
 		return 1, err
 	}
+
+	logger.InfoContext(ctx, "connecting to Postgres")
 
 	db, err := pokemon.OpenPostgres(*uri, 8)
 	if err != nil {
 		return 1, err
 	}
 
+	logger.InfoContext(ctx, "running initial load")
+
 	if err = pokemon.Load(ctx, db, summaries); err != nil {
 		return 1, err
 	}
+
+	logger.InfoContext(ctx, "operation complete")
 
 	return 0, nil
 }
