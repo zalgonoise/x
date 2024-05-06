@@ -10,13 +10,11 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib" // Postgres driver
 )
 
-const insertQuery = `INSERT INTO items (id, image_source, name) VALUES `
-
 func buildInsert(summaries []Summary) (string, []any, error) {
 	b := sq.Insert("items").Columns("id", "image_source", "name")
 
 	for i := range summaries {
-		b.Values(summaries[i].ID, summaries[i].Sprite, summaries[i].Name)
+		b = b.Values(summaries[i].ID, summaries[i].Sprite, summaries[i].Name)
 	}
 
 	return b.PlaceholderFormat(sq.Dollar).ToSql()
