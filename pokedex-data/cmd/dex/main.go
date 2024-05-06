@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
+	"errors"
 	"flag"
+	"io"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/zalgonoise/cfg"
@@ -69,6 +73,7 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 	fs := flag.NewFlagSet("load", flag.ExitOnError)
 
 	uri := fs.String("uri", "", "Postgres DB URI to execute the initial load to")
+	input := fs.String("input", "", "path to get the CSV file from. Default is 'pokemon.csv'")
 	output := fs.String("output", "", "path to place the CSV file in. Default is 'pokemon.csv'")
 	minimum := fs.Int("min", 0, "minimum pokemon ID to query")
 	maximum := fs.Int("max", 0, "maximum pokemon ID to query")
@@ -77,27 +82,70 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 		return 1, err
 	}
 
-	c := cfg.Set[config.Config](
-		config.DefaultConfig(),
-		config.WithOutput(*output), config.WithMin(*minimum), config.WithMax(*maximum),
-	)
+	var summaries []pokemon.Summary
 
-	logger.InfoContext(ctx, "setting up CSV w/ local data")
-	f, err := os.Create(c.Output)
-	if err != nil {
-		return 1, err
-	}
+	if *input == "" {
+		c := cfg.Set[config.Config](
+			config.DefaultConfig(),
+			config.WithOutput(*output), config.WithMin(*minimum), config.WithMax(*maximum),
+		)
 
-	service := pokemon.NewService(f)
+		logger.InfoContext(ctx, "setting up CSV w/ local data")
+		f, err := os.Create(c.Output)
+		if err != nil {
+			return 1, err
+		}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
+		service := pokemon.NewService(f)
 
-	logger.InfoContext(ctx, "loading data from source")
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
 
-	summaries, err := service.Load(ctx, c.Min, c.Max)
-	if err != nil {
-		return 1, err
+		logger.InfoContext(ctx, "loading data from source")
+
+		summaries, err = service.Load(ctx, c.Min, c.Max)
+		if err != nil {
+			return 1, err
+		}
+	} else {
+		f, err := os.Open(*input)
+		if err != nil {
+			return 1, err
+		}
+
+		r := csv.NewReader(f)
+
+		var records = make([][]string, 0, 1025)
+
+		for {
+			rec, err := r.Read()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				return 1, err
+			}
+
+			records = append(records, rec)
+		}
+
+		summaries = make([]pokemon.Summary, 0, len(records))
+
+		for i := range records {
+			id, err := strconv.Atoi(records[i][0])
+			if err != nil {
+				return 1, err
+			}
+
+			summaries = append(summaries, pokemon.Summary{
+				ID:     id,
+				Sprite: records[i][1],
+				Name:   records[i][2],
+			})
+		}
+
+		f.Close()
 	}
 
 	logger.InfoContext(ctx, "connecting to Postgres")
