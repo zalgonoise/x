@@ -13,13 +13,14 @@ import (
 	"github.com/zalgonoise/x/pokedex-data/pokemon"
 )
 
-var modes = []string{"build"}
+var modes = []string{"build", "load"}
 
 func main() {
 	runner := cli.NewRunner("dex",
 		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"build": cli.Executable(ExecBuild),
+			"load":  cli.Executable(ExecBuild),
 		}),
 	)
 
@@ -52,11 +53,54 @@ func ExecBuild(ctx context.Context, logger *slog.Logger, args []string) (int, er
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	if err := service.Load(ctx, c.Min, c.Max); err != nil {
+	if _, err := service.Load(ctx, c.Min, c.Max); err != nil {
 		return 1, err
 	}
 
 	if err := service.Close(); err != nil {
+		return 1, err
+	}
+
+	return 0, nil
+}
+
+func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
+	fs := flag.NewFlagSet("load", flag.ExitOnError)
+
+	uri := fs.String("uri", "", "Postgres DB URI to execute the initial load to")
+	minimum := fs.Int("min", 0, "minimum pokemon ID to query")
+	maximum := fs.Int("max", 0, "maximum pokemon ID to query")
+
+	if err := fs.Parse(args); err != nil {
+		return 1, err
+	}
+
+	c := cfg.Set[config.Config](
+		config.DefaultConfig(),
+		config.WithOutput(*uri), config.WithMin(*minimum), config.WithMax(*maximum),
+	)
+
+	f, err := os.Create(c.Output)
+	if err != nil {
+		return 1, err
+	}
+
+	service := pokemon.NewService(f)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	summaries, err := service.Load(ctx, c.Min, c.Max)
+	if err != nil {
+		return 1, err
+	}
+
+	db, err := pokemon.OpenPostgres(*uri, 8)
+	if err != nil {
+		return 1, err
+	}
+
+	if err = pokemon.Load(ctx, db, summaries); err != nil {
 		return 1, err
 	}
 
