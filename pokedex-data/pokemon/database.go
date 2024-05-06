@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
@@ -14,10 +15,10 @@ func buildInsert(summaries []Summary) (string, []any, error) {
 	b := sq.Insert("items").Columns("id", "image_source", "name")
 
 	for i := range summaries {
-		b = b.Values(summaries[i].ID, summaries[i].Sprite, summaries[i].Name)
+		b = b.Values(strconv.Itoa(summaries[i].ID), summaries[i].Sprite, summaries[i].Name)
 	}
 
-	return b.PlaceholderFormat(typeCast{[]string{"$1,", "$1::uuid,"}}).ToSql()
+	return b.PlaceholderFormat(sq.Dollar).ToSql()
 }
 
 func Load(ctx context.Context, db *sql.DB, summaries []Summary) error {
