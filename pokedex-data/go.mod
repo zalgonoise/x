@@ -5,6 +5,7 @@ go 1.22.2
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/golang-migrate/migrate/v4 v4.17.1
+	github.com/google/uuid v1.4.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/stretchr/testify v1.9.0
 	github.com/zalgonoise/cfg v1.0.0
