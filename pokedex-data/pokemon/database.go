@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/zalgonoise/x/pokedex-data/database"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Postgres driver
 )
@@ -43,7 +45,7 @@ func Load(ctx context.Context, db *sql.DB, summaries []Summary) error {
 	return nil
 }
 
-func OpenPostgres(uri string, maxConns int) (*sql.DB, error) {
+func OpenPostgres(ctx context.Context, uri string, maxConns int, logger *slog.Logger) (*sql.DB, error) {
 	db, err := sql.Open("pgx", uri)
 	if err != nil {
 		return nil, err
@@ -51,6 +53,10 @@ func OpenPostgres(uri string, maxConns int) (*sql.DB, error) {
 
 	db.SetMaxOpenConns(maxConns)
 	db.SetMaxIdleConns(maxConns)
+
+	if err = database.Migrate(ctx, db, logger); err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }
