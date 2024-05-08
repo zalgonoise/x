@@ -60,8 +60,9 @@ func (t *TimeframeReplacer[K, T]) All() SeqKV[Interval, map[K]T] {
 	}
 }
 
-// Organize returns a new TimeframeMap with organized Interval(s) and respective values. It is the result of
-// calling Replace on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
+// Organize returns a new TimeframeReplacer with organized Interval(s) and respective values. It is the result of
+// calling Replace on TimeframeReplacer.All, and appending the resulting sequence to a new instance of
+// TimeframeReplacer.
 func (t *TimeframeReplacer[K, T]) Organize() (*TimeframeMap[K, T], error) {
 	seq, err := Replace(t.All())
 	if err != nil {
@@ -76,9 +77,9 @@ func (t *TimeframeReplacer[K, T]) Organize() (*TimeframeMap[K, T], error) {
 	return tf, nil
 }
 
-// Merge joins the intervals and respective values of the TimeframeMap tf into the TimeframeMap t,
-// by extracting a SeqKV of the same items from tf using TimeframeMap.All, and adding them into
-// Timeframe t using TimeframeMap.Append.
+// Merge joins the intervals and respective values of the TimeframeReplacer tf into the TimeframeReplacer t,
+// by extracting a SeqKV of the same items from tf using TimeframeReplacer.All, and adding them into
+// Timeframe t using TimeframeReplacer.Append.
 func (t *TimeframeReplacer[K, T]) Merge(tf *Timeframe[K, T]) (err error) {
 	return t.Append(tf.All())
 }
