@@ -61,7 +61,7 @@ func (t *TimeframeReplacer[K, T]) All() SeqKV[Interval, map[K]T] {
 }
 
 // Organize returns a new TimeframeMap with organized Interval(s) and respective values. It is the result of
-// calling Flatten on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
+// calling Replace on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
 func (t *TimeframeReplacer[K, T]) Organize() (*TimeframeMap[K, T], error) {
 	seq, err := Replace(t.All())
 	if err != nil {
