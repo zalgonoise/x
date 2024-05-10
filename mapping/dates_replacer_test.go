@@ -270,12 +270,12 @@ func TestTimeframeReplacer(t *testing.T) {
 
 			seq := newTF.All()
 
-			require.True(t, seq(verifySeq(testcase.wants)))
+			require.True(t, seq(verifySeqKV(testcase.wants)))
 		})
 	}
 }
 
-func verifySeq(wants []dataSet) func(interval mapping.Interval, m map[int]blob) bool {
+func verifySeqKV(wants []dataSet) func(interval mapping.Interval, m map[int]blob) bool {
 	return func(interval mapping.Interval, m map[int]blob) bool {
 		if m == nil {
 			return false
