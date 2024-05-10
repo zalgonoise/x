@@ -1,6 +1,9 @@
 package mapping
 
-import "slices"
+import (
+	"maps"
+	"slices"
+)
 
 const minAlloc = 64
 
@@ -69,7 +72,7 @@ func (t *TimeframeMap[K, T]) All() SeqKV[Interval, map[K]T] {
 // Organize returns a new TimeframeMap with organized Interval(s) and respective values. It is the result of
 // calling Flatten on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
 func (t *TimeframeMap[K, T]) Organize() (*TimeframeMap[K, T], error) {
-	seq, err := Flatten(t.All())
+	seq, err := Flatten(t.All(), mergeFunc[K, T])
 	if err != nil {
 		return nil, err
 	}
@@ -87,4 +90,11 @@ func (t *TimeframeMap[K, T]) Organize() (*TimeframeMap[K, T], error) {
 // Timeframe t using TimeframeMap.Append.
 func (t *TimeframeMap[K, T]) Merge(tf *Timeframe[K, T]) (err error) {
 	return t.Append(tf.All())
+}
+
+func mergeFunc[K comparable, T any](a, b map[K]T) map[K]T {
+	dataCopy := maps.Clone(a)
+	coalesce(dataCopy, b)
+
+	return dataCopy
 }
