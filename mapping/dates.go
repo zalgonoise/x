@@ -98,7 +98,7 @@ func (t *Timeframe[K, T]) All() SeqKV[Interval, map[K]T] {
 // Organize returns a new Timeframe with organized Interval(s) and respective values. It is the result of
 // calling Flatten on Timeframe.All, and appending the resulting sequence to a new instance of Timeframe.
 func (t *Timeframe[K, T]) Organize() (*Timeframe[K, T], error) {
-	seq, err := Flatten(t.All())
+	seq, err := Flatten(t.All(), mergeFunc[K, T])
 	if err != nil {
 		return nil, err
 	}
