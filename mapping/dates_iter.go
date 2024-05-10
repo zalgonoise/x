@@ -1,7 +1,6 @@
 package mapping
 
 import (
-	"maps"
 	"slices"
 
 	"github.com/zalgonoise/cfg"
@@ -21,8 +20,8 @@ type Seq[T any] func(yield func(T) bool) bool
 
 // DataInterval contains the data as Data for a specific Interval, as an isolated data structure used when caching
 // Intervals and data as Seq of Interval and Data are organized.
-type DataInterval[K comparable, T any] struct {
-	Data     map[K]T
+type DataInterval[T any] struct {
+	Data     T
 	Interval Interval
 }
 
@@ -36,7 +35,7 @@ type IntervalSet struct {
 
 // Organize consumes a sequence Seq of Interval and data, returning a Timeframe with organized / flattened values.
 func Organize[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *Timeframe[K, T], err error) {
-	flattened, err := Flatten(seq)
+	flattened, err := Flatten[map[K]T](seq, mergeFunc[K, T])
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +50,7 @@ func Organize[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *Timeframe[
 
 // OrganizeMap consumes a sequence Seq of Interval and data, returning a TimeframeMap with organized / flattened values.
 func OrganizeMap[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *TimeframeMap[K, T], err error) {
-	flattened, err := Flatten(seq)
+	flattened, err := Flatten[map[K]T](seq, mergeFunc[K, T])
 	if err != nil {
 		return nil, err
 	}
@@ -67,15 +66,15 @@ func OrganizeMap[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *Timefra
 // Replace consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
-func Replace[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[Interval, map[K]T], err error) {
-	cache := make([]DataInterval[K, T], 0, minAlloc)
+func Replace[T any](seq SeqKV[Interval, T]) (sorted SeqKV[Interval, T], err error) {
+	cache := make([]DataInterval[T], 0, minAlloc)
 
-	if !seq(func(interval Interval, m map[K]T) bool {
+	if !seq(func(interval Interval, value T) bool {
 		conflicts, indices := findConflicts(cache, interval)
 
 		if len(conflicts) == 0 {
-			cache = append(cache, DataInterval[K, T]{
-				Data:     m,
+			cache = append(cache, DataInterval[T]{
+				Data:     value,
 				Interval: interval,
 			})
 
@@ -100,13 +99,13 @@ func Replace[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 			for idx := range sets {
 				switch {
 				case sets[idx].cur && !sets[idx].next:
-					cache = append(cache, DataInterval[K, T]{
+					cache = append(cache, DataInterval[T]{
 						Data:     conflicts[i].Data,
 						Interval: sets[idx].i,
 					})
 				case !sets[idx].cur && sets[idx].next:
-					cache = append(cache, DataInterval[K, T]{
-						Data:     m,
+					cache = append(cache, DataInterval[T]{
+						Data:     value,
 						Interval: sets[idx].i,
 					})
 				default:
@@ -121,7 +120,7 @@ func Replace[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 		return nil, err
 	}
 
-	return func(yield func(Interval, map[K]T) bool) bool {
+	return func(yield func(Interval, T) bool) bool {
 		for i := range cache {
 			if !yield(cache[i].Interval, cache[i].Data) {
 				return false
@@ -135,24 +134,15 @@ func Replace[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 // Flatten consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
-func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[Interval, map[K]T], err error) {
-	cache := make([]DataInterval[K, T], 0, minAlloc)
+func Flatten[T any](seq SeqKV[Interval, T], mergeFunc func(a, b T) T) (sorted SeqKV[Interval, T], err error) {
+	cache := make([]DataInterval[T], 0, minAlloc)
 
-	if !seq(func(interval Interval, m map[K]T) bool {
-		if len(cache) == 0 {
-			cache = append(cache, DataInterval[K, T]{
-				Data:     m,
-				Interval: interval,
-			})
-
-			return true
-		}
-
+	if !seq(func(interval Interval, value T) bool {
 		conflicts, indices := findConflicts(cache, interval)
 
 		if len(conflicts) == 0 {
-			cache = append(cache, DataInterval[K, T]{
-				Data:     m,
+			cache = append(cache, DataInterval[T]{
+				Data:     value,
 				Interval: interval,
 			})
 
@@ -177,21 +167,18 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 			for idx := range sets {
 				switch {
 				case sets[idx].cur && !sets[idx].next:
-					cache = append(cache, DataInterval[K, T]{
+					cache = append(cache, DataInterval[T]{
 						Data:     conflicts[i].Data,
 						Interval: sets[idx].i,
 					})
 				case !sets[idx].cur && sets[idx].next:
-					cache = append(cache, DataInterval[K, T]{
-						Data:     m,
+					cache = append(cache, DataInterval[T]{
+						Data:     value,
 						Interval: sets[idx].i,
 					})
 				default:
-					dataCopy := maps.Clone(m)
-					coalesce(dataCopy, conflicts[i].Data)
-
-					cache = append(cache, DataInterval[K, T]{
-						Data:     dataCopy,
+					cache = append(cache, DataInterval[T]{
+						Data:     mergeFunc(value, conflicts[i].Data),
 						Interval: sets[idx].i,
 					})
 				}
@@ -203,7 +190,7 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 		return nil, err
 	}
 
-	return func(yield func(Interval, map[K]T) bool) bool {
+	return func(yield func(Interval, T) bool) bool {
 		for i := range cache {
 			if !yield(cache[i].Interval, cache[i].Data) {
 				return false
@@ -214,18 +201,18 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 	}, nil
 }
 
-func FormatTime[K comparable, T any](
-	seq SeqKV[Interval, map[K]T],
+func FormatTime[T any](
+	seq SeqKV[Interval, T],
 	opts ...cfg.Option[Format],
-) SeqKV[Interval, map[K]T] {
+) SeqKV[Interval, T] {
 	format := cfg.New(opts...)
 
 	if format.fnFrom == nil && format.fnTo == nil {
 		return seq
 	}
 
-	return func(yield func(Interval, map[K]T) bool) bool {
-		return seq(func(interval Interval, m map[K]T) bool {
+	return func(yield func(Interval, T) bool) bool {
+		return seq(func(interval Interval, m T) bool {
 			var ok bool
 
 			if format.fnFrom != nil {
@@ -247,8 +234,8 @@ func FormatTime[K comparable, T any](
 	}
 }
 
-func findConflicts[K comparable, T any](cache []DataInterval[K, T], cur Interval) (conflicts []DataInterval[K, T], indices []int) {
-	conflicts = make([]DataInterval[K, T], 0, len(cache))
+func findConflicts[T any](cache []DataInterval[T], cur Interval) (conflicts []DataInterval[T], indices []int) {
+	conflicts = make([]DataInterval[T], 0, len(cache))
 	indices = make([]int, 0, len(cache))
 
 	for i := range cache {
