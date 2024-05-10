@@ -1,4 +1,4 @@
-package mapping
+package mapping_test
 
 import (
 	"slices"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/zalgonoise/x/mapping"
 )
 
 type user struct {
@@ -23,87 +24,87 @@ type blob struct {
 }
 
 type dataSet struct {
-	interval Interval
+	interval mapping.Interval
 	blob     blob
 }
 
 func TestTimeframeReplacer(t *testing.T) {
-	interval1 := Interval{
+	interval1 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	interval2 := Interval{
+	interval2 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 21, 0, 0, 0, time.UTC),
 	}
 
-	interval3 := Interval{
+	interval3 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 21, 0, 0, 0, time.UTC),
 	}
 
-	interval4 := Interval{
+	interval4 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	i4split := Interval{
+	i4split := mapping.Interval{
 		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	interval5 := Interval{
+	interval5 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
 	}
 
-	i5split1 := Interval{
+	i5split1 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	i5split2 := Interval{
+	i5split2 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	interval6 := Interval{
+	interval6 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 23, 0, 0, 0, time.UTC),
 	}
 
-	i6split := Interval{
+	i6split := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	interval7 := Interval{
+	interval7 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	i7split := Interval{
+	i7split := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	interval8 := Interval{
+	interval8 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
 	}
 
-	interval9 := Interval{
+	interval9 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	i9split := Interval{
+	i9split := mapping.Interval{
 		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	interval10 := Interval{
+	interval10 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
@@ -258,7 +259,7 @@ func TestTimeframeReplacer(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			tf := NewTimeframeReplacer[int, blob]()
+			tf := mapping.NewTimeframeReplacer[int, blob]()
 
 			for i := range testcase.sets {
 				_ = tf.Add(testcase.sets[i].interval, map[int]blob{testcase.sets[i].blob.user.id: testcase.sets[i].blob})
@@ -274,8 +275,8 @@ func TestTimeframeReplacer(t *testing.T) {
 	}
 }
 
-func verifySeq(wants []dataSet) func(interval Interval, m map[int]blob) bool {
-	return func(interval Interval, m map[int]blob) bool {
+func verifySeq(wants []dataSet) func(interval mapping.Interval, m map[int]blob) bool {
+	return func(interval mapping.Interval, m map[int]blob) bool {
 		if m == nil {
 			return false
 		}
