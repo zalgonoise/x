@@ -70,16 +70,7 @@ func Replace[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 	cache := make([]DataInterval[K, T], 0, minAlloc)
 
 	if !seq(func(interval Interval, m map[K]T) bool {
-		if len(cache) == 0 {
-			cache = append(cache, DataInterval[K, T]{
-				Data:     m,
-				Interval: interval,
-			})
-
-			return true
-		}
-
-		conflicts := findConflicts(cache, interval)
+		conflicts, indices := findConflicts(cache, interval)
 
 		if len(conflicts) == 0 {
 			cache = append(cache, DataInterval[K, T]{
@@ -88,6 +79,11 @@ func Replace[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 			})
 
 			return true
+		}
+
+		// remove conflicts from cache
+		for i := range indices {
+			cache = append(cache[:indices[i]], cache[indices[i]+1:]...)
 		}
 
 		for i := range conflicts {
@@ -151,7 +147,7 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 			return true
 		}
 
-		conflicts := findConflicts(cache, interval)
+		conflicts, indices := findConflicts(cache, interval)
 
 		if len(conflicts) == 0 {
 			cache = append(cache, DataInterval[K, T]{
@@ -160,6 +156,11 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 			})
 
 			return true
+		}
+
+		// remove conflicts from cache
+		for i := range indices {
+			cache = append(cache[:indices[i]], cache[indices[i]+1:]...)
 		}
 
 		for i := range conflicts {
@@ -245,8 +246,9 @@ func FormatTime[K comparable, T any](
 	}
 }
 
-func findConflicts[K comparable, T any](cache []DataInterval[K, T], cur Interval) []DataInterval[K, T] {
-	conflicts := make([]DataInterval[K, T], 0, len(cache))
+func findConflicts[K comparable, T any](cache []DataInterval[K, T], cur Interval) (conflicts []DataInterval[K, T], indices []int) {
+	conflicts = make([]DataInterval[K, T], 0, len(cache))
+	indices = make([]int, 0, len(cache))
 
 	for i := range cache {
 		switch {
@@ -254,10 +256,11 @@ func findConflicts[K comparable, T any](cache []DataInterval[K, T], cur Interval
 			continue
 		default:
 			conflicts = append(conflicts, cache[i])
+			indices = append(indices, i)
 		}
 	}
 
-	return conflicts
+	return conflicts, indices
 }
 
 func replace(cur, next Interval) ([]IntervalSet, bool, error) {
