@@ -2,6 +2,7 @@ package mapping
 
 import (
 	"maps"
+	"slices"
 
 	"github.com/zalgonoise/cfg"
 )
@@ -83,7 +84,7 @@ func Replace[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 
 		// remove conflicts from cache
 		for i := range indices {
-			cache = append(cache[:indices[i]], cache[indices[i]+1:]...)
+			cache = slices.Delete(cache, i, i+1)
 		}
 
 		for i := range conflicts {
@@ -160,7 +161,7 @@ func Flatten[K comparable, T any](seq SeqKV[Interval, map[K]T]) (sorted SeqKV[In
 
 		// remove conflicts from cache
 		for i := range indices {
-			cache = append(cache[:indices[i]], cache[indices[i]+1:]...)
+			cache = slices.Delete(cache, i, i+1)
 		}
 
 		for i := range conflicts {
