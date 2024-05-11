@@ -34,6 +34,24 @@ func NewTimeframe[K comparable, T any]() *Timeframe[K, T] {
 	}
 }
 
+func (t *Timeframe[K, T]) init() *Timeframe[K, T] {
+	if t == nil {
+		return NewTimeframe[K, T]()
+	}
+
+	if t.Index == nil {
+		t.Index = NewIndex[Interval, map[K]T](
+			make(map[Interval]map[K]T),
+			WithIndex[map[K]T](func(a, b Interval) int {
+				return a.From.Compare(b.From)
+			}),
+			WithZero[Interval, map[K]T](nil),
+		)
+	}
+
+	return t
+}
+
 // Add joins the Interval i and its values to the Timeframe t, while ordering its
 // previously inserted Interval(s) in the process.
 func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) bool {
@@ -98,7 +116,7 @@ func (t *Timeframe[K, T]) All() SeqKV[Interval, map[K]T] {
 // Organize returns a new Timeframe with organized Interval(s) and respective values. It is the result of
 // calling Flatten on Timeframe.All, and appending the resulting sequence to a new instance of Timeframe.
 func (t *Timeframe[K, T]) Organize() (*Timeframe[K, T], error) {
-	seq, err := Flatten(t.All(), mergeFunc[K, T])
+	seq, err := Flatten(mergeFunc[K, T])(t.All())
 	if err != nil {
 		return nil, err
 	}
