@@ -13,6 +13,22 @@ func NewTimeframeRange[T any]() *TimeframeRange[T] {
 	}
 }
 
+func (t *TimeframeRange[T]) init() *TimeframeRange[T] {
+	if t == nil {
+		return NewTimeframeRange[T]()
+	}
+
+	if t.Keys == nil {
+		t.Keys = make([]Interval, 0, minAlloc)
+	}
+
+	if t.Values == nil {
+		t.Values = make(map[Interval]T, minAlloc)
+	}
+
+	return t
+}
+
 // Add joins the Interval i and its values to the TimeframeRange t, while ordering its
 // previously inserted Interval(s) in the process.
 func (t *TimeframeRange[T]) Add(i Interval, value T) bool {
@@ -58,10 +74,10 @@ func (t *TimeframeRange[T]) All() SeqKV[Interval, T] {
 }
 
 // Organize returns a new TimeframeRange with organized Interval(s) and respective values. It is the result of
-// calling Replace on TimeframeRange.All, and appending the resulting sequence to a new instance of
-// TimeframeRange.
-func (t *TimeframeRange[T]) Organize() (*TimeframeRange[T], error) {
-	seq, err := Replace(t.All())
+// calling the input ReducerFunc (like Flatten or Replace) on TimeframeRange.All, and appending the resulting sequence
+// to a new instance of TimeframeRange.
+func (t *TimeframeRange[T]) Organize(reducer ReducerFunc[T]) (*TimeframeRange[T], error) {
+	seq, err := reducer(t.All())
 	if err != nil {
 		return nil, err
 	}
