@@ -18,6 +18,13 @@ type SeqKV[T, K any] func(yield func(T, K) bool) bool
 // ref: https://github.com/golang/go/issues/61899
 type Seq[T any] func(yield func(T) bool) bool
 
+// ReducerFunc describes a strategy to apply to a sequence, that returns a (reduced) sequence and an error.
+//
+// This type can be used to apply different strategies in a map-reduce scenario, when working with Interval ranges.
+//
+// It is passed into functions like Organize, and implementations of it include Replace and Flatten.
+type ReducerFunc[T any] func(SeqKV[Interval, T]) (SeqKV[Interval, T], error)
+
 // DataInterval contains the data as Data for a specific Interval, as an isolated data structure used when caching
 // Intervals and data as Seq of Interval and Data are organized.
 type DataInterval[T any] struct {
@@ -33,29 +40,42 @@ type IntervalSet struct {
 	i    Interval
 }
 
-// Organize consumes a sequence Seq of Interval and data, returning a Timeframe with organized / flattened values.
-func Organize[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *Timeframe[K, T], err error) {
-	flattened, err := Flatten[map[K]T](seq, mergeFunc[K, T])
-	if err != nil {
-		return nil, err
-	}
-
-	tf = NewTimeframe[K, T]()
-	if err = tf.Append(flattened); err != nil {
-		return nil, err
-	}
-
-	return tf, nil
+// TimeframeType is a generic interface that describes a constructor to a timeframe implementation.
+//
+// The generic interface includes the init method, allowing for a generic function to safely create a
+// pointer to type M as required by the type itself.
+//
+// Other than initializing type M, the type simply needs to ingest a sequence of Interval and type T,
+// and that is where Append comes in.
+type TimeframeType[T any, M any] interface {
+	*M
+	init() *M
+	Append(SeqKV[Interval, T]) error
 }
 
-// OrganizeMap consumes a sequence Seq of Interval and data, returning a TimeframeMap with organized / flattened values.
-func OrganizeMap[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *TimeframeMap[K, T], err error) {
-	flattened, err := Flatten[map[K]T](seq, mergeFunc[K, T])
+func AsSeq[T any](data []DataInterval[T]) SeqKV[Interval, T] {
+	return func(yield func(Interval, T) bool) bool {
+		for i := range data {
+			if !yield(data[i].Interval, data[i].Data) {
+				return false
+			}
+		}
+
+		return true
+	}
+}
+
+// Organize consumes a sequence Seq of Interval and data, returning an appropriate timeframe type K with organized
+// / flattened values.
+func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reducer ReducerFunc[T]) (*K, error) {
+	flattened, err := reducer(seq)
 	if err != nil {
 		return nil, err
 	}
 
-	tf = NewTimeframeMap[K, T]()
+	var tf M = new(K)
+	tf = tf.init()
+
 	if err = tf.Append(flattened); err != nil {
 		return nil, err
 	}
@@ -66,139 +86,138 @@ func OrganizeMap[K comparable, T any](seq SeqKV[Interval, map[K]T]) (tf *Timefra
 // Replace consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
-func Replace[T any](seq SeqKV[Interval, T]) (sorted SeqKV[Interval, T], err error) {
-	cache := make([]DataInterval[T], 0, minAlloc)
+func Replace[T any]() ReducerFunc[T] {
+	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T], err error) {
+		cache := make([]DataInterval[T], 0, minAlloc)
 
-	if !seq(func(interval Interval, value T) bool {
-		conflicts, indices := findConflicts(cache, interval)
+		if !seq(func(interval Interval, value T) bool {
+			conflicts, indices := findConflicts(cache, interval)
 
-		if len(conflicts) == 0 {
-			cache = append(cache, DataInterval[T]{
-				Data:     value,
-				Interval: interval,
-			})
+			if len(conflicts) == 0 {
+				cache = append(cache, DataInterval[T]{
+					Data:     value,
+					Interval: interval,
+				})
 
-			return true
-		}
-
-		// remove conflicts from cache
-		for i := range indices {
-			cache = slices.Delete(cache, i, i+1)
-		}
-
-		for i := range conflicts {
-			sets, overlaps, err := replace(conflicts[i].Interval, interval)
-			if err != nil {
-				return false
+				return true
 			}
 
-			if !overlaps {
-				continue
+			// remove conflicts from cache
+			for i := range indices {
+				cache = slices.Delete(cache, i, i+1)
 			}
 
-			for idx := range sets {
-				switch {
-				case sets[idx].cur && !sets[idx].next:
-					cache = append(cache, DataInterval[T]{
-						Data:     conflicts[i].Data,
-						Interval: sets[idx].i,
-					})
-				case !sets[idx].cur && sets[idx].next:
-					cache = append(cache, DataInterval[T]{
-						Data:     value,
-						Interval: sets[idx].i,
-					})
-				default:
-					// unsupported state in Replace
+			for i := range conflicts {
+				sets, overlaps, err := replace(conflicts[i].Interval, interval)
+				if err != nil {
+					return false
+				}
+
+				if !overlaps {
 					continue
 				}
+
+				for idx := range sets {
+					switch {
+					case sets[idx].cur && !sets[idx].next:
+						cache = append(cache, DataInterval[T]{
+							Data:     conflicts[i].Data,
+							Interval: sets[idx].i,
+						})
+					case !sets[idx].cur && sets[idx].next:
+						cache = append(cache, DataInterval[T]{
+							Data:     value,
+							Interval: sets[idx].i,
+						})
+					default:
+						// unsupported state in Replace
+						continue
+					}
+				}
 			}
+
+			return true
+		}) {
+			return nil, err
 		}
 
-		return true
-	}) {
-		return nil, err
+		return func(yield func(Interval, T) bool) bool {
+			for i := range cache {
+				if !yield(cache[i].Interval, cache[i].Data) {
+					return false
+				}
+			}
+
+			return true
+		}, nil
 	}
-
-	return func(yield func(Interval, T) bool) bool {
-		for i := range cache {
-			if !yield(cache[i].Interval, cache[i].Data) {
-				return false
-			}
-		}
-
-		return true
-	}, nil
 }
 
 // Flatten consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
-func Flatten[T any](seq SeqKV[Interval, T], mergeFunc func(a, b T) T) (sorted SeqKV[Interval, T], err error) {
-	cache := make([]DataInterval[T], 0, minAlloc)
+func Flatten[T any](mergeFunc func(a, b T) T) ReducerFunc[T] {
+	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T], err error) {
+		cache := make([]DataInterval[T], 0, minAlloc)
 
-	if !seq(func(interval Interval, value T) bool {
-		conflicts, indices := findConflicts(cache, interval)
+		if !seq(func(interval Interval, value T) bool {
+			conflicts, _ := findConflicts(cache, interval)
 
-		if len(conflicts) == 0 {
-			cache = append(cache, DataInterval[T]{
-				Data:     value,
-				Interval: interval,
-			})
+			if len(conflicts) == 0 {
+				cache = append(cache, DataInterval[T]{
+					Data:     value,
+					Interval: interval,
+				})
 
-			return true
-		}
-
-		// remove conflicts from cache
-		for i := range indices {
-			cache = slices.Delete(cache, i, i+1)
-		}
-
-		for i := range conflicts {
-			sets, overlaps, err := split(conflicts[i].Interval, interval)
-			if err != nil {
-				return false
+				return true
 			}
 
-			if !overlaps {
-				continue
-			}
+			for i := range conflicts {
+				sets, overlaps, err := split(conflicts[i].Interval, interval)
+				if err != nil {
+					return false
+				}
 
-			for idx := range sets {
-				switch {
-				case sets[idx].cur && !sets[idx].next:
-					cache = append(cache, DataInterval[T]{
-						Data:     conflicts[i].Data,
-						Interval: sets[idx].i,
-					})
-				case !sets[idx].cur && sets[idx].next:
-					cache = append(cache, DataInterval[T]{
-						Data:     value,
-						Interval: sets[idx].i,
-					})
-				default:
-					cache = append(cache, DataInterval[T]{
-						Data:     mergeFunc(value, conflicts[i].Data),
-						Interval: sets[idx].i,
-					})
+				if !overlaps {
+					continue
+				}
+
+				for idx := range sets {
+					switch {
+					case sets[idx].cur && !sets[idx].next:
+						cache = append(cache, DataInterval[T]{
+							Data:     conflicts[i].Data,
+							Interval: sets[idx].i,
+						})
+					case !sets[idx].cur && sets[idx].next:
+						cache = append(cache, DataInterval[T]{
+							Data:     value,
+							Interval: sets[idx].i,
+						})
+					default:
+						cache = append(cache, DataInterval[T]{
+							Data:     mergeFunc(value, conflicts[i].Data),
+							Interval: sets[idx].i,
+						})
+					}
 				}
 			}
+
+			return true
+		}) {
+			return nil, err
 		}
 
-		return true
-	}) {
-		return nil, err
-	}
-
-	return func(yield func(Interval, T) bool) bool {
-		for i := range cache {
-			if !yield(cache[i].Interval, cache[i].Data) {
-				return false
+		return func(yield func(Interval, T) bool) bool {
+			for i := range cache {
+				if !yield(cache[i].Interval, cache[i].Data) {
+					return false
+				}
 			}
-		}
 
-		return true
-	}, nil
+			return true
+		}, nil
+	}
 }
 
 func FormatTime[T any](
