@@ -16,6 +16,22 @@ func NewTimeframeReplacer[K comparable, T any]() *TimeframeReplacer[K, T] {
 	}
 }
 
+func (t *TimeframeReplacer[K, T]) init() *TimeframeReplacer[K, T] {
+	if t == nil {
+		return NewTimeframeReplacer[K, T]()
+	}
+
+	if t.Keys == nil {
+		t.Keys = make([]Interval, 0, minAlloc)
+	}
+
+	if t.Values == nil {
+		t.Values = make(map[Interval]map[K]T, minAlloc)
+	}
+
+	return t
+}
+
 // Add joins the Interval i and its values to the TimeframeReplacer t, while ordering its
 // previously inserted Interval(s) in the process.
 func (t *TimeframeReplacer[K, T]) Add(i Interval, values map[K]T) bool {
@@ -64,7 +80,7 @@ func (t *TimeframeReplacer[K, T]) All() SeqKV[Interval, map[K]T] {
 // calling Replace on TimeframeReplacer.All, and appending the resulting sequence to a new instance of
 // TimeframeReplacer.
 func (t *TimeframeReplacer[K, T]) Organize() (*TimeframeReplacer[K, T], error) {
-	seq, err := Replace(t.All())
+	seq, err := Replace[map[K]T]()(t.All())
 	if err != nil {
 		return nil, err
 	}
