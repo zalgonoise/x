@@ -23,11 +23,6 @@ type blob struct {
 	data data
 }
 
-type dataSet struct {
-	interval mapping.Interval
-	blob     blob
-}
-
 func TestTimeframeReplacer(t *testing.T) {
 	interval1 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
@@ -121,140 +116,140 @@ func TestTimeframeReplacer(t *testing.T) {
 
 	for _, testcase := range []struct {
 		name  string
-		sets  []dataSet
-		wants []dataSet
+		sets  []mapping.DataInterval[blob]
+		wants []mapping.DataInterval[blob]
 	}{
 		{
 			name:  "OneBlob",
-			sets:  []dataSet{{interval: interval1, blob: blob1}},
-			wants: []dataSet{{interval: interval1, blob: blob1}},
+			sets:  []mapping.DataInterval[blob]{{Interval: interval1, Data: blob1}},
+			wants: []mapping.DataInterval[blob]{{Interval: interval1, Data: blob1}},
 		},
 		{
 			name: "TwoBlobs/Separate/NextIsAfter",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval2, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval2, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval2, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval2, Data: blob2},
 			},
 		},
 		{
 			name: "TwoBlobs/Separate/NextIsBefore",
-			sets: []dataSet{
-				{interval: interval2, blob: blob2},
-				{interval: interval1, blob: blob1},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval2, Data: blob2},
+				{Interval: interval1, Data: blob1},
 			},
-			wants: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval2, blob: blob2},
-			},
-		},
-		{
-			name: "TwoBlobs/MatchingStart/NextOverlapsCurrent",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval3, blob: blob2},
-			},
-			wants: []dataSet{
-				{interval: interval3, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval2, Data: blob2},
 			},
 		},
 		{
 			name: "TwoBlobs/MatchingStart/NextOverlapsCurrent",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval3, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval3, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: interval3, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval3, Data: blob2},
+			},
+		},
+		{
+			name: "TwoBlobs/MatchingStart/NextOverlapsCurrent",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval3, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval3, Data: blob2},
 			},
 		},
 		{
 			name: "TwoBlobs/MatchingStart/NextWithinCurrent",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval4, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval4, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: interval4, blob: blob2},
-				{interval: i4split, blob: blob1},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval4, Data: blob2},
+				{Interval: i4split, Data: blob1},
 			},
 		},
 		{
 			name: "TwoBlobs/MatchingStart/NextIsSameRange",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval1, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval1, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: interval1, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob2},
 			},
 		},
 		{
 			name: "TwoBlobs/OverlappingMiddle/NextWithinCurrent",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval5, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval5, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: i5split1, blob: blob1},
-				{interval: interval5, blob: blob2},
-				{interval: i5split2, blob: blob1},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: i5split1, Data: blob1},
+				{Interval: interval5, Data: blob2},
+				{Interval: i5split2, Data: blob1},
 			},
 		},
 		{
 			name: "TwoBlobs/OverlappingEnd/NextGoesBeyondCurrent",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval6, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval6, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: i6split, blob: blob1},
-				{interval: interval6, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: i6split, Data: blob1},
+				{Interval: interval6, Data: blob2},
 			},
 		},
 		{
 			name: "TwoBlobs/OverlappingEnd/NextMatchesEnds",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval7, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval7, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: i7split, blob: blob1},
-				{interval: interval7, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: i7split, Data: blob1},
+				{Interval: interval7, Data: blob2},
 			},
 		},
 		{
 			name: "TwoBlobs/OverlappingStart/NextCoversCurrent",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval8, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval8, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: interval8, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval8, Data: blob2},
 			},
 		},
 		{
 			name: "TwoBlobs/OverlappingStart/PortionOfStart",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval9, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval9, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: interval9, blob: blob2},
-				{interval: i9split, blob: blob1},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval9, Data: blob2},
+				{Interval: i9split, Data: blob1},
 			},
 		},
 		{
 			name: "TwoBlobs/OverlappingStart/MatchingEnds",
-			sets: []dataSet{
-				{interval: interval1, blob: blob1},
-				{interval: interval10, blob: blob2},
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval10, Data: blob2},
 			},
-			wants: []dataSet{
-				{interval: interval10, blob: blob2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval10, Data: blob2},
 			},
 		},
 	} {
@@ -262,7 +257,7 @@ func TestTimeframeReplacer(t *testing.T) {
 			tf := mapping.NewTimeframeReplacer[int, blob]()
 
 			for i := range testcase.sets {
-				_ = tf.Add(testcase.sets[i].interval, map[int]blob{testcase.sets[i].blob.user.id: testcase.sets[i].blob})
+				_ = tf.Add(testcase.sets[i].Interval, map[int]blob{testcase.sets[i].Data.user.id: testcase.sets[i].Data})
 			}
 
 			newTF, err := tf.Organize()
@@ -272,28 +267,47 @@ func TestTimeframeReplacer(t *testing.T) {
 
 			require.True(t, seq(verifySeqKV(testcase.wants)))
 		})
+
+		t.Run("OrganizeTimeframeRange/"+testcase.name, func(t *testing.T) {
+			var fn = func(yield func(mapping.Interval, map[int]blob) bool) bool {
+				for i := range testcase.sets {
+					if !yield(testcase.sets[i].Interval, map[int]blob{
+						testcase.sets[i].Data.user.id: testcase.sets[i].Data,
+					}) {
+						return false
+					}
+				}
+
+				return true
+			}
+
+			tf, err := mapping.Organize[*mapping.TimeframeReplacer[int, blob]](fn, mapping.Replace[map[int]blob]())
+			require.NoError(t, err)
+
+			require.True(t, tf.All()(verifySeqKV(testcase.wants)))
+		})
 	}
 }
 
-func verifySeqKV(wants []dataSet) func(interval mapping.Interval, m map[int]blob) bool {
+func verifySeqKV(wants []mapping.DataInterval[blob]) func(interval mapping.Interval, m map[int]blob) bool {
 	return func(interval mapping.Interval, m map[int]blob) bool {
 		if m == nil {
 			return false
 		}
 
-		idx := slices.IndexFunc(wants, func(set dataSet) bool {
-			return set.interval == interval
+		idx := slices.IndexFunc(wants, func(set mapping.DataInterval[blob]) bool {
+			return set.Interval == interval
 		})
 
 		if idx < 0 {
 			return false
 		}
 
-		v, ok := m[wants[idx].blob.user.id]
+		v, ok := m[wants[idx].Data.user.id]
 		if !ok {
 			return false
 		}
 
-		return v == wants[idx].blob
+		return v == wants[idx].Data
 	}
 }
