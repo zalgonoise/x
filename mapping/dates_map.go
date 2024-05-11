@@ -21,6 +21,22 @@ func NewTimeframeMap[K comparable, T any]() *TimeframeMap[K, T] {
 	}
 }
 
+func (t *TimeframeMap[K, T]) init() *TimeframeMap[K, T] {
+	if t == nil {
+		return NewTimeframeMap[K, T]()
+	}
+
+	if t.Keys == nil {
+		t.Keys = make([]Interval, 0, minAlloc)
+	}
+
+	if t.Values == nil {
+		t.Values = make(map[Interval]map[K]T, minAlloc)
+	}
+
+	return t
+}
+
 // Add joins the Interval i and its values to the TimeframeMap t, while ordering its
 // previously inserted Interval(s) in the process.
 func (t *TimeframeMap[K, T]) Add(i Interval, values map[K]T) bool {
@@ -72,7 +88,7 @@ func (t *TimeframeMap[K, T]) All() SeqKV[Interval, map[K]T] {
 // Organize returns a new TimeframeMap with organized Interval(s) and respective values. It is the result of
 // calling Flatten on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
 func (t *TimeframeMap[K, T]) Organize() (*TimeframeMap[K, T], error) {
-	seq, err := Flatten(t.All(), mergeFunc[K, T])
+	seq, err := Flatten(mergeFunc[K, T])(t.All())
 	if err != nil {
 		return nil, err
 	}
