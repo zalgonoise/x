@@ -2,6 +2,7 @@ package mapping
 
 import (
 	"errors"
+	"slices"
 	"time"
 )
 
@@ -115,17 +116,23 @@ func (t *Timeframe[K, T]) All() SeqKV[Interval, map[K]T] {
 
 // Organize returns a new Timeframe with organized Interval(s) and respective values. It is the result of
 // calling Flatten on Timeframe.All, and appending the resulting sequence to a new instance of Timeframe.
-func (t *Timeframe[K, T]) Organize() (*Timeframe[K, T], error) {
-	seq, err := Flatten(mergeFunc[K, T])(t.All())
+func (t *Timeframe[K, T]) Organize(cmp func(a, b T) bool) (*Timeframe[K, T], error) {
+	seq, err := Flatten(cmpFunc[K](cmp), mergeFunc[K, T])(t.All())
 	if err != nil {
 		return nil, err
 	}
 
 	tf := NewTimeframe[K, T]()
 
-	if err = tf.Append(seq); err != nil {
-		return nil, err
-	}
+	seq(func(interval Interval, t map[K]T) bool {
+		_ = tf.Add(interval, t)
+
+		return true
+	})
+
+	slices.SortFunc(tf.Index.Keys, func(a, b Interval) int {
+		return a.From.Compare(b.From)
+	})
 
 	return tf, nil
 }
