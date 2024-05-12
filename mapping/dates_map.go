@@ -87,16 +87,23 @@ func (t *TimeframeMap[K, T]) All() SeqKV[Interval, map[K]T] {
 
 // Organize returns a new TimeframeMap with organized Interval(s) and respective values. It is the result of
 // calling Flatten on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
-func (t *TimeframeMap[K, T]) Organize() (*TimeframeMap[K, T], error) {
-	seq, err := Flatten(mergeFunc[K, T])(t.All())
+func (t *TimeframeMap[K, T]) Organize(cmp func(a, b T) bool) (*TimeframeMap[K, T], error) {
+	seq, err := Flatten(cmpFunc[K](cmp), mergeFunc[K, T])(t.All())
 	if err != nil {
 		return nil, err
 	}
 
 	tf := NewTimeframeMap[K, T]()
-	if err = tf.Append(seq); err != nil {
-		return nil, err
-	}
+
+	seq(func(interval Interval, t map[K]T) bool {
+		_ = tf.Add(interval, t)
+
+		return true
+	})
+
+	slices.SortFunc(tf.Keys, func(a, b Interval) int {
+		return a.From.Compare(b.From)
+	})
 
 	return tf, nil
 }
@@ -113,4 +120,19 @@ func mergeFunc[K comparable, T any](a, b map[K]T) map[K]T {
 	coalesce(dataCopy, b)
 
 	return dataCopy
+}
+
+func cmpFunc[K comparable, T any](cmp func(a, b T) bool) func(a, b map[K]T) bool {
+	return func(a, b map[K]T) bool {
+		if len(a) != len(b) {
+			return false
+		}
+
+		for k, v1 := range a {
+			if v2, ok := b[k]; !ok || !cmp(v1, v2) {
+				return false
+			}
+		}
+		return true
+	}
 }
