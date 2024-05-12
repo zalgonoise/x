@@ -50,7 +50,7 @@ type IntervalSet struct {
 type TimeframeType[T any, M any] interface {
 	*M
 	init() *M
-	Append(SeqKV[Interval, T]) error
+	Add(i Interval, value T) bool
 }
 
 func AsSeq[T any](data []DataInterval[T]) SeqKV[Interval, T] {
@@ -76,9 +76,11 @@ func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reduc
 	var tf M = new(K)
 	tf = tf.init()
 
-	if err = tf.Append(flattened); err != nil {
-		return nil, err
-	}
+	flattened(func(interval Interval, t T) bool {
+		_ = tf.Add(interval, t)
+
+		return true
+	})
 
 	return tf, nil
 }
@@ -103,8 +105,8 @@ func Replace[T any]() ReducerFunc[T] {
 			}
 
 			// remove conflicts from cache
-			for i := range indices {
-				cache = slices.Delete(cache, i, i+1)
+			for i := len(indices) - 1; i >= 0; i-- {
+				cache = slices.Delete(cache, indices[i], indices[i]+1)
 			}
 
 			for i := range conflicts {
@@ -156,12 +158,14 @@ func Replace[T any]() ReducerFunc[T] {
 // Flatten consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
-func Flatten[T any](mergeFunc func(a, b T) T) ReducerFunc[T] {
+func Flatten[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T) ReducerFunc[T] {
 	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T], err error) {
 		cache := make([]DataInterval[T], 0, minAlloc)
 
 		if !seq(func(interval Interval, value T) bool {
-			conflicts, _ := findConflicts(cache, interval)
+			cache = mergeCache(cache, cmpFunc)
+
+			conflicts, indices := findConflicts(cache, interval)
 
 			if len(conflicts) == 0 {
 				cache = append(cache, DataInterval[T]{
@@ -170,6 +174,11 @@ func Flatten[T any](mergeFunc func(a, b T) T) ReducerFunc[T] {
 				})
 
 				return true
+			}
+
+			// remove conflicts from cache
+			for i := len(indices) - 1; i >= 0; i-- {
+				cache = slices.Delete(cache, indices[i], indices[i]+1)
 			}
 
 			for i := range conflicts {
@@ -196,7 +205,7 @@ func Flatten[T any](mergeFunc func(a, b T) T) ReducerFunc[T] {
 						})
 					default:
 						cache = append(cache, DataInterval[T]{
-							Data:     mergeFunc(value, conflicts[i].Data),
+							Data:     mergeFunc(conflicts[i].Data, value),
 							Interval: sets[idx].i,
 						})
 					}
@@ -251,6 +260,21 @@ func FormatTime[T any](
 			return yield(interval, m)
 		})
 	}
+}
+
+func mergeCache[T any](cache []DataInterval[T], cmp func(a, b T) bool) []DataInterval[T] {
+	if len(cache) <= 1 {
+		return cache
+	}
+
+	for i := len(cache) - 1; i > 0; i-- {
+		if cache[i-1].Interval.To.Equal(cache[i].Interval.From) && cmp(cache[i-1].Data, cache[i].Data) {
+			cache[i-1].Interval.To = cache[i].Interval.To
+			cache = slices.Delete(cache, i, i+1)
+		}
+	}
+
+	return cache
 }
 
 func findConflicts[T any](cache []DataInterval[T], cur Interval) (conflicts []DataInterval[T], indices []int) {
