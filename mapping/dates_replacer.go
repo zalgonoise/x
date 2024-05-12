@@ -1,5 +1,7 @@
 package mapping
 
+import "slices"
+
 // TimeframeReplacer stores values in intervals of time, as a 2D-map of Interval to a map of types K and T; by handling
 // conflicts as replacement-updates.
 type TimeframeReplacer[K comparable, T any] struct {
@@ -86,9 +88,16 @@ func (t *TimeframeReplacer[K, T]) Organize() (*TimeframeReplacer[K, T], error) {
 	}
 
 	tf := NewTimeframeReplacer[K, T]()
-	if err = tf.Append(seq); err != nil {
-		return nil, err
-	}
+
+	seq(func(interval Interval, t map[K]T) bool {
+		_ = tf.Add(interval, t)
+
+		return true
+	})
+
+	slices.SortFunc(tf.Keys, func(a, b Interval) int {
+		return a.From.Compare(b.From)
+	})
 
 	return tf, nil
 }
