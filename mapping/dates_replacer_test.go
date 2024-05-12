@@ -23,6 +23,10 @@ type blob struct {
 	data data
 }
 
+func (b blob) Name() string {
+	return b.user.name
+}
+
 func TestTimeframeReplacer(t *testing.T) {
 	interval1 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),

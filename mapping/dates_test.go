@@ -176,7 +176,9 @@ func TestTimeframe(t *testing.T) {
 				isEqual(t, true, ok)
 			}
 
-			tf, err := tf.Organize()
+			tf, err := tf.Organize(func(a, b string) bool {
+				return a == b
+			})
 			if err != nil {
 				t.Error(err)
 				t.Fail()
