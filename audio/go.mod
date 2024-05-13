@@ -10,16 +10,16 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/stretchr/testify v1.9.0
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240504125350-f24f028daee3
-	github.com/zalgonoise/x/errs v0.0.0-20240504125350-f24f028daee3
-	github.com/zalgonoise/x/ptr v0.0.0-20240504125350-f24f028daee3
-	modernc.org/sqlite v1.29.8
+	github.com/zalgonoise/x/cli v0.0.0-20240512011643-fb62904c8d24
+	github.com/zalgonoise/x/errs v0.0.0-20240512011643-fb62904c8d24
+	github.com/zalgonoise/x/ptr v0.0.0-20240512011643-fb62904c8d24
+	modernc.org/sqlite v1.29.9
 )
 
 require (
@@ -189,12 +189,12 @@ require (
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.16.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/tools v0.19.0 // indirect
-	google.golang.org/protobuf v1.34.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
