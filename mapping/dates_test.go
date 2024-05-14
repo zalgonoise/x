@@ -177,7 +177,7 @@ func TestTimeframe(t *testing.T) {
 
 			tf = tf.Organize(func(a, b string) bool {
 				return a == b
-			})
+			}, 0)
 
 			for i := range testcase.print {
 				itf, ok := tf.Index.values[testcase.print[i]]
@@ -376,7 +376,7 @@ func TestReplace(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			sets, overlaps := replace(testcase.cur, testcase.next)
+			sets, overlaps := replace(testcase.cur, testcase.next, 0)
 
 			isEqual(t, testcase.overlaps, overlaps)
 			isEqual(t, len(testcase.wants), len(sets))
@@ -612,7 +612,7 @@ func TestSplit(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			sets, overlaps := split(testcase.cur, testcase.next)
+			sets, overlaps := split(testcase.cur, testcase.next, 0)
 
 			isEqual(t, testcase.overlaps, overlaps)
 			isEqual(t, len(testcase.wants), len(sets))
@@ -642,7 +642,7 @@ func FuzzSplit(f *testing.F) {
 			To:   time.Unix(bTo, 0),
 		}
 
-		_, _ = split(interval1, interval2)
+		_, _ = split(interval1, interval2, 0)
 	})
 }
 
@@ -664,7 +664,7 @@ func FuzzReplace(f *testing.F) {
 			To:   time.Unix(bTo, 0),
 		}
 
-		_, _ = replace(interval1, interval2)
+		_, _ = replace(interval1, interval2, 0)
 	})
 }
 

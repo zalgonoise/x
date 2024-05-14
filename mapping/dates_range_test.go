@@ -705,7 +705,7 @@ func TestTimeframeRange(t *testing.T) {
 			sets: []mapping.DataInterval[blob]{
 				iA, iB, iC,
 			},
-			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc),
+			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
 			wants: []mapping.DataInterval[blob]{
 				i3RangesFlattened1, i3RangesFlattened2, i3RangesFlattened3, i3RangesFlattened4,
 			},
@@ -743,7 +743,7 @@ func TestTimeframeRange(t *testing.T) {
 			sets: []mapping.DataInterval[blob]{
 				iA, iB, iC, iD, iE, iF,
 			},
-			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc),
+			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
 			wants: []mapping.DataInterval[blob]{
 				i6RangesFlattened1, i6RangesFlattened2, i6RangesFlattened3, i6RangesFlattened4, i6RangesFlattened5,
 				i6RangesFlattened6, i6RangesFlattened7, i6RangesFlattened8,
@@ -758,7 +758,7 @@ func TestTimeframeRange(t *testing.T) {
 			}
 
 			if testcase.reducer == nil {
-				testcase.reducer = mapping.Replace[blob]()
+				testcase.reducer = mapping.Replace[blob](0)
 			}
 
 			newTF := tf.Organize(testcase.reducer)
@@ -770,7 +770,7 @@ func TestTimeframeRange(t *testing.T) {
 
 		t.Run("OrganizeTimeframeRange/"+testcase.name, func(t *testing.T) {
 			if testcase.reducer == nil {
-				testcase.reducer = mapping.Replace[blob]()
+				testcase.reducer = mapping.Replace[blob](0)
 			}
 
 			tf := mapping.Organize[*mapping.TimeframeRange[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
