@@ -87,11 +87,8 @@ func (t *TimeframeMap[K, T]) All() SeqKV[Interval, map[K]T] {
 
 // Organize returns a new TimeframeMap with organized Interval(s) and respective values. It is the result of
 // calling Flatten on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
-func (t *TimeframeMap[K, T]) Organize(cmp func(a, b T) bool) (*TimeframeMap[K, T], error) {
-	seq, err := Flatten(cmpFunc[K](cmp), mergeFunc[K, T])(t.All())
-	if err != nil {
-		return nil, err
-	}
+func (t *TimeframeMap[K, T]) Organize(cmp func(a, b T) bool) *TimeframeMap[K, T] {
+	seq := Flatten(cmpFunc[K](cmp), mergeFunc[K, T])(t.All())
 
 	tf := NewTimeframeMap[K, T]()
 
@@ -105,7 +102,7 @@ func (t *TimeframeMap[K, T]) Organize(cmp func(a, b T) bool) (*TimeframeMap[K, T
 		return a.From.Compare(b.From)
 	})
 
-	return tf, nil
+	return tf
 }
 
 // Merge joins the intervals and respective values of the TimeframeMap tf into the TimeframeMap t,
