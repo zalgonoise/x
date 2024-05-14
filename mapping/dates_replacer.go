@@ -1,6 +1,9 @@
 package mapping
 
-import "slices"
+import (
+	"slices"
+	"time"
+)
 
 // TimeframeReplacer stores values in intervals of time, as a 2D-map of Interval to a map of types K and T; by handling
 // conflicts as replacement-updates.
@@ -81,8 +84,8 @@ func (t *TimeframeReplacer[K, T]) All() SeqKV[Interval, map[K]T] {
 // Organize returns a new TimeframeReplacer with organized Interval(s) and respective values. It is the result of
 // calling Replace on TimeframeReplacer.All, and appending the resulting sequence to a new instance of
 // TimeframeReplacer.
-func (t *TimeframeReplacer[K, T]) Organize() *TimeframeReplacer[K, T] {
-	seq := Replace[map[K]T]()(t.All())
+func (t *TimeframeReplacer[K, T]) Organize(offset time.Duration) *TimeframeReplacer[K, T] {
+	seq := Replace[map[K]T](offset)(t.All())
 
 	tf := NewTimeframeReplacer[K, T]()
 
