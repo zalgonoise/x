@@ -3,6 +3,7 @@ package mapping
 import (
 	"maps"
 	"slices"
+	"time"
 )
 
 const minAlloc = 64
@@ -87,8 +88,8 @@ func (t *TimeframeMap[K, T]) All() SeqKV[Interval, map[K]T] {
 
 // Organize returns a new TimeframeMap with organized Interval(s) and respective values. It is the result of
 // calling Flatten on TimeframeMap.All, and appending the resulting sequence to a new instance of TimeframeMap.
-func (t *TimeframeMap[K, T]) Organize(cmp func(a, b T) bool) *TimeframeMap[K, T] {
-	seq := Flatten(cmpFunc[K](cmp), mergeFunc[K, T])(t.All())
+func (t *TimeframeMap[K, T]) Organize(cmp func(a, b T) bool, offset time.Duration) *TimeframeMap[K, T] {
+	seq := Flatten(cmpFunc[K](cmp), mergeFunc[K, T], offset)(t.All())
 
 	tf := NewTimeframeMap[K, T]()
 
