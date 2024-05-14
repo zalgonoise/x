@@ -78,11 +78,8 @@ func (t *TimeframeRange[T]) All() SeqKV[Interval, T] {
 // Organize returns a new TimeframeRange with organized Interval(s) and respective values. It is the result of
 // calling the input ReducerFunc (like Flatten or Replace) on TimeframeRange.All, and appending the resulting sequence
 // to a new instance of TimeframeRange.
-func (t *TimeframeRange[T]) Organize(reducer ReducerFunc[T]) (*TimeframeRange[T], error) {
-	seq, err := reducer(t.All())
-	if err != nil {
-		return nil, err
-	}
+func (t *TimeframeRange[T]) Organize(reducer ReducerFunc[T]) *TimeframeRange[T] {
+	seq := reducer(t.All())
 
 	tf := NewTimeframeRange[T]()
 
@@ -96,5 +93,5 @@ func (t *TimeframeRange[T]) Organize(reducer ReducerFunc[T]) (*TimeframeRange[T]
 		return a.From.Compare(b.From)
 	})
 
-	return tf, nil
+	return tf
 }
