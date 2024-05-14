@@ -264,8 +264,7 @@ func TestTimeframeReplacer(t *testing.T) {
 				_ = tf.Add(testcase.sets[i].Interval, map[int]blob{testcase.sets[i].Data.user.id: testcase.sets[i].Data})
 			}
 
-			newTF, err := tf.Organize()
-			require.NoError(t, err)
+			newTF := tf.Organize()
 
 			seq := newTF.All()
 
@@ -285,8 +284,7 @@ func TestTimeframeReplacer(t *testing.T) {
 				return true
 			}
 
-			tf, err := mapping.Organize[*mapping.TimeframeReplacer[int, blob]](fn, mapping.Replace[map[int]blob]())
-			require.NoError(t, err)
+			tf := mapping.Organize[*mapping.TimeframeReplacer[int, blob]](fn, mapping.Replace[map[int]blob]())
 
 			require.True(t, tf.All()(verifySeqKV(testcase.wants)))
 		})

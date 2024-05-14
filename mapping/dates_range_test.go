@@ -761,8 +761,7 @@ func TestTimeframeRange(t *testing.T) {
 				testcase.reducer = mapping.Replace[blob]()
 			}
 
-			newTF, err := tf.Organize(testcase.reducer)
-			require.NoError(t, err)
+			newTF := tf.Organize(testcase.reducer)
 
 			seq := newTF.All()
 
@@ -774,8 +773,7 @@ func TestTimeframeRange(t *testing.T) {
 				testcase.reducer = mapping.Replace[blob]()
 			}
 
-			tf, err := mapping.Organize[*mapping.TimeframeRange[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
-			require.NoError(t, err)
+			tf := mapping.Organize[*mapping.TimeframeRange[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
 
 			require.True(t, tf.All()(verifySeq(t, testcase.wants)))
 		})

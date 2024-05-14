@@ -1,7 +1,6 @@
 package mapping
 
 import (
-	"errors"
 	"testing"
 	"time"
 )
@@ -176,13 +175,9 @@ func TestTimeframe(t *testing.T) {
 				isEqual(t, true, ok)
 			}
 
-			tf, err := tf.Organize(func(a, b string) bool {
+			tf = tf.Organize(func(a, b string) bool {
 				return a == b
 			})
-			if err != nil {
-				t.Error(err)
-				t.Fail()
-			}
 
 			for i := range testcase.print {
 				itf, ok := tf.Index.values[testcase.print[i]]
@@ -273,7 +268,6 @@ func TestReplace(t *testing.T) {
 		next     Interval
 		wants    []IntervalSet
 		overlaps bool
-		err      error
 	}{
 		{
 			name: "CurBeforeNext",
@@ -382,10 +376,7 @@ func TestReplace(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			sets, overlaps, err := replace(testcase.cur, testcase.next)
-			if err != nil {
-				isEqual(t, true, errors.Is(err, testcase.err))
-			}
+			sets, overlaps := replace(testcase.cur, testcase.next)
 
 			isEqual(t, testcase.overlaps, overlaps)
 			isEqual(t, len(testcase.wants), len(sets))
@@ -507,7 +498,6 @@ func TestSplit(t *testing.T) {
 		next     Interval
 		wants    []IntervalSet
 		overlaps bool
-		err      error
 	}{
 		{
 			name: "CurBeforeNext",
@@ -622,10 +612,7 @@ func TestSplit(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			sets, overlaps, err := split(testcase.cur, testcase.next)
-			if err != nil {
-				isEqual(t, true, errors.Is(err, testcase.err))
-			}
+			sets, overlaps := split(testcase.cur, testcase.next)
 
 			isEqual(t, testcase.overlaps, overlaps)
 			isEqual(t, len(testcase.wants), len(sets))
@@ -655,10 +642,7 @@ func FuzzSplit(f *testing.F) {
 			To:   time.Unix(bTo, 0),
 		}
 
-		_, _, err := split(interval1, interval2)
-		if err != nil {
-			t.Error(err)
-		}
+		_, _ = split(interval1, interval2)
 	})
 }
 
@@ -680,10 +664,7 @@ func FuzzReplace(f *testing.F) {
 			To:   time.Unix(bTo, 0),
 		}
 
-		_, _, err := replace(interval1, interval2)
-		if err != nil {
-			t.Error(err)
-		}
+		_, _ = replace(interval1, interval2)
 	})
 }
 
