@@ -4,7 +4,6 @@ import "slices"
 
 type TimeframeSet[T any] struct {
 	buffer []DataInterval[T]
-	//mergeFunc func(a, b T) T
 }
 
 // NewTimeframeSet creates a NewTimeframeSet of type T, with an 2D-map of Interval's to type T.
