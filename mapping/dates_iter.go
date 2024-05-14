@@ -23,7 +23,7 @@ type Seq[T any] func(yield func(T) bool) bool
 // This type can be used to apply different strategies in a map-reduce scenario, when working with Interval ranges.
 //
 // It is passed into functions like Organize, and implementations of it include Replace and Flatten.
-type ReducerFunc[T any] func(SeqKV[Interval, T]) (SeqKV[Interval, T], error)
+type ReducerFunc[T any] func(SeqKV[Interval, T]) SeqKV[Interval, T]
 
 // DataInterval contains the data as Data for a specific Interval, as an isolated data structure used when caching
 // Intervals and data as Seq of Interval and Data are organized.
@@ -67,11 +67,8 @@ func AsSeq[T any](data []DataInterval[T]) SeqKV[Interval, T] {
 
 // Organize consumes a sequence Seq of Interval and data, returning an appropriate timeframe type K with organized
 // / flattened values.
-func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reducer ReducerFunc[T]) (*K, error) {
-	flattened, err := reducer(seq)
-	if err != nil {
-		return nil, err
-	}
+func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reducer ReducerFunc[T]) *K {
+	flattened := reducer(seq)
 
 	var tf M = new(K)
 	tf = tf.init()
@@ -82,14 +79,14 @@ func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reduc
 		return true
 	})
 
-	return tf, nil
+	return tf
 }
 
 // Replace consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
 func Replace[T any]() ReducerFunc[T] {
-	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T], err error) {
+	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T]) {
 		cache := make([]DataInterval[T], 0, minAlloc)
 
 		if !seq(func(interval Interval, value T) bool {
@@ -110,10 +107,7 @@ func Replace[T any]() ReducerFunc[T] {
 			}
 
 			for i := range conflicts {
-				sets, overlaps, err := replace(conflicts[i].Interval, interval)
-				if err != nil {
-					return false
-				}
+				sets, overlaps := replace(conflicts[i].Interval, interval)
 
 				if !overlaps {
 					continue
@@ -140,7 +134,7 @@ func Replace[T any]() ReducerFunc[T] {
 
 			return true
 		}) {
-			return nil, err
+			return nil
 		}
 
 		return func(yield func(Interval, T) bool) bool {
@@ -151,7 +145,7 @@ func Replace[T any]() ReducerFunc[T] {
 			}
 
 			return true
-		}, nil
+		}
 	}
 }
 
@@ -159,7 +153,7 @@ func Replace[T any]() ReducerFunc[T] {
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
 func Flatten[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T) ReducerFunc[T] {
-	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T], err error) {
+	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T]) {
 		cache := make([]DataInterval[T], 0, minAlloc)
 
 		if !seq(func(interval Interval, value T) bool {
@@ -182,10 +176,7 @@ func Flatten[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T) Reducer
 			}
 
 			for i := range conflicts {
-				sets, overlaps, err := split(conflicts[i].Interval, interval)
-				if err != nil {
-					return false
-				}
+				sets, overlaps := split(conflicts[i].Interval, interval)
 
 				if !overlaps {
 					continue
@@ -214,7 +205,7 @@ func Flatten[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T) Reducer
 
 			return true
 		}) {
-			return nil, err
+			return nil
 		}
 
 		return func(yield func(Interval, T) bool) bool {
@@ -225,7 +216,7 @@ func Flatten[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T) Reducer
 			}
 
 			return true
-		}, nil
+		}
 	}
 }
 
@@ -294,226 +285,236 @@ func findConflicts[T any](cache []DataInterval[T], cur Interval) (conflicts []Da
 	return conflicts, indices
 }
 
-func replace(cur, next Interval) ([]IntervalSet, bool, error) {
+func replace(cur, next Interval) ([]IntervalSet, bool) {
 	switch {
 	// next is after
 	//  c -  |###|
 	//  n -        |###|
 	case cur.To.Before(next.From):
-		return []IntervalSet{{cur: true, i: cur}, {next: true, i: next}}, false, nil
+		return []IntervalSet{{cur: true, i: cur}, {next: true, i: next}}, false
 
 	// cur is after
 	//  c -        |###|
 	//  n -  |###|
 	case cur.From.After(next.To):
-		return []IntervalSet{{next: true, i: next}, {cur: true, i: cur}}, false, nil
+		return []IntervalSet{{next: true, i: next}, {cur: true, i: cur}}, false
 
-	// overlapping start
+		// overlapping
 	//  c -  |#######|
-	//  n -  |#####?????
-	case cur.From.Equal(next.From):
-		switch cur.To.Compare(next.To) {
-		case -1:
-			// before
-			//  c -  |#######|
-			//  n -  |###########|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: next.To}},
-			}, true, nil
-		case 1:
-			// after
-			//  c -  |#######|
-			//  n -  |#####|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: next.To}},
-				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}, true, nil
-		case 0:
-			// equal
-			//  c -  |#######|
-			//  n -  |#######|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: next.To}},
-			}, true, nil
-		}
+	//  n - ???#####????
+	default:
+		switch cur.From.Compare(next.From) {
 
-	// overlap: portion of end
-	//  c -  |#######|
-	//  n -     |##?????
-	case next.From.After(cur.From):
-		switch next.To.Compare(cur.To) {
-		case 1:
-			// after; next goes beyond cur
-			//  c -  |#######|
-			//  n -     |#######|
-			return []IntervalSet{
-				{cur: true, i: Interval{From: cur.From, To: next.From}},
-				{next: true, i: Interval{From: next.From, To: next.To}},
-			}, true, nil
+		// cur before next
+		//  c -  |#######|
+		//  n -    |####????
 		case -1:
-			// before; next is within cur
-			//  c -  |#######|
-			//  n -     |###|
-			return []IntervalSet{
-				{cur: true, i: Interval{From: cur.From, To: next.From}},
-				{next: true, i: Interval{From: next.From, To: next.To}},
-				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}, true, nil
-		case 0:
-			// matching ends
-			//  c -  |#######|
-			//  n -     |####|
-			return []IntervalSet{
-				{cur: true, i: Interval{From: cur.From, To: next.From}},
-				{next: true, i: Interval{From: next.From, To: next.To}},
-			}, true, nil
-		}
+			switch next.To.Compare(cur.To) {
+			case 1:
+				// after; next goes beyond cur
+				//  c -  |#######|
+				//  n -     |#######|
+				return []IntervalSet{
+					{cur: true, i: Interval{From: cur.From, To: next.From}},
+					{next: true, i: Interval{From: next.From, To: next.To}},
+				}, true
+			case -1:
+				// before; next is within cur
+				//  c -  |#######|
+				//  n -     |###|
+				return []IntervalSet{
+					{cur: true, i: Interval{From: cur.From, To: next.From}},
+					{next: true, i: Interval{From: next.From, To: next.To}},
+					{cur: true, i: Interval{From: next.To, To: cur.To}},
+				}, true
+			default:
+				// matching ends, 0
+				//  c -  |#######|
+				//  n -     |####|
+				return []IntervalSet{
+					{cur: true, i: Interval{From: cur.From, To: next.From}},
+					{next: true, i: Interval{From: next.From, To: next.To}},
+				}, true
+			}
 
-	// overlap: portion of start
-	//  c -    |#######|
-	//  n -  |##?????
-	case next.From.Before(cur.From):
-		switch next.To.Compare(cur.To) {
+		// cur after next
+		//  c -    |#######|
+		//  n -  |####????????
 		case 1:
-			// overlap: entirety of current
-			//  c -    |#######|
-			//  n -  |############|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: next.To}},
-			}, true, nil
-		case -1:
-			// overlap: portion of start
-			//  c -    |#######|
-			//  n -  |######|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: next.To}},
-				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}, true, nil
-		case 0:
-			// overlap: entirety of current
-			//  c -    |#######|
-			//  n -  |#########|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: next.To}},
-			}, true, nil
+			switch next.To.Compare(cur.To) {
+			case 1:
+				// overlap: entirety of current
+				//  c -    |#######|
+				//  n -  |############|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: next.To}},
+				}, true
+			case -1:
+				// overlap: portion of start
+				//  c -    |#######|
+				//  n -  |######|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: next.To}},
+					{cur: true, i: Interval{From: next.To, To: cur.To}},
+				}, true
+			default:
+				// overlap: entirety of current, 0
+				//  c -    |#######|
+				//  n -  |#########|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: next.To}},
+				}, true
+			}
+
+		// cur equal to next, 0
+		//  c -  |#######|
+		//  n -  |####????
+		default:
+			switch cur.To.Compare(next.To) {
+			case -1:
+				// before
+				//  c -  |#######|
+				//  n -  |###########|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: next.To}},
+				}, true
+			case 1:
+				// after
+				//  c -  |#######|
+				//  n -  |#####|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: next.To}},
+					{cur: true, i: Interval{From: next.To, To: cur.To}},
+				}, true
+			default:
+				// equal, 0
+				//  c -  |#######|
+				//  n -  |#######|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: next.To}},
+				}, true
+			}
 		}
 	}
-
-	return nil, false, ErrTimeSplitFailed
 }
 
-func split(cur, next Interval) ([]IntervalSet, bool, error) {
+func split(cur, next Interval) ([]IntervalSet, bool) {
 	switch {
 	// next is after
 	//  c -  |###|
 	//  n -        |###|
 	case cur.To.Before(next.From):
-		return []IntervalSet{{cur: true, i: cur}, {next: true, i: next}}, false, nil
+		return []IntervalSet{{cur: true, i: cur}, {next: true, i: next}}, false
 
 	// cur is after
 	//  c -        |###|
 	//  n -  |###|
 	case cur.From.After(next.To):
-		return []IntervalSet{{next: true, i: next}, {cur: true, i: cur}}, false, nil
+		return []IntervalSet{{next: true, i: next}, {cur: true, i: cur}}, false
 
-	// overlapping start
+	// overlapping
 	//  c -  |#######|
-	//  n -  |#####?????
-	case cur.From.Equal(next.From):
-		switch cur.To.Compare(next.To) {
-		case -1:
-			// before
-			//  c -  |#######|
-			//  n -  |###########|
-			return []IntervalSet{
-				{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
-				{next: true, i: Interval{From: cur.To, To: next.To}},
-			}, true, nil
-		case 1:
-			// after
-			//  c -  |#######|
-			//  n -  |#####|
-			return []IntervalSet{
-				{cur: true, next: true, i: Interval{From: cur.From, To: next.To}},
-				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}, true, nil
-		case 0:
-			// equal
-			//  c -  |#######|
-			//  n -  |#######|
-			return []IntervalSet{
-				{cur: true, next: true, i: cur},
-			}, true, nil
-		}
+	//  n - ???#####????
+	default:
+		switch cur.From.Compare(next.From) {
 
-	// overlap: portion of end
-	//  c -  |#######|
-	//  n -     |##?????
-	case next.From.After(cur.From):
-		switch next.To.Compare(cur.To) {
-		case 1:
-			// after; next goes beyond cur
-			//  c -  |#######|
-			//  n -     |#######|
-			return []IntervalSet{
-				{cur: true, i: Interval{From: cur.From, To: next.From}},
-				{cur: true, next: true, i: Interval{From: next.From, To: cur.To}},
-				{next: true, i: Interval{From: cur.To, To: next.To}},
-			}, true, nil
+		// cur before next
+		//  c -  |#######|
+		//  n -    |####????
 		case -1:
-			// before; next is within cur
-			//  c -  |#######|
-			//  n -     |###|
-			return []IntervalSet{
-				{cur: true, i: Interval{From: cur.From, To: next.From}},
-				{cur: true, next: true, i: Interval{From: next.From, To: next.To}},
-				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}, true, nil
-		case 0:
-			// matching ends
-			//  c -  |#######|
-			//  n -     |####|
-			return []IntervalSet{
-				{cur: true, i: Interval{From: cur.From, To: next.From}},
-				{cur: true, next: true, i: Interval{From: next.From, To: next.To}},
-			}, true, nil
-		}
+			switch next.To.Compare(cur.To) {
+			case 1:
+				// after; next goes beyond cur
+				//  c -  |#######|
+				//  n -     |#######|
+				return []IntervalSet{
+					{cur: true, i: Interval{From: cur.From, To: next.From}},
+					{cur: true, next: true, i: Interval{From: next.From, To: cur.To}},
+					{next: true, i: Interval{From: cur.To, To: next.To}},
+				}, true
+			case -1:
+				// before; next is within cur
+				//  c -  |#######|
+				//  n -     |###|
+				return []IntervalSet{
+					{cur: true, i: Interval{From: cur.From, To: next.From}},
+					{cur: true, next: true, i: Interval{From: next.From, To: next.To}},
+					{cur: true, i: Interval{From: next.To, To: cur.To}},
+				}, true
+			default:
+				// matching ends, 0
+				//  c -  |#######|
+				//  n -     |####|
+				return []IntervalSet{
+					{cur: true, i: Interval{From: cur.From, To: next.From}},
+					{cur: true, next: true, i: Interval{From: next.From, To: next.To}},
+				}, true
+			}
 
-	// overlap: portion of start
-	//  c -    |#######|
-	//  n -  |##?????
-	case next.From.Before(cur.From):
-		switch next.To.Compare(cur.To) {
+		// cur after next
+		//  c -    |#######|
+		//  n -  |####????????
 		case 1:
-			// overlap: entirety of current
-			//  c -    |#######|
-			//  n -  |############|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: cur.From}},
-				{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
-				{next: true, i: Interval{From: cur.To, To: next.To}},
-			}, true, nil
-		case -1:
-			// overlap: portion of start
-			//  c -    |#######|
-			//  n -  |######|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: cur.From}},
-				{cur: true, next: true, i: Interval{From: cur.From, To: next.To}},
-				{cur: true, i: Interval{From: next.To, To: cur.To}},
-			}, true, nil
-		case 0:
-			// overlap: entirety of current
-			//  c -    |#######|
-			//  n -  |#########|
-			return []IntervalSet{
-				{next: true, i: Interval{From: next.From, To: cur.From}},
-				{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
-			}, true, nil
+			switch next.To.Compare(cur.To) {
+			case 1:
+				// overlap: entirety of current
+				//  c -    |#######|
+				//  n -  |############|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: cur.From}},
+					{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
+					{next: true, i: Interval{From: cur.To, To: next.To}},
+				}, true
+			case -1:
+				// overlap: portion of start
+				//  c -    |#######|
+				//  n -  |######|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: cur.From}},
+					{cur: true, next: true, i: Interval{From: cur.From, To: next.To}},
+					{cur: true, i: Interval{From: next.To, To: cur.To}},
+				}, true
+			default:
+				// overlap: entirety of current
+				//  c -    |#######|
+				//  n -  |#########|
+				return []IntervalSet{
+					{next: true, i: Interval{From: next.From, To: cur.From}},
+					{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
+				}, true
+			}
+
+		// cur equal to next, 0
+		//  c -  |#######|
+		//  n -  |####????
+		default:
+			switch cur.To.Compare(next.To) {
+			case -1:
+				// before
+				//  c -  |#######|
+				//  n -  |###########|
+				return []IntervalSet{
+					{cur: true, next: true, i: Interval{From: cur.From, To: cur.To}},
+					{next: true, i: Interval{From: cur.To, To: next.To}},
+				}, true
+			case 1:
+				// after
+				//  c -  |#######|
+				//  n -  |#####|
+				return []IntervalSet{
+					{cur: true, next: true, i: Interval{From: cur.From, To: next.To}},
+					{cur: true, i: Interval{From: next.To, To: cur.To}},
+				}, true
+			default:
+				// equal, 0
+				//  c -  |#######|
+				//  n -  |#######|
+				return []IntervalSet{
+					{cur: true, next: true, i: cur},
+				}, true
+			}
 		}
 	}
-
-	return nil, false, ErrTimeSplitFailed
 }
 
 func coalesce[K comparable, T any](start, next map[K]T) map[K]T {
