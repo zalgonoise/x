@@ -63,16 +63,13 @@ func (t *TimeframeSet[T]) All() SeqKV[Interval, T] {
 func (t *TimeframeSet[T]) Organize(reducer ReducerFunc[T]) *TimeframeSet[T] {
 	seq := reducer(t.All())
 
-	buffer := make([]DataInterval[T], 0, len(t.buffer))
-	seq(func(interval Interval, data T) bool {
-		buffer = append(buffer, DataInterval[T]{Interval: interval, Data: data})
+	tf := NewTimeframeSet[T]()
 
-		return true
-	})
+	seq(tf.Add)
 
-	slices.SortFunc(buffer, func(a, b DataInterval[T]) int {
+	slices.SortFunc(tf.buffer, func(a, b DataInterval[T]) int {
 		return a.Interval.From.Compare(b.Interval.From)
 	})
 
-	return &TimeframeSet[T]{buffer: buffer}
+	return tf
 }
