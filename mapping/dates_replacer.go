@@ -84,8 +84,8 @@ func (t *TimeframeReplacer[K, T]) All() SeqKV[Interval, map[K]T] {
 // Organize returns a new TimeframeReplacer with organized Interval(s) and respective values. It is the result of
 // calling Replace on TimeframeReplacer.All, and appending the resulting sequence to a new instance of
 // TimeframeReplacer.
-func (t *TimeframeReplacer[K, T]) Organize(offset time.Duration) *TimeframeReplacer[K, T] {
-	seq := Replace[map[K]T](offset)(t.All())
+func (t *TimeframeReplacer[K, T]) Organize(cmpFunc func(a, b map[K]T) bool, offset time.Duration) *TimeframeReplacer[K, T] {
+	seq := Replace[map[K]T](cmpFunc, offset)(t.All())
 
 	tf := NewTimeframeReplacer[K, T]()
 
