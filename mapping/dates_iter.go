@@ -60,6 +60,7 @@ func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reduc
 	flattened := reducer(seq)
 
 	var tf M = new(K)
+
 	tf = tf.init()
 
 	flattened(func(interval Interval, t T) bool {
