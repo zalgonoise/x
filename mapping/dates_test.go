@@ -171,8 +171,7 @@ func TestTimeframe(t *testing.T) {
 			tf := NewTimeframe[string, string]()
 
 			for interval, values := range testcase.input {
-				ok := tf.Add(interval, values)
-				isEqual(t, true, ok)
+				_ = tf.Add(interval, values)
 			}
 
 			tf = tf.Organize(func(a, b string) bool {

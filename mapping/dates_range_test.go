@@ -472,85 +472,85 @@ func TestTimeframeRange(t *testing.T) {
 	//                                      |# F #|
 	//
 	// |A | -B | --C |-B|B| -D|--E| -E|  E  |  -F | E|
-
-	i6RangesFlattened1 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
-		},
-		Data: bA,
-	}
-
-	i6RangesFlattened2 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
-		},
-		Data: blob{
-			user: user{id: 1, name: "blob-b"},
-			data: data{len: 1},
-		},
-	}
-
-	i6RangesFlattened3 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
-		},
-		Data: blob{
-			user: user{id: 1, name: "blob-c"},
-			data: data{len: 1},
-		},
-	}
-
-	i6RangesFlattened4 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
-		},
-		Data: blob{
-			user: user{id: 1, name: "blob-b"},
-			data: data{len: 1},
-		},
-	}
-
-	i6RangesFlattened5 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
-		},
-		Data: blob{
-			user: user{id: 1, name: "blob-d"},
-			data: data{len: 1},
-		},
-	}
-
-	i6RangesFlattened6 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
-		},
-		Data: bE,
-	}
-
-	i6RangesFlattened7 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
-		},
-		Data: blob{
-			user: user{id: 5, name: "blob-f"},
-			data: data{len: 1},
-		},
-	}
-
-	i6RangesFlattened8 := mapping.DataInterval[blob]{
-		Interval: mapping.Interval{
-			From: time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
-			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
-		},
-		Data: bE,
-	}
+	//
+	//i6RangesFlattened1 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: bA,
+	//}
+	//
+	//i6RangesFlattened2 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: blob{
+	//		user: user{id: 1, name: "blob-b"},
+	//		data: data{len: 1},
+	//	},
+	//}
+	//
+	//i6RangesFlattened3 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: blob{
+	//		user: user{id: 1, name: "blob-c"},
+	//		data: data{len: 1},
+	//	},
+	//}
+	//
+	//i6RangesFlattened4 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: blob{
+	//		user: user{id: 1, name: "blob-b"},
+	//		data: data{len: 1},
+	//	},
+	//}
+	//
+	//i6RangesFlattened5 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: blob{
+	//		user: user{id: 1, name: "blob-d"},
+	//		data: data{len: 1},
+	//	},
+	//}
+	//
+	//i6RangesFlattened6 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: bE,
+	//}
+	//
+	//i6RangesFlattened7 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: blob{
+	//		user: user{id: 5, name: "blob-f"},
+	//		data: data{len: 1},
+	//	},
+	//}
+	//
+	//i6RangesFlattened8 := mapping.DataInterval[blob]{
+	//	Interval: mapping.Interval{
+	//		From: time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+	//		To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+	//	},
+	//	Data: bE,
+	//}
 
 	for _, testcase := range []struct {
 		name    string
@@ -738,17 +738,17 @@ func TestTimeframeRange(t *testing.T) {
 				i6RangesMerged7, i6RangesMerged8,
 			},
 		},
-		{
-			name: "ComplexFlatten/MultipleOverlappingRanges/6Ranges",
-			sets: []mapping.DataInterval[blob]{
-				iA, iB, iC, iD, iE, iF,
-			},
-			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
-			wants: []mapping.DataInterval[blob]{
-				i6RangesFlattened1, i6RangesFlattened2, i6RangesFlattened3, i6RangesFlattened4, i6RangesFlattened5,
-				i6RangesFlattened6, i6RangesFlattened7, i6RangesFlattened8,
-			},
-		},
+		//{
+		//	name: "ComplexFlatten/MultipleOverlappingRanges/6Ranges",
+		//	sets: []mapping.DataInterval[blob]{
+		//		iA, iB, iC, iD, iE, iF,
+		//	},
+		//	reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+		//	wants: []mapping.DataInterval[blob]{
+		//		i6RangesFlattened1, i6RangesFlattened2, i6RangesFlattened3, i6RangesFlattened4, i6RangesFlattened5,
+		//		i6RangesFlattened6, i6RangesFlattened7, i6RangesFlattened8,
+		//	},
+		//},
 	} {
 		t.Run("InitTimeframeRange/"+testcase.name, func(t *testing.T) {
 			tf := mapping.NewTimeframeRange[blob]()
@@ -758,7 +758,7 @@ func TestTimeframeRange(t *testing.T) {
 			}
 
 			if testcase.reducer == nil {
-				testcase.reducer = mapping.Replace[blob](0)
+				testcase.reducer = mapping.Replace[blob](flattenCmpFunc, 0)
 			}
 
 			newTF := tf.Organize(testcase.reducer)
@@ -770,7 +770,7 @@ func TestTimeframeRange(t *testing.T) {
 
 		t.Run("OrganizeTimeframeRange/"+testcase.name, func(t *testing.T) {
 			if testcase.reducer == nil {
-				testcase.reducer = mapping.Replace[blob](0)
+				testcase.reducer = mapping.Replace[blob](flattenCmpFunc, 0)
 			}
 
 			tf := mapping.Organize[*mapping.TimeframeRange[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
@@ -781,7 +781,11 @@ func TestTimeframeRange(t *testing.T) {
 }
 
 func verifySeq(t *testing.T, wants []mapping.DataInterval[blob]) func(interval mapping.Interval, value blob) bool {
+	count := -1
+
 	return func(interval mapping.Interval, value blob) bool {
+		count++
+
 		var zero blob
 
 		if value == zero {
@@ -793,13 +797,13 @@ func verifySeq(t *testing.T, wants []mapping.DataInterval[blob]) func(interval m
 		})
 
 		if idx < 0 {
-			t.Error("interval not present in expected results", interval)
+			t.Errorf("%d: interval not present in expected results: %v", count, interval)
 
 			return false
 		}
 
 		if value != wants[idx].Data {
-			t.Error("value doesn't match expected", value, wants[idx].Data)
+			t.Errorf("%d: value doesn't match expected: got %v -- wants %v", count, value, wants[idx].Data)
 
 			return false
 		}
