@@ -2,7 +2,6 @@ package mapping
 
 import (
 	"errors"
-	"slices"
 	"time"
 )
 
@@ -127,9 +126,9 @@ func (t *Timeframe[K, T]) Organize(cmp func(a, b T) bool, offset time.Duration) 
 		return true
 	})
 
-	slices.SortFunc(tf.Index.Keys, func(a, b Interval) int {
-		return a.From.Compare(b.From)
-	})
+	//slices.SortFunc(tf.Index.Keys, func(a, b Interval) int {
+	//	return a.From.Compare(b.From)
+	//})
 
 	return tf
 }
