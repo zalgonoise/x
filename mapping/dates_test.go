@@ -1,104 +1,109 @@
-package mapping
+package mapping_test
 
 import (
+	"maps"
+	"slices"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	"github.com/zalgonoise/x/mapping"
 )
 
 func TestTimeframe(t *testing.T) {
-	interval1 := Interval{
+	interval1 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
-	interval2 := Interval{
+	interval2 := mapping.Interval{
 		From: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
 	}
 
 	// interleaved on tail
-	interval3 := Interval{
+	interval3 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
 	}
-	interval3Split1 := Interval{
+	interval3Split1 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
 	}
-	interval3Split2 := Interval{
+	interval3Split2 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
 
 	// interleaved on head
-	interval4 := Interval{
+	interval4 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
 	}
 
-	interval4Split1 := Interval{
+	interval4Split1 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 	}
-	interval4Split2 := Interval{
+	interval4Split2 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
 	}
-	interval4Split3 := Interval{
+	interval4Split3 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
 
 	// interleaved in the middle
-	interval5 := Interval{
+	interval5 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 16, 0, 0, 0, time.UTC),
 	}
 
-	interval5Split1 := Interval{
+	interval5Split1 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
 	}
-	interval5Split2 := Interval{
+	interval5Split2 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 16, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
 
 	// interleaved recursively
-	interval6 := Interval{
+	interval6 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
 	}
-	interval7 := Interval{
+	interval7 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
 	}
-	interval8 := Interval{
+	interval8 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 21, 0, 0, 0, time.UTC),
 	}
 
-	interval6Split1 := Interval{
+	interval6Split1 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
 	}
-	interval6Split2 := Interval{
+	interval6Split2 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
 	}
-	interval6Split3 := Interval{
+	interval6Split3 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
 	}
 
-	interval6Split4 := Interval{
+	interval6Split4 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 21, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
 	}
-	interval6Split5 := Interval{
+	interval6Split5 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
 	}
-	interval6Split6 := Interval{
+	interval6Split6 := mapping.Interval{
 		From: time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 	}
@@ -117,645 +122,186 @@ func TestTimeframe(t *testing.T) {
 	kv4 := map[string]string{"d": "value"}
 	kv5 := map[string]string{"e": "value"}
 
+	mapMergeFunc := func(a, b map[string]string) map[string]string {
+		aCopy := make(map[string]string, len(a))
+		maps.Copy(aCopy, a)
+
+		for k, v := range b {
+			aCopy[k] = v
+		}
+
+		return aCopy
+	}
+
 	for _, testcase := range []struct {
 		name  string
-		input map[Interval]map[string]string
-		print []Interval
+		input []mapping.DataInterval[map[string]string]
+		wants []mapping.DataInterval[map[string]string]
 	}{
 		{
 			name: "sequential",
-			input: map[Interval]map[string]string{
-				interval1: kv1,
-				interval2: kv2,
+			input: []mapping.DataInterval[map[string]string]{
+				{Interval: interval1, Data: kv1},
+				{Interval: interval2, Data: kv2},
 			},
-			print: []Interval{interval1, interval2},
+			wants: []mapping.DataInterval[map[string]string]{
+				{Interval: interval1, Data: kv1},
+				{Interval: interval2, Data: kv2},
+			},
 		},
 		{
 			name: "interleaved/on_tail",
-			input: map[Interval]map[string]string{
-				interval1: kv1,
-				interval3: kv2,
+			input: []mapping.DataInterval[map[string]string]{
+				{Interval: interval1, Data: kv1},
+				{Interval: interval3, Data: kv2},
 			},
-			print: []Interval{interval3Split1, interval3Split2, interval2},
+			wants: []mapping.DataInterval[map[string]string]{
+				{Interval: interval3Split1, Data: kv1},
+				{Interval: interval3Split2, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+					"d": "value",
+				}},
+				{Interval: interval2, Data: kv2},
+			},
 		},
 		{
 			name: "interleaved/on_head",
-			input: map[Interval]map[string]string{
-				interval1: kv1,
-				interval4: kv2,
+			input: []mapping.DataInterval[map[string]string]{
+				{Interval: interval1, Data: kv1},
+				{Interval: interval4, Data: kv2},
 			},
-			print: []Interval{interval4Split1, interval4Split2, interval4Split3},
+			wants: []mapping.DataInterval[map[string]string]{
+				{Interval: interval4Split1, Data: kv2},
+				{Interval: interval4Split2, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+					"d": "value",
+				}},
+				{Interval: interval4Split3, Data: kv1},
+			},
 		},
 		{
 			name: "interleaved/on_middle",
-			input: map[Interval]map[string]string{
-				interval1: kv1,
-				interval5: kv2,
+			input: []mapping.DataInterval[map[string]string]{
+				{Interval: interval1, Data: kv1},
+				{Interval: interval5, Data: kv2},
 			},
-			print: []Interval{interval5Split1, interval5, interval5Split2},
+			wants: []mapping.DataInterval[map[string]string]{
+				{Interval: interval5Split1, Data: kv1},
+				{Interval: interval5, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+					"d": "value",
+				}},
+				{Interval: interval5Split2, Data: kv1},
+			},
 		},
 		{
 			name: "interleaved/recursive",
-			input: map[Interval]map[string]string{
-				interval1: kv1,
-				interval6: kv3,
-				interval7: kv4,
-				interval8: kv5,
+			input: []mapping.DataInterval[map[string]string]{
+				{Interval: interval1, Data: kv1},
+				{Interval: interval6, Data: kv3},
+				{Interval: interval7, Data: kv4},
+				{Interval: interval8, Data: kv5},
 			},
-			print: []Interval{
-				interval6Split1, interval6Split2, interval6Split3, interval8, interval6Split4, interval6Split5, interval6Split6,
+			wants: []mapping.DataInterval[map[string]string]{
+				{Interval: interval6Split1, Data: kv1},
+				{Interval: interval6Split2, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+				}},
+				{Interval: interval6Split3, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+					"d": "value",
+				}},
+				{Interval: interval8, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+					"d": "value",
+					"e": "value",
+				}},
+				{Interval: interval6Split4, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+					"d": "value",
+				}},
+				{Interval: interval6Split5, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+					"c": "value",
+				}},
+				{Interval: interval6Split6, Data: map[string]string{
+					"a": "value",
+					"b": "value",
+				}},
 			},
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			tf := NewTimeframe[string, string]()
+			tf := mapping.NewTimeframe[map[string]string]()
 
-			for interval, values := range testcase.input {
-				_ = tf.Add(interval, values)
+			for i := range testcase.input {
+				_ = tf.Add(testcase.input[i].Interval, testcase.input[i].Data)
 			}
 
-			tf = tf.Organize(func(a, b string) bool {
-				return a == b
-			}, 0)
+			tf = tf.Organize(mapping.Flatten[map[string]string](
+				maps.Equal[map[string]string, map[string]string],
+				mapMergeFunc, 0))
 
-			for i := range testcase.print {
-				itf, ok := tf.Index.values[testcase.print[i]]
-				isEqual(t, true, ok)
+			require.True(t, tf.All()(verifySeqMap(testcase.wants)))
+		})
 
-				t.Log(itf)
+		t.Run("OrganizeTimeframe/"+testcase.name, func(t *testing.T) {
+			fn := func(yield func(mapping.Interval, map[string]string) bool) bool {
+				for i := range testcase.input {
+					if !yield(testcase.input[i].Interval, testcase.input[i].Data) {
+						return false
+					}
+				}
+
+				return true
 			}
+
+			tf := mapping.Organize[*mapping.Timeframe[map[string]string]](fn,
+				mapping.Flatten[map[string]string](
+					maps.Equal[map[string]string, map[string]string],
+					mapMergeFunc, 0))
+
+			require.True(t, tf.All()(verifySeqMap(testcase.wants)))
 		})
 	}
 }
 
-func TestReplace(t *testing.T) {
-	intervalBefore := Interval{
-		From: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 11, 59, 59, 0, time.UTC),
-	}
-	intervalAfter := Interval{
-		From: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-	}
+func verifySeqMap(wants []mapping.DataInterval[map[string]string]) func(interval mapping.Interval, m map[string]string) bool {
+	return func(interval mapping.Interval, b map[string]string) bool {
 
-	interval1 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	interval2 := Interval{
-		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
-	}
-	interval3 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	interval4 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-	}
-	interval5 := Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	interval6 := Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	interval7 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	interval8 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
-	}
-	interval9 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-
-	i1Split1 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
-	}
-	i1Split2 := Interval{
-		From: time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-
-	i4split := Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	i5split := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-	}
-	i6Split := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-	}
-	i8Split := Interval{
-		From: time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-
-	for _, testcase := range []struct {
-		name     string
-		cur      Interval
-		next     Interval
-		wants    []IntervalSet
-		overlaps bool
-	}{
-		{
-			name: "CurBeforeNext",
-			cur:  intervalBefore,
-			next: interval1,
-			wants: []IntervalSet{
-				{cur: true, i: intervalBefore},
-				{next: true, i: interval1},
-			},
-		},
-		{
-			name: "CurAfterNext",
-			cur:  intervalAfter,
-			next: interval1,
-			wants: []IntervalSet{
-				{next: true, i: interval1},
-				{cur: true, i: intervalAfter},
-			},
-		},
-		{
-			name: "OverlappingStart/NextEndsAfter",
-			cur:  interval1,
-			next: interval3,
-			wants: []IntervalSet{
-				{next: true, i: interval3},
-			},
-			overlaps: true,
-		},
-		{
-			name: "OverlappingStart/NextEndsBefore",
-			cur:  interval1,
-			next: interval4,
-			wants: []IntervalSet{
-				{next: true, i: interval4},
-				{cur: true, i: i4split},
-			},
-			overlaps: true,
-		},
-		{
-			name: "OverlappingStart/MatchingLengths",
-			cur:  interval1,
-			next: interval1,
-			wants: []IntervalSet{
-				{next: true, i: interval1},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectMiddle/NextEndsAfter",
-			cur:  interval1,
-			next: interval5,
-			wants: []IntervalSet{
-				{cur: true, i: i5split},
-				{next: true, i: interval5},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectMiddle/NextIsWithin",
-			cur:  interval1,
-			next: interval2,
-			wants: []IntervalSet{
-				{cur: true, i: i1Split1},
-				{next: true, i: interval2},
-				{cur: true, i: i1Split2},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectMiddle/NextEndsLikeCur",
-			cur:  interval1,
-			next: interval6,
-			wants: []IntervalSet{
-				{cur: true, i: i6Split},
-				{next: true, i: interval6},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectBeginning/NextOverlapsCur",
-			cur:  interval1,
-			next: interval7,
-			wants: []IntervalSet{
-				{next: true, i: interval7},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectBeginning/NextOverlapsStart",
-			cur:  interval1,
-			next: interval8,
-			wants: []IntervalSet{
-				{next: true, i: interval8},
-				{cur: true, i: i8Split},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectBeginning/NextEndsWithStart",
-			cur:  interval1,
-			next: interval9,
-			wants: []IntervalSet{
-				{next: true, i: interval9},
-			},
-			overlaps: true,
-		},
-	} {
-		t.Run(testcase.name, func(t *testing.T) {
-			sets, overlaps := replace(testcase.cur, testcase.next, 0)
-
-			isEqual(t, testcase.overlaps, overlaps)
-			isEqual(t, len(testcase.wants), len(sets))
-
-			for i, w := range testcase.wants {
-				isEqual(t, w, sets[i])
-			}
+		idx := slices.IndexFunc(wants, func(set mapping.DataInterval[map[string]string]) bool {
+			return set.Interval == interval
 		})
-	}
-}
 
-func TestSplit(t *testing.T) {
-	intervalBefore := Interval{
-		From: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 11, 59, 59, 0, time.UTC),
-	}
-	intervalAfter := Interval{
-		From: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC),
-	}
-
-	interval1 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	interval2 := Interval{
-		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
-	}
-	interval3 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	interval4 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-	}
-	interval5 := Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	interval6 := Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	interval7 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	interval8 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
-	}
-	interval9 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-
-	i1Split1 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
-	}
-	i1Split2 := Interval{
-		From: time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	i3split := Interval{
-		From: time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	i4split := Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	i5split1 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-	}
-	i5split2 := Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	i5split3 := Interval{
-		From: time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	i6Split := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-	}
-	i7Split1 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-	}
-	i7Split2 := Interval{
-		From: time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	i8Split1 := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-	}
-	i8Split2 := Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
-	}
-	i8Split3 := Interval{
-		From: time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC),
-	}
-	i9Split := Interval{
-		From: time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-	}
-
-	for _, testcase := range []struct {
-		name     string
-		cur      Interval
-		next     Interval
-		wants    []IntervalSet
-		overlaps bool
-	}{
-		{
-			name: "CurBeforeNext",
-			cur:  intervalBefore,
-			next: interval1,
-			wants: []IntervalSet{
-				{cur: true, i: intervalBefore},
-				{next: true, i: interval1},
-			},
-		},
-		{
-			name: "CurAfterNext",
-			cur:  intervalAfter,
-			next: interval1,
-			wants: []IntervalSet{
-				{next: true, i: interval1},
-				{cur: true, i: intervalAfter},
-			},
-		},
-		{
-			name: "OverlappingStart/NextEndsAfter",
-			cur:  interval1,
-			next: interval3,
-			wants: []IntervalSet{
-				{cur: true, next: true, i: interval1},
-				{next: true, i: i3split},
-			},
-			overlaps: true,
-		},
-		{
-			name: "OverlappingStart/NextEndsBefore",
-			cur:  interval1,
-			next: interval4,
-			wants: []IntervalSet{
-				{cur: true, next: true, i: interval4},
-				{cur: true, i: i4split},
-			},
-			overlaps: true,
-		},
-		{
-			name: "OverlappingStart/MatchingLengths",
-			cur:  interval1,
-			next: interval1,
-			wants: []IntervalSet{
-				{cur: true, next: true, i: interval1},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectMiddle/NextEndsAfter",
-			cur:  interval1,
-			next: interval5,
-			wants: []IntervalSet{
-				{cur: true, i: i5split1},
-				{cur: true, next: true, i: i5split2},
-				{next: true, i: i5split3},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectMiddle/NextIsWithin",
-			cur:  interval1,
-			next: interval2,
-			wants: []IntervalSet{
-				{cur: true, i: i1Split1},
-				{cur: true, next: true, i: interval2},
-				{cur: true, i: i1Split2},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectMiddle/NextEndsLikeCur",
-			cur:  interval1,
-			next: interval6,
-			wants: []IntervalSet{
-				{cur: true, i: i6Split},
-				{cur: true, next: true, i: interval6},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectBeginning/NextOverlapsCur",
-			cur:  interval1,
-			next: interval7,
-			wants: []IntervalSet{
-				{next: true, i: i7Split1},
-				{cur: true, next: true, i: interval1},
-				{next: true, i: i7Split2},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectBeginning/NextOverlapsStart",
-			cur:  interval1,
-			next: interval8,
-			wants: []IntervalSet{
-				{next: true, i: i8Split1},
-				{cur: true, next: true, i: i8Split2},
-				{cur: true, i: i8Split3},
-			},
-			overlaps: true,
-		},
-		{
-			name: "IntersectBeginning/NextEndsWithStart",
-			cur:  interval1,
-			next: interval9,
-			wants: []IntervalSet{
-				{next: true, i: i9Split},
-				{cur: true, next: true, i: interval1},
-			},
-			overlaps: true,
-		},
-	} {
-		t.Run(testcase.name, func(t *testing.T) {
-			sets, overlaps := split(testcase.cur, testcase.next, 0)
-
-			isEqual(t, testcase.overlaps, overlaps)
-			isEqual(t, len(testcase.wants), len(sets))
-
-			for i, w := range testcase.wants {
-				isEqual(t, w, sets[i])
-			}
-		})
-	}
-}
-
-func FuzzSplit(f *testing.F) {
-	f.Add(
-		time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC).Unix(),
-		time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC).Unix(),
-		time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC).Unix(),
-		time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC).Unix(),
-	)
-
-	f.Fuzz(func(t *testing.T, aFrom, aTo, bFrom, bTo int64) {
-		interval1 := Interval{
-			From: time.Unix(aFrom, 0),
-			To:   time.Unix(aTo, 0),
-		}
-		interval2 := Interval{
-			From: time.Unix(bFrom, 0),
-			To:   time.Unix(bTo, 0),
+		if idx < 0 {
+			return false
 		}
 
-		_, _ = split(interval1, interval2, 0)
-	})
-}
-
-func FuzzReplace(f *testing.F) {
-	f.Add(
-		time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC).Unix(),
-		time.Date(2024, 1, 1, 23, 59, 59, 0, time.UTC).Unix(),
-		time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC).Unix(),
-		time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC).Unix(),
-	)
-
-	f.Fuzz(func(t *testing.T, aFrom, aTo, bFrom, bTo int64) {
-		interval1 := Interval{
-			From: time.Unix(aFrom, 0),
-			To:   time.Unix(aTo, 0),
-		}
-		interval2 := Interval{
-			From: time.Unix(bFrom, 0),
-			To:   time.Unix(bTo, 0),
+		if len(wants[idx].Data) != len(b) {
+			return false
 		}
 
-		_, _ = replace(interval1, interval2, 0)
-	})
-}
-
-func TestCoalesce(t *testing.T) {
-	for _, testcase := range []struct {
-		name  string
-		input map[string]string
-		next  map[string]string
-		wants map[string]string
-	}{
-		{
-			name:  "simple",
-			input: map[string]string{"a": "value"},
-			next:  map[string]string{"b": "value"},
-			wants: map[string]string{"a": "value", "b": "value"},
-		},
-		{
-			name:  "overwrite",
-			input: map[string]string{"a": "value"},
-			next:  map[string]string{"a": "value2"},
-			wants: map[string]string{"a": "value2"},
-		},
-		{
-			name:  "next_is_nil",
-			input: map[string]string{"a": "value"},
-			wants: map[string]string{"a": "value"},
-		},
-		{
-			name:  "start_is_nil",
-			next:  map[string]string{"a": "value"},
-			wants: map[string]string{"a": "value"},
-		},
-	} {
-		t.Run(testcase.name, func(t *testing.T) {
-			i := coalesce(testcase.input, testcase.next)
-
-			for k, v := range testcase.wants {
-				value, ok := i[k]
-
-				isEqual(t, true, ok)
-				isEqual(t, v, value)
+		for k, v := range wants[idx].Data {
+			if value, ok := b[k]; !ok || v != value {
+				return false
 			}
-		})
-	}
-}
+		}
 
-func TestCoalesceUnset(t *testing.T) {
-	for _, testcase := range []struct {
-		name    string
-		input   map[string]string
-		next    map[string]string
-		wants   map[string]string
-		skipped []string
-	}{
-		{
-			name:  "simple",
-			input: map[string]string{"a": "value"},
-			next:  map[string]string{"b": "value"},
-			wants: map[string]string{"a": "value", "b": "value"},
-		},
-		{
-			name:    "overwrite",
-			input:   map[string]string{"a": "value"},
-			next:    map[string]string{"a": "value2"},
-			wants:   map[string]string{"a": "value"},
-			skipped: []string{"a"},
-		},
-		{
-			name:  "next_is_nil",
-			input: map[string]string{"a": "value"},
-			wants: map[string]string{"a": "value"},
-		},
-		{
-			name:  "start_is_nil",
-			next:  map[string]string{"a": "value"},
-			wants: map[string]string{"a": "value"},
-		},
-	} {
-		t.Run(testcase.name, func(t *testing.T) {
-			i, skipped := coalesceUnset(testcase.input, testcase.next)
-
-			for k, v := range testcase.wants {
-				value, ok := i[k]
-
-				isEqual(t, true, ok)
-				isEqual(t, v, value)
-			}
-
-			isEqual(t, len(testcase.skipped), len(skipped))
-			for idx := range testcase.skipped {
-				isEqual(t, testcase.skipped[idx], skipped[idx])
-			}
-		})
+		return true
 	}
 }
