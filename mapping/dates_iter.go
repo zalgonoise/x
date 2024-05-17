@@ -1,7 +1,5 @@
 package mapping
 
-import "github.com/zalgonoise/cfg"
-
 // SeqKV describes a sequence of iterable items, which takes a yield func which will be used
 // to perform a certain operation on each yielded item throughout the iteration
 //
@@ -70,39 +68,6 @@ func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reduc
 	})
 
 	return tf
-}
-
-func FormatTime[T any](
-	seq SeqKV[Interval, T],
-	opts ...cfg.Option[Format],
-) SeqKV[Interval, T] {
-	format := cfg.New(opts...)
-
-	if format.fnFrom == nil && format.fnTo == nil {
-		return seq
-	}
-
-	return func(yield func(Interval, T) bool) bool {
-		return seq(func(interval Interval, m T) bool {
-			var ok bool
-
-			if format.fnFrom != nil {
-				interval.From, ok = format.fnFrom(interval.From)
-				if !ok {
-					return false
-				}
-			}
-
-			if format.fnTo != nil {
-				interval.To, ok = format.fnTo(interval.To)
-				if !ok {
-					return false
-				}
-			}
-
-			return yield(interval, m)
-		})
-	}
 }
 
 func coalesce[K comparable, T any](start, next map[K]T) map[K]T {
