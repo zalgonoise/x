@@ -5,14 +5,13 @@ import (
 	"time"
 )
 
-var (
-	ErrAppendFailed    = errors.New("failed to append to timeframe")
-	ErrTimeSplitFailed = errors.New("failed to split time intervals")
-)
+const minAlloc = 64
+
+var ErrAppendFailed = errors.New("failed to append to timeframe")
 
 // Timeframe stores values in intervals of time, as an Index of Interval and a map of types K and T.
-type Timeframe[K comparable, T any] struct {
-	Index *Index[Interval, map[K]T]
+type Timeframe[T any] struct {
+	Index *Index[Interval, T]
 }
 
 // Interval is a period of time with a From and To time.Time values.
@@ -22,30 +21,30 @@ type Interval struct {
 }
 
 // NewTimeframe creates a Timeframe of types K and T, with an index on the Interval's From time.Time.
-func NewTimeframe[K comparable, T any]() *Timeframe[K, T] {
-	return &Timeframe[K, T]{
-		Index: NewIndex[Interval, map[K]T](
-			make(map[Interval]map[K]T),
-			WithIndex[map[K]T](func(a, b Interval) int {
+func NewTimeframe[T any]() *Timeframe[T] {
+	return &Timeframe[T]{
+		Index: NewIndex[Interval, T](
+			make(map[Interval]T),
+			WithIndex[T](func(a, b Interval) int {
 				return a.From.Compare(b.From)
 			}),
-			WithZero[Interval, map[K]T](nil),
+			WithZero[Interval, T](*new(T)),
 		),
 	}
 }
 
-func (t *Timeframe[K, T]) init() *Timeframe[K, T] {
+func (t *Timeframe[T]) init() *Timeframe[T] {
 	if t == nil {
-		return NewTimeframe[K, T]()
+		return NewTimeframe[T]()
 	}
 
 	if t.Index == nil {
-		t.Index = NewIndex[Interval, map[K]T](
-			make(map[Interval]map[K]T),
-			WithIndex[map[K]T](func(a, b Interval) int {
+		t.Index = NewIndex[Interval, T](
+			make(map[Interval]T),
+			WithIndex[T](func(a, b Interval) int {
 				return a.From.Compare(b.From)
 			}),
-			WithZero[Interval, map[K]T](nil),
+			WithZero[Interval, T](*new(T)),
 		)
 	}
 
@@ -54,29 +53,29 @@ func (t *Timeframe[K, T]) init() *Timeframe[K, T] {
 
 // Add joins the Interval i and its values to the Timeframe t, while ordering its
 // previously inserted Interval(s) in the process.
-func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) bool {
+func (t *Timeframe[T]) Add(i Interval, value T) bool {
 	if i.To.Before(i.From) {
 		return false
 	}
 
 	if len(t.Index.Keys) == 0 {
-		t.Index.Set(i, func(old map[K]T) (map[K]T, bool) {
-			return values, true
+		t.Index.Set(i, func(old T) (T, bool) {
+			return value, true
 		})
 
 		return true
 	}
 
 	if _, ok := t.Index.Get(i); ok {
-		t.Index.Set(i, func(old map[K]T) (map[K]T, bool) {
-			return coalesce(old, values), true
+		t.Index.Set(i, func(old T) (T, bool) {
+			return value, true
 		})
 
 		return true
 	}
 
-	t.Index.Set(i, func(old map[K]T) (map[K]T, bool) {
-		return values, true
+	t.Index.Set(i, func(old T) (T, bool) {
+		return value, true
 	})
 
 	return true
@@ -84,7 +83,7 @@ func (t *Timeframe[K, T]) Add(i Interval, values map[K]T) bool {
 
 // Append iterates through the input SeqKV and adds all intervals and respective values
 // to the Timeframe t.
-func (t *Timeframe[K, T]) Append(seq SeqKV[Interval, map[K]T]) (err error) {
+func (t *Timeframe[T]) Append(seq SeqKV[Interval, T]) (err error) {
 	if !seq(t.Add) {
 		return ErrAppendFailed
 	}
@@ -94,8 +93,8 @@ func (t *Timeframe[K, T]) Append(seq SeqKV[Interval, map[K]T]) (err error) {
 
 // All returns an iterator over the values in the Timeframe,
 // through the indexed Interval values ordered by their From time.Time value.
-func (t *Timeframe[K, T]) All() SeqKV[Interval, map[K]T] {
-	return func(yield func(Interval, map[K]T) bool) bool {
+func (t *Timeframe[T]) All() SeqKV[Interval, T] {
+	return func(yield func(Interval, T) bool) bool {
 		keys := t.Index.Keys
 
 		for i := range keys {
@@ -115,12 +114,12 @@ func (t *Timeframe[K, T]) All() SeqKV[Interval, map[K]T] {
 
 // Organize returns a new Timeframe with organized Interval(s) and respective values. It is the result of
 // calling Flatten on Timeframe.All, and appending the resulting sequence to a new instance of Timeframe.
-func (t *Timeframe[K, T]) Organize(cmp func(a, b T) bool, offset time.Duration) *Timeframe[K, T] {
-	seq := Flatten(cmpFunc[K](cmp), mergeFunc[K, T], offset)(t.All())
+func (t *Timeframe[T]) Organize(reducer ReducerFunc[T]) *Timeframe[T] {
+	seq := reducer(t.All())
 
-	tf := NewTimeframe[K, T]()
+	tf := NewTimeframe[T]()
 
-	seq(func(interval Interval, t map[K]T) bool {
+	seq(func(interval Interval, t T) bool {
 		_ = tf.Add(interval, t)
 
 		return true
@@ -136,6 +135,6 @@ func (t *Timeframe[K, T]) Organize(cmp func(a, b T) bool, offset time.Duration) 
 // Merge joins the intervals and respective values of the Timeframe tf into the Timeframe t,
 // by extracting a SeqKV of the same items from tf using Timeframe.All, and adding them into
 // Timeframe t using Timeframe.Append.
-func (t *Timeframe[K, T]) Merge(tf *Timeframe[K, T]) (err error) {
+func (t *Timeframe[T]) Merge(tf *Timeframe[T]) (err error) {
 	return t.Append(tf.All())
 }
