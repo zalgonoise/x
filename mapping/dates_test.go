@@ -1,8 +1,6 @@
 package mapping_test
 
 import (
-	"maps"
-	"slices"
 	"testing"
 	"time"
 
@@ -10,298 +8,906 @@ import (
 	"github.com/zalgonoise/x/mapping"
 )
 
-func TestTimeframe(t *testing.T) {
+func TestTimeframeSet(t *testing.T) {
 	interval1 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
+
 	interval2 := mapping.Interval{
-		From: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 21, 0, 0, 0, time.UTC),
 	}
 
-	// interleaved on tail
 	interval3 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 12, 0, 0, 0, time.UTC),
-	}
-	interval3Split1 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
-	}
-	interval3Split2 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 21, 0, 0, 0, time.UTC),
 	}
 
-	// interleaved on head
 	interval4 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	interval4Split1 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-	}
-	interval4Split2 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
-	}
-	interval4Split3 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 18, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	i4split := mapping.Interval{
+		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	// interleaved in the middle
 	interval5 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 16, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
 	}
 
-	interval5Split1 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-	}
-	interval5Split2 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 16, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	i5split1 := mapping.Interval{
+		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	// interleaved recursively
+	i5split2 := mapping.Interval{
+		From: time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+	}
+
 	interval6 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 23, 0, 0, 0, time.UTC),
 	}
+
+	i6split := mapping.Interval{
+		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+	}
+
 	interval7 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
+
+	i7split := mapping.Interval{
+		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+	}
+
 	interval8 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 21, 0, 0, 0, time.UTC),
+		From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
 	}
 
-	interval6Split1 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
-	}
-	interval6Split2 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 13, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
-	}
-	interval6Split3 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 14, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 15, 0, 0, 0, time.UTC),
+	interval9 := mapping.Interval{
+		From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
 	}
 
-	interval6Split4 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 21, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
-	}
-	interval6Split5 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 22, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
-	}
-	interval6Split6 := mapping.Interval{
-		From: time.Date(2024, 1, 1, 23, 0, 0, 0, time.UTC),
-		To:   time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
+	i9split := mapping.Interval{
+		From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	kv1 := map[string]string{
-		"a": "value",
-		"b": "value",
+	interval10 := mapping.Interval{
+		From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 	}
 
-	kv2 := map[string]string{
-		"c": "value",
-		"d": "value",
+	blob1 := blob{
+		user: user{0, "user"},
+		data: data{63},
 	}
 
-	kv3 := map[string]string{"c": "value"}
-	kv4 := map[string]string{"d": "value"}
-	kv5 := map[string]string{"e": "value"}
+	blob2 := blob{
+		user: user{0, "user_x"},
+		data: data{64},
+	}
 
-	mapMergeFunc := func(a, b map[string]string) map[string]string {
-		aCopy := make(map[string]string, len(a))
-		maps.Copy(aCopy, a)
-
-		for k, v := range b {
-			aCopy[k] = v
+	flattenMergeFunc := func(cur, next blob) blob {
+		if next.user.name != "" {
+			cur.user.name = next.user.name
 		}
 
-		return aCopy
+		return cur
+	}
+
+	flattenCmpFunc := func(cur, next blob) bool {
+		return cur.user.name == next.user.name
+	}
+
+	bA := blob{
+		user: user{id: 1, name: "blob-a"},
+		data: data{len: 1},
+	}
+
+	bB := blob{
+		user: user{id: 2, name: "blob-b"},
+		data: data{len: 1},
+	}
+
+	bC := blob{
+		user: user{id: 3, name: "blob-c"},
+		data: data{len: 1},
+	}
+
+	bD := blob{
+		user: user{id: 4, name: "blob-d"},
+		data: data{len: 1},
+	}
+
+	bE := blob{
+		user: user{id: 5, name: "blob-e"},
+		data: data{len: 1},
+	}
+
+	bF := blob{
+		user: user{id: 6, name: "blob-f"},
+		data: data{len: 1},
+	}
+
+	iA := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 9, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+
+	iB := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	iC := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		Data: bC,
+	}
+
+	iD := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		},
+		Data: bD,
+	}
+
+	iE := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+		},
+		Data: bE,
+	}
+
+	iF := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+		},
+		Data: bF,
+	}
+
+	// complex test - 3 ranges
+	//
+	// |###### A ######|
+	//    |#### B ####################|
+	//         |# C #|
+
+	i3RangesMerged1 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+
+	i3RangesMerged2 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	i3RangesMerged3 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		Data: bC,
+	}
+
+	i3RangesMerged4 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	// complex test - 3 ranges (flattened)
+	//
+	// |###### A #######|
+	//    |#### B ####################|
+	//         |# C #|
+	//
+	// |A | -B | --C |-B|      B      |
+
+	i3RangesFlattened1 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+
+	i3RangesFlattened2 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-b"},
+			data: data{len: 1},
+		},
+	}
+
+	i3RangesFlattened3 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-c"},
+			data: data{len: 1},
+		},
+	}
+
+	i3RangesFlattened4 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-b"},
+			data: data{len: 1},
+		},
+	}
+
+	// complex test - 4 ranges
+	//
+	// |###### A ######|
+	//    |#### B ####################|
+	//         |# C #|
+	//                    |# D #|
+
+	i4RangesMerged1 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+
+	i4RangesMerged2 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	i4RangesMerged3 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		Data: bC,
+	}
+
+	i4RangesMerged4 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	i4RangesMerged5 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+		},
+		Data: bD,
+	}
+
+	i4RangesMerged6 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	// complex test - 5 ranges
+	//
+	// |###### A ######|
+	//    |#### B ####################|
+	//         |# C #|
+	//                    |# D #|
+	//                        |######### E ##########|
+
+	i5RangesMerged1 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+
+	i5RangesMerged2 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	i5RangesMerged3 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		Data: bC,
+	}
+
+	i5RangesMerged4 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	i5RangesMerged5 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+		},
+		Data: bD,
+	}
+
+	i5RangesMerged6 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+		},
+		Data: bE,
+	}
+
+	// complex test - 6 ranges
+	//
+	// |###### A ######|
+	//    |#### B ####################|
+	//         |# C #|
+	//                    |# D #|
+	//                        |######### E ##########|
+	//                                      |# F #|
+
+	i6RangesMerged1 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+
+	i6RangesMerged2 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	i6RangesMerged3 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		Data: bC,
+	}
+
+	i6RangesMerged4 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+
+	i6RangesMerged5 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+		},
+		Data: bD,
+	}
+
+	i6RangesMerged6 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+		},
+		Data: bE,
+	}
+
+	i6RangesMerged7 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+		},
+		Data: bF,
+	}
+
+	i6RangesMerged8 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+		},
+		Data: bE,
+	}
+
+	// complex test - 6 ranges (flattened)
+	//
+	// |###### A #######|
+	//    |#### B ####################|
+	//         |# C #|
+	//                    |## D ##|
+	//                        |######### E ##########|
+	//                                      |# F #|
+	//
+	// |A | -B | --C |-B|B| -D|--E| -E|  E  |  -F | E|
+
+	i6RangesFlattened1 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 5, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+
+	i6RangesFlattened2 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 6, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-b"},
+			data: data{len: 1},
+		},
+	}
+
+	i6RangesFlattened3 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 7, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-c"},
+			data: data{len: 1},
+		},
+	}
+
+	i6RangesFlattened4 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 8, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-b"},
+			data: data{len: 1},
+		},
+	}
+
+	i6RangesFlattened5 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 10, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-d"},
+			data: data{len: 1},
+		},
+	}
+
+	i6RangesFlattened6 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-e"},
+			data: data{len: 1},
+		},
+	}
+
+	i6RangesFlattened7 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-f"},
+			data: data{len: 1},
+		},
+	}
+
+	i6RangesFlattened8 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-e"},
+			data: data{len: 1},
+		},
+	}
+
+	i6WantsFlattened := []mapping.DataInterval[blob]{
+		i6RangesFlattened1, i6RangesFlattened2, i6RangesFlattened3, i6RangesFlattened4, i6RangesFlattened5,
+		i6RangesFlattened6, i6RangesFlattened7, i6RangesFlattened8,
+	}
+
+	iStackA := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 23, 0, 0, 0, time.UTC),
+		},
+		Data: bA,
+	}
+	iStackB := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 22, 0, 0, 0, time.UTC),
+		},
+		Data: bB,
+	}
+	iStackC := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 21, 0, 0, 0, time.UTC),
+		},
+		Data: bC,
+	}
+	iStackD := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+		},
+		Data: bD,
+	}
+
+	iStackFlattened1 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 13, 0, 0, 0, time.UTC),
+		},
+
+		Data: blob{
+			user: user{id: 1, name: "blob-a"},
+			data: data{len: 1},
+		},
+	}
+	iStackFlattened2 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-b"},
+			data: data{len: 1},
+		},
+	}
+	iStackFlattened3 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 14, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-c"},
+			data: data{len: 1},
+		},
+	}
+	iStackFlattened4 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 15, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-d"},
+			data: data{len: 1},
+		},
+	}
+	iStackFlattened5 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 21, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-c"},
+			data: data{len: 1},
+		},
+	}
+	iStackFlattened6 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 21, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 22, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-b"},
+			data: data{len: 1},
+		},
+	}
+	iStackFlattened7 := mapping.DataInterval[blob]{
+		Interval: mapping.Interval{
+			From: time.Date(2024, 1, 10, 22, 0, 0, 0, time.UTC),
+			To:   time.Date(2024, 1, 10, 23, 0, 0, 0, time.UTC),
+		},
+		Data: blob{
+			user: user{id: 1, name: "blob-a"},
+			data: data{len: 1},
+		},
+	}
+
+	iStackFlattened := []mapping.DataInterval[blob]{
+		iStackFlattened1, iStackFlattened2, iStackFlattened3, iStackFlattened4,
+		iStackFlattened5, iStackFlattened6, iStackFlattened7,
 	}
 
 	for _, testcase := range []struct {
-		name  string
-		input []mapping.DataInterval[map[string]string]
-		wants []mapping.DataInterval[map[string]string]
+		name    string
+		sets    []mapping.DataInterval[blob]
+		reducer mapping.ReducerFunc[blob]
+		wants   []mapping.DataInterval[blob]
 	}{
 		{
-			name: "sequential",
-			input: []mapping.DataInterval[map[string]string]{
-				{Interval: interval1, Data: kv1},
-				{Interval: interval2, Data: kv2},
+			name:  "OneBlob",
+			sets:  []mapping.DataInterval[blob]{{Interval: interval1, Data: blob1}},
+			wants: []mapping.DataInterval[blob]{{Interval: interval1, Data: blob1}},
+		},
+		{
+			name: "TwoBlobs/Separate/NextIsAfter",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval2, Data: blob2},
 			},
-			wants: []mapping.DataInterval[map[string]string]{
-				{Interval: interval1, Data: kv1},
-				{Interval: interval2, Data: kv2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval2, Data: blob2},
 			},
 		},
 		{
-			name: "interleaved/on_tail",
-			input: []mapping.DataInterval[map[string]string]{
-				{Interval: interval1, Data: kv1},
-				{Interval: interval3, Data: kv2},
+			name: "TwoBlobs/Separate/NextIsBefore",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval2, Data: blob2},
+				{Interval: interval1, Data: blob1},
 			},
-			wants: []mapping.DataInterval[map[string]string]{
-				{Interval: interval3Split1, Data: kv1},
-				{Interval: interval3Split2, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-					"d": "value",
-				}},
-				{Interval: interval2, Data: kv2},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval2, Data: blob2},
 			},
 		},
 		{
-			name: "interleaved/on_head",
-			input: []mapping.DataInterval[map[string]string]{
-				{Interval: interval1, Data: kv1},
-				{Interval: interval4, Data: kv2},
+			name: "TwoBlobs/MatchingStart/NextOverlapsCurrent",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval3, Data: blob2},
 			},
-			wants: []mapping.DataInterval[map[string]string]{
-				{Interval: interval4Split1, Data: kv2},
-				{Interval: interval4Split2, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-					"d": "value",
-				}},
-				{Interval: interval4Split3, Data: kv1},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval3, Data: blob2},
 			},
 		},
 		{
-			name: "interleaved/on_middle",
-			input: []mapping.DataInterval[map[string]string]{
-				{Interval: interval1, Data: kv1},
-				{Interval: interval5, Data: kv2},
+			name: "TwoBlobs/MatchingStart/NextOverlapsCurrent",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval3, Data: blob2},
 			},
-			wants: []mapping.DataInterval[map[string]string]{
-				{Interval: interval5Split1, Data: kv1},
-				{Interval: interval5, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-					"d": "value",
-				}},
-				{Interval: interval5Split2, Data: kv1},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval3, Data: blob2},
 			},
 		},
 		{
-			name: "interleaved/recursive",
-			input: []mapping.DataInterval[map[string]string]{
-				{Interval: interval1, Data: kv1},
-				{Interval: interval6, Data: kv3},
-				{Interval: interval7, Data: kv4},
-				{Interval: interval8, Data: kv5},
+			name: "TwoBlobs/MatchingStart/NextWithinCurrent",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval4, Data: blob2},
 			},
-			wants: []mapping.DataInterval[map[string]string]{
-				{Interval: interval6Split1, Data: kv1},
-				{Interval: interval6Split2, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-				}},
-				{Interval: interval6Split3, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-					"d": "value",
-				}},
-				{Interval: interval8, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-					"d": "value",
-					"e": "value",
-				}},
-				{Interval: interval6Split4, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-					"d": "value",
-				}},
-				{Interval: interval6Split5, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-					"c": "value",
-				}},
-				{Interval: interval6Split6, Data: map[string]string{
-					"a": "value",
-					"b": "value",
-				}},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval4, Data: blob2},
+				{Interval: i4split, Data: blob1},
 			},
+		},
+		{
+			name: "TwoBlobs/MatchingStart/NextIsSameRange",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval1, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob2},
+			},
+		},
+		{
+			name: "TwoBlobs/OverlappingMiddle/NextWithinCurrent",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval5, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: i5split1, Data: blob1},
+				{Interval: interval5, Data: blob2},
+				{Interval: i5split2, Data: blob1},
+			},
+		},
+		{
+			name: "TwoBlobs/OverlappingEnd/NextGoesBeyondCurrent",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval6, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: i6split, Data: blob1},
+				{Interval: interval6, Data: blob2},
+			},
+		},
+		{
+			name: "TwoBlobs/OverlappingEnd/NextMatchesEnds",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval7, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: i7split, Data: blob1},
+				{Interval: interval7, Data: blob2},
+			},
+		},
+		{
+			name: "TwoBlobs/OverlappingStart/NextCoversCurrent",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval8, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval8, Data: blob2},
+			},
+		},
+		{
+			name: "TwoBlobs/OverlappingStart/PortionOfStart",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval9, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval9, Data: blob2},
+				{Interval: i9split, Data: blob1},
+			},
+		},
+		{
+			name: "TwoBlobs/OverlappingStart/MatchingEnds",
+			sets: []mapping.DataInterval[blob]{
+				{Interval: interval1, Data: blob1},
+				{Interval: interval10, Data: blob2},
+			},
+			wants: []mapping.DataInterval[blob]{
+				{Interval: interval10, Data: blob2},
+			},
+		},
+		{
+			name: "Complex/MultipleOverlappingRanges/3Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iA, iB, iC,
+			},
+			wants: []mapping.DataInterval[blob]{
+				i3RangesMerged1, i3RangesMerged2, i3RangesMerged3, i3RangesMerged4,
+			},
+		},
+		{
+			name: "ComplexFlatten/MultipleOverlappingRanges/3Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iA, iB, iC,
+			},
+			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			wants: []mapping.DataInterval[blob]{
+				i3RangesFlattened1, i3RangesFlattened2, i3RangesFlattened3, i3RangesFlattened4,
+			},
+		},
+		{
+			name: "Complex/MultipleOverlappingRanges/4Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iA, iB, iC, iD,
+			},
+			wants: []mapping.DataInterval[blob]{
+				i4RangesMerged1, i4RangesMerged2, i4RangesMerged3, i4RangesMerged4, i4RangesMerged5, i4RangesMerged6,
+			},
+		},
+		{
+			name: "Complex/MultipleOverlappingRanges/5Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iA, iB, iC, iD, iE,
+			},
+			wants: []mapping.DataInterval[blob]{
+				i5RangesMerged1, i5RangesMerged2, i5RangesMerged3, i5RangesMerged4, i5RangesMerged5, i5RangesMerged6,
+			},
+		},
+		{
+			name: "Complex/MultipleOverlappingRanges/6Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iA, iB, iC, iD, iE, iF,
+			},
+			wants: []mapping.DataInterval[blob]{
+				i6RangesMerged1, i6RangesMerged2, i6RangesMerged3, i6RangesMerged4, i6RangesMerged5, i6RangesMerged6,
+				i6RangesMerged7, i6RangesMerged8,
+			},
+		},
+		{
+			name: "ComplexFlatten/MultipleOverlappingRanges/6Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iA, iB, iC, iD, iE, iF,
+			},
+			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			wants:   i6WantsFlattened,
+		},
+		{
+			name: "ComplexFlatten/MultipleOverlappingRanges/6Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iA, iB, iC, iD, iE, iF,
+			},
+			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			wants:   i6WantsFlattened,
+		},
+		{
+			name: "ComplexFlatten/MultipleStackedRanges/4Ranges",
+			sets: []mapping.DataInterval[blob]{
+				iStackA, iStackB, iStackC, iStackD,
+			},
+			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			wants:   iStackFlattened,
 		},
 	} {
-		t.Run(testcase.name, func(t *testing.T) {
-			tf := mapping.NewTimeframe[map[string]string]()
+		t.Run("InitTimeframeSet/"+testcase.name, func(t *testing.T) {
+			tf := mapping.NewTimeframeSet[blob]()
 
-			for i := range testcase.input {
-				_ = tf.Add(testcase.input[i].Interval, testcase.input[i].Data)
+			for i := range testcase.sets {
+				_ = tf.Add(testcase.sets[i].Interval, testcase.sets[i].Data)
 			}
 
-			tf = tf.Organize(mapping.Flatten[map[string]string](
-				maps.Equal[map[string]string, map[string]string],
-				mapMergeFunc, 0))
-
-			require.True(t, tf.All()(verifySeqMap(testcase.wants)))
-		})
-
-		t.Run("OrganizeTimeframe/"+testcase.name, func(t *testing.T) {
-			fn := func(yield func(mapping.Interval, map[string]string) bool) bool {
-				for i := range testcase.input {
-					if !yield(testcase.input[i].Interval, testcase.input[i].Data) {
-						return false
-					}
-				}
-
-				return true
+			if testcase.reducer == nil {
+				testcase.reducer = mapping.Replace[blob](func(a, b blob) bool {
+					return a == b
+				}, 0)
 			}
 
-			tf := mapping.Organize[*mapping.Timeframe[map[string]string]](fn,
-				mapping.Flatten[map[string]string](
-					maps.Equal[map[string]string, map[string]string],
-					mapMergeFunc, 0))
+			newTF := tf.Organize(testcase.reducer)
 
-			require.True(t, tf.All()(verifySeqMap(testcase.wants)))
-		})
-	}
-}
+			seq := newTF.All()
 
-func verifySeqMap(wants []mapping.DataInterval[map[string]string]) func(interval mapping.Interval, m map[string]string) bool {
-	return func(interval mapping.Interval, b map[string]string) bool {
-
-		idx := slices.IndexFunc(wants, func(set mapping.DataInterval[map[string]string]) bool {
-			return set.Interval == interval
+			require.True(t, seq(verifySeq(t, testcase.wants)))
 		})
 
-		if idx < 0 {
-			return false
-		}
-
-		if len(wants[idx].Data) != len(b) {
-			return false
-		}
-
-		for k, v := range wants[idx].Data {
-			if value, ok := b[k]; !ok || v != value {
-				return false
+		t.Run("OrganizeTimeframeSet/"+testcase.name, func(t *testing.T) {
+			if testcase.reducer == nil {
+				testcase.reducer = mapping.Replace[blob](func(a, b blob) bool {
+					return a == b
+				}, 0)
 			}
-		}
 
-		return true
+			tf := mapping.Organize[*mapping.Timeframe[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
+
+			require.True(t, tf.All()(verifySeq(t, testcase.wants)))
+		})
 	}
 }
