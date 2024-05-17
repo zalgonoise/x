@@ -8,7 +8,21 @@ import (
 	"github.com/zalgonoise/x/mapping"
 )
 
-func TestTimeframeSet(t *testing.T) {
+type user struct {
+	id   int
+	name string
+}
+
+type data struct {
+	len int
+}
+
+type blob struct {
+	user user
+	data data
+}
+
+func TestTimeframe(t *testing.T) {
 	interval1 := mapping.Interval{
 		From: time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC),
 		To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
@@ -878,8 +892,8 @@ func TestTimeframeSet(t *testing.T) {
 			wants:   iStackFlattened,
 		},
 	} {
-		t.Run("InitTimeframeSet/"+testcase.name, func(t *testing.T) {
-			tf := mapping.NewTimeframeSet[blob]()
+		t.Run("InitTimeframe/"+testcase.name, func(t *testing.T) {
+			tf := mapping.NewTimeframe[blob]()
 
 			for i := range testcase.sets {
 				_ = tf.Add(testcase.sets[i].Interval, testcase.sets[i].Data)
@@ -898,7 +912,7 @@ func TestTimeframeSet(t *testing.T) {
 			require.True(t, seq(verifySeq(t, testcase.wants)))
 		})
 
-		t.Run("OrganizeTimeframeSet/"+testcase.name, func(t *testing.T) {
+		t.Run("OrganizeTimeframe/"+testcase.name, func(t *testing.T) {
 			if testcase.reducer == nil {
 				testcase.reducer = mapping.Replace[blob](func(a, b blob) bool {
 					return a == b
