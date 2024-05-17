@@ -99,8 +99,6 @@ func resolveConflicts[T any](
 		})
 
 		return cache
-	case 1:
-		return resolveConflict[T](cache, indices[0], conflicts[0], interval, value, offset, mapFunc, cmpFunc, mergeFunc)
 
 	default:
 		conflictSet := splitConflicts(conflicts, interval, value)
@@ -146,46 +144,6 @@ func resolveConflicts[T any](
 
 		return mergeCache(cache, cmpFunc, offset)
 	}
-}
-
-func resolveConflict[T any](
-	cache []DataInterval[T], index int, conflict DataInterval[T],
-	interval Interval, value T, offset time.Duration,
-	mapFunc mappingFunc, cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T,
-) (resolved []DataInterval[T]) {
-	cache = slices.Delete(cache, index, index+1)
-
-	sets, overlaps := mapFunc(conflict.Interval, interval, offset)
-
-	if !overlaps {
-		return cache
-	}
-
-	for idx := range sets {
-		switch {
-		case sets[idx].cur && !sets[idx].next:
-			cache = append(cache, DataInterval[T]{
-				Data:     conflict.Data,
-				Interval: sets[idx].i,
-			})
-		case !sets[idx].cur && sets[idx].next:
-			cache = append(cache, DataInterval[T]{
-				Data:     value,
-				Interval: sets[idx].i,
-			})
-		default:
-			cache = append(cache, DataInterval[T]{
-				Data:     mergeFunc(conflict.Data, value),
-				Interval: sets[idx].i,
-			})
-		}
-	}
-
-	slices.SortFunc(cache, func(a, b DataInterval[T]) int {
-		return a.Interval.From.Compare(b.Interval.From)
-	})
-
-	return mergeCache(cache, cmpFunc, offset)
 }
 
 // Flatten consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
