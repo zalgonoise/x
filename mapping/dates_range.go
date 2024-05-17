@@ -1,7 +1,5 @@
 package mapping
 
-import "slices"
-
 type TimeframeRange[T any] struct {
 	Keys   []Interval
 	Values map[Interval]T
@@ -87,10 +85,6 @@ func (t *TimeframeRange[T]) Organize(reducer ReducerFunc[T]) *TimeframeRange[T] 
 		_ = tf.Add(interval, t)
 
 		return true
-	})
-
-	slices.SortFunc(tf.Keys, func(a, b Interval) int {
-		return a.From.Compare(b.From)
 	})
 
 	return tf
