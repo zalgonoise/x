@@ -6,8 +6,8 @@ type Timeframe[T any] struct {
 	buffer []DataInterval[T]
 }
 
-// NewTimeframeSet creates a NewTimeframeSet of type T, with an 2D-map of Interval's to type T.
-func NewTimeframeSet[T any]() *Timeframe[T] {
+// NewTimeframe creates a NewTimeframe of type T, with an 2D-map of Interval's to type T.
+func NewTimeframe[T any]() *Timeframe[T] {
 	return &Timeframe[T]{
 		buffer: make([]DataInterval[T], 0, minAlloc),
 	}
@@ -15,7 +15,7 @@ func NewTimeframeSet[T any]() *Timeframe[T] {
 
 func (t *Timeframe[T]) init() *Timeframe[T] {
 	if t == nil {
-		return NewTimeframeSet[T]()
+		return NewTimeframe[T]()
 	}
 
 	if t.buffer == nil {
@@ -63,7 +63,7 @@ func (t *Timeframe[T]) All() SeqKV[Interval, T] {
 func (t *Timeframe[T]) Organize(reducer ReducerFunc[T]) *Timeframe[T] {
 	seq := reducer(t.All())
 
-	tf := NewTimeframeSet[T]()
+	tf := NewTimeframe[T]()
 
 	seq(tf.Add)
 
