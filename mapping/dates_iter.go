@@ -1,16 +1,12 @@
 package mapping
 
-// SeqKV describes a sequence of iterable items, which takes a yield func which will be used
-// to perform a certain operation on each yielded item throughout the iteration
-//
-// ref: https://github.com/golang/go/issues/61899
-type SeqKV[T, K any] func(yield func(T, K) bool) bool
+import "time"
 
-// Seq describes a sequence of iterable items, which takes a yield func which will be used
-// to perform a certain operation on each yielded item throughout the iteration
-//
-// ref: https://github.com/golang/go/issues/61899
-type Seq[T any] func(yield func(T) bool) bool
+// Interval is a period of time with a From and To time.Time values.
+type Interval struct {
+	From time.Time
+	To   time.Time
+}
 
 // DataInterval contains the data as Data for a specific Interval, as an isolated data structure used when caching
 // Intervals and data as Seq of Interval and Data are organized.
@@ -26,6 +22,18 @@ type IntervalSet struct {
 	next bool
 	i    Interval
 }
+
+// SeqKV describes a sequence of iterable items, which takes a yield func which will be used
+// to perform a certain operation on each yielded item throughout the iteration
+//
+// ref: https://github.com/golang/go/issues/61899
+type SeqKV[T, K any] func(yield func(T, K) bool) bool
+
+// Seq describes a sequence of iterable items, which takes a yield func which will be used
+// to perform a certain operation on each yielded item throughout the iteration
+//
+// ref: https://github.com/golang/go/issues/61899
+type Seq[T any] func(yield func(T) bool) bool
 
 // TimeframeType is a generic interface that describes a constructor to a timeframe implementation.
 //
