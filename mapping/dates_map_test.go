@@ -751,7 +751,7 @@ func TestTimeframeRange(t *testing.T) {
 		//},
 	} {
 		t.Run("InitTimeframeRange/"+testcase.name, func(t *testing.T) {
-			tf := mapping.NewTimeframeRange[blob]()
+			tf := mapping.NewTimeframeMap[blob]()
 
 			for i := range testcase.sets {
 				_ = tf.Add(testcase.sets[i].Interval, testcase.sets[i].Data)
@@ -773,7 +773,7 @@ func TestTimeframeRange(t *testing.T) {
 				testcase.reducer = mapping.Replace[blob](flattenCmpFunc, 0)
 			}
 
-			tf := mapping.Organize[*mapping.TimeframeRange[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
+			tf := mapping.Organize[*mapping.TimeframeMap[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
 
 			require.True(t, tf.All()(verifySeq(t, testcase.wants)))
 		})
