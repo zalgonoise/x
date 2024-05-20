@@ -161,6 +161,10 @@ func Flatten[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T, offset 
 			return nil
 		}
 
+		slices.SortFunc(cache, func(a, b DataInterval[T]) int {
+			return a.Interval.From.Compare(b.Interval.From)
+		})
+
 		return func(yield func(Interval, T) bool) bool {
 			for i := range cache {
 				if !yield(cache[i].Interval, cache[i].Data) {
