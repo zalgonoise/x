@@ -925,3 +925,379 @@ func TestTimeframe(t *testing.T) {
 		})
 	}
 }
+
+func TestFlatten(t *testing.T) {
+	type section struct {
+		interval mapping.Interval
+		data     string
+	}
+
+	type user struct {
+		id    string
+		dataA []section
+		dataB []section
+		dataC []section
+	}
+
+	type data struct {
+		interval mapping.Interval
+		sectionA string
+		sectionB string
+		sectionC string
+	}
+
+	fn := func(u user) []mapping.DataInterval[data] {
+		userData := make([]mapping.DataInterval[data], 0, len(u.dataA)+len(u.dataB)+len(u.dataC))
+
+		for i := range u.dataA {
+			userData = append(userData, mapping.DataInterval[data]{
+				Interval: u.dataA[i].interval,
+				Data:     data{sectionA: u.dataA[i].data},
+			})
+		}
+
+		for i := range u.dataB {
+			userData = append(userData, mapping.DataInterval[data]{
+				Interval: u.dataB[i].interval,
+				Data:     data{sectionB: u.dataB[i].data},
+			})
+		}
+
+		for i := range u.dataC {
+			userData = append(userData, mapping.DataInterval[data]{
+				Interval: u.dataC[i].interval,
+				Data:     data{sectionC: u.dataC[i].data},
+			})
+		}
+
+		return userData
+	}
+
+	cmpFunc := func(a, b data) bool {
+		return a.sectionA == b.sectionA && a.sectionB == b.sectionB && a.sectionC == b.sectionC
+	}
+
+	mergeFunc := func(a, b data) data {
+		if b.sectionA != "" {
+			a.sectionA = b.sectionA
+		}
+
+		if b.sectionB != "" {
+			a.sectionB = b.sectionB
+		}
+
+		if b.sectionC != "" {
+			a.sectionC = b.sectionC
+		}
+
+		return a
+	}
+
+	for _, testcase := range []struct {
+		name  string
+		input user
+		wants []mapping.DataInterval[data]
+	}{
+		{
+			name:  "NoOp",
+			input: user{},
+			wants: []mapping.DataInterval[data]{},
+		},
+		{
+			name: "OneSection",
+			input: user{
+				dataA: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+					},
+					data: "a",
+				}},
+			},
+			wants: []mapping.DataInterval[data]{{
+				Interval: mapping.Interval{
+					From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+					To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+				},
+				Data: data{sectionA: "a"},
+			}},
+		},
+		{
+			name: "TwoSections/InSequence",
+			input: user{
+				dataA: []section{
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+						},
+						data: "a",
+					},
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+						},
+						data: "b",
+					},
+				},
+			},
+			wants: []mapping.DataInterval[data]{
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "b"},
+				},
+			},
+		},
+		{
+			name: "TwoSections/Overlapping",
+			input: user{
+				dataA: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+					},
+					data: "a",
+				}},
+				dataB: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+					},
+					data: "b",
+				}},
+			},
+			wants: []mapping.DataInterval[data]{
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 11, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a", sectionB: "b"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionB: "b"},
+				},
+			},
+		},
+		{
+			name: "MultipleOverlappingSections",
+			input: user{
+				dataA: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
+					},
+					data: "a",
+				}},
+				dataB: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 17, 0, 0, 0, 0, time.UTC),
+					},
+					data: "b",
+				}},
+				dataC: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC),
+					},
+					data: "c",
+				}},
+			},
+			wants: []mapping.DataInterval[data]{
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a", sectionB: "b"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a", sectionB: "b", sectionC: "c"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 17, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a", sectionB: "b"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 17, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a"},
+				},
+			},
+		},
+		{
+			name: "MultipleOverlappingSections/Complex",
+			input: user{
+				dataA: []section{
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						},
+						data: "a",
+					},
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 18, 0, 0, 0, 0, time.UTC),
+						},
+						data: "aa",
+					},
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 18, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
+						},
+						data: "aaa",
+					},
+				},
+				dataB: []section{
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 14, 0, 0, 0, 0, time.UTC),
+						},
+						data: "b",
+					},
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 14, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 17, 0, 0, 0, 0, time.UTC),
+						},
+						data: "bb",
+					},
+				},
+				dataC: []section{
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 14, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						},
+						data: "c",
+					},
+					{
+						interval: mapping.Interval{
+							From: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+							To:   time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC),
+						},
+						data: "cc",
+					},
+				},
+			},
+			wants: []mapping.DataInterval[data]{
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 13, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 14, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a", sectionB: "b"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 14, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a", sectionB: "bb", sectionC: "c"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "aa", sectionB: "bb", sectionC: "cc"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 16, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 17, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "aa", sectionB: "bb"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 17, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 18, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "aa"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 18, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "aaa"},
+				},
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			sections := fn(testcase.input)
+
+			seq := mapping.Flatten(cmpFunc, mergeFunc, 0)(mapping.AsSeq(sections))
+
+			output := make([]mapping.DataInterval[data], 0, len(testcase.wants))
+
+			seq(func(interval mapping.Interval, d data) bool {
+				output = append(output, mapping.DataInterval[data]{
+					Interval: interval,
+					Data:     d,
+				})
+
+				return true
+			})
+
+			require.Equal(t, len(testcase.wants), len(output))
+
+			for i := range testcase.wants {
+				require.Equal(t, testcase.wants[i].Interval, output[i].Interval)
+				require.Equal(t, testcase.wants[i].Data, output[i].Data)
+			}
+		})
+	}
+}
