@@ -1102,6 +1102,41 @@ func TestFlatten(t *testing.T) {
 			},
 		},
 		{
+			name: "TwoSections/NextStartsBefore",
+			input: user{
+				dataA: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+					},
+					data: "a",
+				}},
+				dataB: []section{{
+					interval: mapping.Interval{
+						From: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+					},
+					data: "b",
+				}},
+			},
+			wants: []mapping.DataInterval[data]{
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionB: "b"},
+				},
+				{
+					Interval: mapping.Interval{
+						From: time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC),
+						To:   time.Date(2024, 1, 12, 0, 0, 0, 0, time.UTC),
+					},
+					Data: data{sectionA: "a"},
+				},
+			},
+		},
+		{
 			name: "MultipleOverlappingSections",
 			input: user{
 				dataA: []section{{

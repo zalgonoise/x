@@ -530,7 +530,10 @@ func TestTimeframeMap(t *testing.T) {
 			From: time.Date(2024, 1, 10, 11, 0, 0, 0, time.UTC),
 			To:   time.Date(2024, 1, 10, 17, 0, 0, 0, time.UTC),
 		},
-		Data: bE,
+		Data: blob{
+			user: user{id: 1, name: "blob-e"},
+			data: data{len: 1},
+		},
 	}
 
 	i6RangesFlattened7 := mapping.DataInterval[blob]{
@@ -539,7 +542,7 @@ func TestTimeframeMap(t *testing.T) {
 			To:   time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 		},
 		Data: blob{
-			user: user{id: 5, name: "blob-f"},
+			user: user{id: 1, name: "blob-f"},
 			data: data{len: 1},
 		},
 	}
@@ -549,7 +552,10 @@ func TestTimeframeMap(t *testing.T) {
 			From: time.Date(2024, 1, 10, 18, 0, 0, 0, time.UTC),
 			To:   time.Date(2024, 1, 10, 20, 0, 0, 0, time.UTC),
 		},
-		Data: bE,
+		Data: blob{
+			user: user{id: 1, name: "blob-e"},
+			data: data{len: 1},
+		},
 	}
 
 	for _, testcase := range []struct {
