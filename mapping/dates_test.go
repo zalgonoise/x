@@ -834,7 +834,7 @@ func TestTimeframe(t *testing.T) {
 			sets: []mapping.DataInterval[blob]{
 				iA, iB, iC,
 			},
-			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			reducer: mapping.FlattenFunc(flattenCmpFunc, flattenMergeFunc, 0),
 			wants: []mapping.DataInterval[blob]{
 				i3RangesFlattened1, i3RangesFlattened2, i3RangesFlattened3, i3RangesFlattened4,
 			},
@@ -872,7 +872,7 @@ func TestTimeframe(t *testing.T) {
 			sets: []mapping.DataInterval[blob]{
 				iA, iB, iC, iD, iE, iF,
 			},
-			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			reducer: mapping.FlattenFunc(flattenCmpFunc, flattenMergeFunc, 0),
 			wants:   i6WantsFlattened,
 		},
 		{
@@ -880,7 +880,7 @@ func TestTimeframe(t *testing.T) {
 			sets: []mapping.DataInterval[blob]{
 				iA, iB, iC, iD, iE, iF,
 			},
-			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			reducer: mapping.FlattenFunc(flattenCmpFunc, flattenMergeFunc, 0),
 			wants:   i6WantsFlattened,
 		},
 		{
@@ -888,7 +888,7 @@ func TestTimeframe(t *testing.T) {
 			sets: []mapping.DataInterval[blob]{
 				iStackA, iStackB, iStackC, iStackD,
 			},
-			reducer: mapping.Flatten(flattenCmpFunc, flattenMergeFunc, 0),
+			reducer: mapping.FlattenFunc(flattenCmpFunc, flattenMergeFunc, 0),
 			wants:   iStackFlattened,
 		},
 	} {
@@ -900,9 +900,7 @@ func TestTimeframe(t *testing.T) {
 			}
 
 			if testcase.reducer == nil {
-				testcase.reducer = mapping.Replace[blob](func(a, b blob) bool {
-					return a == b
-				}, 0)
+				testcase.reducer = mapping.Replace[blob](0)
 			}
 
 			newTF := tf.Organize(testcase.reducer)
@@ -914,12 +912,10 @@ func TestTimeframe(t *testing.T) {
 
 		t.Run("OrganizeTimeframe/"+testcase.name, func(t *testing.T) {
 			if testcase.reducer == nil {
-				testcase.reducer = mapping.Replace[blob](func(a, b blob) bool {
-					return a == b
-				}, 0)
+				testcase.reducer = mapping.Replace[blob](0)
 			}
 
-			tf := mapping.Organize[*mapping.Timeframe[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
+			tf := mapping.OrganizeSeq[*mapping.Timeframe[blob]](mapping.AsSeq(testcase.sets), testcase.reducer)
 
 			require.True(t, tf.All()(verifySeq(t, testcase.wants)))
 		})
@@ -971,10 +967,6 @@ func TestFlatten(t *testing.T) {
 		}
 
 		return userData
-	}
-
-	cmpFunc := func(a, b data) bool {
-		return a.sectionA == b.sectionA && a.sectionB == b.sectionB && a.sectionC == b.sectionC
 	}
 
 	mergeFunc := func(a, b data) data {
@@ -1314,7 +1306,7 @@ func TestFlatten(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			sections := fn(testcase.input)
 
-			seq := mapping.Flatten(cmpFunc, mergeFunc, 0)(mapping.AsSeq(sections))
+			seq := mapping.Flatten(mergeFunc, 0)(mapping.AsSeq(sections))
 
 			output := make([]mapping.DataInterval[data], 0, len(testcase.wants))
 

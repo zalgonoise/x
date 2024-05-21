@@ -253,7 +253,7 @@ func TestTimeframeIndex(t *testing.T) {
 				_ = tf.Add(testcase.input[i].Interval, testcase.input[i].Data)
 			}
 
-			tf = tf.Organize(mapping.Flatten[map[string]string](
+			tf = tf.Organize(mapping.FlattenFunc[map[string]string](
 				maps.Equal[map[string]string, map[string]string],
 				mapMergeFunc, 0))
 
@@ -271,8 +271,8 @@ func TestTimeframeIndex(t *testing.T) {
 				return true
 			}
 
-			tf := mapping.Organize[*mapping.TimeframeIndex[map[string]string]](fn,
-				mapping.Flatten[map[string]string](
+			tf := mapping.OrganizeSeq[*mapping.TimeframeIndex[map[string]string]](fn,
+				mapping.FlattenFunc[map[string]string](
 					maps.Equal[map[string]string, map[string]string],
 					mapMergeFunc, 0))
 

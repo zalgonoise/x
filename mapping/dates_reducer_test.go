@@ -14,10 +14,6 @@ func TestMergeCache(t *testing.T) {
 		id   int
 	}
 
-	cmpBlob := func(a, b blob) bool {
-		return a.name == b.name && a.id == b.id
-	}
-
 	i1 := Interval{
 		From: time.Date(2020, 1, 1, 6, 0, 0, 0, time.UTC),
 		To:   time.Date(2020, 1, 1, 12, 0, 0, 0, time.UTC),
@@ -91,7 +87,7 @@ func TestMergeCache(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			cache := mergeCache(testcase.cache, cmpBlob, 0)
+			cache := mergeCache(testcase.cache, 0)
 
 			require.Equal(t, len(testcase.wants), len(cache))
 
@@ -260,7 +256,7 @@ func TestResolveConflicts(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			res := resolveConflicts(
+			res := resolveAnyConflicts(
 				testcase.next.Interval, testcase.next.Data, testcase.cache,
 				split,
 				func(a, b blob) bool {
