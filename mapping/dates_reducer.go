@@ -17,7 +17,7 @@ type mappingFunc func(cur Interval, next Interval, offset time.Duration) ([]Inte
 // Replace consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
-func Replace[T any](cmpFunc func(a, b T) bool, offset time.Duration) ReducerFunc[T] {
+func Replace[T comparable](offset time.Duration) ReducerFunc[T] {
 	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T]) {
 		cache := make([]DataInterval[T], 0, minAlloc)
 
@@ -25,7 +25,38 @@ func Replace[T any](cmpFunc func(a, b T) bool, offset time.Duration) ReducerFunc
 			cache = resolveConflicts[T](
 				interval, t, cache,
 				replace,
-				cmpFunc,
+				func(a, b T) T { return b },
+				offset,
+			)
+
+			return true
+		}) {
+			return nil
+		}
+
+		return func(yield func(Interval, T) bool) bool {
+			for i := range cache {
+				if !yield(cache[i].Interval, cache[i].Data) {
+					return false
+				}
+			}
+
+			return true
+		}
+	}
+}
+
+// ReplaceFunc consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
+// and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
+// Seq, but with organized values.
+func ReplaceFunc[T any](cmpFunc func(a, b T) bool, offset time.Duration) ReducerFunc[T] {
+	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T]) {
+		cache := make([]DataInterval[T], 0, minAlloc)
+
+		if !seq(func(interval Interval, t T) bool {
+			cache = resolveAnyConflicts[T](
+				interval, t, cache,
+				replace, cmpFunc,
 				func(a, b T) T { return b },
 				offset,
 			)
@@ -82,13 +113,11 @@ func getNearestLimit(interval, conflict Interval) time.Time {
 	}
 }
 
-func resolveConflicts[T any](
+func resolveConflicts[T comparable](
 	interval Interval, value T, cache []DataInterval[T],
-	mapFunc mappingFunc, cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T,
+	mapFunc mappingFunc, mergeFunc func(a, b T) T,
 	offset time.Duration,
 ) []DataInterval[T] {
-	cache = mergeCache(cache, cmpFunc, offset)
-
 	conflicts, indices := findConflicts(cache, interval)
 
 	switch len(conflicts) {
@@ -142,19 +171,112 @@ func resolveConflicts[T any](
 			return a.Interval.From.Compare(b.Interval.From)
 		})
 
-		return mergeCache(cache, cmpFunc, offset)
+		return mergeCache(cache, offset)
+	}
+}
+
+func resolveAnyConflicts[T any](
+	interval Interval, value T, cache []DataInterval[T],
+	mapFunc mappingFunc, cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T,
+	offset time.Duration,
+) []DataInterval[T] {
+	conflicts, indices := findConflicts(cache, interval)
+
+	switch len(conflicts) {
+	case 0:
+		cache = append(cache, DataInterval[T]{
+			Data:     value,
+			Interval: interval,
+		})
+
+		return cache
+
+	default:
+		conflictSet := splitConflicts(conflicts, interval, value)
+		tempCache := make([]DataInterval[T], 0, len(conflicts)*3)
+
+		for i := len(conflicts) - 1; i >= 0; i-- {
+			sets, overlaps := mapFunc(conflicts[i].Interval, conflictSet[i], offset)
+
+			if !overlaps {
+				continue
+			}
+
+			for idx := range sets {
+				switch {
+				case sets[idx].cur && !sets[idx].next:
+					tempCache = append(tempCache, DataInterval[T]{
+						Data:     conflicts[i].Data,
+						Interval: sets[idx].i,
+					})
+				case !sets[idx].cur && sets[idx].next:
+					tempCache = append(tempCache, DataInterval[T]{
+						Data:     value,
+						Interval: sets[idx].i,
+					})
+				default:
+					tempCache = append(tempCache, DataInterval[T]{
+						Data:     mergeFunc(conflicts[i].Data, value),
+						Interval: sets[idx].i,
+					})
+				}
+			}
+		}
+
+		for i := len(conflicts) - 1; i >= 0; i-- {
+			cache = slices.Delete(cache, indices[i], indices[i]+1)
+		}
+
+		cache = append(cache, tempCache...)
+
+		slices.SortFunc(cache, func(a, b DataInterval[T]) int {
+			return a.Interval.From.Compare(b.Interval.From)
+		})
+
+		return mergeAnyCache(cache, cmpFunc, offset)
 	}
 }
 
 // Flatten consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
 // and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
 // Seq, but with organized values.
-func Flatten[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T, offset time.Duration) ReducerFunc[T] {
+func Flatten[T comparable](mergeFunc func(a, b T) T, offset time.Duration) ReducerFunc[T] {
 	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T]) {
 		cache := make([]DataInterval[T], 0, minAlloc)
 
 		if !seq(func(interval Interval, t T) bool {
-			cache = resolveConflicts(interval, t, cache, split, cmpFunc, mergeFunc, offset)
+			cache = resolveConflicts(interval, t, cache, split, mergeFunc, offset)
+
+			return true
+		}) {
+			return nil
+		}
+
+		slices.SortFunc(cache, func(a, b DataInterval[T]) int {
+			return a.Interval.From.Compare(b.Interval.From)
+		})
+
+		return func(yield func(Interval, T) bool) bool {
+			for i := range cache {
+				if !yield(cache[i].Interval, cache[i].Data) {
+					return false
+				}
+			}
+
+			return true
+		}
+	}
+}
+
+// FlattenFunc consumes the sequence Seq of Interval and data to align all From and To time.Time values for each Interval
+// and coalescing the data in any intersections when required. It returns a similar but new instance of the same type of
+// Seq, but with organized values.
+func FlattenFunc[T any](cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T, offset time.Duration) ReducerFunc[T] {
+	return func(seq SeqKV[Interval, T]) (reduced SeqKV[Interval, T]) {
+		cache := make([]DataInterval[T], 0, minAlloc)
+
+		if !seq(func(interval Interval, t T) bool {
+			cache = resolveAnyConflicts(interval, t, cache, split, cmpFunc, mergeFunc, offset)
 
 			return true
 		}) {
@@ -427,7 +549,7 @@ func split(cur, next Interval, offset time.Duration) ([]IntervalSet, bool) {
 	}
 }
 
-func mergeCache[T any](cache []DataInterval[T], cmp func(a, b T) bool, offset time.Duration) []DataInterval[T] {
+func mergeCache[T comparable](cache []DataInterval[T], offset time.Duration) []DataInterval[T] {
 	if len(cache) <= 1 {
 		return cache
 	}
@@ -444,20 +566,60 @@ func mergeCache[T any](cache []DataInterval[T], cmp func(a, b T) bool, offset ti
 		switch {
 		// cur starts where prev ends; cur eq prev
 		case cache[i-1].Interval.To.Sub(cache[i].Interval.From) <= offset &&
-			cmp(cache[i-1].Data, cache[i].Data):
+			cache[i-1].Data == cache[i].Data:
 			cache[i-1].Interval.To = cache[i].Interval.To
 			cache = slices.Delete(cache, i, i+1)
 
 		// prev is within cur; cur eq prev
 		case cache[i-1].Interval.To.Before(cache[i].Interval.To) &&
 			cache[i-1].Interval.From.After(cache[i].Interval.From) &&
-			cmp(cache[i-1].Data, cache[i].Data):
+			cache[i-1].Data == cache[i].Data:
 			cache = slices.Delete(cache, i-1, i)
 
 		// cur is within prev; cur eq prev
 		case cache[i].Interval.To.Before(cache[i-1].Interval.To) &&
 			cache[i].Interval.From.After(cache[i-1].Interval.From) &&
-			cmp(cache[i-1].Data, cache[i].Data):
+			cache[i-1].Data == cache[i].Data:
+			cache = slices.Delete(cache, i, i+1)
+
+		default:
+		}
+	}
+
+	return cache
+}
+
+func mergeAnyCache[T any](cache []DataInterval[T], cmpFunc func(a, b T) bool, offset time.Duration) []DataInterval[T] {
+	if len(cache) <= 1 {
+		return cache
+	}
+
+	// iterate backwards merging equal ranges
+	//
+	// |#### D #####|
+	//              |## E ##|
+	//    |# D #|   |##### E #####|
+	//                            |## E ##|
+	//
+	// |#### D #####|######### E #########|
+	for i := len(cache) - 1; i > 0; i-- {
+		switch {
+		// cur starts where prev ends; cur eq prev
+		case cache[i-1].Interval.To.Sub(cache[i].Interval.From) <= offset &&
+			cmpFunc(cache[i-1].Data, cache[i].Data):
+			cache[i-1].Interval.To = cache[i].Interval.To
+			cache = slices.Delete(cache, i, i+1)
+
+		// prev is within cur; cur eq prev
+		case cache[i-1].Interval.To.Before(cache[i].Interval.To) &&
+			cache[i-1].Interval.From.After(cache[i].Interval.From) &&
+			cmpFunc(cache[i-1].Data, cache[i].Data):
+			cache = slices.Delete(cache, i-1, i)
+
+		// cur is within prev; cur eq prev
+		case cache[i].Interval.To.Before(cache[i-1].Interval.To) &&
+			cache[i].Interval.From.After(cache[i-1].Interval.From) &&
+			cmpFunc(cache[i-1].Data, cache[i].Data):
 			cache = slices.Delete(cache, i, i+1)
 
 		default:
