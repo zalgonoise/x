@@ -1,6 +1,9 @@
 package mapping
 
-import "time"
+import (
+	"slices"
+	"time"
+)
 
 // Interval is a period of time with a From and To time.Time values.
 type Interval struct {
@@ -60,9 +63,9 @@ func AsSeq[T any](data []DataInterval[T]) SeqKV[Interval, T] {
 	}
 }
 
-// Organize consumes a sequence Seq of Interval and data, returning an appropriate timeframe type K with organized
+// OrganizeSeq consumes a sequence Seq of Interval and data, returning an appropriate timeframe type K with organized
 // / flattened values.
-func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reducer ReducerFunc[T]) *K {
+func OrganizeSeq[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reducer ReducerFunc[T]) *K {
 	flattened := reducer(seq)
 
 	var tf M = new(K)
@@ -78,48 +81,34 @@ func Organize[M TimeframeType[T, K], T any, K any](seq SeqKV[Interval, T], reduc
 	return tf
 }
 
-func coalesce[K comparable, T any](start, next map[K]T) map[K]T {
-	switch {
-	case start != nil && next == nil:
-		return start
-	case start == nil && next != nil:
-		return next
-	case start == nil && next == nil:
-		return nil
+func Organize[T comparable](
+	data []DataInterval[T], mergeFunc func(a, b T) T, offset time.Duration,
+) []DataInterval[T] {
+	cache := make([]DataInterval[T], 0, minAlloc)
+
+	for i := range data {
+		cache = resolveConflicts(data[i].Interval, data[i].Data, cache, split, mergeFunc, offset)
 	}
 
-	for key, value := range next {
-		start[key] = value
-	}
+	slices.SortFunc(cache, func(a, b DataInterval[T]) int {
+		return a.Interval.From.Compare(b.Interval.From)
+	})
 
-	return start
+	return cache
 }
 
-func coalesceUnset[K comparable, T any](start, next map[K]T) (res map[K]T, skipped []K) {
-	switch {
-	case start != nil && next == nil:
-		return start, nil
-	case start == nil && next != nil:
-		return next, nil
-	case start == nil && next == nil:
-		return nil, nil
+func OrganizeFunc[T any](
+	data []DataInterval[T], cmpFunc func(a, b T) bool, mergeFunc func(a, b T) T, offset time.Duration,
+) []DataInterval[T] {
+	cache := make([]DataInterval[T], 0, minAlloc)
+
+	for i := range data {
+		cache = resolveAnyConflicts(data[i].Interval, data[i].Data, cache, split, cmpFunc, mergeFunc, offset)
 	}
 
-	skipped = make([]K, 0, len(next))
+	slices.SortFunc(cache, func(a, b DataInterval[T]) int {
+		return a.Interval.From.Compare(b.Interval.From)
+	})
 
-	for key, value := range next {
-		if _, ok := start[key]; ok {
-			skipped = append(skipped, key)
-
-			continue
-		}
-
-		start[key] = value
-	}
-
-	if len(skipped) == 0 {
-		return start, nil
-	}
-
-	return start, skipped
+	return cache
 }
