@@ -118,10 +118,6 @@ func (t *TimeframeIndex[T]) Organize(reducer ReducerFunc[T]) *TimeframeIndex[T] 
 		return true
 	})
 
-	//slices.SortFunc(tf.Index.Keys, func(a, b Interval) int {
-	//	return a.From.Compare(b.From)
-	//})
-
 	return tf
 }
 
