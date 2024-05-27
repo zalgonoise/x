@@ -582,10 +582,16 @@ github.com/zalgonoise/valigator v1.0.0 h1:zuSTgarZS4XJ0V2V43454bp3fDnTw89hjMKepQ
 github.com/zalgonoise/valigator v1.0.0/go.mod h1:YMPU7SIqhh38NUCis7K6lxyJh7MDKdH+b5hNTfu3Cj4=
 github.com/zalgonoise/x/cli v0.0.0-20240524145822-f27c02ac04f3 h1:JxhFYy0jSkWNOaE0RZCbZlVVXNReJ70QqqQ4i2xnMUg=
 github.com/zalgonoise/x/cli v0.0.0-20240524145822-f27c02ac04f3/go.mod h1:dRGdo9vd/EGZPa9zeJXC1gKCJbzOF1LtBSca9SUnERg=
+github.com/zalgonoise/x/cli v0.0.0-20240526121852-a424bcf16e43 h1:F+rkoeLD9iatTX2ZcV0K5FtGQrDbGANv4BnHrSWp2pM=
+github.com/zalgonoise/x/cli v0.0.0-20240526121852-a424bcf16e43/go.mod h1:dRGdo9vd/EGZPa9zeJXC1gKCJbzOF1LtBSca9SUnERg=
 github.com/zalgonoise/x/errs v0.0.0-20240524145822-f27c02ac04f3 h1:jTR6Gp0EeIAdCZUNFFGY7Q0XtH9Amh+ppnwLv4kyX7M=
 github.com/zalgonoise/x/errs v0.0.0-20240524145822-f27c02ac04f3/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
+github.com/zalgonoise/x/errs v0.0.0-20240526121852-a424bcf16e43 h1:0Df//0TfOzauM649fNdZnEvy6e1uCkRbnSQ+NzFAGlM=
+github.com/zalgonoise/x/errs v0.0.0-20240526121852-a424bcf16e43/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/ptr v0.0.0-20240524145822-f27c02ac04f3 h1:KKLNDR2YynQ3NJHjQfHtQd1+A6q48Di4RR03LmxRg7c=
 github.com/zalgonoise/x/ptr v0.0.0-20240524145822-f27c02ac04f3/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
+github.com/zalgonoise/x/ptr v0.0.0-20240526121852-a424bcf16e43 h1:o9lrsxYRV7YFgWFhzMd1Zkr93iHa/KKMGeNerWLEX9I=
+github.com/zalgonoise/x/ptr v0.0.0-20240526121852-a424bcf16e43/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
 gitlab.com/bosi/decorder v0.4.1 h1:VdsdfxhstabyhZovHafFw+9eJ6eU0d2CkFNJcZz/NU4=
 gitlab.com/bosi/decorder v0.4.1/go.mod h1:jecSqWUew6Yle1pCr2eLWTensJMmsxHsBwt+PVbkAqA=
 go-simpler.org/assert v0.7.0 h1:OzWWZqfNxt8cLS+MlUp6Tgk1HjPkmgdKBq9qvy8lZsA=
