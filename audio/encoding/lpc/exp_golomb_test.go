@@ -1,0 +1,137 @@
+package lpc
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestGolombEncodeDecode(t *testing.T) {
+	for _, testcase := range []struct {
+		name string
+		x    uint64
+		m    uint64
+		q    uint64
+		r    uint64
+	}{
+		{
+			name: "M3/X14",
+			x:    14,
+			m:    3,
+			q:    1,
+			r:    6,
+		},
+		{
+			name: "M1/X14",
+			x:    14,
+			m:    1,
+			q:    3,
+			r:    12,
+		},
+		{
+			name: "M10/X1500",
+			x:    1500,
+			m:    10,
+			q:    1,
+			r:    476,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			q, r, ok := GolombEncode64(testcase.x, testcase.m)
+			require.True(t, ok)
+			require.Equal(t, testcase.q, q)
+			require.Equal(t, testcase.r, r)
+			x, ok := GolombDecode64(testcase.m, testcase.r)
+			require.True(t, ok)
+			require.Equal(t, testcase.x, x)
+		})
+	}
+}
+
+func FuzzGolombEncodeDecode64(f *testing.F) {
+	f.Add(uint64(14), uint64(3))
+	f.Add(uint64(14), uint64(1))
+	f.Add(uint64(1500), uint64(10))
+
+	f.Fuzz(func(t *testing.T, x, m uint64) {
+		_, r, ok := GolombEncode64(x, m)
+		if !ok && (m == 0 || m > 63) {
+			return
+		}
+
+		newX, ok := GolombDecode64(m, r)
+		if !ok {
+			t.Fail()
+		}
+
+		if newX != x {
+			t.Fail()
+		}
+	})
+}
+
+func FuzzGolombEncodeDecode32(f *testing.F) {
+	f.Add(uint32(14), uint32(3))
+	f.Add(uint32(14), uint32(1))
+	f.Add(uint32(1500), uint32(10))
+
+	f.Fuzz(func(t *testing.T, x, m uint32) {
+		_, r, ok := GolombEncode32(x, m)
+		if !ok && (m == 0 || m > 31) {
+			return
+		}
+
+		newX, ok := GolombDecode32(m, r)
+		if !ok {
+			t.Fail()
+		}
+
+		if newX != x {
+			t.Fail()
+		}
+	})
+}
+
+func FuzzGolombEncodeDecode16(f *testing.F) {
+	f.Add(uint16(14), uint16(3))
+	f.Add(uint16(14), uint16(1))
+	f.Add(uint16(1500), uint16(10))
+
+	f.Fuzz(func(t *testing.T, x, m uint16) {
+		_, r, ok := GolombEncode16(x, m)
+		if !ok && (m == 0 || m > 15) {
+			return
+		}
+
+		newX, ok := GolombDecode16(m, r)
+		if !ok {
+			t.Fail()
+		}
+
+		if newX != x {
+			t.Fail()
+		}
+	})
+}
+
+func FuzzGolombEncodeDecode8(f *testing.F) {
+	f.Add(uint8(14), uint8(3))
+	f.Add(uint8(14), uint8(1))
+	f.Add(uint8(255), uint8(10))
+
+	f.Fuzz(func(t *testing.T, x, m uint8) {
+		_, r, ok := GolombEncode8(x, m)
+		if !ok && (m == 0 || m > 7) {
+			return
+		}
+
+		newX, ok := GolombDecode8(m, r)
+		if !ok {
+			t.Fail()
+		}
+
+		if newX != x {
+			t.Fail()
+		}
+	})
+}
