@@ -41,7 +41,7 @@ func GolombEncode32(x, m uint32) (q, r uint32, ok bool) {
 		return uint32(math.Log2(float64(x) + 1.0)), x + 1, true
 	}
 
-	if m > 31 {
+	if m > exp32 {
 		return 0, 0, false
 	}
 
@@ -68,7 +68,7 @@ func GolombEncode16(x, m uint16) (q, r uint16, ok bool) {
 		return uint16(math.Log2(float64(x) + 1.0)), x + 1, true
 	}
 
-	if m > 15 {
+	if m > exp16 {
 		return 0, 0, false
 	}
 
@@ -95,7 +95,7 @@ func GolombEncode8(x, m uint8) (q, r uint8, ok bool) {
 		return uint8(math.Log2(float64(x) + 1.0)), x + 1, true
 	}
 
-	if m > 7 {
+	if m > exp8 {
 		return 0, 0, false
 	}
 
