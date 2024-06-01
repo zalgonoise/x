@@ -15,6 +15,20 @@ func TestGolombEncodeDecode(t *testing.T) {
 		r    uint64
 	}{
 		{
+			name: "M0/X3",
+			x:    3,
+			m:    0,
+			q:    2,
+			r:    4,
+		},
+		{
+			name: "M0/X8",
+			x:    8,
+			m:    0,
+			q:    3,
+			r:    9,
+		},
+		{
 			name: "M3/X14",
 			x:    14,
 			m:    3,

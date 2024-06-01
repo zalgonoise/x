@@ -2,8 +2,19 @@ package lpc
 
 import "math"
 
+const (
+	exp64 = 63
+	exp32 = 31
+	exp16 = 15
+	exp8  = 7
+)
+
 func GolombEncode64(x, m uint64) (q, r uint64, ok bool) {
-	if m == 0 || m > 63 {
+	if m == 0 {
+		return uint64(math.Log2(float64(x) + 1.0)), x + 1, true
+	}
+
+	if m > exp64 {
 		return 0, 0, false
 	}
 
@@ -13,15 +24,24 @@ func GolombEncode64(x, m uint64) (q, r uint64, ok bool) {
 }
 
 func GolombDecode64(m, r uint64) (x uint64, ok bool) {
-	if m < 1 {
+	switch {
+	case m < 0:
 		return 0, false
+	case m > exp64:
+		return 0, false
+	case m == 0:
+		return r - 1, true
+	default:
+		return r + (1 << m), true
 	}
-
-	return r + (1 << m), true
 }
 
 func GolombEncode32(x, m uint32) (q, r uint32, ok bool) {
-	if m == 0 || m > 31 {
+	if m == 0 {
+		return uint32(math.Log2(float64(x) + 1.0)), x + 1, true
+	}
+
+	if m > 31 {
 		return 0, 0, false
 	}
 
@@ -31,15 +51,24 @@ func GolombEncode32(x, m uint32) (q, r uint32, ok bool) {
 }
 
 func GolombDecode32(m, r uint32) (x uint32, ok bool) {
-	if m < 1 {
+	switch {
+	case m < 0:
 		return 0, false
+	case m > exp32:
+		return 0, false
+	case m == 0:
+		return r - 1, true
+	default:
+		return r + (1 << m), true
 	}
-
-	return r + (1 << m), true
 }
 
 func GolombEncode16(x, m uint16) (q, r uint16, ok bool) {
-	if m == 0 || m > 15 {
+	if m == 0 {
+		return uint16(math.Log2(float64(x) + 1.0)), x + 1, true
+	}
+
+	if m > 15 {
 		return 0, 0, false
 	}
 
@@ -49,15 +78,24 @@ func GolombEncode16(x, m uint16) (q, r uint16, ok bool) {
 }
 
 func GolombDecode16(m, r uint16) (x uint16, ok bool) {
-	if m < 1 {
+	switch {
+	case m < 0:
 		return 0, false
+	case m > exp16:
+		return 0, false
+	case m == 0:
+		return r - 1, true
+	default:
+		return r + (1 << m), true
 	}
-
-	return r + (1 << m), true
 }
 
 func GolombEncode8(x, m uint8) (q, r uint8, ok bool) {
-	if m == 0 || m > 7 {
+	if m == 0 {
+		return uint8(math.Log2(float64(x) + 1.0)), x + 1, true
+	}
+
+	if m > 7 {
 		return 0, 0, false
 	}
 
@@ -67,9 +105,14 @@ func GolombEncode8(x, m uint8) (q, r uint8, ok bool) {
 }
 
 func GolombDecode8(m, r uint8) (x uint8, ok bool) {
-	if m < 1 {
+	switch {
+	case m < 0:
 		return 0, false
+	case m > exp8:
+		return 0, false
+	case m == 0:
+		return r - 1, true
+	default:
+		return r + (1 << m), true
 	}
-
-	return r + (1 << m), true
 }
