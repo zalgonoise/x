@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240530144058-526e1e74398b
-	github.com/zalgonoise/x/errs v0.0.0-20240530144058-526e1e74398b
-	github.com/zalgonoise/x/ptr v0.0.0-20240530144058-526e1e74398b
+	github.com/zalgonoise/x/cli v0.0.0-20240530233046-8610b0520699
+	github.com/zalgonoise/x/errs v0.0.0-20240530233046-8610b0520699
+	github.com/zalgonoise/x/ptr v0.0.0-20240530233046-8610b0520699
 	modernc.org/sqlite v1.29.10
 )
 
@@ -135,7 +135,7 @@ require (
 	github.com/polyfloyd/go-errorlint v1.4.8 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.53.0 // indirect
-	github.com/prometheus/procfs v0.15.0 // indirect
+	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.2 // indirect
 	github.com/quasilyte/gogrep v0.5.0 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
