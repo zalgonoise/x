@@ -1,6 +1,8 @@
 package lpc
 
-import "math"
+import (
+	"math"
+)
 
 const (
 	exp64 = 63
@@ -115,4 +117,49 @@ func GolombDecode8(m, r uint8) (x uint8, ok bool) {
 	default:
 		return r + (1 << m), true
 	}
+}
+
+type GolombWriter struct {
+	w BitWriter
+	m int
+}
+
+func (w *GolombWriter) WriteInt8(v int8) {
+	var value uint8
+
+	switch {
+	case v == 0:
+	case v < 0:
+		value = 2 * uint8(-v)
+	default:
+		value = (2 * uint8(v)) - 1
+	}
+
+	// TODO: use r value here:
+	q, _, ok := GolombEncode8(value, uint8(w.m))
+	if !ok {
+		return
+	}
+
+	mantissa := make([]bool, q+1)
+	mantissa[len(mantissa)-1] = true
+
+	// TODO: short binary of r
+	// TODO: write mantissa + r to buffer
+}
+
+func bitLength(value uint8) int {
+	bits := 8
+
+	for i := uint8(1 << 7); i > 0; i = i >> 1 {
+		if i&value == 0 {
+			bits--
+
+			continue
+		}
+
+		break
+	}
+
+	return bits
 }

@@ -149,3 +149,66 @@ func FuzzGolombEncodeDecode8(f *testing.F) {
 		}
 	})
 }
+
+func TestBitLength(t *testing.T) {
+	for _, testcase := range []struct {
+		name  string
+		input uint8
+		wants int
+	}{
+		{
+			name:  "00000000",
+			input: 0,
+			wants: 0,
+		},
+		{
+			name:  "00000001",
+			input: 1,
+			wants: 1,
+		},
+		{
+			name:  "00000010",
+			input: 2,
+			wants: 2,
+		},
+		{
+			name:  "00000100",
+			input: 4,
+			wants: 3,
+		},
+		{
+			name:  "00001000",
+			input: 8,
+			wants: 4,
+		},
+		{
+			name:  "00010000",
+			input: 16,
+			wants: 5,
+		},
+		{
+			name:  "00100000",
+			input: 32,
+			wants: 6,
+		},
+		{
+			name:  "01000000",
+			input: 64,
+			wants: 7,
+		},
+		{
+			name:  "10000000",
+			input: 128,
+			wants: 8,
+		},
+		{
+			name:  "11111111",
+			input: 255,
+			wants: 8,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			require.Equal(t, testcase.wants, bitLength(testcase.input))
+		})
+	}
+}
