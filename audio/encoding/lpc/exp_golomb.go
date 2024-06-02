@@ -103,7 +103,7 @@ func GolombEncode8(x, m uint8) (q, r uint8, ok bool) {
 
 	var shift uint8 = 1 << m
 
-	return uint8(math.Log2(float64(x/shift) + 1.0)), x - shift, true
+	return uint8(math.Log2(float64(x/shift) + 1.0)), x % shift, true
 }
 
 func GolombDecode8(m, r uint8) (x uint8, ok bool) {
@@ -119,49 +119,20 @@ func GolombDecode8(m, r uint8) (x uint8, ok bool) {
 	}
 }
 
-type GolombWriter struct {
+type ExpGolombWriter struct {
 	w *BitWriter
 	m int
 }
 
-// TODO: fix higher orders; currently works for order-k zero values
-func (w *GolombWriter) WriteInt8(v int8) {
-	var value uint8
+func (w *ExpGolombWriter) WriteInt8(v int8) {
+	if w.m == 0 {
+		w.w.WriteBits(EliasGammaUint8(zigZag[uint8](v))...)
 
-	switch {
-	case v == 0:
-	case v < 0:
-		value = 2 * uint8(-v)
-	default:
-		value = (2 * uint8(v)) - 1
-	}
-
-	q, r, ok := GolombEncode8(value, uint8(w.m))
-	if !ok {
 		return
 	}
 
-	mantissa := make([]bool, q)
-
-	w.w.WriteBits(mantissa...)
-
-	remainder := asBits(r)
-
-	isLeadingZero := true
-
-	for i := range remainder {
-		if !remainder[i] && isLeadingZero {
-			continue
-		}
-
-		if remainder[i] && isLeadingZero {
-			isLeadingZero = false
-		}
-
-		w.w.WriteBits(remainder[i:]...)
-
-		break
-	}
+	w.w.WriteBits(EliasGammaUint8(
+		zigZag[uint8](v) + (1 << w.m) - 1)[w.m:]...)
 }
 
 func asBits(value uint8) (bits [8]bool) {
