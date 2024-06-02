@@ -120,10 +120,11 @@ func GolombDecode8(m, r uint8) (x uint8, ok bool) {
 }
 
 type GolombWriter struct {
-	w BitWriter
+	w *BitWriter
 	m int
 }
 
+// TODO: fix higher orders; currently works for order-k zero values
 func (w *GolombWriter) WriteInt8(v int8) {
 	var value uint8
 
@@ -135,17 +136,42 @@ func (w *GolombWriter) WriteInt8(v int8) {
 		value = (2 * uint8(v)) - 1
 	}
 
-	// TODO: use r value here:
-	q, _, ok := GolombEncode8(value, uint8(w.m))
+	q, r, ok := GolombEncode8(value, uint8(w.m))
 	if !ok {
 		return
 	}
 
-	mantissa := make([]bool, q+1)
-	mantissa[len(mantissa)-1] = true
+	mantissa := make([]bool, q)
 
-	// TODO: short binary of r
-	// TODO: write mantissa + r to buffer
+	w.w.WriteBits(mantissa...)
+
+	remainder := asBits(r)
+
+	isLeadingZero := true
+
+	for i := range remainder {
+		if !remainder[i] && isLeadingZero {
+			continue
+		}
+
+		if remainder[i] && isLeadingZero {
+			isLeadingZero = false
+		}
+
+		w.w.WriteBits(remainder[i:]...)
+
+		break
+	}
+}
+
+func asBits(value uint8) (bits [8]bool) {
+	for i, j := uint8(1<<7), 0; i > 0; i, j = i>>1, j+1 {
+		if i&value != 0 {
+			bits[j] = true
+		}
+	}
+
+	return bits
 }
 
 func bitLength(value uint8) int {

@@ -212,3 +212,105 @@ func TestBitLength(t *testing.T) {
 		})
 	}
 }
+
+func TestAsBits(t *testing.T) {
+	for _, testcase := range []struct {
+		name  string
+		input uint8
+		wants [8]bool
+	}{
+		{
+			name:  "00000000",
+			input: 0,
+			wants: [8]bool{false, false, false, false, false, false, false, false},
+		},
+		{
+			name:  "00000001",
+			input: 1,
+			wants: [8]bool{false, false, false, false, false, false, false, true},
+		},
+		{
+			name:  "00000010",
+			input: 2,
+			wants: [8]bool{false, false, false, false, false, false, true, false},
+		},
+		{
+			name:  "00000100",
+			input: 4,
+			wants: [8]bool{false, false, false, false, false, true, false, false},
+		},
+		{
+			name:  "00001000",
+			input: 8,
+			wants: [8]bool{false, false, false, false, true, false, false, false},
+		},
+		{
+			name:  "00010000",
+			input: 16,
+			wants: [8]bool{false, false, false, true, false, false, false, false},
+		},
+		{
+			name:  "00100000",
+			input: 32,
+			wants: [8]bool{false, false, true, false, false, false, false, false},
+		},
+		{
+			name:  "01000000",
+			input: 64,
+			wants: [8]bool{false, true, false, false, false, false, false, false},
+		},
+		{
+			name:  "10000000",
+			input: 128,
+			wants: [8]bool{true, false, false, false, false, false, false, false},
+		},
+		{
+			name:  "11111111",
+			input: 255,
+			wants: [8]bool{true, true, true, true, true, true, true, true},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			require.Equal(t, testcase.wants, asBits(testcase.input))
+		})
+	}
+}
+
+func TestGolombWriter_WriteInt8(t *testing.T) {
+	for _, testcase := range []struct {
+		name        string
+		input       int8
+		m           int
+		wantsBit    uint8
+		wantsBuffer []byte
+	}{
+		{
+			name:     "M0/X3",
+			input:    3,
+			m:        0,
+			wantsBit: 0b00110000, // wrote 00110
+		},
+		{
+			name:        "M0/X9",
+			input:       9,
+			m:           0,
+			wantsBit:    0b00000000, // wrote 000010010
+			wantsBuffer: []byte{0b00001001},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			w := &GolombWriter{
+				w: NewBitWriter(8),
+				m: testcase.m,
+			}
+
+			w.WriteInt8(testcase.input)
+
+			require.Equal(t, testcase.wantsBit, w.w.bit)
+			require.Equal(t, len(testcase.wantsBuffer), len(w.w.buffer))
+			for i := range testcase.wantsBuffer {
+				require.Equal(t, testcase.wantsBuffer[i], w.w.buffer[i])
+			}
+		})
+	}
+}
