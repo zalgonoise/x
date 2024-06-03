@@ -13,8 +13,8 @@ func zigZag[To uintSet, From intSet](value From) To {
 	case value == 0:
 		return 1
 	case value < 0:
-		return 2*To(-value) + 1
+		return 2 * To(-value)
 	default:
-		return 2 * To(value)
+		return 2*To(value) + 1
 	}
 }

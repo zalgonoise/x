@@ -291,44 +291,44 @@ func TestGolombWriter_WriteInt8(t *testing.T) {
 			wantsBit: 0b10000000, // wrote 1
 		},
 		{
-			name:     "M0/X1",
-			input:    1,
+			name:     "M0/X-1",
+			input:    -1,
 			m:        0,
 			wantsBit: 0b01000000, // wrote 010
 		},
 		{
-			name:     "M0/X-1",
-			input:    -1,
+			name:     "M0/X1",
+			input:    1,
 			m:        0,
 			wantsBit: 0b01100000, // wrote 011
-		},
-		{
-			name:     "M0/X2",
-			input:    2,
-			m:        0,
-			wantsBit: 0b00100000, // wrote 00100
 		},
 		{
 			name:     "M0/X-2",
 			input:    -2,
 			m:        0,
-			wantsBit: 0b00101000, // wrote 00101
+			wantsBit: 0b00100000, // wrote 00100
 		},
 		{
-			name:     "M0/X3",
-			input:    3,
+			name:     "M0/X2",
+			input:    2,
 			m:        0,
-			wantsBit: 0b00110000, // wrote 00110
+			wantsBit: 0b00101000, // wrote 00101
 		},
 		{
 			name:     "M0/X-3",
 			input:    -3,
 			m:        0,
+			wantsBit: 0b00110000, // wrote 00110
+		},
+		{
+			name:     "M0/X3",
+			input:    3,
+			m:        0,
 			wantsBit: 0b00111000, // wrote 00111
 		},
 		{
-			name:     "M0/X4",
-			input:    4,
+			name:     "M0/X-4",
+			input:    -4,
 			m:        0,
 			wantsBit: 0b00010000, // wrote 0001000
 		},
@@ -339,51 +339,51 @@ func TestGolombWriter_WriteInt8(t *testing.T) {
 			wantsBit: 0b10000000, // wrote 10
 		},
 		{
-			name:     "M1/X1",
-			input:    1,
+			name:     "M1/X-1",
+			input:    -1,
 			m:        1,
 			wantsBit: 0b11000000, // wrote 11
 		},
 		{
-			name:     "M1/X-1",
-			input:    -1,
+			name:     "M1/X1",
+			input:    1,
 			m:        1,
 			wantsBit: 0b01000000, // wrote 0100
-		},
-		{
-			name:     "M1/X2",
-			input:    2,
-			m:        1,
-			wantsBit: 0b01010000, // wrote 0101
 		},
 		{
 			name:     "M1/X-2",
 			input:    -2,
 			m:        1,
-			wantsBit: 0b01100000, // wrote 0110
+			wantsBit: 0b01010000, // wrote 0101
 		},
 		{
-			name:     "M1/X3",
-			input:    3,
+			name:     "M1/X2",
+			input:    2,
 			m:        1,
-			wantsBit: 0b01110000, // wrote 0111
+			wantsBit: 0b01100000, // wrote 0110
 		},
 		{
 			name:     "M1/X-3",
 			input:    -3,
 			m:        1,
+			wantsBit: 0b01110000, // wrote 0111
+		},
+		{
+			name:     "M1/X3",
+			input:    3,
+			m:        1,
 			wantsBit: 0b00100000, // wrote 001000
 		},
 		{
-			name:        "M0/X9",
-			input:       9,
+			name:        "M0/X-9",
+			input:       -9,
 			m:           0,
 			wantsBit:    0b00000000, // wrote 000010010
 			wantsBuffer: []byte{0b00001001},
 		},
 		{
-			name:     "M3/X3",
-			input:    3,
+			name:     "M3/X-3",
+			input:    -3,
 			m:        3,
 			wantsBit: 0b11010000, // wrote 1101
 		},
