@@ -18,6 +18,10 @@ func ReadChunks(r io.Reader, size int) Seq[[]byte, error] {
 			n, err := r.Read(buf)
 
 			if errors.Is(err, io.EOF) {
+				if closer, ok := r.(io.Closer); ok {
+					return closer.Close() == nil
+				}
+
 				return true
 			}
 
