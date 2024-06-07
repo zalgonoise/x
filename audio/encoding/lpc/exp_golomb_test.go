@@ -397,9 +397,9 @@ func TestGolombWriter_WriteInt8(t *testing.T) {
 			w.WriteInt8(testcase.input)
 
 			require.Equal(t, testcase.wantsBit, w.w.bit)
-			require.Equal(t, len(testcase.wantsBuffer), len(w.w.buffer))
+			require.Equal(t, len(testcase.wantsBuffer), len(w.w.Buffer))
 			for i := range testcase.wantsBuffer {
-				require.Equal(t, testcase.wantsBuffer[i], w.w.buffer[i])
+				require.Equal(t, testcase.wantsBuffer[i], w.w.Buffer[i])
 			}
 		})
 	}
