@@ -13,17 +13,17 @@ import (
 
 func TestCheckout(t *testing.T) {
 	for _, testcase := range []struct {
-		name string
-		repo config.Repository
-		cfg  config.Checkout
-		err  error
+		name     string
+		repo     config.Repository
+		checkout config.Checkout
+		err      error
 	}{
 		{
 			name: "Success/PublicCheckout",
 			repo: config.Repository{
 				Path: "github.com/zalgonoise/micron",
 			},
-			cfg: config.Checkout{
+			checkout: config.Checkout{
 				Path: "./testdata/micron",
 			},
 		},
@@ -31,7 +31,7 @@ func TestCheckout(t *testing.T) {
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			defer func() {
-				require.NoError(t, os.RemoveAll(testcase.cfg.Path))
+				require.NoError(t, os.RemoveAll(testcase.checkout.Path))
 			}()
 
 			logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -40,7 +40,7 @@ func TestCheckout(t *testing.T) {
 
 			a := NewModUpdate(&config.Config{
 				Repository: testcase.repo,
-				Checkout:   testcase.cfg,
+				Checkout:   testcase.checkout,
 			}, logger)
 
 			err := a.Checkout(context.Background())

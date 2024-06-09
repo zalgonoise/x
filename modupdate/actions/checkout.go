@@ -90,6 +90,14 @@ func buildPath(repo *config.Repository) string {
 	sb := &strings.Builder{}
 	sb.WriteString("https://")
 
+	if repo.Username != "" {
+		sb.WriteString(repo.Username)
+
+		if repo.Token != "" {
+			sb.WriteByte(':')
+		}
+	}
+
 	if repo.Token != "" {
 		sb.WriteString(repo.Token)
 		sb.WriteByte('@')

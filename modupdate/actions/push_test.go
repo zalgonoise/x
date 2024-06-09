@@ -10,34 +10,27 @@ import (
 	"github.com/zalgonoise/x/modupdate/config"
 )
 
-func TestUpdate(t *testing.T) {
+func TestPush(t *testing.T) {
 	for _, testcase := range []struct {
 		name     string
 		repo     config.Repository
 		checkout config.Checkout
 		update   config.Update
+		push     config.Push
 		err      error
 	}{
 		{
-			name: "Success/PublicCheckoutAndUpdate",
+			name: "Success/PublicCheckoutUpdateAndPush",
 			repo: config.Repository{
-				Path: "github.com/zalgonoise/micron",
+				Path:   "github.com/zalgonoise/micron",
+				Branch: "master",
 			},
 			checkout: config.Checkout{
 				Path: "./testdata/micron",
 			},
 			update: config.Update{},
-		},
-		{
-			name: "Success/PublicCheckoutAndUpdate/CustomGoBin",
-			repo: config.Repository{
-				Path: "github.com/zalgonoise/micron",
-			},
-			checkout: config.Checkout{
-				Path: "./testdata/micron",
-			},
-			update: config.Update{
-				GoBin: "~/go/go1.22.1/bin/go",
+			push: config.Push{
+				DryRun: true,
 			},
 		},
 	} {
@@ -54,12 +47,14 @@ func TestUpdate(t *testing.T) {
 				Repository: testcase.repo,
 				Checkout:   testcase.checkout,
 				Update:     testcase.update,
+				Push:       testcase.push,
 			}, logger)
 
 			ctx := context.Background()
 
 			require.NoError(t, a.Checkout(ctx))
-			require.ErrorIs(t, a.Update(ctx), testcase.err)
+			require.NoError(t, a.Update(ctx))
+			require.ErrorIs(t, a.Push(ctx), testcase.err)
 		})
 	}
 }
