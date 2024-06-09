@@ -10,6 +10,8 @@ type Config struct {
 type Repository struct {
 	Path       string
 	ModulePath string
+	Branch     string
+	Username   string
 	Token      string
 }
 
@@ -27,8 +29,8 @@ type Update struct {
 }
 
 type Push struct {
-	DryRun          bool
-	CommandOverride string
-	CommitMessage   string
-	FilesOverride   []string
+	DryRun           bool
+	CommitMessage    string
+	CommandOverrides []string
+	FilesOverride    []string
 }
