@@ -13,30 +13,30 @@ import (
 func TestUpdate(t *testing.T) {
 	for _, testcase := range []struct {
 		name     string
-		repo     *config.Repository
-		checkout *config.Checkout
-		cfg      *config.Update
+		repo     config.Repository
+		checkout config.Checkout
+		cfg      config.Update
 		err      error
 	}{
 		{
 			name: "Success/PublicCheckoutAndUpdate",
-			repo: &config.Repository{
+			repo: config.Repository{
 				Path: "github.com/zalgonoise/micron",
 			},
-			checkout: &config.Checkout{
+			checkout: config.Checkout{
 				Path: "./testdata/micron",
 			},
-			cfg: &config.Update{},
+			cfg: config.Update{},
 		},
 		{
 			name: "Success/PublicCheckoutAndUpdate/CustomGoBin",
-			repo: &config.Repository{
+			repo: config.Repository{
 				Path: "github.com/zalgonoise/micron",
 			},
-			checkout: &config.Checkout{
+			checkout: config.Checkout{
 				Path: "./testdata/micron",
 			},
-			cfg: &config.Update{
+			cfg: config.Update{
 				GoBin: "~/go/go1.22.1/bin/go",
 			},
 		},
@@ -51,9 +51,9 @@ func TestUpdate(t *testing.T) {
 			}))
 
 			a := NewModUpdate(&config.Config{
-				Repository: *testcase.repo,
-				Checkout:   *testcase.checkout,
-				Update:     *testcase.cfg,
+				Repository: testcase.repo,
+				Checkout:   testcase.checkout,
+				Update:     testcase.cfg,
 			}, logger)
 
 			ctx := context.Background()

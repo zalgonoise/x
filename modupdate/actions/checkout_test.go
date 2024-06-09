@@ -14,16 +14,16 @@ import (
 func TestCheckout(t *testing.T) {
 	for _, testcase := range []struct {
 		name string
-		repo *config.Repository
-		cfg  *config.Checkout
+		repo config.Repository
+		cfg  config.Checkout
 		err  error
 	}{
 		{
 			name: "Success/PublicCheckout",
-			repo: &config.Repository{
+			repo: config.Repository{
 				Path: "github.com/zalgonoise/micron",
 			},
-			cfg: &config.Checkout{
+			cfg: config.Checkout{
 				Path: "./testdata/micron",
 			},
 		},
@@ -39,8 +39,8 @@ func TestCheckout(t *testing.T) {
 			}))
 
 			a := NewModUpdate(&config.Config{
-				Repository: *testcase.repo,
-				Checkout:   *testcase.cfg,
+				Repository: testcase.repo,
+				Checkout:   testcase.cfg,
 			}, logger)
 
 			err := a.Checkout(context.Background())
