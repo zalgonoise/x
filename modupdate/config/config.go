@@ -1,10 +1,11 @@
 package config
 
 type Config struct {
-	Repository Repository
-	Checkout   Checkout
-	Update     Update
-	Push       Push
+	CronSchedule string
+	Repository   Repository
+	Checkout     Checkout
+	Update       Update
+	Push         Push
 }
 
 type Repository struct {
