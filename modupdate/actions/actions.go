@@ -36,6 +36,18 @@ func NewModUpdate(cfg *config.Config, logger *slog.Logger) *ModUpdate {
 	}
 }
 
+func (a *ModUpdate) Run(ctx context.Context) error {
+	if err := a.Checkout(ctx); err != nil {
+		return err
+	}
+
+	if err := a.Update(ctx); err != nil {
+		return err
+	}
+
+	return a.Push(ctx)
+}
+
 func cmd(ctx context.Context, dir, bin string, args ...string) ([]string, error) {
 	binPath := bin
 
