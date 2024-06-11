@@ -17,10 +17,10 @@ type Repository struct {
 }
 
 type Checkout struct {
-	Persist         bool
-	Path            string
-	GitPath         string
-	CommandOverride string
+	Persist          bool
+	Path             string
+	GitPath          string
+	CommandOverrides []string
 }
 
 type Update struct {
