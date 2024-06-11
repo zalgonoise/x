@@ -50,16 +50,20 @@ func (a *ModUpdate) Checkout(ctx context.Context) error {
 	var err error
 
 	// git clone --depth=1 {remote} {directory}
-	switch len(a.checkout.CommandOverride) {
-	case 0:
-		out, err = cmd(ctx, "", a.checkout.GitPath, "clone", "--depth=1", path, a.checkout.Path)
-		if err != nil {
-			return err
+	switch {
+	case len(a.checkout.CommandOverrides) > 0:
+		for i := range a.checkout.CommandOverrides {
+			args := append(strings.Split(a.checkout.CommandOverrides[i], " "), a.checkout.Path)
+			output, err := cmd(ctx, "", a.checkout.GitPath, args...)
+			if err != nil {
+				return err
+			}
+
+			out = append(out, output...)
 		}
 
 	default:
-		args := append(strings.Split(a.checkout.CommandOverride, " "), a.checkout.Path)
-		out, err = cmd(ctx, "", a.checkout.GitPath, args...)
+		out, err = cmd(ctx, "", a.checkout.GitPath, "clone", "--depth=1", path, a.checkout.Path)
 		if err != nil {
 			return err
 		}
