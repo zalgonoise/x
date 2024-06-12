@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/zalgonoise/x/modupdate/config"
+	"github.com/zalgonoise/x/modupdate/events"
 )
 
 var ErrEmptyPath = errors.New("target path to checkout into is empty")
@@ -68,6 +69,14 @@ func (a *ModUpdate) Checkout(ctx context.Context) error {
 			return err
 		}
 	}
+
+	a.reporter.ReportEvent(ctx, events.Event{
+		Action: actionCheckout,
+		URI:    a.repo.Path,
+		Module: a.repo.ModulePath,
+		Branch: a.repo.Branch,
+		Output: out,
+	})
 
 	a.logger.InfoContext(ctx, "checked out repository",
 		slog.Any("output", out),

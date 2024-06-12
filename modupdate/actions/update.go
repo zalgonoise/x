@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/zalgonoise/x/modupdate/config"
+	"github.com/zalgonoise/x/modupdate/events"
 )
 
 func (a *ModUpdate) Update(ctx context.Context) error {
@@ -65,6 +66,14 @@ func (a *ModUpdate) Update(ctx context.Context) error {
 
 	a.logger.InfoContext(ctx, "repository updated successfully", slog.Any("output", out))
 
+	a.reporter.ReportEvent(ctx, events.Event{
+		Action: actionUpdateRepo,
+		URI:    a.repo.Path,
+		Module: a.repo.ModulePath,
+		Branch: a.repo.Branch,
+		Output: out,
+	})
+
 	goBin := parseGoBin(a.update.GoBin)
 	if goBin == "" {
 		goBin = "go"
@@ -99,6 +108,14 @@ func (a *ModUpdate) Update(ctx context.Context) error {
 	}
 
 	out = append(out, tidyOut...)
+
+	a.reporter.ReportEvent(ctx, events.Event{
+		Action: actionUpdateMod,
+		URI:    a.repo.Path,
+		Module: a.repo.ModulePath,
+		Branch: a.repo.Branch,
+		Output: out,
+	})
 
 	a.logger.InfoContext(ctx, "modules updated successfully", slog.Any("output", out))
 

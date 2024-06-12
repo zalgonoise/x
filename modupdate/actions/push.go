@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"path"
+
+	"github.com/zalgonoise/x/modupdate/events"
 )
 
 const (
@@ -66,6 +68,14 @@ func (a *ModUpdate) Push(ctx context.Context) error {
 
 		out = append(out, output...)
 
+		a.reporter.ReportEvent(ctx, events.Event{
+			Action: actionPushCommit,
+			URI:    a.repo.Path,
+			Module: a.repo.ModulePath,
+			Branch: a.repo.Branch,
+			Output: out,
+		})
+
 		a.logger.InfoContext(ctx, "files committed successfully",
 			slog.Bool("dry_run", true), slog.Any("output", out))
 
@@ -85,6 +95,13 @@ func (a *ModUpdate) Push(ctx context.Context) error {
 
 	out = append(out, output...)
 
+	a.reporter.ReportEvent(ctx, events.Event{
+		Action: actionPushPush,
+		URI:    a.repo.Path,
+		Module: a.repo.ModulePath,
+		Branch: a.repo.Branch,
+		Output: out,
+	})
 	a.logger.InfoContext(ctx, "files pushed to origin",
 		slog.Bool("dry_run", true), slog.Any("output", out))
 

@@ -9,9 +9,22 @@ import (
 	"strings"
 
 	"github.com/zalgonoise/x/modupdate/config"
+	"github.com/zalgonoise/x/modupdate/events"
+)
+
+const (
+	actionCheckout   = "checkout"
+	actionUpdateRepo = "update.repository"
+	actionUpdateMod  = "update.modules"
+	actionPushCommit = "push.commit"
+	actionPushPush   = "push.push"
 )
 
 var ErrBinNotFound = errors.New("binary not found")
+
+type Reporter interface {
+	ReportEvent(ctx context.Context, event events.Event)
+}
 
 type ModUpdate struct {
 	repo     *config.Repository
@@ -19,12 +32,17 @@ type ModUpdate struct {
 	update   *config.Update
 	push     *config.Push
 
-	logger *slog.Logger
+	reporter Reporter
+	logger   *slog.Logger
 }
 
-func NewModUpdate(cfg *config.Config, logger *slog.Logger) *ModUpdate {
+func NewModUpdate(reporter Reporter, cfg *config.Config, logger *slog.Logger) *ModUpdate {
 	if cfg == nil {
 		return nil
+	}
+
+	if reporter == nil {
+		reporter = noOpReporter{}
 	}
 
 	return &ModUpdate{
@@ -32,6 +50,7 @@ func NewModUpdate(cfg *config.Config, logger *slog.Logger) *ModUpdate {
 		checkout: &cfg.Checkout,
 		update:   &cfg.Update,
 		push:     &cfg.Push,
+		reporter: reporter,
 		logger:   logger,
 	}
 }
