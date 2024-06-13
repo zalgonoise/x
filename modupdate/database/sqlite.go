@@ -26,11 +26,6 @@ SELECT EXISTS(SELECT 1 FROM sqlite_master
 	WHERE type='table' 
 	AND name='%s');
 `
-
-	insertScopesQuery = `
-INSERT INTO scopes (id, min, max, total)
-VALUES (?, ?, ?, ?);
-`
 )
 
 func OpenSQLite(uri string, pragmas map[string]string, logger *slog.Logger) (*sql.DB, error) {

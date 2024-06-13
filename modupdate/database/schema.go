@@ -9,7 +9,7 @@ const (
     username    		TEXT,
     token       		TEXT,
     cron_schedule 	TEXT,
-    dry_run         BOOLEAN          		NOT NULL,
+    dry_run         INTEGER          		NOT NULL,
     fs_path         TEXT             		NOT NULL,
     commit_message  TEXT             		NOT NULL
 ) STRICT;`
