@@ -36,7 +36,7 @@ type ModUpdate struct {
 	logger   *slog.Logger
 }
 
-func NewModUpdate(reporter Reporter, cfg *config.Config, logger *slog.Logger) *ModUpdate {
+func NewModUpdate(reporter Reporter, cfg *config.Task, logger *slog.Logger) *ModUpdate {
 	if cfg == nil {
 		return nil
 	}

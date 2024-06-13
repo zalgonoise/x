@@ -43,7 +43,7 @@ func TestPush(t *testing.T) {
 				Level: slog.LevelDebug,
 			}))
 
-			a := NewModUpdate(&config.Config{
+			a := NewModUpdate(noOpReporter{}, &config.Task{
 				Repository: testcase.repo,
 				Checkout:   testcase.checkout,
 				Update:     testcase.update,
