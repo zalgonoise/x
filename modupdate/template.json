@@ -1,0 +1,33 @@
+{
+  "database_uri": "",
+  "discord_token": "",
+  "tasks": [
+    {
+      "cron_schedule": "",
+      "repository": {
+        "uri": "",
+        "module": "",
+        "branch": "",
+        "username": "",
+        "token": ""
+      },
+      "checkout": {
+        "persist": true,
+        "path": "",
+        "git_path": "",
+        "command_overrides": []
+      },
+      "update": {
+        "go_bin": "",
+        "git_command_overrides": [],
+        "go_command_overrides": []
+      },
+      "push": {
+        "dry_run": true,
+        "commit_message": "",
+        "command_overrides": [],
+        "files_override": []
+      }
+    }
+  ]
+}
