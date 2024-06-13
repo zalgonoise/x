@@ -16,10 +16,10 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240607144621-e2d10f072f88
-	github.com/zalgonoise/x/errs v0.0.0-20240607144621-e2d10f072f88
-	github.com/zalgonoise/x/ptr v0.0.0-20240607144621-e2d10f072f88
-	modernc.org/sqlite v1.30.0
+	github.com/zalgonoise/x/cli v0.0.0-20240613174528-84d29ed43c62
+	github.com/zalgonoise/x/errs v0.0.0-20240613174528-84d29ed43c62
+	github.com/zalgonoise/x/ptr v0.0.0-20240613174528-84d29ed43c62
+	modernc.org/sqlite v1.30.1
 )
 
 require (
@@ -194,13 +194,13 @@ require (
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
-	google.golang.org/protobuf v1.34.1 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
-	modernc.org/libc v1.52.1 // indirect
+	modernc.org/libc v1.53.2 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
