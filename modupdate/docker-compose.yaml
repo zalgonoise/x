@@ -1,0 +1,17 @@
+version: '3.7'
+services:
+
+  modupdate:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: modupdate
+    restart: unless-stopped
+    volumes:
+      - /tmp/modupdate:/app/data
+      - ./local/config.json:/app/data/config.json:ro
+    command:
+      - /app/modupdate
+      - run
+      - --config
+      - /app/data/config.json
