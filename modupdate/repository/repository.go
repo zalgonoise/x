@@ -63,6 +63,10 @@ type Repository struct {
 	db *sql.DB
 }
 
+func NewRepository(db *sql.DB) *Repository {
+	return &Repository{db: db}
+}
+
 type taskID struct {
 	id sql.Null[string]
 }
@@ -81,7 +85,7 @@ type task struct {
 	username      sql.Null[string]
 	token         sql.Null[string]
 	cronSchedule  sql.Null[string]
-	dryRun        sql.Null[bool]
+	dryRun        sql.Null[int]
 	fsPath        sql.Null[string]
 	commitMessage sql.Null[string]
 }
@@ -107,17 +111,17 @@ func (o *override) Scan(row *sql.Rows) error {
 	return row.Scan(&o)
 }
 
-func (r *Repository) ListTasks(ctx context.Context) ([]*config.Config, error) {
+func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 	seq, err := iter.QueryContext[*task](ctx, r.db, queryRepositoryAndTasks)
 	if errors.Is(err, sql.ErrNoRows) {
-		return []*config.Config{}, nil
+		return []*config.Task{}, nil
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	configs := make([]*config.Config, 0, minAlloc)
+	configs := make([]*config.Task, 0, minAlloc)
 	errs := make([]error, 0, minAlloc)
 
 	seq(func(t *task, err error) bool {
@@ -127,8 +131,13 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Config, error) {
 			// collect all valid tasks
 			return true
 		}
+		dryRun := false
 
-		c := &config.Config{
+		if t.dryRun.V == 1 {
+			dryRun = true
+		}
+
+		c := &config.Task{
 			CronSchedule: t.cronSchedule.V,
 			Repository: config.Repository{
 				Path:       t.uri.V,
@@ -142,7 +151,7 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Config, error) {
 				Path:    t.fsPath.V,
 			},
 			Push: config.Push{
-				DryRun:        t.dryRun.V,
+				DryRun:        dryRun,
 				CommitMessage: t.commitMessage.V,
 			},
 		}
@@ -209,6 +218,10 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Config, error) {
 	return configs, nil
 }
 
+func (r *Repository) Close() error {
+	return r.db.Close()
+}
+
 func addOverrides(ctx context.Context, tx transactioner, id, typ string) ([]string, error) {
 	seq, err := iter.QueryContext[*override](ctx, tx, queryOverrides, id, typ)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -239,7 +252,7 @@ func addOverrides(ctx context.Context, tx transactioner, id, typ string) ([]stri
 
 }
 
-func (r *Repository) AddTask(ctx context.Context, cfg *config.Config) error {
+func (r *Repository) AddTask(ctx context.Context, cfg *config.Task) error {
 	if err := r.DeleteTask(ctx, cfg.Repository.Path, cfg.Repository.ModulePath, cfg.Repository.Branch); err != nil {
 		return err
 	}
@@ -350,13 +363,18 @@ type transactioner interface {
 	ExecContext(context.Context, string, ...any) (sql.Result, error)
 }
 
-func createTask(ctx context.Context, tx transactioner, cfg *config.Config) (string, error) {
+func createTask(ctx context.Context, tx transactioner, cfg *config.Task) (string, error) {
 	id := uuid.New().String()
+
+	dryRun := 0
+	if cfg.Push.DryRun {
+		dryRun = 1
+	}
 
 	res, err := tx.ExecContext(ctx, insertRepositoryAndTasks,
 		id, cfg.Repository.Path, cfg.Repository.ModulePath, cfg.Repository.Branch,
 		cfg.Repository.Username, cfg.Repository.Token,
-		cfg.CronSchedule, cfg.Push.DryRun, cfg.Checkout.Path, cfg.Push.CommitMessage,
+		cfg.CronSchedule, dryRun, cfg.Checkout.Path, cfg.Push.CommitMessage,
 	)
 	if err != nil {
 		return "", err
