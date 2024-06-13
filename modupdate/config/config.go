@@ -1,37 +1,43 @@
 package config
 
 type Config struct {
-	CronSchedule string
-	Repository   Repository
-	Checkout     Checkout
-	Update       Update
-	Push         Push
+	DatabaseURI  string  `json:"database_uri,omitempty"`
+	DiscordToken string  `json:"discord_token,omitempty"`
+	Tasks        []*Task `json:"tasks,omitempty"`
+}
+
+type Task struct {
+	CronSchedule string     `json:"cron_schedule,omitempty"`
+	Repository   Repository `json:"repository"`
+	Checkout     Checkout   `json:"checkout"`
+	Update       Update     `json:"update"`
+	Push         Push       `json:"push"`
 }
 
 type Repository struct {
-	Path       string
-	ModulePath string
-	Branch     string
-	Username   string
-	Token      string
+	Path       string `json:"uri,omitempty"`
+	ModulePath string `json:"module,omitempty"`
+	Branch     string `json:"branch,omitempty"`
+	Username   string `json:"username,omitempty"`
+	Token      string `json:"token,omitempty"`
 }
 
 type Checkout struct {
-	Persist          bool
-	Path             string
-	GitPath          string
-	CommandOverrides []string
+	Persist          bool     `json:"persist,omitempty"`
+	Path             string   `json:"path,omitempty"`
+	GitPath          string   `json:"git_path,omitempty"`
+	CommandOverrides []string `json:"command_overrides,omitempty"`
 }
 
 type Update struct {
-	GoBin               string
-	GitCommandOverrides []string
-	GoCommandOverrides  []string
+	GoBin               string   `json:"go_bin,omitempty"`
+	GitCommandOverrides []string `json:"git_command_overrides,omitempty"`
+	GoCommandOverrides  []string `json:"go_command_overrides,omitempty"`
 }
 
 type Push struct {
-	DryRun           bool
-	CommitMessage    string
-	CommandOverrides []string
-	FilesOverride    []string
+	DryRun           bool     `json:"dry_run,omitempty"`
+	CommitMessage    string   `json:"commit_message,omitempty"`
+	CommandOverrides []string `json:"command_overrides,omitempty"`
+	FilesOverride    []string `json:"files_override,omitempty"`
 }
