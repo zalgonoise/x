@@ -11,6 +11,7 @@ type Task struct {
 	Repository   Repository `json:"repository"`
 	Checkout     Checkout   `json:"checkout"`
 	Update       Update     `json:"update"`
+	Check        Check      `json:"check"`
 	Push         Push       `json:"push"`
 }
 
@@ -33,6 +34,10 @@ type Update struct {
 	GoBin               string   `json:"go_bin,omitempty"`
 	GitCommandOverrides []string `json:"git_command_overrides,omitempty"`
 	GoCommandOverrides  []string `json:"go_command_overrides,omitempty"`
+}
+
+type Check struct {
+	CommandOverrides []string `json:"command_overrides,omitempty"`
 }
 
 type Push struct {
