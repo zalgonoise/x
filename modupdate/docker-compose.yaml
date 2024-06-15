@@ -13,5 +13,5 @@ services:
     command:
       - /app/modupdate
       - run
-      - --config
+      - -config
       - /app/data/config.json
