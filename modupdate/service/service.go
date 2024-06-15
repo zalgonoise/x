@@ -31,6 +31,8 @@ type Runtime interface {
 //
 // Modifying the tasks in a service will cause the cron instance to be shut down and restarted.
 type Service struct {
+	// TODO: implement tasks API to allow reading and writing tasks (and restarting cron) on demand
+
 	runtime Runtime
 	repo    Repository
 
