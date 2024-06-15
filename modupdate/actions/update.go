@@ -20,28 +20,37 @@ func (a *ModUpdate) Update(ctx context.Context) error {
 	}
 
 	// which git
-	if a.checkout.GitPath == "" {
-		gitBin, err := cmd(ctx, "", "which", "git")
-		if err != nil {
-			return err
-		}
-
-		if len(gitBin) == 0 {
-			return fmt.Errorf("%w: git", ErrBinNotFound)
-		}
-
-		a.checkout.GitPath = gitBin[0]
+	if err := a.setGit(ctx); err != nil {
+		return err
 	}
-
-	out := make([]string, 0, 8)
 
 	// git fetch
 	// git pull --ff-only
+	if err := a.gitFetchPull(ctx, dir); err != nil {
+		return err
+	}
+
+	goBin := parseGoBin(a.update.GoBin)
+	if goBin == "" {
+		goBin = "go"
+	}
+
+	// go get -u ./...
+	return a.goGet(ctx, dir, goBin)
+}
+
+func (a *ModUpdate) gitFetchPull(ctx context.Context, dir string) (err error) {
+	out := make([]string, 0, 8)
+
 	switch {
 	case len(a.update.GitCommandOverrides) > 0:
 		for i := range a.update.GitCommandOverrides {
 			output, err := cmd(ctx, dir, a.checkout.GitPath, strings.Split(a.update.GitCommandOverrides[i], " ")...)
 			if err != nil {
+				if len(output) > 0 {
+					err = fmt.Errorf("%w: %s", err, strings.Join(output, "; "))
+				}
+
 				return err
 			}
 
@@ -51,6 +60,10 @@ func (a *ModUpdate) Update(ctx context.Context) error {
 	default:
 		output, err := cmd(ctx, dir, a.checkout.GitPath, "fetch")
 		if err != nil {
+			if len(output) > 0 {
+				err = fmt.Errorf("%w: %s", err, strings.Join(output, "; "))
+			}
+
 			return err
 		}
 
@@ -58,6 +71,10 @@ func (a *ModUpdate) Update(ctx context.Context) error {
 
 		output, err = cmd(ctx, dir, a.checkout.GitPath, "pull", "--ff-only")
 		if err != nil {
+			if len(output) > 0 {
+				err = fmt.Errorf("%w: %s", err, strings.Join(output, "; "))
+			}
+
 			return err
 		}
 
@@ -74,14 +91,12 @@ func (a *ModUpdate) Update(ctx context.Context) error {
 		Output: out,
 	})
 
-	goBin := parseGoBin(a.update.GoBin)
-	if goBin == "" {
-		goBin = "go"
-	}
+	return nil
+}
 
-	out = make([]string, 0, 8)
+func (a *ModUpdate) goGet(ctx context.Context, dir, goBin string) error {
+	out := make([]string, 0, 8)
 
-	// go get -u ./...
 	switch {
 	case len(a.update.GoCommandOverrides) > 0:
 		for i := range a.update.GoCommandOverrides {

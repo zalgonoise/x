@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path"
+	"strings"
 
 	"github.com/zalgonoise/x/modupdate/events"
 )
@@ -21,29 +22,49 @@ func (a *ModUpdate) Push(ctx context.Context) error {
 	}
 
 	// which git
-	if a.checkout.GitPath == "" {
-		gitBin, err := cmd(ctx, "", "which", "git")
-		if err != nil {
-			return err
-		}
-
-		if len(gitBin) == 0 {
-			return fmt.Errorf("%w: git", ErrBinNotFound)
-		}
-
-		a.checkout.GitPath = gitBin[0]
+	if err := a.setGit(ctx); err != nil {
+		return err
 	}
-
-	out := make([]string, 0, 8)
 
 	// git add go.mod go.sum
 	// git commit -m 'chore: updated modules'
+	out, err := a.gitAddGoMod(ctx, dir)
+	if err != nil {
+		return err
+	}
+
+	if a.push.DryRun {
+		return a.doDryRun(ctx, dir, out)
+	}
+
+	return a.gitPush(ctx, dir, out)
+}
+
+func (a *ModUpdate) gitAddGoMod(ctx context.Context, dir string) (out []string, err error) {
 	switch {
 	case len(a.push.CommandOverrides) > 0:
+		for i := range a.push.CommandOverrides {
+			args := append(strings.Split(a.push.CommandOverrides[i], " "), a.checkout.Path)
+			output, err := cmd(ctx, dir, a.checkout.GitPath, args...)
+			if err != nil {
+				if len(output) > 0 {
+					err = fmt.Errorf("%w: %s", err, strings.Join(output, "; "))
+				}
+
+				return nil, err
+			}
+
+			out = append(out, output...)
+		}
+
 	default:
 		output, err := cmd(ctx, dir, a.checkout.GitPath, "add", "go.mod", "go.sum")
 		if err != nil {
-			return err
+			if len(output) > 0 {
+				err = fmt.Errorf("%w: %s", err, strings.Join(output, "; "))
+			}
+
+			return nil, err
 		}
 
 		out = append(out, output...)
@@ -54,34 +75,38 @@ func (a *ModUpdate) Push(ctx context.Context) error {
 
 		output, err = cmd(ctx, dir, a.checkout.GitPath, "commit", "-m", a.push.CommitMessage)
 		if err != nil {
-			return err
+			return out, err
 		}
 
 		out = append(out, output...)
 	}
 
-	if a.push.DryRun {
-		output, err := cmd(ctx, dir, a.checkout.GitPath, "status")
-		if err != nil {
-			return err
-		}
+	return out, nil
+}
 
-		out = append(out, output...)
-
-		a.reporter.ReportEvent(ctx, events.Event{
-			Action: actionPushCommit,
-			URI:    a.repo.Path,
-			Module: a.repo.ModulePath,
-			Branch: a.repo.Branch,
-			Output: out,
-		})
-
-		a.logger.InfoContext(ctx, "files committed successfully",
-			slog.Bool("dry_run", true), slog.Any("output", out))
-
-		return nil
+func (a *ModUpdate) doDryRun(ctx context.Context, dir string, out []string) error {
+	output, err := cmd(ctx, dir, a.checkout.GitPath, "status")
+	if err != nil {
+		return err
 	}
 
+	out = append(out, output...)
+
+	a.reporter.ReportEvent(ctx, events.Event{
+		Action: actionPushCommit,
+		URI:    a.repo.Path,
+		Module: a.repo.ModulePath,
+		Branch: a.repo.Branch,
+		Output: out,
+	})
+
+	a.logger.InfoContext(ctx, "files committed successfully",
+		slog.Bool("dry_run", true), slog.Any("output", out))
+
+	return nil
+}
+
+func (a *ModUpdate) gitPush(ctx context.Context, dir string, out []string) error {
 	targetBranch := a.repo.Branch
 	if targetBranch == "" {
 		targetBranch = defaultBranch

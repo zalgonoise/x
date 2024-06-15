@@ -15,6 +15,30 @@ import (
 var ErrEmptyPath = errors.New("target path to checkout into is empty")
 
 func (a *ModUpdate) Checkout(ctx context.Context) error {
+	if err := a.setPath(ctx); err != nil {
+		return err
+	}
+
+	// check if repo has already been checked out
+	ok, err := a.checkRepoExists(ctx)
+	if err != nil {
+		return err
+	}
+
+	if ok {
+		return nil
+	}
+
+	// which git
+	if err := a.setGit(ctx); err != nil {
+		return err
+	}
+
+	// git clone --depth=1 {remote} {directory}
+	return a.gitClone(ctx)
+}
+
+func (a *ModUpdate) setPath(ctx context.Context) error {
 	if a.checkout.Path == "" {
 		if a.checkout.Persist {
 			a.logger.WarnContext(ctx, "cannot persist with an empty target path",
@@ -31,7 +55,30 @@ func (a *ModUpdate) Checkout(ctx context.Context) error {
 		a.checkout.Path = path
 	}
 
-	// which git
+	return nil
+}
+
+func (a *ModUpdate) checkRepoExists(ctx context.Context) (bool, error) {
+	if out, err := cmd(ctx, a.checkout.Path, "file", ".git"); err == nil {
+		a.reporter.ReportEvent(ctx, events.Event{
+			Action: actionCheckoutPresent,
+			URI:    a.repo.Path,
+			Module: a.repo.ModulePath,
+			Branch: a.repo.Branch,
+			Output: out,
+		})
+
+		a.logger.InfoContext(ctx, "repository has already been checked out",
+			slog.Any("output", out),
+		)
+
+		return true, a.checkoutBranch(ctx)
+	}
+
+	return false, nil
+}
+
+func (a *ModUpdate) setGit(ctx context.Context) error {
 	if a.checkout.GitPath == "" {
 		gitBin, err := cmd(ctx, "", "which", "git")
 		if err != nil {
@@ -45,12 +92,13 @@ func (a *ModUpdate) Checkout(ctx context.Context) error {
 		a.checkout.GitPath = gitBin[0]
 	}
 
+	return nil
+}
+
+func (a *ModUpdate) gitClone(ctx context.Context) (err error) {
+	var out []string
 	path := buildPath(a.repo)
 
-	var out []string
-	var err error
-
-	// git clone --depth=1 {remote} {directory}
 	switch {
 	case len(a.checkout.CommandOverrides) > 0:
 		for i := range a.checkout.CommandOverrides {
@@ -82,7 +130,27 @@ func (a *ModUpdate) Checkout(ctx context.Context) error {
 		slog.Any("output", out),
 	)
 
-	// TODO: add branches support
+	return a.checkoutBranch(ctx)
+}
+
+func (a *ModUpdate) checkoutBranch(ctx context.Context) error {
+	out, err := cmd(ctx, a.checkout.Path, "git", "checkout", a.repo.Branch)
+	if err != nil {
+		return err
+	}
+
+	a.reporter.ReportEvent(ctx, events.Event{
+		Action: actionCheckoutBranch,
+		URI:    a.repo.Path,
+		Module: a.repo.ModulePath,
+		Branch: a.repo.Branch,
+		Output: out,
+	})
+
+	a.logger.InfoContext(ctx, "checked out repository's branch",
+		slog.String("branch", a.repo.Branch),
+		slog.Any("output", out),
+	)
 
 	return nil
 }

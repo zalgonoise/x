@@ -13,11 +13,14 @@ import (
 )
 
 const (
-	actionCheckout   = "checkout"
-	actionUpdateRepo = "update.repository"
-	actionUpdateMod  = "update.modules"
-	actionPushCommit = "push.commit"
-	actionPushPush   = "push.push"
+	actionCheckout        = "checkout"
+	actionCheckoutPresent = "checkout.present"
+	actionCheckoutBranch  = "checkout.branch"
+	actionUpdateRepo      = "update.repository"
+	actionUpdateMod       = "update.modules"
+	actionCheckBuild      = "check.build"
+	actionPushCommit      = "push.commit"
+	actionPushPush        = "push.push"
 )
 
 var ErrBinNotFound = errors.New("binary not found")
@@ -30,6 +33,7 @@ type ModUpdate struct {
 	repo     *config.Repository
 	checkout *config.Checkout
 	update   *config.Update
+	check    *config.Check
 	push     *config.Push
 
 	reporter Reporter
@@ -49,6 +53,7 @@ func NewModUpdate(reporter Reporter, cfg *config.Task, logger *slog.Logger) *Mod
 		repo:     &cfg.Repository,
 		checkout: &cfg.Checkout,
 		update:   &cfg.Update,
+		check:    &cfg.Check,
 		push:     &cfg.Push,
 		reporter: reporter,
 		logger:   logger,
@@ -61,6 +66,10 @@ func (a *ModUpdate) Run(ctx context.Context) error {
 	}
 
 	if err := a.Update(ctx); err != nil {
+		return err
+	}
+
+	if err := a.Check(ctx); err != nil {
 		return err
 	}
 

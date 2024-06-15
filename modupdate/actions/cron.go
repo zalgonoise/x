@@ -30,7 +30,7 @@ func NewActions(reporter Reporter, logger *slog.Logger, tasks ...*config.Task) (
 		execs = append(execs, e)
 	}
 
-	sel, err := selector.New(selector.WithExecutors(execs...))
+	sel, err := selector.New(selector.WithBlock(), selector.WithExecutors(execs...))
 	if err != nil {
 		return nil, err
 	}
