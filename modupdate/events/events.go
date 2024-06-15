@@ -25,13 +25,19 @@ func (r *Reporter) ReportEvent(ctx context.Context, event Event) {
 	go func() {
 		sb := &strings.Builder{}
 
-		sb.WriteString(`New event for https://`)
+		sb.WriteString("Action: ")
+		sb.WriteString(event.Action)
+		sb.WriteString("\nRepository: https://")
 		sb.WriteString(event.URI)
-		sb.WriteString("/tree/")
-		sb.WriteString(event.Branch)
-		sb.WriteByte('/')
-		sb.WriteString(event.Module)
-		sb.WriteString("!")
+		if event.Branch != "" {
+			sb.WriteString("/tree/")
+			sb.WriteString(event.Branch)
+		}
+
+		if event.Module != "" {
+			sb.WriteByte('/')
+			sb.WriteString(event.Module)
+		}
 
 		if len(event.Output) > 0 {
 			sb.WriteString("\n\n")
@@ -42,7 +48,7 @@ func (r *Reporter) ReportEvent(ctx context.Context, event Event) {
 				sb.WriteByte('\n')
 			}
 
-			sb.WriteString("\t- ")
+			sb.WriteString("- ")
 			sb.WriteString(event.Output[i])
 		}
 
@@ -52,7 +58,9 @@ func (r *Reporter) ReportEvent(ctx context.Context, event Event) {
 				slog.String("error", err.Error()))
 		}
 
-		_ = res.Body.Close()
+		if res != nil && res.Body != nil {
+			_ = res.Body.Close()
+		}
 	}()
 }
 
