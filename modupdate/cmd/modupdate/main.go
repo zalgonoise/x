@@ -17,13 +17,14 @@ import (
 	"github.com/zalgonoise/x/modupdate/service"
 )
 
-var modes = []string{"run"}
+var modes = []string{"run", "exec"}
 
 func main() {
 	runner := cli.NewRunner("modupdate",
 		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
-			"run": cli.Executable(ExecRun),
+			"run":  cli.Executable(ExecRun),
+			"exec": cli.Executable(ExecExec),
 		}),
 	)
 
@@ -58,12 +59,27 @@ func ExecRun(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 		return 1, err
 	}
 
-	cron, err := actions.NewActions(reporter, logger, cfg.Tasks...)
+	repo := repository.NewRepository(db)
+
+	// add tasks from config if present
+	for i := range cfg.Tasks {
+		if err := repo.AddTask(ctx, cfg.Tasks[i]); err != nil {
+			return 1, err
+		}
+	}
+
+	// load all tasks from the database as configured
+	tasks, err := repo.ListTasks(context.Background())
 	if err != nil {
 		return 1, err
 	}
 
-	svc, err := service.NewService(cron, repository.NewRepository(db), logger)
+	cron, err := actions.NewActions(reporter, logger, tasks...)
+	if err != nil {
+		return 1, err
+	}
+
+	svc, err := service.NewService(cron, repo, logger)
 	if err != nil {
 		return 1, err
 	}
@@ -78,6 +94,34 @@ func ExecRun(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 	}()
 
 	svc.Start()
+
+	return 0, nil
+}
+
+func ExecExec(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
+	fs := flag.NewFlagSet("exec", flag.ExitOnError)
+
+	configPath := fs.String("config", "", "path to the config JSON file containing the task definitions as well as database URI and discord token")
+
+	if err := fs.Parse(args); err != nil {
+		return 1, err
+	}
+
+	cfg, err := parseConfig(*configPath)
+	if err != nil {
+		return 1, err
+	}
+
+	reporter, err := events.NewReporter(cfg.DiscordToken, logger)
+	if err != nil {
+		return 1, err
+	}
+
+	for i := range cfg.Tasks {
+		if err := actions.NewModUpdate(reporter, cfg.Tasks[i], logger).Run(ctx); err != nil {
+			return 1, err
+		}
+	}
 
 	return 0, nil
 }
