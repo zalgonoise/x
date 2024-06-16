@@ -22,6 +22,10 @@
         "git_command_overrides": [],
         "go_command_overrides": []
       },
+      "check": {
+        "skip": false,
+        "command_overrides": []
+      },
       "push": {
         "dry_run": true,
         "commit_message": "",
