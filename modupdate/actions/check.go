@@ -10,6 +10,10 @@ import (
 )
 
 func (a *ModUpdate) Check(ctx context.Context) error {
+	if a.check.Skip {
+		return nil
+	}
+
 	dir := a.checkout.Path
 	if a.repo.ModulePath != "" {
 		dir = path.Join(dir, a.repo.ModulePath)
