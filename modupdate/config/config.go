@@ -37,6 +37,7 @@ type Update struct {
 }
 
 type Check struct {
+	Skip             bool     `json:"skip"`
 	CommandOverrides []string `json:"command_overrides,omitempty"`
 }
 
