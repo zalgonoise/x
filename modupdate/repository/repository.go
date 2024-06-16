@@ -34,7 +34,7 @@ SELECT command FROM overrides
 	filterByURIModuleAndBranch = `
 		WHERE uri = ?
 		AND module = ?
-		AND branch = ?;'`
+		AND branch = ?;`
 
 	deleteRepo = `
 DELETE FROM repositories WHERE id = ?`
@@ -124,9 +124,19 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 	configs := make([]*config.Task, 0, minAlloc)
 	errs := make([]error, 0, minAlloc)
 
-	seq(func(t *task, err error) bool {
+	seq(r.collectSeq(ctx, &configs, &errs))
+
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+
+	return configs, nil
+}
+
+func (r *Repository) collectSeq(ctx context.Context, configs *[]*config.Task, errs *[]error) func(t *task, err error) bool {
+	return func(t *task, err error) bool {
 		if err != nil {
-			errs = append(errs, err)
+			*errs = append(*errs, err)
 
 			// collect all valid tasks
 			return true
@@ -158,7 +168,7 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 
 		overrides, err := addOverrides(ctx, r.db, t.id.V, typeCheckout)
 		if err != nil {
-			errs = append(errs, err)
+			*errs = append(*errs, err)
 
 			// collect all valid tasks
 			return true
@@ -168,7 +178,7 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 
 		overrides, err = addOverrides(ctx, r.db, t.id.V, typeUpdateGit)
 		if err != nil {
-			errs = append(errs, err)
+			*errs = append(*errs, err)
 
 			// collect all valid tasks
 			return true
@@ -178,7 +188,7 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 
 		overrides, err = addOverrides(ctx, r.db, t.id.V, typeUpdateGo)
 		if err != nil {
-			errs = append(errs, err)
+			*errs = append(*errs, err)
 
 			// collect all valid tasks
 			return true
@@ -188,7 +198,7 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 
 		overrides, err = addOverrides(ctx, r.db, t.id.V, typePush)
 		if err != nil {
-			errs = append(errs, err)
+			*errs = append(*errs, err)
 
 			// collect all valid tasks
 			return true
@@ -198,7 +208,7 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 
 		overrides, err = addOverrides(ctx, r.db, t.id.V, typePushFiles)
 		if err != nil {
-			errs = append(errs, err)
+			*errs = append(*errs, err)
 
 			// collect all valid tasks
 			return true
@@ -206,16 +216,10 @@ func (r *Repository) ListTasks(ctx context.Context) ([]*config.Task, error) {
 
 		c.Push.FilesOverride = overrides
 
-		configs = append(configs, c)
+		*configs = append(*configs, c)
 
 		return true
-	})
-
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
 	}
-
-	return configs, nil
 }
 
 func (r *Repository) Close() error {
@@ -249,7 +253,6 @@ func addOverrides(ctx context.Context, tx transactioner, id, typ string) ([]stri
 	}
 
 	return overrides, nil
-
 }
 
 func (r *Repository) AddTask(ctx context.Context, cfg *config.Task) error {
@@ -330,6 +333,8 @@ func (r *Repository) DeleteTask(ctx context.Context, uri, module, branch string)
 	}
 
 	errs := make([]error, 0, minAlloc)
+	ids := make([]string, 0, minAlloc)
+
 	if !seq(func(t *taskID, err error) bool {
 		if err != nil {
 			errs = append(errs, err)
@@ -341,6 +346,8 @@ func (r *Repository) DeleteTask(ctx context.Context, uri, module, branch string)
 		if !t.id.Valid {
 			return true
 		}
+
+		ids = append(ids, t.id.V)
 
 		if err := removeTask(ctx, tx, t.id.V); err != nil {
 			errs = append(errs, err)
