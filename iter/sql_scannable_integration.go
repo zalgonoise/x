@@ -36,8 +36,6 @@ func QueryContext[S Scannable[T], T any](
 		return nil, err
 	}
 
-	defer rows.Close()
-
 	return func(yield func(*T, error) bool) bool {
 		for rows.Next() {
 			// initialize a new pointer instance of T, as a Scannable[T] interface type:
@@ -54,6 +52,12 @@ func QueryContext[S Scannable[T], T any](
 			if !yield(item, nil) {
 				return false
 			}
+		}
+
+		if err := rows.Close(); err != nil {
+			yield(nil, err)
+
+			return false
 		}
 
 		if err := rows.Err(); err != nil {
