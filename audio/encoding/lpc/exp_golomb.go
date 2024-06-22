@@ -103,7 +103,7 @@ func GolombEncode8(x, m uint8) (q, r uint8, ok bool) {
 
 	var shift uint8 = 1 << m
 
-	return uint8(math.Log2(float64(x/shift) + 1.0)), x % shift, true
+	return uint8(math.Log2(float64(x/shift) + 1.0)), x - shift, true
 }
 
 func GolombDecode8(m, r uint8) (x uint8, ok bool) {
