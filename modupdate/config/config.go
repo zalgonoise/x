@@ -1,9 +1,9 @@
 package config
 
 type Config struct {
-	DatabaseURI  string  `json:"database_uri,omitempty"`
-	DiscordToken string  `json:"discord_token,omitempty"`
-	Tasks        []*Task `json:"tasks,omitempty"`
+	DatabaseURI string  `json:"database_uri,omitempty"`
+	Events      *Events `json:"events,omitempty"`
+	Tasks       []*Task `json:"tasks,omitempty"`
 }
 
 type Task struct {
@@ -21,6 +21,12 @@ type Repository struct {
 	Branch     string `json:"branch,omitempty"`
 	Username   string `json:"username,omitempty"`
 	Token      string `json:"token,omitempty"`
+}
+
+type Events struct {
+	DiscordToken string `json:"discord_token,omitempty"`
+	Skip         bool   `json:"skip,omitempty"`
+	BufferSize   int    `json:"buffer_size,omitempty"`
 }
 
 type Checkout struct {
