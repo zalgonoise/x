@@ -1,6 +1,10 @@
 {
   "database_uri": "",
-  "discord_token": "",
+  "events": {
+    "discord_token": "",
+    "skip": false,
+    "buffer_size": 8
+  },
   "tasks": [
     {
       "cron_schedule": "",
