@@ -49,7 +49,7 @@ func (a *ModUpdate) checkGoBuild(ctx context.Context, dir, goBin string) error {
 		out = append(out, output...)
 	}
 
-	a.reporter.ReportEvent(ctx, events.Event{
+	a.reporter.ReportEvent(events.Event{
 		Action: actionCheckBuild,
 		URI:    a.repo.Path,
 		Module: a.repo.ModulePath,

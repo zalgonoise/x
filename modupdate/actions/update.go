@@ -83,7 +83,7 @@ func (a *ModUpdate) gitFetchPull(ctx context.Context, dir string) (err error) {
 
 	a.logger.InfoContext(ctx, "repository updated successfully", slog.Any("output", out))
 
-	a.reporter.ReportEvent(ctx, events.Event{
+	a.reporter.ReportEvent(events.Event{
 		Action: actionUpdateRepo,
 		URI:    a.repo.Path,
 		Module: a.repo.ModulePath,
@@ -124,7 +124,7 @@ func (a *ModUpdate) goGet(ctx context.Context, dir, goBin string) error {
 
 	out = append(out, tidyOut...)
 
-	a.reporter.ReportEvent(ctx, events.Event{
+	a.reporter.ReportEvent(events.Event{
 		Action: actionUpdateMod,
 		URI:    a.repo.Path,
 		Module: a.repo.ModulePath,

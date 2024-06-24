@@ -92,7 +92,7 @@ func (a *ModUpdate) doDryRun(ctx context.Context, dir string, out []string) erro
 
 	out = append(out, output...)
 
-	a.reporter.ReportEvent(ctx, events.Event{
+	a.reporter.ReportEvent(events.Event{
 		Action: actionPushCommit,
 		URI:    a.repo.Path,
 		Module: a.repo.ModulePath,
@@ -120,7 +120,7 @@ func (a *ModUpdate) gitPush(ctx context.Context, dir string, out []string) error
 
 	out = append(out, output...)
 
-	a.reporter.ReportEvent(ctx, events.Event{
+	a.reporter.ReportEvent(events.Event{
 		Action: actionPushPush,
 		URI:    a.repo.Path,
 		Module: a.repo.ModulePath,

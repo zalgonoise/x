@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/zalgonoise/x/modupdate/config"
+	"github.com/zalgonoise/x/modupdate/events"
 )
 
 func TestPush(t *testing.T) {
@@ -43,7 +44,7 @@ func TestPush(t *testing.T) {
 				Level: slog.LevelDebug,
 			}))
 
-			a := NewModUpdate(noOpReporter{}, &config.Task{
+			a := NewModUpdate(events.NoOp{}, &config.Task{
 				Repository: testcase.repo,
 				Checkout:   testcase.checkout,
 				Update:     testcase.update,

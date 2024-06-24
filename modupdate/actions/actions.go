@@ -26,7 +26,8 @@ const (
 var ErrBinNotFound = errors.New("binary not found")
 
 type Reporter interface {
-	ReportEvent(ctx context.Context, event events.Event)
+	ReportEvent(event events.Event)
+	Flush()
 }
 
 type ModUpdate struct {
@@ -45,10 +46,6 @@ func NewModUpdate(reporter Reporter, cfg *config.Task, logger *slog.Logger) *Mod
 		return nil
 	}
 
-	if reporter == nil {
-		reporter = noOpReporter{}
-	}
-
 	return &ModUpdate{
 		repo:     &cfg.Repository,
 		checkout: &cfg.Checkout,
@@ -61,6 +58,8 @@ func NewModUpdate(reporter Reporter, cfg *config.Task, logger *slog.Logger) *Mod
 }
 
 func (a *ModUpdate) Run(ctx context.Context) error {
+	defer a.reporter.Flush()
+
 	if err := a.Checkout(ctx); err != nil {
 		return err
 	}

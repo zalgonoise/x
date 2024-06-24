@@ -60,7 +60,7 @@ func (a *ModUpdate) setPath(ctx context.Context) error {
 
 func (a *ModUpdate) checkRepoExists(ctx context.Context) (bool, error) {
 	if out, err := cmd(ctx, a.checkout.Path, "file", ".git"); err == nil {
-		a.reporter.ReportEvent(ctx, events.Event{
+		a.reporter.ReportEvent(events.Event{
 			Action: actionCheckoutPresent,
 			URI:    a.repo.Path,
 			Module: a.repo.ModulePath,
@@ -118,7 +118,7 @@ func (a *ModUpdate) gitClone(ctx context.Context) (err error) {
 		}
 	}
 
-	a.reporter.ReportEvent(ctx, events.Event{
+	a.reporter.ReportEvent(events.Event{
 		Action: actionCheckout,
 		URI:    a.repo.Path,
 		Module: a.repo.ModulePath,
@@ -139,7 +139,7 @@ func (a *ModUpdate) checkoutBranch(ctx context.Context) error {
 		return err
 	}
 
-	a.reporter.ReportEvent(ctx, events.Event{
+	a.reporter.ReportEvent(events.Event{
 		Action: actionCheckoutBranch,
 		URI:    a.repo.Path,
 		Module: a.repo.ModulePath,
