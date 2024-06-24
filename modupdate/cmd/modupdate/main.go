@@ -54,9 +54,13 @@ func ExecRun(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 		return 1, err
 	}
 
-	reporter, err := events.NewReporter(cfg.DiscordToken, logger)
-	if err != nil {
-		return 1, err
+	var reporter actions.Reporter = events.NoOp{}
+
+	if cfg.Events != nil && !cfg.Events.Skip && cfg.Events.DiscordToken != "" {
+		reporter, err = events.NewReporter(cfg.Events.DiscordToken, cfg.Events.BufferSize, logger)
+		if err != nil {
+			return 1, err
+		}
 	}
 
 	repo := repository.NewRepository(db)
@@ -112,9 +116,13 @@ func ExecExec(ctx context.Context, logger *slog.Logger, args []string) (int, err
 		return 1, err
 	}
 
-	reporter, err := events.NewReporter(cfg.DiscordToken, logger)
-	if err != nil {
-		return 1, err
+	var reporter actions.Reporter = events.NoOp{}
+
+	if cfg.Events != nil && !cfg.Events.Skip && cfg.Events.DiscordToken != "" {
+		reporter, err = events.NewReporter(cfg.Events.DiscordToken, cfg.Events.BufferSize, logger)
+		if err != nil {
+			return 1, err
+		}
 	}
 
 	for i := range cfg.Tasks {
