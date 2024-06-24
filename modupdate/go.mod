@@ -2,16 +2,16 @@ module github.com/zalgonoise/x/modupdate
 
 go 1.22.2
 
-toolchain go1.22.4
+toolchain go1.23rc1
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zalgonoise/micron v1.1.0
-	github.com/zalgonoise/x/cli v0.0.0-20240616103453-c1ac175191ec
-	github.com/zalgonoise/x/discord v0.0.0-20240616103453-c1ac175191ec
-	github.com/zalgonoise/x/iter v0.0.0-20240616232905-f42d5435ac02
+	github.com/zalgonoise/x/cli v0.0.0-20240624121040-fa2b30b0a485
+	github.com/zalgonoise/x/discord v0.0.0-20240624121040-fa2b30b0a485
+	github.com/zalgonoise/x/iter v0.0.0-20240624121040-fa2b30b0a485
 	go.opentelemetry.io/otel/trace v1.27.0
 	modernc.org/sqlite v1.30.1
 )
@@ -23,7 +23,7 @@ require (
 	github.com/Abirdcfly/dupword v0.0.14 // indirect
 	github.com/Antonboom/errname v0.1.13 // indirect
 	github.com/Antonboom/nilnil v0.1.9 // indirect
-	github.com/Antonboom/testifylint v1.4.2 // indirect
+	github.com/Antonboom/testifylint v1.4.3 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Crocmagnon/fatcontext v0.3.0 // indirect
 	github.com/Djarvur/go-err113 v0.0.0-20210108212216-aea10b59be24 // indirect
@@ -39,7 +39,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bkielbasa/cyclop v1.2.1 // indirect
 	github.com/blizzy78/varnamelen v0.8.0 // indirect
-	github.com/bombsimon/wsl/v4 v4.4.0 // indirect
+	github.com/bombsimon/wsl/v4 v4.4.1 // indirect
 	github.com/breml/bidichk v0.2.7 // indirect
 	github.com/breml/errchkjson v0.3.6 // indirect
 	github.com/butuzov/ireturn v0.3.0 // indirect
@@ -96,7 +96,7 @@ require (
 	github.com/jgautheron/goconst v1.7.1 // indirect
 	github.com/jingyugao/rowserrcheck v1.1.1 // indirect
 	github.com/jirfag/go-printf-func-name v0.0.0-20200119135958-7558a9eaa5af // indirect
-	github.com/jjti/go-spancheck v0.6.1 // indirect
+	github.com/jjti/go-spancheck v0.6.2 // indirect
 	github.com/julz/importas v0.1.0 // indirect
 	github.com/karamaru-alpha/copyloopvar v1.1.0 // indirect
 	github.com/kisielk/errcheck v1.7.0 // indirect
@@ -186,10 +186,10 @@ require (
 	github.com/zalgonoise/gio v1.0.0 // indirect
 	github.com/zalgonoise/lex v0.0.0-20230210133743-771cae9540b7 // indirect
 	github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5 // indirect
-	github.com/zalgonoise/x/errs v0.0.0-20240616103453-c1ac175191ec // indirect
+	github.com/zalgonoise/x/errs v0.0.0-20240624121040-fa2b30b0a485 // indirect
 	gitlab.com/bosi/decorder v0.4.2 // indirect
 	go-simpler.org/musttag v0.12.2 // indirect
-	go-simpler.org/sloglint v0.7.1 // indirect
+	go-simpler.org/sloglint v0.7.2 // indirect
 	go.opentelemetry.io/otel v1.27.0 // indirect
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
@@ -202,7 +202,7 @@ require (
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240610135401-a8a62080eff3 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240624140628-dc46fd24d27d // indirect
 	google.golang.org/grpc v1.64.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -210,7 +210,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
-	modernc.org/libc v1.53.3 // indirect
+	modernc.org/libc v1.53.4 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
