@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240804022726-9862f303e2a6
-	github.com/zalgonoise/x/errs v0.0.0-20240804022726-9862f303e2a6
-	github.com/zalgonoise/x/ptr v0.0.0-20240804022726-9862f303e2a6
+	github.com/zalgonoise/x/cli v0.0.0-20240805152025-6706611f3ef3
+	github.com/zalgonoise/x/errs v0.0.0-20240805152025-6706611f3ef3
+	github.com/zalgonoise/x/ptr v0.0.0-20240805152025-6706611f3ef3
 	modernc.org/sqlite v1.31.1
 )
 
