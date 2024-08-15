@@ -10,15 +10,15 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
-	github.com/prometheus/client_golang v1.19.1
+	github.com/prometheus/client_golang v1.20.0
 	github.com/stretchr/testify v1.9.0
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240813131635-28e84505ea3a
-	github.com/zalgonoise/x/errs v0.0.0-20240813131635-28e84505ea3a
-	github.com/zalgonoise/x/ptr v0.0.0-20240813131635-28e84505ea3a
+	github.com/zalgonoise/x/cli v0.0.0-20240814113559-d9cbbf4fb180
+	github.com/zalgonoise/x/errs v0.0.0-20240814113559-d9cbbf4fb180
+	github.com/zalgonoise/x/ptr v0.0.0-20240814113559-d9cbbf4fb180
 	modernc.org/sqlite v1.32.0
 )
 
@@ -106,6 +106,7 @@ require (
 	github.com/karamaru-alpha/copyloopvar v1.1.0 // indirect
 	github.com/kisielk/errcheck v1.7.0 // indirect
 	github.com/kkHAIKE/contextcheck v1.1.5 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/kulti/thelper v0.6.3 // indirect
 	github.com/kunwardeep/paralleltest v1.0.10 // indirect
 	github.com/kyoh86/exportloopref v0.1.11 // indirect
@@ -205,7 +206,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
 	modernc.org/gc/v3 v3.0.0-20240801135723-a856999a2e4a // indirect
-	modernc.org/libc v1.59.3 // indirect
+	modernc.org/libc v1.59.4 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
