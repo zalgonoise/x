@@ -429,10 +429,16 @@ github.com/zalgonoise/valigator v1.0.0 h1:zuSTgarZS4XJ0V2V43454bp3fDnTw89hjMKepQ
 github.com/zalgonoise/valigator v1.0.0/go.mod h1:YMPU7SIqhh38NUCis7K6lxyJh7MDKdH+b5hNTfu3Cj4=
 github.com/zalgonoise/x/cli v0.0.0-20240815123910-b2a4c5f0417d h1:hTKm9JXdZ3sQ6XOEV3Z0IIMo4FPu8Ub8MEVFraspTyA=
 github.com/zalgonoise/x/cli v0.0.0-20240815123910-b2a4c5f0417d/go.mod h1:dRGdo9vd/EGZPa9zeJXC1gKCJbzOF1LtBSca9SUnERg=
+github.com/zalgonoise/x/cli v0.0.0-20240816155639-40c66120593b h1:9X5sNrYKOC+hsiLRGB+n3n+SznqvBOtij+j1YfdekTg=
+github.com/zalgonoise/x/cli v0.0.0-20240816155639-40c66120593b/go.mod h1:dRGdo9vd/EGZPa9zeJXC1gKCJbzOF1LtBSca9SUnERg=
 github.com/zalgonoise/x/errs v0.0.0-20240815123910-b2a4c5f0417d h1:c1XTsSOTkTf2qmwE9GdYKSlPGP4IAj7ipCW5BDVe6f4=
 github.com/zalgonoise/x/errs v0.0.0-20240815123910-b2a4c5f0417d/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
+github.com/zalgonoise/x/errs v0.0.0-20240816155639-40c66120593b h1:dhEFtQMm0G2oHzjjZC7XF5jBDKYRQPpk9/2SW4MXDVU=
+github.com/zalgonoise/x/errs v0.0.0-20240816155639-40c66120593b/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/ptr v0.0.0-20240815123910-b2a4c5f0417d h1:oDOD0XGlLFH3mBtlT3caUhXAIyz2hnU7nojGP+1KPas=
 github.com/zalgonoise/x/ptr v0.0.0-20240815123910-b2a4c5f0417d/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
+github.com/zalgonoise/x/ptr v0.0.0-20240816155639-40c66120593b h1:7E1ttBAiBHvzE6i8llOltrNuZ+sFynISKpqQC5sreUY=
+github.com/zalgonoise/x/ptr v0.0.0-20240816155639-40c66120593b/go.mod h1:wW/r3vCLSWCBWsV2Bk0J3U7+pS8EFBCYLJIGmYFJbn0=
 gitlab.com/bosi/decorder v0.4.2 h1:qbQaV3zgwnBZ4zPMhGLW4KZe7A7NwxEhJx39R3shffo=
 gitlab.com/bosi/decorder v0.4.2/go.mod h1:muuhHoaJkA9QLcYHq4Mj8FJUwDZ+EirSHRiaTcTf6T8=
 go-simpler.org/assert v0.9.0 h1:PfpmcSvL7yAnWyChSjOz6Sp6m9j5lyK8Ok9pEL31YkQ=
@@ -597,6 +603,8 @@ modernc.org/gc/v3 v3.0.0-20240801135723-a856999a2e4a h1:CfbpOLEo2IwNzJdMvE8aiRbP
 modernc.org/gc/v3 v3.0.0-20240801135723-a856999a2e4a/go.mod h1:Qz0X07sNOR1jWYCrJMEnbW/X55x206Q7Vt4mz6/wHp4=
 modernc.org/libc v1.59.7 h1:Ia+aIdEz5oQfoM/PIExhAMpSrN9GP4gSgNDMp8y2mAY=
 modernc.org/libc v1.59.7/go.mod h1:EY/egGEU7Ju66eU6SBqCNYaFUDuc4npICkMWnU5EE3A=
+modernc.org/libc v1.59.8 h1:fDbvsc7R9phaPxWQk0FoDNpMPZOjlC+N2hZadDVUqxc=
+modernc.org/libc v1.59.8/go.mod h1:EY/egGEU7Ju66eU6SBqCNYaFUDuc4npICkMWnU5EE3A=
 modernc.org/mathutil v1.6.0 h1:fRe9+AmYlaej+64JsEEhoWuAYBkOtQiMEU7n/XgfYi4=
 modernc.org/mathutil v1.6.0/go.mod h1:Ui5Q9q1TR2gFm0AQRqQUaBWFLAhQpCwNcuhBOSedWPo=
 modernc.org/memory v1.8.0 h1:IqGTL6eFMaDZZhEWwcREgeMXYwmW83LYW8cROZYkg+E=
