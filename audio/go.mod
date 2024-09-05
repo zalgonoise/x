@@ -10,15 +10,15 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
-	github.com/prometheus/client_golang v1.20.2
+	github.com/prometheus/client_golang v1.20.3
 	github.com/stretchr/testify v1.9.0
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20240903152714-6d752c686c4c
-	github.com/zalgonoise/x/errs v0.0.0-20240903152714-6d752c686c4c
-	github.com/zalgonoise/x/ptr v0.0.0-20240903152714-6d752c686c4c
+	github.com/zalgonoise/x/cli v0.0.0-20240904073408-d0cc4daf72ce
+	github.com/zalgonoise/x/errs v0.0.0-20240904073408-d0cc4daf72ce
+	github.com/zalgonoise/x/ptr v0.0.0-20240904073408-d0cc4daf72ce
 	modernc.org/sqlite v1.32.0
 )
 
@@ -139,7 +139,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.5.2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.58.0 // indirect
+	github.com/prometheus/common v0.59.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.2 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22 // indirect
@@ -197,7 +197,7 @@ require (
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
