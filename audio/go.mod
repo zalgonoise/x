@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20241003104651-5aff0ed29b35
-	github.com/zalgonoise/x/errs v0.0.0-20241003104651-5aff0ed29b35
-	github.com/zalgonoise/x/ptr v0.0.0-20241003104651-5aff0ed29b35
+	github.com/zalgonoise/x/cli v0.0.0-20241004133530-ed77b5d07ce9
+	github.com/zalgonoise/x/errs v0.0.0-20241004133530-ed77b5d07ce9
+	github.com/zalgonoise/x/ptr v0.0.0-20241004133530-ed77b5d07ce9
 	modernc.org/sqlite v1.33.1
 )
 
@@ -192,20 +192,20 @@ require (
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
+	golang.org/x/exp v0.0.0-20241004190924-225e2abe05e6 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
-	golang.org/x/tools v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
+	golang.org/x/tools v0.26.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
-	modernc.org/gc/v3 v3.0.0-20240801135723-a856999a2e4a // indirect
+	modernc.org/gc/v3 v3.0.0-20241004144649-1aea3fae8852 // indirect
 	modernc.org/libc v1.61.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
