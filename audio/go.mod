@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20241007144435-b1a3f5fe7b9b
-	github.com/zalgonoise/x/errs v0.0.0-20241007144435-b1a3f5fe7b9b
-	github.com/zalgonoise/x/ptr v0.0.0-20241007144435-b1a3f5fe7b9b
+	github.com/zalgonoise/x/cli v0.0.0-20241008165141-9c963b6b09f3
+	github.com/zalgonoise/x/errs v0.0.0-20241008165141-9c963b6b09f3
+	github.com/zalgonoise/x/ptr v0.0.0-20241008165141-9c963b6b09f3
 	modernc.org/sqlite v1.33.1
 )
 
@@ -192,7 +192,7 @@ require (
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/exp v0.0.0-20241004190924-225e2abe05e6 // indirect
+	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
