@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20241010151317-40369cb6f35b
-	github.com/zalgonoise/x/errs v0.0.0-20241010151317-40369cb6f35b
-	github.com/zalgonoise/x/ptr v0.0.0-20241010151317-40369cb6f35b
+	github.com/zalgonoise/x/cli v0.0.0-20241011070230-3624263fd9e2
+	github.com/zalgonoise/x/errs v0.0.0-20241011070230-3624263fd9e2
+	github.com/zalgonoise/x/ptr v0.0.0-20241011070230-3624263fd9e2
 	modernc.org/sqlite v1.33.1
 )
 
@@ -106,7 +106,7 @@ require (
 	github.com/karamaru-alpha/copyloopvar v1.1.0 // indirect
 	github.com/kisielk/errcheck v1.7.0 // indirect
 	github.com/kkHAIKE/contextcheck v1.1.5 // indirect
-	github.com/klauspost/compress v1.17.10 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/kulti/thelper v0.6.3 // indirect
 	github.com/kunwardeep/paralleltest v1.0.10 // indirect
 	github.com/kyoh86/exportloopref v0.1.11 // indirect
