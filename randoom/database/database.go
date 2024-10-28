@@ -83,6 +83,8 @@ func Migrate(ctx context.Context, db *sql.DB) error {
 	return runMigrations(ctx, db,
 		migration{"labels", createLabelsTable},
 		migration{"label_items", createLabelItemsTable},
+		migration{"playlists", createPlaylistsTable},
+		migration{"playlist_items", createPlaylistItemsTable},
 	)
 }
 
