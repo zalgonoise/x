@@ -43,7 +43,7 @@ func getScenes(sceneMap map[string]int) []string {
 	scenes := make([]string, 0, len(sceneMap))
 
 	for scene := range sceneMap {
-		if scene == "" || !strings.HasSuffix(scene, blankPrefix) {
+		if scene == "" || strings.HasPrefix(scene, blankPrefix) {
 			continue
 		}
 
