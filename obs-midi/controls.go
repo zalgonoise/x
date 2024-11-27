@@ -73,7 +73,7 @@ func NewControlsBindings(
 							Channel: channel1,
 							Device:  midiDevice,
 							Name:    "LED On",
-							Note:    ValueInt{Higher: 127, Lower: 0, Number: notes.NoteOff, State: 0},
+							Note:    ValueInt{Higher: 127, Lower: 0, Number: notes.NoteOn, State: 0},
 							Type:    typeNoteOn,
 							Value:   ValueInt{Higher: 127, Lower: 0, Number: 1, State: 0},
 						}},
