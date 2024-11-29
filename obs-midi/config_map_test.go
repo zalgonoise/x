@@ -36,7 +36,7 @@ func TestNewConfig(t *testing.T) {
 	t.Log(string(data))
 
 	if path := os.Getenv("OBS_MIDI_CONFIG_OUTPUT"); path != "" {
-		f, err := os.Create(path + `obs-midi-gen.json`)
+		f, err := os.Create(path + `obs-midi-config.json`)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -47,6 +47,6 @@ func TestNewConfig(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		t.Log("OK")
+		t.Log("created file in " + path + `obs-midi-config.json`)
 	}
 }
