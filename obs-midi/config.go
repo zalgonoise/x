@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var ErrSourceConfigEmpty = errors.New("source config is empty")
+
 type Config struct {
 	SceneMap    map[string]int `json:"scene_map"`
 	HigherScene string         `json:"higher_scene"`
@@ -16,12 +18,13 @@ type Config struct {
 	TransitionMap map[string]int        `json:"transition_map"`
 	FaderMap      map[string]int        `json:"fader_map"`
 	ControlMap    map[string]SourceNote `json:"control_map"`
-	ColorSchema   ColorSchema           `json:"color_schema"`
+
+	ColorSchema ColorSchema `json:"color_schema"`
 }
 
 func (c *Config) Validate() error {
 	if c.Source == "" {
-		return errors.New("no source specified")
+		return ErrSourceConfigEmpty
 	}
 
 	if len(c.SceneMap) > 0 && (c.HigherScene == "" || c.LowerScene == "") {
