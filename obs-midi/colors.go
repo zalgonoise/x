@@ -2,6 +2,7 @@ package obs_midi
 
 type ColorSchema struct {
 	Scenes      OnOffColor       `json:"scenes"`
+	Sources     OnOffColor       `json:"sources"`
 	Toggles     OnOffColor       `json:"toggles"`
 	Transitions TransitionsColor `json:"transitions"`
 }
@@ -26,6 +27,11 @@ func DefaultColorSchema() ColorSchema {
 			Off:   52,
 			Blank: 82,
 		},
+		Sources: OnOffColor{
+			On:    98,
+			Off:   90,
+			Blank: 118,
+		},
 		Toggles: OnOffColor{
 			On:    38,
 			Off:   81,
@@ -46,6 +52,11 @@ func GreenColorSchema() ColorSchema {
 			On:    13,
 			Off:   84,
 			Blank: 108,
+		},
+		Sources: OnOffColor{
+			On:    57,
+			Off:   89,
+			Blank: 100,
 		},
 		Toggles: OnOffColor{
 			On:    113,
