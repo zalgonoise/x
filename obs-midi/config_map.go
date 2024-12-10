@@ -17,9 +17,10 @@ func NewConfigMap(cfg *Config) *ConfigMap {
 	return &ConfigMap{
 		Collections: []Collection{{
 			Name: configName,
-			Bindings: NewBindings(
-				cfg.ControlMap, cfg.ToggleMap, cfg.SceneMap, cfg.TransitionMap, cfg.FaderMap,
-				cfg.HigherScene, cfg.LowerScene, cfg.Source, cfg.ColorSchema,
+			Bindings: NewBindings(cfg.Base, cfg.SkipSecondary,
+				cfg.ControlMap, cfg.ToggleMap, cfg.SceneMap, cfg.PrimarySourceMap, cfg.SecondarySourceMap,
+				cfg.TransitionMap, cfg.FaderMap, cfg.HigherScene, cfg.LowerScene, cfg.ModSource,
+				cfg.ColorSchema,
 			),
 		}},
 		Devices: []Devices{
@@ -33,18 +34,21 @@ func NewConfigMap(cfg *Config) *ConfigMap {
 }
 
 func NewBindings(
+	base string, skipSecondary []string,
 	controlSet, togglesSet map[string]SourceNote,
-	sceneSet, transitionsSet, sliderSet map[string]int,
+	sceneSet, primarySourceSet, secondarySourceSet, transitionsSet, sliderSet map[string]int,
 	higher, lower, source string,
 	colorSchema ColorSchema,
 ) []Binding {
 	bindings := make([]Binding, 0, 256)
 
 	scenes := getScenes(sceneSet)
-	bindings = append(bindings, NewControlsBindings(
-		controlSet, togglesSet, sceneSet, transitionsSet, higher, lower, colorSchema)...)
+	bindings = append(bindings, NewControlsBindings(controlSet, togglesSet, sceneSet,
+		primarySourceSet, secondarySourceSet, transitionsSet, higher, lower, colorSchema)...)
 	bindings = append(bindings, NewFaderBindings(sliderSet, source, scenes)...)
 	bindings = append(bindings, NewScenesBindings(sceneSet, higher, lower, colorSchema.Scenes)...)
+	bindings = append(bindings, NewSourcesBindings(base, skipSecondary, scenes,
+		primarySourceSet, secondarySourceSet, colorSchema.Sources)...)
 	bindings = append(bindings, NewTogglesBindings(togglesSet, scenes, colorSchema.Toggles)...)
 	bindings = append(bindings, NewTransitionBindings(transitionsSet, colorSchema.Transitions)...)
 
