@@ -8,7 +8,7 @@ import (
 
 func NewControlsBindings(
 	mapping, toggles map[string]SourceNote,
-	scenes, transitions map[string]int,
+	scenes, primarySources, secondarySources, transitions map[string]int,
 	higher, lower string,
 	colorSchema ColorSchema,
 ) []Binding {
@@ -165,6 +165,42 @@ func NewControlsBindings(
 				}
 
 				actionName := fmt.Sprintf("%s - %s #%d", name, sceneName, note)
+
+				binding.Actions = append(binding.Actions, Action{Category: 15, Name: actionName, Messages: []Message{{
+					Channel: channel5,
+					Device:  midiDevice,
+					Name:    actionName,
+					Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
+					Type:    typeNoteOn,
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+				}}})
+			}
+
+			for sourceName, note := range primarySources {
+				color := colorSchema.Sources.Off
+				if strings.HasPrefix(sourceName, blankPrefix) {
+					color = colorSchema.Sources.Blank
+				}
+
+				actionName := fmt.Sprintf("%s - %s #%d", name, sourceName, note)
+
+				binding.Actions = append(binding.Actions, Action{Category: 15, Name: actionName, Messages: []Message{{
+					Channel: channel5,
+					Device:  midiDevice,
+					Name:    actionName,
+					Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
+					Type:    typeNoteOn,
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+				}}})
+			}
+
+			for sourceName, note := range secondarySources {
+				color := colorSchema.Sources.Off
+				if strings.HasPrefix(sourceName, blankPrefix) {
+					color = colorSchema.Sources.Blank
+				}
+
+				actionName := fmt.Sprintf("%s - %s #%d", name, sourceName, note)
 
 				binding.Actions = append(binding.Actions, Action{Category: 15, Name: actionName, Messages: []Message{{
 					Channel: channel5,
