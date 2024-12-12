@@ -11,13 +11,15 @@ var ErrSourceConfigEmpty = errors.New("source config is empty")
 type Config struct {
 	Base          string   `json:"base"`
 	SkipSecondary []string `json:"skip_secondary"`
+	SkipTetriary  []string `json:"skip_tetriary"`
 
-	SceneMap    map[string]int `json:"scene_map"`
-	HigherScene string         `json:"higher_scene"`
-	LowerScene  string         `json:"lower_scene"`
+	SceneMap           map[string]int `json:"scene_map"`
+	HigherScene        string         `json:"higher_scene"`
+	LowerScene         string         `json:"lower_scene"`
 	ModSource          string         `json:"mod_source"`
 	PrimarySourceMap   map[string]int `json:"primary_source_map"`
 	SecondarySourceMap map[string]int `json:"secondary_source_map"`
+	TetriarySourceMap  map[string]int `json:"tetriary_source_map"`
 
 	ToggleMap     map[string]SourceNote `json:"toggle_map"`
 	TransitionMap map[string]int        `json:"transition_map"`
