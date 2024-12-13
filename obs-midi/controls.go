@@ -8,7 +8,7 @@ import (
 
 func NewControlsBindings(
 	mapping, toggles map[string]SourceNote,
-	scenes, primarySources, secondarySources, tetriarySources, transitions map[string]int,
+	scenes, primarySources, secondarySources, tertiarySources, transitions map[string]int,
 	higher, lower string,
 	colorSchema ColorSchema,
 ) []Binding {
@@ -212,7 +212,7 @@ func NewControlsBindings(
 				}}})
 			}
 
-			for sourceName, note := range tetriarySources {
+			for sourceName, note := range tertiarySources {
 				color := colorSchema.Sources.Off
 				if strings.HasPrefix(sourceName, blankPrefix) {
 					color = colorSchema.Sources.Blank

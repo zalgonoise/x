@@ -7,8 +7,8 @@ import (
 )
 
 func NewSourcesBindings(
-	base string, skipSecondary, skipTetriary, sceneNames []string,
-	primarySources, secondarySources, tetriarySources map[string]int,
+	base string, skipSecondary, skipTertiary, sceneNames []string,
+	primarySources, secondarySources, tertiarySources map[string]int,
 	colors OnOffColor,
 ) []Binding {
 	bindings := make([]Binding, 0, len(primarySources)+len(secondarySources))
@@ -228,7 +228,7 @@ func NewSourcesBindings(
 		bindings = append(bindings, binding)
 	}
 
-	for name, note := range tetriarySources {
+	for name, note := range tertiarySources {
 		// skip blank
 		if strings.HasPrefix(name, blankPrefix) {
 			bindingName := fmt.Sprintf("Toggle Blank #%d", note)
@@ -284,7 +284,7 @@ func NewSourcesBindings(
 		// apply to all scenes
 		for i := range sceneNames {
 			// skip tetriary
-			if slices.Contains(skipTetriary, sceneNames[i]) {
+			if slices.Contains(skipTertiary, sceneNames[i]) {
 				continue
 			}
 
@@ -304,7 +304,7 @@ func NewSourcesBindings(
 
 			ledOffName := fmt.Sprintf("LED Off %s", bindingName)
 
-			for inner, innerNote := range tetriarySources {
+			for inner, innerNote := range tertiarySources {
 				if strings.HasPrefix(inner, blankPrefix) || inner == name {
 					continue
 				}

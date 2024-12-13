@@ -17,9 +17,9 @@ func NewConfigMap(cfg *Config) *ConfigMap {
 	return &ConfigMap{
 		Collections: []Collection{{
 			Name: configName,
-			Bindings: NewBindings(cfg.Base, cfg.SkipSecondary, cfg.SkipTetriary,
+			Bindings: NewBindings(cfg.Base, cfg.SkipSecondary, cfg.SkipTertiary,
 				cfg.ControlMap, cfg.ToggleMap, cfg.SceneMap,
-				cfg.PrimarySourceMap, cfg.SecondarySourceMap, cfg.TetriarySourceMap,
+				cfg.PrimarySourceMap, cfg.SecondarySourceMap, cfg.TertiarySourceMap,
 				cfg.TransitionMap, cfg.FaderMap, cfg.HigherScene, cfg.LowerScene, cfg.ModSource,
 				cfg.ColorSchema,
 			),
@@ -35,9 +35,9 @@ func NewConfigMap(cfg *Config) *ConfigMap {
 }
 
 func NewBindings(
-	base string, skipSecondary, skipTetriary []string,
+	base string, skipSecondary, skipTertiary []string,
 	controlSet, togglesSet map[string]SourceNote,
-	sceneSet, primarySourceSet, secondarySourceSet, tetriarySources, transitionsSet, sliderSet map[string]int,
+	sceneSet, primarySourceSet, secondarySourceSet, tertiarySources, transitionsSet, sliderSet map[string]int,
 	higher, lower, source string,
 	colorSchema ColorSchema,
 ) []Binding {
@@ -45,11 +45,11 @@ func NewBindings(
 
 	scenes := getScenes(sceneSet)
 	bindings = append(bindings, NewControlsBindings(controlSet, togglesSet, sceneSet,
-		primarySourceSet, secondarySourceSet, tetriarySources, transitionsSet, higher, lower, colorSchema)...)
+		primarySourceSet, secondarySourceSet, tertiarySources, transitionsSet, higher, lower, colorSchema)...)
 	bindings = append(bindings, NewFaderBindings(sliderSet, source, scenes)...)
 	bindings = append(bindings, NewScenesBindings(sceneSet, higher, lower, colorSchema.Scenes)...)
-	bindings = append(bindings, NewSourcesBindings(base, skipSecondary, skipTetriary, scenes,
-		primarySourceSet, secondarySourceSet, tetriarySources, colorSchema.Sources)...)
+	bindings = append(bindings, NewSourcesBindings(base, skipSecondary, skipTertiary, scenes,
+		primarySourceSet, secondarySourceSet, tertiarySources, colorSchema.Sources)...)
 	bindings = append(bindings, NewTogglesBindings(togglesSet, scenes, colorSchema.Toggles)...)
 	bindings = append(bindings, NewTransitionBindings(transitionsSet, colorSchema.Transitions)...)
 
