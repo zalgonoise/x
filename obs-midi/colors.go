@@ -1,5 +1,138 @@
 package obs_midi
 
+type ColorValue int
+
+const (
+	ColorOff ColorValue = iota
+	ColorGrayLow
+	ColorGrayMed
+	ColorGrayHigh
+	ColorLightPinkMed
+	ColorRedHigh
+	ColorRedMed
+	ColorRedLow
+	ColorWhiteHigh
+	ColorGoldHigh
+	ColorGoldMed
+	ColorGoldLow
+	ColorLightGreenHigh
+	ColorYellowGreenHigh
+	ColorYellowGreenMed
+	ColorYellowGreenLow
+	ColorLightTealHigh
+	ColorYellowishGreenHigh
+	ColorYellowishGreenMed
+	ColorYellowishGreenLow
+	ColorTealHigh
+	ColorGreenHigh
+	ColorGreenMed
+	ColorGreenLow
+	ColorBluishTealHigh
+	ColorBluishGreenHigh
+	ColorBluishGreenMed
+	ColorBluishGreenLow
+	ColorGreenishBlueHigh
+	ColorGreenBlueHigh
+	ColorGreenBlueMed
+	ColorGreenBlueLow
+	ColorLightBlueHigh
+	ColorSkyBlueHigh
+	ColorSkyBlueMed
+	ColorSkyBlueLow
+	ColorLightVioletHigh
+	ColorFadedLightBlueHigh
+	ColorFadedBlueMed
+	ColorFadedBlueLow
+	ColorBluishVioletHigh
+	ColorBlueHigh
+	ColorBlueMed
+	ColorBlueLow
+	ColorLightPurpleHigh
+	ColorNavyBlueHigh
+	ColorNavyBlueMed
+	ColorNavyBlueLow
+	ColorVioletHigh
+	ColorPurpleHigh
+	ColorPurpleMed
+	ColorPurpleLow
+	ColorPurplishPinkHigh
+	ColorPinkHigh
+	ColorPinkMed
+	ColorPinkLow
+	ColorBrightPinkHigh
+	ColorShockPinkHigh
+	ColorShockPinkMed
+	ColorShockPinkLow
+	ColorBrightOrangeHigh
+	ColorFadedOrangeHigh
+	ColorFadedGoldHigh
+	ColorFadedYellowGreenHigh
+	ColorFadedGreenLow
+	ColorFadedBlueGreenHigh
+	ColorFadedBluishGreenHigh
+	ColorFadedBlueHigh
+	ColorFadedTealHigh
+	ColorFadedPurpleHigh
+	ColorFadedWhiteMed
+	ColorFadedGrayLow
+	ColorBrightRedHigh
+	ColorLightOliveHigh
+	ColorLightGreenishYellowHigh
+	ColorLightYellowishGreenHigh
+	ColorDarkGreenHigh
+	ColorBrightTealHigh
+	ColorBrightPurplishBlueHigh
+	ColorBrightBlueHigh
+	ColorBrightPurpleHigh
+	ColorBrightLightPurpleHigh
+	ColorBrightHigh
+	ColorFadedGoldMed
+	ColorBrightGoldHigh
+	ColorBrightYellowGreenHigh
+	ColorBrightLightYellowishGreenHigh
+	ColorBrightGreenHigh
+	ColorBrightLightGreenHigh
+	ColorBrightLightTealHigh
+	ColorBrightLightBlueHigh
+	ColorBrightBluishVioletHigh
+	ColorBrightVioletHigh
+	ColorBrightLightVioletHigh
+	ColorBrightPurplishPinkHigh
+	ColorBrightShockPinkHigh
+	ColorBrightLightGoldHigh
+	ColorBrightGreenYellowHigh
+	ColorBrightYellowishGreenHigh
+	ColorFadedLightGoldHigh
+	ColorFadedLightGoldMed
+	ColorFadedBlueishGreenHigh
+	ColorFadedBlueGreenMed
+	ColorFadedVioletLow
+	ColorFadedBluishVioletHigh
+	ColorLightBrownHigh
+	ColorMagentaHigh
+	ColorLightPinkHigh
+	ColorLightGoldHigh
+	ColorLightYellowHigh
+	ColorFadedLightYellowishGreenHigh
+	ColorLightYellowGreenHigh
+	ColorDarkVioletHigh
+	ColorFadedLightYellowGreenHigh
+	ColorFadedGreenishBlueHigh
+	ColorFadedVioletHigh
+	ColorFadedVioletMed
+	ColorFadedGrayHigh
+	ColorFadedGrayMed
+	ColorFadedWhiteHigh
+	ColorFadedRedHigh
+	ColorFadedRedMed
+	ColorFadedGreenHigh
+	ColorFadedGreenMed
+	ColorFadedYellowHigh
+	ColorFadedYellowMed
+	ColorFadedLightOrangeHigh
+	ColorFadedOrangeMed
+)
+
 type ColorSchema struct {
 	Scenes      OnOffColor       `json:"scenes"`
 	Sources     OnOffColor       `json:"sources"`
@@ -8,40 +141,40 @@ type ColorSchema struct {
 }
 
 type TransitionsColor struct {
-	On         int `json:"on"`
-	Off        int `json:"off"`
-	Blank      int `json:"blank"`
-	Transition int `json:"transition"`
+	On         ColorValue `json:"on"`
+	Off        ColorValue `json:"off"`
+	Blank      ColorValue `json:"blank"`
+	Transition ColorValue `json:"transition"`
 }
 
 type OnOffColor struct {
-	On    int `json:"on"`
-	Off   int `json:"off"`
-	Blank int `json:"blank"`
+	On    ColorValue `json:"on"`
+	Off   ColorValue `json:"off"`
+	Blank ColorValue `json:"blank"`
 }
 
 func DefaultColorSchema() ColorSchema {
 	return ColorSchema{
 		Scenes: OnOffColor{
-			On:    90,
-			Off:   52,
-			Blank: 82,
+			On:    ColorBrightLightBlueHigh,
+			Off:   ColorPurplishPinkHigh,
+			Blank: ColorBrightHigh,
 		},
 		Sources: OnOffColor{
-			On:    98,
-			Off:   90,
-			Blank: 118,
+			On:    ColorBrightYellowishGreenHigh,
+			Off:   ColorBrightLightBlueHigh,
+			Blank: ColorFadedGrayMed,
 		},
 		Toggles: OnOffColor{
-			On:    38,
-			Off:   81,
-			Blank: 118,
+			On:    ColorFadedBlueMed,
+			Off:   ColorBrightLightPurpleHigh,
+			Blank: ColorFadedGrayMed,
 		},
 		Transitions: TransitionsColor{
-			On:         126,
-			Off:        4,
-			Blank:      34,
-			Transition: 5,
+			On:         ColorFadedLightOrangeHigh,
+			Off:        ColorLightPinkMed,
+			Blank:      ColorSkyBlueMed,
+			Transition: ColorRedHigh,
 		},
 	}
 }
@@ -49,25 +182,25 @@ func DefaultColorSchema() ColorSchema {
 func GreenColorSchema() ColorSchema {
 	return ColorSchema{
 		Scenes: OnOffColor{
-			On:    13,
-			Off:   84,
-			Blank: 108,
+			On:    ColorYellowGreenHigh,
+			Off:   ColorBrightGoldHigh,
+			Blank: ColorLightGoldHigh,
 		},
 		Sources: OnOffColor{
-			On:    57,
-			Off:   89,
-			Blank: 100,
+			On:    ColorShockPinkHigh,
+			Off:   ColorBrightLightTealHigh,
+			Blank: ColorFadedLightGoldMed,
 		},
 		Toggles: OnOffColor{
-			On:    113,
-			Off:   124,
-			Blank: 100,
+			On:    ColorFadedLightYellowGreenHigh,
+			Off:   ColorFadedYellowHigh,
+			Blank: ColorFadedLightGoldMed,
 		},
 		Transitions: TransitionsColor{
-			On:         87,
-			Off:        110,
-			Blank:      34,
-			Transition: 5,
+			On:         ColorBrightGreenHigh,
+			Off:        ColorFadedLightYellowishGreenHigh,
+			Blank:      ColorSkyBlueMed,
+			Transition: ColorRedHigh,
 		},
 	}
 }
