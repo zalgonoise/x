@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20241215210517-1fc72b8f3e13
-	github.com/zalgonoise/x/errs v0.0.0-20241215210517-1fc72b8f3e13
-	github.com/zalgonoise/x/ptr v0.0.0-20241215210517-1fc72b8f3e13
+	github.com/zalgonoise/x/cli v0.0.0-20241216160356-2846f0654d9b
+	github.com/zalgonoise/x/errs v0.0.0-20241216160356-2846f0654d9b
+	github.com/zalgonoise/x/ptr v0.0.0-20241216160356-2846f0654d9b
 	modernc.org/sqlite v1.34.2
 )
 
@@ -200,7 +200,7 @@ require (
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.28.0 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	google.golang.org/protobuf v1.36.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
