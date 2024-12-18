@@ -2,6 +2,8 @@ package exporters
 
 import (
 	"github.com/zalgonoise/cfg"
+	"go.opentelemetry.io/otel/trace"
+	"log/slog"
 
 	"github.com/zalgonoise/x/audio/fft"
 	"github.com/zalgonoise/x/audio/sdk/audio"
@@ -10,16 +12,18 @@ import (
 	"github.com/zalgonoise/x/audio/sdk/audio/registries/unitreg"
 )
 
-func NewStatsExporter(emitter audio.Emitter, options ...cfg.Option[*StatsConfig]) (audio.Exporter, error) {
-	config := cfg.Set[*StatsConfig](DefaultStatsConfig(), options...)
+func NewStatsExporter(
+	emitter audio.Emitter, statsOptions []cfg.Option[*StatsConfig],
+	logger *slog.Logger, metrics audio.ExporterMetrics, tracer trace.Tracer,
+) (audio.Exporter, error) {
+	config := cfg.Set[*StatsConfig](DefaultStatsConfig(), statsOptions...)
 
-	e, err := audio.NewExporter(emitter, newPeaksCollector(config), newSpectrumCollector(config))
+	e, err := audio.NewExporter(
+		emitter, newPeaksCollector(config), newSpectrumCollector(config),
+		logger, metrics, tracer,
+	)
 	if err != nil {
 		return audio.NoOpExporter(), err
-	}
-
-	if config.LogHandler != nil {
-		e = audio.ExporterWithLogs(e, config.LogHandler)
 	}
 
 	return e, nil
