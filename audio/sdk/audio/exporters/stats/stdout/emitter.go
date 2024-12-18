@@ -2,6 +2,7 @@ package stdout
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/trace"
 	"log/slog"
 
 	"github.com/zalgonoise/cfg"
@@ -35,12 +36,13 @@ func (e emitter) Shutdown(context.Context) error {
 	return nil
 }
 
-func ToLogger(options ...cfg.Option[*exporters.StatsConfig]) (audio.Exporter, error) {
-	// re-use log handler from general exporter config
-	config := cfg.Set[*exporters.StatsConfig](exporters.DefaultStatsConfig(), options...)
-
+func ToLogger(
+	options []cfg.Option[*exporters.StatsConfig],
+	logger *slog.Logger, metrics audio.ExporterMetrics, tracer trace.Tracer,
+) (audio.Exporter, error) {
 	return exporters.NewStatsExporter(
-		emitter{logger: slog.New(config.LogHandler)},
-		options...,
+		emitter{logger: logger},
+		options,
+		logger, metrics, tracer,
 	)
 }
