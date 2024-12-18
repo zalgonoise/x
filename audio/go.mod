@@ -16,10 +16,11 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20241216160356-2846f0654d9b
-	github.com/zalgonoise/x/errs v0.0.0-20241216160356-2846f0654d9b
-	github.com/zalgonoise/x/ptr v0.0.0-20241216160356-2846f0654d9b
-	modernc.org/sqlite v1.34.2
+	github.com/zalgonoise/x/cli v0.0.0-20241217171130-656df2ece464
+	github.com/zalgonoise/x/errs v0.0.0-20241217171130-656df2ece464
+	github.com/zalgonoise/x/ptr v0.0.0-20241217171130-656df2ece464
+	go.opentelemetry.io/otel/trace v1.33.0
+	modernc.org/sqlite v1.34.3
 )
 
 require (
@@ -188,11 +189,12 @@ require (
 	gitlab.com/bosi/decorder v0.4.2 // indirect
 	go-simpler.org/musttag v0.12.2 // indirect
 	go-simpler.org/sloglint v0.7.1 // indirect
+	go.opentelemetry.io/otel v1.33.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/exp v0.0.0-20241215155358-4a5509556b9e // indirect
+	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.32.0 // indirect
