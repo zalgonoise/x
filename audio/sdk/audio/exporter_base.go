@@ -3,6 +3,9 @@ package audio
 import (
 	"context"
 	"errors"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
+	"log/slog"
 
 	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/errs"
@@ -24,7 +27,13 @@ var (
 	ErrNilCollectors = errs.WithDomain(errDomain, ErrNil, ErrCollectors)
 )
 
+type ExporterMetrics interface{}
+
 type exporter struct {
+	logger  *slog.Logger
+	metrics ExporterMetrics
+	tracer  trace.Tracer
+
 	peaks    Collector[float64]
 	spectrum Collector[[]fft.FrequencyPower]
 
@@ -43,6 +52,10 @@ type exporter struct {
 //
 // The returned error is a wrapped error of both peaks and spectrum Collector Collect method call, if raised.
 func (e exporter) Export(ctx context.Context, h *wav.Header, data []float64) error {
+	e.logger.DebugContext(ctx, "exporting audio chunks from processor",
+		slog.Int("num_samples", len(data)),
+	)
+
 	return errors.Join(
 		e.peaks.Collect(ctx, h, data),
 		e.spectrum.Collect(ctx, h, data),
@@ -55,6 +68,8 @@ func (e exporter) Export(ctx context.Context, h *wav.Header, data []float64) err
 //
 // The returned error is a wrapped error of both peaks and spectrum Collector ForceFlush method call, if raised.
 func (e exporter) ForceFlush() error {
+	e.logger.DebugContext(context.TODO(), "flushing exporter registry buffers")
+
 	return errors.Join(
 		e.peaks.ForceFlush(),
 		e.spectrum.ForceFlush(),
@@ -69,6 +84,8 @@ func (e exporter) ForceFlush() error {
 //
 // The returned error is a wrapped error of both peaks and spectrum Collector ForceFlush method call, if raised.
 func (e exporter) Shutdown(ctx context.Context) error {
+	e.logger.InfoContext(context.TODO(), "shutting down exporter")
+
 	e.cancel()
 
 	return errors.Join(
@@ -88,14 +105,22 @@ func (e exporter) export(ctx context.Context) {
 			return
 		case v, ok := <-peaksValues:
 			if !ok {
+				e.logger.DebugContext(ctx, "peaks values channel closed")
+
 				return
 			}
+
+			e.logger.DebugContext(ctx, "received peaks values")
 
 			e.emitter.EmitPeaks(v)
 		case v, ok := <-spectrumValues:
 			if !ok {
+				e.logger.DebugContext(ctx, "spectrum values channel closed")
+
 				return
 			}
+
+			e.logger.DebugContext(ctx, "received spectrum values")
 
 			e.emitter.EmitSpectrum(v)
 		}
@@ -120,6 +145,7 @@ func (e exporter) export(ctx context.Context) {
 // a context.Context. Its done signal is sent on the Exporter's Shutdown method call.
 func NewExporter(
 	emitter Emitter, peaks Collector[float64], spectrum Collector[[]fft.FrequencyPower],
+	logger *slog.Logger, metrics ProcessorMetrics, tracer trace.Tracer,
 ) (Exporter, error) {
 	switch {
 	case emitter == nil:
@@ -132,9 +158,25 @@ func NewExporter(
 		spectrum = NoOpCollector[[]fft.FrequencyPower]()
 	}
 
+	if logger == nil {
+		logger = slog.New(noOpLogHandler{})
+	}
+
+	if metrics == nil {
+		metrics = NoOpProcessorMetrics{}
+	}
+
+	if tracer == nil {
+		tracer = noop.NewTracerProvider().Tracer("no-op")
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	e := exporter{
+		logger:  logger,
+		metrics: metrics,
+		tracer:  tracer,
+
 		peaks:    peaks,
 		spectrum: spectrum,
 		emitter:  emitter,
