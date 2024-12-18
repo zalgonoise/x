@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/otel/trace"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -49,7 +51,10 @@ func (e emitter) Shutdown(ctx context.Context) error {
 	return e.server.Shutdown(ctx)
 }
 
-func ToProm(port int, options ...cfg.Option[*exporters.StatsConfig]) (audio.Exporter, error) {
+func ToProm(
+	port int, options []cfg.Option[*exporters.StatsConfig],
+	logger *slog.Logger, tracer trace.Tracer,
+) (audio.Exporter, error) {
 	e := emitter{
 		peaks: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: "audio",
@@ -70,7 +75,7 @@ func ToProm(port int, options ...cfg.Option[*exporters.StatsConfig]) (audio.Expo
 
 	e.server = newServer(port, reg)
 
-	return exporters.NewStatsExporter(e, options...)
+	return exporters.NewStatsExporter(e, options, logger, e, tracer)
 }
 
 func newRegistry(exporter emitter) (*prometheus.Registry, error) {
