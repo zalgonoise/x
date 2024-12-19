@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"log/slog"
 	"os"
 	"strconv"
@@ -52,6 +54,12 @@ func run() (int, error) {
 	logger := slog.New(logHandler)
 	ctx := context.Background()
 
+	//TODO: replace with an actual tracer implementation
+	tracer := noop.NewTracerProvider().Tracer("noop")
+
+	exporterMetrics := audio.NoOpExporterMetrics{}
+	processorMetrics := audio.NoOpProcessorMetrics{}
+
 	config, err := NewConfig()
 	if err != nil {
 		return 1, err
@@ -71,7 +79,7 @@ func run() (int, error) {
 
 	var exp = make([]audio.Exporter, 0, 2)
 
-	stats, err := newStatsExporter(ctx, config, logHandler)
+	stats, err := newStatsExporter(ctx, config, logger, exporterMetrics, tracer)
 	if err != nil {
 		return 1, err
 	}
@@ -91,10 +99,11 @@ func run() (int, error) {
 
 	logger.InfoContext(ctx, "setting up processor")
 
-	proc := processors.PCM(exp,
+	proc := processors.PCM(exp, []cfg.Option[wav.Config]{
 		wav.WithSize(config.BufferSize),
 		wav.WithDuration(config.BufferDur),
 		wav.WithRatio(config.BufferRatio),
+	}, logger, processorMetrics, tracer,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.Duration)
@@ -151,10 +160,12 @@ func newDataExporter(ctx context.Context, config *Config, logHandler slog.Handle
 	return exporters.NewSQLiteExporter(database.NewRepository(db), exporters.WithFlushDuration(config.BufferDur))
 }
 
-func newStatsExporter(ctx context.Context, config *Config, logHandler slog.Handler) (audio.Exporter, error) {
+func newStatsExporter(
+	ctx context.Context, config *Config,
+	logger *slog.Logger, metrics audio.ExporterMetrics, tracer trace.Tracer,
+) (audio.Exporter, error) {
 	var (
-		logger       = slog.New(logHandler)
-		exporterOpts = newExporterOpts(config, logHandler)
+		exporterOpts = newExporterOpts(config, logger.Handler())
 		exporter     audio.Exporter
 		err          error
 	)
@@ -170,12 +181,12 @@ func newStatsExporter(ctx context.Context, config *Config, logHandler slog.Handl
 			)
 		}
 
-		exporter, err = prom.ToProm(port, exporterOpts...)
+		exporter, err = prom.ToProm(port, exporterOpts, logger, tracer)
 		if err != nil {
 			return audio.NoOpExporter(), err
 		}
 	default:
-		exporter, err = stdout.ToLogger(exporterOpts...)
+		exporter, err = stdout.ToLogger(exporterOpts, logger, metrics, tracer)
 		if err != nil {
 			return audio.NoOpExporter(), err
 		}
