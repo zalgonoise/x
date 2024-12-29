@@ -43,11 +43,11 @@ func NewScenesBindings(mapping map[string]int, higher, lower string, colors OnOf
 
 			switch {
 			case strings.HasPrefix(name, blankPrefix):
-				color = colors.Blank
+				color = int(colors.Blank)
 			case name == sceneName:
-				color = colors.On
+				color = int(colors.On)
 			default:
-				color = colors.Off
+				color = int(colors.Off)
 			}
 
 			binding.Actions = append(binding.Actions, Action{Category: 15, Name: actionName, Messages: []Message{{
