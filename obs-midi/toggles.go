@@ -75,7 +75,7 @@ func NewTogglesBindings(mapping map[string]SourceNote, sceneNames []string, colo
 			Name:    ledOnName,
 			Note:    ValueInt{Higher: 127, Lower: 0, Number: sourceNote.NoteOn, State: 0},
 			Type:    typeNoteOn,
-			Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.On, State: 0},
+			Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.On), State: 0},
 		}}})
 
 		ledOffName := fmt.Sprintf("LED Off %s", bindingName)
@@ -86,7 +86,7 @@ func NewTogglesBindings(mapping map[string]SourceNote, sceneNames []string, colo
 			Name:    ledOffName,
 			Note:    ValueInt{Higher: 127, Lower: 0, Number: sourceNote.NoteOff, State: 0},
 			Type:    typeNoteOn,
-			Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.Off, State: 0},
+			Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.Off), State: 0},
 		}}})
 
 		bindings = append(bindings, binding)
