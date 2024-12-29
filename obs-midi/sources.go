@@ -63,7 +63,7 @@ func NewSourcesBindings(
 			Name:    ledOnName,
 			Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 			Type:    typeNoteOn,
-			Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.On, State: 0},
+			Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.On), State: 0},
 		}}})
 
 		// apply to all scenes
@@ -110,7 +110,7 @@ func NewSourcesBindings(
 					Name:    ledOffName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: innerNote, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.Off, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.Off), State: 0},
 				}}})
 			}
 		}
@@ -168,7 +168,7 @@ func NewSourcesBindings(
 			Name:    ledOnName,
 			Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 			Type:    typeNoteOn,
-			Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.On, State: 0},
+			Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.On), State: 0},
 		}}})
 
 		// apply to all scenes
@@ -220,7 +220,7 @@ func NewSourcesBindings(
 					Name:    ledOffName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: innerNote, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.Off, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.Off), State: 0},
 				}}})
 			}
 		}
@@ -278,7 +278,7 @@ func NewSourcesBindings(
 			Name:    ledOnName,
 			Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 			Type:    typeNoteOn,
-			Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.On, State: 0},
+			Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.On), State: 0},
 		}}})
 
 		// apply to all scenes
@@ -330,7 +330,7 @@ func NewSourcesBindings(
 					Name:    ledOffName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: innerNote, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.Off, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.Off), State: 0},
 				}}})
 			}
 		}
