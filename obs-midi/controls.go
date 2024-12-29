@@ -172,7 +172,7 @@ func NewControlsBindings(
 					Name:    actionName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(color), State: 0},
 				}}})
 			}
 
@@ -190,7 +190,7 @@ func NewControlsBindings(
 					Name:    actionName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(color), State: 0},
 				}}})
 			}
 
@@ -208,7 +208,7 @@ func NewControlsBindings(
 					Name:    actionName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(color), State: 0},
 				}}})
 			}
 
@@ -226,7 +226,7 @@ func NewControlsBindings(
 					Name:    actionName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(color), State: 0},
 				}}})
 			}
 
@@ -248,7 +248,7 @@ func NewControlsBindings(
 					Name:    actionName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: toggleNotes.NoteOn, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(color), State: 0},
 				}}})
 			}
 
@@ -269,9 +269,80 @@ func NewControlsBindings(
 					Name:    actionName,
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: color, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(color), State: 0},
 				}}})
 			}
+
+			// light-up Studio Mode
+			if note, ok := mapping[ControlModeStudioModeOn]; ok {
+				actionNameLED := fmt.Sprintf("%s - %s #%d", name, "Studio Mode LED", note.NoteOn)
+				actionNameSetting := fmt.Sprintf("%s - %s #%d", name, "Studio Mode Enabled", note.NoteOn)
+
+				binding.Actions = append(binding.Actions, Action{Category: 15, Name: actionNameLED, Messages: []Message{{
+					Channel: channel1,
+					Device:  midiDevice,
+					Name:    actionNameLED,
+					Note:    ValueInt{Higher: 127, Lower: 0, Number: note.NoteOn, State: 0},
+					Type:    typeNoteOn,
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: 1, State: 0},
+				}}})
+
+				binding.Actions = append(binding.Actions, Action{
+					Category: 5, Name: actionNameSetting, Sub: 0, Type: 0,
+					Scene: ValueString{Higher: higher, Lower: lower, State: 4, String: lower},
+				})
+			}
+
+			// light-up Replay Buffer clip
+			if note, ok := mapping[ControlModeSaveReplayBuffer]; ok {
+				actionNameLED := fmt.Sprintf("%s - %s #%d", name, "Replay Buffer LED", note.NoteOn)
+
+				binding.Actions = append(binding.Actions, Action{Category: 15, Name: actionNameLED, Messages: []Message{{
+					Channel: channel1,
+					Device:  midiDevice,
+					Name:    actionNameLED,
+					Note:    ValueInt{Higher: 127, Lower: 0, Number: note.NoteOn, State: 0},
+					Type:    typeNoteOn,
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: 1, State: 0},
+				}}})
+			}
+
+			bindings = append(bindings, Binding{
+				Actions: []Action{
+					{
+						Category: 5, Name: bindingName, Sub: 0, Type: 0,
+						Scene: ValueString{Higher: higher, Lower: lower, State: 4, String: lower},
+					},
+					{
+						Category: 15, Name: "LED Off", Messages: []Message{{
+							Channel: channel1,
+							Device:  midiDevice,
+							Name:    "LED Off",
+							Note:    ValueInt{Higher: 127, Lower: 0, Number: notes.NoteOff, State: 0},
+							Type:    typeNoteOn,
+							Value:   ValueInt{Higher: 127, Lower: 0, Number: 0, State: 0},
+						}},
+					},
+					{
+						Category: 15, Name: "LED On", Messages: []Message{{
+							Channel: channel1,
+							Device:  midiDevice,
+							Name:    "LED On",
+							Note:    ValueInt{Higher: 127, Lower: 0, Number: notes.NoteOn, State: 0},
+							Type:    typeNoteOn,
+							Value:   ValueInt{Higher: 127, Lower: 0, Number: 1, State: 0},
+						}},
+					},
+				},
+				Enabled: true,
+				Messages: []Message{{
+					Channel: channel1, Device: midiDevice, Name: bindingName,
+					Note:  ValueInt{Higher: 127, Lower: 0, Number: notes.NoteOn, State: 0},
+					Type:  typeNoteOn,
+					Value: ValueInt{Higher: 127, Lower: 0, Number: 127, State: 0},
+				}},
+				Name: bindingName, ResetMode: 0, Type: 0,
+			})
 
 			binding.Actions = append(binding.Actions, Action{Category: 15, Name: "Enable LED", Messages: []Message{{
 				Channel: channel5,
