@@ -33,7 +33,7 @@ func NewTransitionBindings(mapping map[string]int, colors TransitionsColor) []Bi
 						Name:    "Enable LED",
 						Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 						Type:    typeNoteOn,
-						Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.Transition, State: 0},
+						Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.Transition), State: 0},
 					}}},
 				},
 				Enabled: true,
@@ -60,7 +60,7 @@ func NewTransitionBindings(mapping map[string]int, colors TransitionsColor) []Bi
 						Name:    bindingName,
 						Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 						Type:    typeNoteOn,
-						Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.Blank, State: 0}}}}},
+						Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.Blank), State: 0}}}}},
 				Enabled: true,
 				Messages: []Message{{
 					Channel: channel1,
@@ -109,7 +109,7 @@ func NewTransitionBindings(mapping map[string]int, colors TransitionsColor) []Bi
 				Name:    "LED On",
 				Note:    ValueInt{Higher: 127, Lower: 0, Number: note, State: 0},
 				Type:    typeNoteOn,
-				Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.On, State: 0},
+				Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.On), State: 0},
 			}}})
 
 			for i := range setTransitions {
@@ -123,7 +123,7 @@ func NewTransitionBindings(mapping map[string]int, colors TransitionsColor) []Bi
 					Name:    "LED Off",
 					Note:    ValueInt{Higher: 127, Lower: 0, Number: setTransitions[i], State: 0},
 					Type:    typeNoteOn,
-					Value:   ValueInt{Higher: 127, Lower: 0, Number: colors.Off, State: 0},
+					Value:   ValueInt{Higher: 127, Lower: 0, Number: int(colors.Off), State: 0},
 				}}})
 			}
 
