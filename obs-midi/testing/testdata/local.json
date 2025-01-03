@@ -1,0 +1,254 @@
+{
+  "base": "Banner",
+  "skip_secondary": [
+    "Fullscreen"
+  ],
+  "skip_tertiary": [
+    "Fullscreen",
+    "Corner BL",
+    "Corner BR",
+    "2 Way",
+    "2 Way Left",
+    "2 Way Right"
+  ],
+  "scene_map": {
+    "2 Way": 59,
+    "2 Way Left": 60,
+    "2 Way Right": 61,
+    "3 Way Horizontal": 51,
+    "3 Way Left": 52,
+    "3 Way Right": 53,
+    "Blank #48": 48,
+    "Blank #49": 49,
+    "Blank #50": 50,
+    "Blank #54": 54,
+    "Blank #55": 55,
+    "Blank #62": 62,
+    "Blank #63": 63,
+    "Corner BL": 57,
+    "Corner BR": 58,
+    "Fullscreen": 56
+  },
+  "higher_scene": "Camera Full",
+  "lower_scene": "Fullscreen",
+  "mod_source": "ModBrowser",
+  "primary_source_map": {
+    "Banner": 40,
+    "Camera Desk Full": 47,
+    "Camera Full": 46,
+    "Discord Stream": 44,
+    "Monitor 3": 42,
+    "Monitor 5": 43,
+    "Screen": 41,
+    "iPad": 45
+  },
+  "secondary_source_map": {
+    "Banner": 32,
+    "Camera Desk Full B": 39,
+    "Camera Full B": 38,
+    "Discord Stream B": 36,
+    "Monitor 3 B": 34,
+    "Monitor 5 B": 35,
+    "Screen B": 33,
+    "iPad B": 37
+  },
+  "tertiary_source_map": {
+    "Banner": 24,
+    "Camera Desk Full C": 31,
+    "Camera Full C": 30,
+    "Discord Stream C": 28,
+    "Monitor 3 C": 26,
+    "Monitor 5 C": 27,
+    "Screen C": 25,
+    "iPad C": 29
+  },
+  "toggle_map": {
+    "Blank #16": {
+      "state": false,
+      "source": "",
+      "note_on": 16,
+      "note_off": 0
+    },
+    "Blank #17": {
+      "state": false,
+      "source": "",
+      "note_on": 17,
+      "note_off": 0
+    },
+    "Blank #18": {
+      "state": false,
+      "source": "",
+      "note_on": 18,
+      "note_off": 0
+    },
+    "Blank #19": {
+      "state": false,
+      "source": "",
+      "note_on": 19,
+      "note_off": 0
+    },
+    "Blank #20": {
+      "state": false,
+      "source": "",
+      "note_on": 20,
+      "note_off": 0
+    },
+    "Blank #21": {
+      "state": false,
+      "source": "",
+      "note_on": 21,
+      "note_off": 0
+    },
+    "Blank #6": {
+      "state": false,
+      "source": "",
+      "note_on": 6,
+      "note_off": 0
+    },
+    "Cam Desk Off": {
+      "state": false,
+      "source": "DroidCam OBS Desk",
+      "note_on": 2,
+      "note_off": 10
+    },
+    "Cam Desk On": {
+      "state": true,
+      "source": "DroidCam OBS Desk",
+      "note_on": 10,
+      "note_off": 2
+    },
+    "Cam Self Off": {
+      "state": false,
+      "source": "DroidCam OBS Self",
+      "note_on": 1,
+      "note_off": 9
+    },
+    "Cam Self On": {
+      "state": true,
+      "source": "DroidCam OBS Self",
+      "note_on": 9,
+      "note_off": 1
+    },
+    "ModBrowser Off": {
+      "state": false,
+      "source": "ModBrowser",
+      "note_on": 3,
+      "note_off": 11
+    },
+    "ModBrowser On": {
+      "state": true,
+      "source": "ModBrowser",
+      "note_on": 11,
+      "note_off": 3
+    },
+    "Task Manager Off": {
+      "state": false,
+      "source": "Task Manager",
+      "note_on": 0,
+      "note_off": 8
+    },
+    "Task Manager On": {
+      "state": true,
+      "source": "Task Manager",
+      "note_on": 8,
+      "note_off": 0
+    },
+    "Vtube Studio Off": {
+      "state": false,
+      "source": "vtube studio",
+      "note_on": 4,
+      "note_off": 12
+    },
+    "Vtube Studio On": {
+      "state": true,
+      "source": "vtube studio",
+      "note_on": 12,
+      "note_off": 4
+    },
+    "Xenise Off": {
+      "state": false,
+      "source": "Xenise",
+      "note_on": 5,
+      "note_off": 13
+    },
+    "Xenise On": {
+      "state": true,
+      "source": "Xenise",
+      "note_on": 13,
+      "note_off": 5
+    }
+  },
+  "transition_map": {
+    "Cut": 23,
+    "Fade": 14,
+    "Fade to Black": 22,
+    "Move": 15,
+    "Transition to Program": 7
+  },
+  "fader_map": {
+    "Crop Bottom": 53,
+    "Crop Left": 54,
+    "Crop Right": 55,
+    "Crop Top": 52,
+    "Move X": 48,
+    "Move Y": 49,
+    "Opacity": 51,
+    "Scale": 50,
+    "Transition": 56
+  },
+  "control_map": {
+    "Disable LEDs": {
+      "state": false,
+      "source": "",
+      "note_on": 113,
+      "note_off": 112
+    },
+    "Disable Studio Mode": {
+      "state": false,
+      "source": "",
+      "note_on": 115,
+      "note_off": 114
+    },
+    "Enable LEDs": {
+      "state": true,
+      "source": "",
+      "note_on": 112,
+      "note_off": 113
+    },
+    "Enable Studio Mode": {
+      "state": true,
+      "source": "",
+      "note_on": 114,
+      "note_off": 115
+    },
+    "Save Replay Buffer": {
+      "state": false,
+      "source": "",
+      "note_on": 119,
+      "note_off": 0
+    }
+  },
+  "color_schema": {
+    "scenes": {
+      "on": 13,
+      "off": 84,
+      "blank": 108
+    },
+    "sources": {
+      "on": 57,
+      "off": 89,
+      "blank": 100
+    },
+    "toggles": {
+      "on": 113,
+      "off": 124,
+      "blank": 100
+    },
+    "transitions": {
+      "on": 87,
+      "off": 110,
+      "blank": 34,
+      "transition": 5
+    }
+  }
+}
