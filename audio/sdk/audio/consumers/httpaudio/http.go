@@ -2,7 +2,10 @@ package httpaudio
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/zalgonoise/cfg"
@@ -16,6 +19,10 @@ const (
 )
 
 type httpConsumer struct {
+	logger  *slog.Logger
+	metrics audio.ConsumerMetrics
+	tracer  trace.Tracer
+
 	cfg Config
 
 	cancel context.CancelFunc
@@ -56,14 +63,31 @@ func (c *httpConsumer) Shutdown(_ context.Context) error {
 	return nil
 }
 
-func New(options ...cfg.Option[Config]) (audio.Consumer, error) {
+func New(options []cfg.Option[Config],
+	logger *slog.Logger, metrics audio.ConsumerMetrics, tracer trace.Tracer,
+) (audio.Consumer, error) {
 	config := cfg.Set(DefaultConfig(), options...)
 
 	if err := Validate(config); err != nil {
 		return audio.NoOpConsumer(), err
 	}
 
+	if logger == nil {
+		logger = slog.New(audio.NoOpLogHandler())
+	}
+
+	if metrics == nil {
+		metrics = audio.NoOpConsumerMetrics{}
+	}
+
+	if tracer == nil {
+		tracer = noop.NewTracerProvider().Tracer("no-op")
+	}
+
 	return &httpConsumer{
-		cfg: config,
+		logger:  logger,
+		metrics: metrics,
+		tracer:  tracer,
+		cfg:     config,
 	}, nil
 }
