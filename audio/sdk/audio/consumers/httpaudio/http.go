@@ -32,8 +32,17 @@ type httpConsumer struct {
 func (c *httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	c.logger.DebugContext(ctx, "starting HTTP connection with audio feed",
+		slog.String("target", c.cfg.target),
+	)
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.cfg.target, http.NoBody)
 	if err != nil {
+		c.logger.ErrorContext(ctx, "error preparing request to connect with HTTP audio feed",
+			slog.String("target", c.cfg.target),
+			slog.String("error", err.Error()),
+		)
+
 		cancel()
 
 		return nil, err
@@ -46,6 +55,11 @@ func (c *httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error
 		Timeout: c.cfg.timeout,
 	}).Do(req)
 	if err != nil {
+		c.logger.ErrorContext(ctx, "error connecting with HTTP audio feed",
+			slog.String("target", c.cfg.target),
+			slog.String("error", err.Error()),
+		)
+
 		cancel()
 
 		return nil, err
@@ -53,11 +67,15 @@ func (c *httpConsumer) Consume(ctx context.Context) (reader io.Reader, err error
 
 	c.cancel = cancel
 
+	c.logger.InfoContext(ctx, "connected to HTTP audio feed")
+
 	return res.Body, nil
 }
 
 // Shutdown gracefully shuts down the Consumer.
-func (c *httpConsumer) Shutdown(_ context.Context) error {
+func (c *httpConsumer) Shutdown(ctx context.Context) error {
+	c.logger.InfoContext(ctx, "closing connection to HTTP audio feed")
+
 	c.cancel()
 
 	return nil
