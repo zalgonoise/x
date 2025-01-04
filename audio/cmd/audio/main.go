@@ -57,8 +57,9 @@ func run() (int, error) {
 	//TODO: replace with an actual tracer implementation
 	tracer := noop.NewTracerProvider().Tracer("noop")
 
-	exporterMetrics := audio.NoOpExporterMetrics{}
+	consumerMetrics := audio.NoOpConsumerMetrics{}
 	processorMetrics := audio.NoOpProcessorMetrics{}
+	exporterMetrics := audio.NoOpExporterMetrics{}
 
 	config, err := NewConfig()
 	if err != nil {
@@ -68,8 +69,11 @@ func run() (int, error) {
 	logger.InfoContext(ctx, "setting up consumer")
 
 	consumer, err := httpaudio.New(
-		httpaudio.WithTarget(config.Input),
-		httpaudio.WithTimeout(config.Duration),
+		[]cfg.Option[httpaudio.Config]{
+			httpaudio.WithTarget(config.Input),
+			httpaudio.WithTimeout(config.Duration),
+		},
+		logger, consumerMetrics, tracer,
 	)
 	if err != nil {
 		return 1, err
