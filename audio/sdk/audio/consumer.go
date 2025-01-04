@@ -5,6 +5,8 @@ import (
 	"io"
 )
 
+type ConsumerMetrics interface{}
+
 // Consumer is responsible for consuming, extracting, reading an audio source and returning a byte streamer to read it,
 // as an io.Reader.
 //
