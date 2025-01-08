@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250106193333-c628307f5bb7
-	github.com/zalgonoise/x/errs v0.0.0-20250106193333-c628307f5bb7
-	github.com/zalgonoise/x/ptr v0.0.0-20250106193333-c628307f5bb7
+	github.com/zalgonoise/x/cli v0.0.0-20250107215606-17e7f577e32b
+	github.com/zalgonoise/x/errs v0.0.0-20250107215606-17e7f577e32b
+	github.com/zalgonoise/x/ptr v0.0.0-20250107215606-17e7f577e32b
 	go.opentelemetry.io/otel/trace v1.33.0
 	modernc.org/sqlite v1.34.4
 )
@@ -208,7 +208,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
 	modernc.org/gc/v3 v3.0.0-20250105121824-520be1a3aee6 // indirect
-	modernc.org/libc v1.61.6 // indirect
+	modernc.org/libc v1.61.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.1 // indirect
 	modernc.org/strutil v1.2.1 // indirect
