@@ -81,7 +81,8 @@ func (c *httpConsumer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func New(options []cfg.Option[Config],
+func New(
+	options []cfg.Option[Config],
 	logger *slog.Logger, metrics audio.ConsumerMetrics, tracer trace.Tracer,
 ) (audio.Consumer, error) {
 	config := cfg.Set(DefaultConfig(), options...)
