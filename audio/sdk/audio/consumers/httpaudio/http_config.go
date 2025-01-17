@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultConnTimeout = 30 * time.Second
+	defaultConnTimeout = 15 * time.Second
 	protoHTTP          = "http://"
 	protoHTTPS         = "https://"
 
