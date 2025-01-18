@@ -16,10 +16,10 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250114190726-9c7f54756d41
-	github.com/zalgonoise/x/errs v0.0.0-20250114190726-9c7f54756d41
-	github.com/zalgonoise/x/ptr v0.0.0-20250114190726-9c7f54756d41
-	go.opentelemetry.io/otel/trace v1.33.0
+	github.com/zalgonoise/x/cli v0.0.0-20250116033748-299468af7d25
+	github.com/zalgonoise/x/errs v0.0.0-20250116033748-299468af7d25
+	github.com/zalgonoise/x/ptr v0.0.0-20250116033748-299468af7d25
+	go.opentelemetry.io/otel/trace v1.34.0
 	modernc.org/sqlite v1.34.5
 )
 
@@ -139,7 +139,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.5.2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.61.0 // indirect
+	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.2 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22 // indirect
@@ -188,7 +188,7 @@ require (
 	gitlab.com/bosi/decorder v0.4.2 // indirect
 	go-simpler.org/musttag v0.12.2 // indirect
 	go-simpler.org/sloglint v0.7.1 // indirect
-	go.opentelemetry.io/otel v1.33.0 // indirect
+	go.opentelemetry.io/otel v1.34.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
