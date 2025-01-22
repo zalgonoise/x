@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultFlushFrequency = 500 * time.Millisecond
+	defaultFlushFrequency = 250 * time.Millisecond
 	defaultMaxBatchSize   = 256
 	minimumBatchSize      = 64
 )
