@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250126212952-c1109635face
-	github.com/zalgonoise/x/errs v0.0.0-20250126212952-c1109635face
-	github.com/zalgonoise/x/ptr v0.0.0-20250126212952-c1109635face
+	github.com/zalgonoise/x/cli v0.0.0-20250127185358-116e76c9cd20
+	github.com/zalgonoise/x/errs v0.0.0-20250127185358-116e76c9cd20
+	github.com/zalgonoise/x/ptr v0.0.0-20250127185358-116e76c9cd20
 	go.opentelemetry.io/otel/trace v1.34.0
 	modernc.org/sqlite v1.34.5
 )
@@ -193,7 +193,7 @@ require (
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8 // indirect
+	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
