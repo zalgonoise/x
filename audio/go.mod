@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250128192120-f52269b6f68b
-	github.com/zalgonoise/x/errs v0.0.0-20250128192120-f52269b6f68b
-	github.com/zalgonoise/x/ptr v0.0.0-20250128192120-f52269b6f68b
+	github.com/zalgonoise/x/cli v0.0.0-20250129210628-4cd0dbb9cd5d
+	github.com/zalgonoise/x/errs v0.0.0-20250129210628-4cd0dbb9cd5d
+	github.com/zalgonoise/x/ptr v0.0.0-20250129210628-4cd0dbb9cd5d
 	go.opentelemetry.io/otel/trace v1.34.0
 	modernc.org/sqlite v1.34.5
 )
