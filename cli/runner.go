@@ -119,6 +119,15 @@ func (r runner[T]) Run(logger *slog.Logger) (int, error) {
 			return 1, fmt.Errorf("invalid runner type: %+v", r)
 		}
 
+		// allow mapping an empty subcommand as a top-level executor
+		//
+		// however, no flags can be passed to that executor
+		if len(os.Args) <= 1 {
+			if exec, ok := run.executors[""]; ok {
+				return exec.Exec(ctx, logger, []string{})
+			}
+		}
+
 		if err := run.isValid(&os.Args[1]); err != nil {
 			return 1, fmt.Errorf("%w: %v", ErrInvalidOption, os.Args[1])
 		}
