@@ -10,15 +10,15 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
-	github.com/prometheus/client_golang v1.21.0
+	github.com/prometheus/client_golang v1.21.1
 	github.com/stretchr/testify v1.10.0
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250302222829-d03fb9a50ede
-	github.com/zalgonoise/x/errs v0.0.0-20250302222829-d03fb9a50ede
-	github.com/zalgonoise/x/ptr v0.0.0-20250302222829-d03fb9a50ede
+	github.com/zalgonoise/x/cli v0.0.0-20250303210639-d5ce106f7c43
+	github.com/zalgonoise/x/errs v0.0.0-20250303210639-d5ce106f7c43
+	github.com/zalgonoise/x/ptr v0.0.0-20250303210639-d5ce106f7c43
 	go.opentelemetry.io/otel/trace v1.34.0
 	modernc.org/sqlite v1.36.0
 )
