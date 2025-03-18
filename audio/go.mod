@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250316200002-21412b59a618
-	github.com/zalgonoise/x/errs v0.0.0-20250316200002-21412b59a618
-	github.com/zalgonoise/x/ptr v0.0.0-20250316200002-21412b59a618
+	github.com/zalgonoise/x/cli v0.0.0-20250317072641-32241c51abf2
+	github.com/zalgonoise/x/errs v0.0.0-20250317072641-32241c51abf2
+	github.com/zalgonoise/x/ptr v0.0.0-20250317072641-32241c51abf2
 	go.opentelemetry.io/otel/trace v1.35.0
 	modernc.org/sqlite v1.36.1
 )
@@ -140,7 +140,7 @@ require (
 	github.com/polyfloyd/go-errorlint v1.5.2 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
-	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/prometheus/procfs v0.16.0 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.2 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22 // indirect
 	github.com/quasilyte/gogrep v0.5.0 // indirect
@@ -208,7 +208,7 @@ require (
 	honnef.co/go/tools v0.4.7 // indirect
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.8.2 // indirect
+	modernc.org/memory v1.9.0 // indirect
 	mvdan.cc/gofumpt v0.6.0 // indirect
 	mvdan.cc/unparam v0.0.0-20240528143540-8a5130ca722f // indirect
 )
