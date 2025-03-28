@@ -16,11 +16,11 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250326200039-fce5cb19139b
-	github.com/zalgonoise/x/errs v0.0.0-20250326200039-fce5cb19139b
-	github.com/zalgonoise/x/ptr v0.0.0-20250326200039-fce5cb19139b
+	github.com/zalgonoise/x/cli v0.0.0-20250327160704-61a3b9c5921b
+	github.com/zalgonoise/x/errs v0.0.0-20250327160704-61a3b9c5921b
+	github.com/zalgonoise/x/ptr v0.0.0-20250327160704-61a3b9c5921b
 	go.opentelemetry.io/otel/trace v1.35.0
-	modernc.org/sqlite v1.36.2
+	modernc.org/sqlite v1.36.3
 )
 
 require (
@@ -196,7 +196,7 @@ require (
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
@@ -206,7 +206,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.7 // indirect
-	modernc.org/libc v1.61.13 // indirect
+	modernc.org/libc v1.62.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.9.1 // indirect
 	mvdan.cc/gofumpt v0.6.0 // indirect
