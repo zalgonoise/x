@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250503095642-cc5c057cb173
-	github.com/zalgonoise/x/errs v0.0.0-20250503095642-cc5c057cb173
-	github.com/zalgonoise/x/ptr v0.0.0-20250503095642-cc5c057cb173
+	github.com/zalgonoise/x/cli v0.0.0-20250504085615-9f08d3f7be49
+	github.com/zalgonoise/x/errs v0.0.0-20250504085615-9f08d3f7be49
+	github.com/zalgonoise/x/ptr v0.0.0-20250504085615-9f08d3f7be49
 	go.opentelemetry.io/otel/trace v1.35.0
 	modernc.org/sqlite v1.37.0
 )
@@ -195,10 +195,10 @@ require (
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.24.0 // indirect
-	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
+	golang.org/x/net v0.40.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.32.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
