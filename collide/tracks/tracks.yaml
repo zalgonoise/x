@@ -1,0 +1,302 @@
+tracks:
+  - name: Construction
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinConstructionRev
+      - FinChurchOfPinkies
+      - FinEvasLAT
+      - FinFuckinW
+  - name: ConstructionRev
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinConstruction
+      - FinChurchOfPinkies
+      - FinEvasLAT
+      - FinFuckinW
+  - name: Beacon Mess
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinChurchOfPinkies
+      - FinEvasLAT
+      - FinLAT
+  - name: Church of Pinkies
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinConstruction
+      - FinConstructionRev
+      - FinBeaconMess
+      - FinLAT
+      - FinEvasLAT
+  - name: Xmas Bash
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinTunnelOfDeath
+      - FinLAT
+      - FinEvasLAT
+      - FinMikroTournament
+      - FinFuckinW
+  - name: Tunnel of Death
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinLAT
+      - FinEvasLAT
+      - FinMikroTournament
+      - FinFuckinW
+  - name: Sk8 Fkn' Way
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinTunnelOfDeath
+      - FinLAT
+      - FinEvasLAT
+      - FinBorderRun
+      - FinFuckinW
+      - FinNewCrossGT
+  - name: Long-Ass Track
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinBeaconMess
+      - FinChurchOfPinkies
+      - FinXmasBash
+      - FinTunnelOfDeath
+      - FinSk8FknWay
+      - FinEvasLAT
+      - FinMikroTournament
+      - FinFuckinW
+      - FinNewCrossGT
+  - name: Eva's LAT
+    district: Financial
+    is_drift_track: true
+    collides_with:
+      - FinConstruction
+      - FinConstructionRev
+      - FinBeaconMess
+      - FinChurchOfPinkies
+      - FinXmasBash
+      - FinTunnelOfDeath
+      - FinSk8FknWay
+      - FinLAT
+      - FinMikroTournament
+      - FinFuckinW
+      - FinNewCrossGT
+  - name: Border Run
+    district: Financial
+    collides_with:
+      - FinSk8FknWay
+      - FinMikroTournament
+      - FinNewCrossGT
+  - name: Fuckin W
+    district: Financial
+    collides_with:
+      - FinConstruction
+      - FinConstructionRev
+      - FinXmasBash
+      - FinTunnelOfDeath
+      - FinSk8FknWay
+      - FinLAT
+      - FinEvasLAT
+      - FinNewCrossGT
+  - name: Mikro Tournament
+    district: Financial
+    collides_with:
+      - FinXmasBash
+      - FinTunnelOfDeath
+      - FinLAT
+      - FinEvasLAT
+  - name: Up 'n' Down
+    district: Financial
+    collides_with:
+      - FinTunnelOfDeath
+      - FinSk8FknWay
+      - FinNewCrossGT
+  - name: New Cross GT
+      district: Financial
+      collides_with:
+        - FinSk8FknWay
+        - FinLAT
+        - FinEvasLAT
+        - FinFuckinW
+  - WFRailroads:
+      name: Railroads
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFBaylanDriftingLogistics
+        - WFWestRing
+        - WFPortRing
+        - WFIcyGear
+        - WFNALAT
+        - WFSewers
+        - WFFuckinW
+  - WFBaylanDriftingLogistics:
+      name: Baylan Drifting Logistics
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFRailroads
+        - WFPortRing
+        - WFWestRing
+        - WFNALAT
+  - WFContainer:
+      name: Container
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFBudgetCup
+        - WFBaylanBash
+        - WFPortRing
+        - WFNALAT
+        - WFIcyGear
+        - WFFuckinW
+  - WFBudgetCup:
+      name: Budget Cup
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFContainer
+        - WFHeysieGT
+        - WFPortRing
+        - WFNALAT
+        - WFNaimburgring
+        - WFIcyGear
+        - WFFuckinW
+        - WFSewers
+        - WFHelenSuperGT
+        - WFTsunamiSprint
+  - WFHeysieGT:
+      name: Heysie GT
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFBudgetCup
+        - WFHeysieGTB
+        - WFNALAT
+        - WFNaimburgring
+        - WFHelenSuperGT
+  - WFHeysieGTB:
+      name: Heysie GT B
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFHeysieGT
+        - WFNaimburgring
+        - WFNALAT
+  - WFPortRing:
+      name: Port Ring
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFRailroads
+        - WFBaylanDriftingLogistics
+        - WFBaylanBash
+        - WFContainer
+        - WFBudgetCup
+        - WFWestRing
+        - WFNALAT
+        - WFFuckinW
+        - WFTsunamiSprint
+  - WFWestRing:
+      name: West Ring
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFRailroads
+        - WFBaylanDriftingLogistics
+        - WFPortRing
+        - WFNALAT
+        - WFIcyGear
+  - WFBaylanBash:
+      name: Baylan Bash
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFContainer
+        - WFPortRing
+        - WFNALAT
+        - WFIcyGear
+        - WFSewers
+  - WFNaimburgring:
+      name: Naimburgring
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFBudgetCup
+        - WFHeysieGT
+        - WFHeysieGTB
+        - WFNALAT
+        - WFIcyGear
+  - WFIcyGear:
+      name: Icy Gear
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFRailroads
+        - WFContainer
+        - WFBudgetCup
+        - WFWestRing
+        - WFBaylanBash
+        - WFNALAT
+        - WFSewers
+        - WFHelenSuperGT
+  - WFNALAT:
+      name: Not As Long-Ass Track
+      district: Waterfront
+      is_drift_track: true
+      collides_with:
+        - WFRailroads
+        - WFBaylanDriftingLogistics
+        - WFContainer
+        - WFBudgetCup
+        - WFHeysieGT
+        - WFHeysieGTB
+        - WFPortRing
+        - WFWestRing
+        - WFBaylanBash
+        - WFNaimburgring
+        - WFIcyGear
+        - WFSewers
+        - WFHelenSuperGT
+        - WFTsunamiSprint
+  - WFFuckinW:
+      name: Fuckin' W
+      district: Waterfront
+      collides_with:
+        - WFRailroads
+        - WFContainer
+        - WFBudgetCup
+        - WFPortRing
+        - WFTsunamiSprint
+  - WFSewers:
+      name: Sewers
+      district: Waterfront
+      collides_with:
+        - WFRailroads
+        - WFBudgetCup
+        - WFIcyGear
+        - WFBaylanBash
+        - WFNALAT
+  - WFHelenSuperGT:
+      name: Helen Super GT
+      district: Waterfront
+      collides_with:
+        - WFBudgetCup
+        - WFHeysieGT
+        - WFNALAT
+        - WFIcyGear
+  - WFTsunamiSprint:
+      name: Tsunami Sprint
+      district: Waterfront
+      collides_with:
+        - WFBudgetCup
+        - WFPortRing
+        - WFNALAT
+        - WFIcyGear
+        - WFHelenSuperGT
+        - WFFuckinW
