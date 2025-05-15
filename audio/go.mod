@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250513154504-fc112c0593c3
-	github.com/zalgonoise/x/errs v0.0.0-20250513154504-fc112c0593c3
-	github.com/zalgonoise/x/ptr v0.0.0-20250513154504-fc112c0593c3
+	github.com/zalgonoise/x/cli v0.0.0-20250514171416-51f8a81bdf4c
+	github.com/zalgonoise/x/errs v0.0.0-20250514171416-51f8a81bdf4c
+	github.com/zalgonoise/x/ptr v0.0.0-20250514171416-51f8a81bdf4c
 	go.opentelemetry.io/otel/trace v1.35.0
 	modernc.org/sqlite v1.37.0
 )
@@ -138,7 +138,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.5.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.63.0 // indirect
+	github.com/prometheus/common v0.64.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.2 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22 // indirect
