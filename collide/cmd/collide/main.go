@@ -1,1 +1,5 @@
-package collide
+package main
+
+func main() {
+
+}
