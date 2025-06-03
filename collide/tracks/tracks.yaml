@@ -1,5 +1,6 @@
 tracks:
   - name: Construction
+    id: FinConstruction
     district: Financial
     is_drift_track: true
     collides_with:
@@ -8,6 +9,7 @@ tracks:
       - FinEvasLAT
       - FinFuckinW
   - name: ConstructionRev
+    id: FinConstructionRev
     district: Financial
     is_drift_track: true
     collides_with:
@@ -16,6 +18,7 @@ tracks:
       - FinEvasLAT
       - FinFuckinW
   - name: Beacon Mess
+    id: FinBeaconMess
     district: Financial
     is_drift_track: true
     collides_with:
@@ -23,6 +26,7 @@ tracks:
       - FinEvasLAT
       - FinLAT
   - name: Church of Pinkies
+    id: FinChurchOfPinkies
     district: Financial
     is_drift_track: true
     collides_with:
@@ -32,6 +36,7 @@ tracks:
       - FinLAT
       - FinEvasLAT
   - name: Xmas Bash
+    id: FinXmasBash
     district: Financial
     is_drift_track: true
     collides_with:
@@ -41,6 +46,7 @@ tracks:
       - FinMikroTournament
       - FinFuckinW
   - name: Tunnel of Death
+    id: FinTunnelOfDeath
     district: Financial
     is_drift_track: true
     collides_with:
@@ -49,6 +55,7 @@ tracks:
       - FinMikroTournament
       - FinFuckinW
   - name: Sk8 Fkn' Way
+    id: FinSk8FknWay
     district: Financial
     is_drift_track: true
     collides_with:
@@ -59,6 +66,7 @@ tracks:
       - FinFuckinW
       - FinNewCrossGT
   - name: Long-Ass Track
+    id: FinLAT
     district: Financial
     is_drift_track: true
     collides_with:
@@ -72,6 +80,7 @@ tracks:
       - FinFuckinW
       - FinNewCrossGT
   - name: Eva's LAT
+    id: FinEvasLAT
     district: Financial
     is_drift_track: true
     collides_with:
@@ -87,12 +96,14 @@ tracks:
       - FinFuckinW
       - FinNewCrossGT
   - name: Border Run
+    id: FinBorderRun
     district: Financial
     collides_with:
       - FinSk8FknWay
       - FinMikroTournament
       - FinNewCrossGT
   - name: Fuckin W
+    id: FinFuckinW
     district: Financial
     collides_with:
       - FinConstruction
@@ -104,6 +115,7 @@ tracks:
       - FinEvasLAT
       - FinNewCrossGT
   - name: Mikro Tournament
+    id: FinMikroTournament
     district: Financial
     collides_with:
       - FinXmasBash
@@ -111,20 +123,22 @@ tracks:
       - FinLAT
       - FinEvasLAT
   - name: Up 'n' Down
+    id: FinUpNDown
     district: Financial
     collides_with:
       - FinTunnelOfDeath
       - FinSk8FknWay
       - FinNewCrossGT
   - name: New Cross GT
+    id: FinNewCrossGT
     district: Financial
     collides_with:
       - FinSk8FknWay
       - FinLAT
       - FinEvasLAT
       - FinFuckinW
-  - WFRailroads:
-    name: Railroads
+  - name: Railroads
+    id: WFRailroads
     district: Waterfront
     is_drift_track: true
     collides_with:
@@ -135,8 +149,8 @@ tracks:
       - WFNALAT
       - WFSewers
       - WFFuckinW
-  - WFBaylanDriftingLogistics:
-    name: Baylan Drifting Logistics
+  - name: Baylan Drifting Logistics
+    id: WFBaylanDriftingLogistics
     district: Waterfront
     is_drift_track: true
     collides_with:
@@ -144,7 +158,7 @@ tracks:
       - WFPortRing
       - WFWestRing
       - WFNALAT
-  - WFContainer:
+  - id: WFContainer
     name: Container
     district: Waterfront
     is_drift_track: true
@@ -155,7 +169,7 @@ tracks:
       - WFNALAT
       - WFIcyGear
       - WFFuckinW
-  - WFBudgetCup:
+  - id: WFBudgetCup
     name: Budget Cup
     district: Waterfront
     is_drift_track: true
@@ -170,7 +184,7 @@ tracks:
       - WFSewers
       - WFHelenSuperGT
       - WFTsunamiSprint
-  - WFHeysieGT:
+  - id: WFHeysieGT
     name: Heysie GT
     district: Waterfront
     is_drift_track: true
@@ -180,7 +194,7 @@ tracks:
       - WFNALAT
       - WFNaimburgring
       - WFHelenSuperGT
-  - WFHeysieGTB:
+  - id: WFHeysieGTB
     name: Heysie GT B
     district: Waterfront
     is_drift_track: true
@@ -188,7 +202,7 @@ tracks:
       - WFHeysieGT
       - WFNaimburgring
       - WFNALAT
-  - WFPortRing:
+  - id: WFPortRing
     name: Port Ring
     district: Waterfront
     is_drift_track: true
@@ -202,7 +216,7 @@ tracks:
       - WFNALAT
       - WFFuckinW
       - WFTsunamiSprint
-  - WFWestRing:
+  - id: WFWestRing
     name: West Ring
     district: Waterfront
     is_drift_track: true
@@ -212,7 +226,7 @@ tracks:
       - WFPortRing
       - WFNALAT
       - WFIcyGear
-  - WFBaylanBash:
+  - id: WFBaylanBash
     name: Baylan Bash
     district: Waterfront
     is_drift_track: true
@@ -222,7 +236,7 @@ tracks:
       - WFNALAT
       - WFIcyGear
       - WFSewers
-  - WFNaimburgring:
+  - id: WFNaimburgring
     name: Naimburgring
     district: Waterfront
     is_drift_track: true
@@ -232,7 +246,7 @@ tracks:
       - WFHeysieGTB
       - WFNALAT
       - WFIcyGear
-  - WFIcyGear:
+  - id: WFIcyGear
     name: Icy Gear
     district: Waterfront
     is_drift_track: true
@@ -245,7 +259,7 @@ tracks:
       - WFNALAT
       - WFSewers
       - WFHelenSuperGT
-  - WFNALAT:
+  - id: WFNALAT
     name: Not As Long-Ass Track
     district: Waterfront
     is_drift_track: true
@@ -264,7 +278,7 @@ tracks:
       - WFSewers
       - WFHelenSuperGT
       - WFTsunamiSprint
-  - WFFuckinW:
+  - id: WFFuckinW
     name: Fuckin' W
     district: Waterfront
     collides_with:
@@ -273,7 +287,7 @@ tracks:
       - WFBudgetCup
       - WFPortRing
       - WFTsunamiSprint
-  - WFSewers:
+  - id: WFSewers
     name: Sewers
     district: Waterfront
     collides_with:
@@ -282,7 +296,7 @@ tracks:
       - WFIcyGear
       - WFBaylanBash
       - WFNALAT
-  - WFHelenSuperGT:
+  - id: WFHelenSuperGT
     name: Helen Super GT
     district: Waterfront
     collides_with:
@@ -290,7 +304,7 @@ tracks:
       - WFHeysieGT
       - WFNALAT
       - WFIcyGear
-  - WFTsunamiSprint:
+  - id: WFTsunamiSprint
     name: Tsunami Sprint
     district: Waterfront
     collides_with:

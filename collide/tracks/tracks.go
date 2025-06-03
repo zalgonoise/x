@@ -13,7 +13,7 @@ var (
 )
 
 type Track struct {
-	ID           uint8
+	ID           string   `yaml:"id"`
 	Name         string   `yaml:"name"`
 	District     string   `yaml:"district"`
 	IsDriftTrack bool     `yaml:"is_drift_track"`
@@ -32,31 +32,31 @@ func (t *TrackList) Read(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
-func GetCollisions(list *TrackList, track string) ([]string, error) {
+func GetCollisions(list *TrackList, trackID string) ([]string, error) {
 	i := slices.IndexFunc(list.Tracks, func(t Track) bool {
-		return t.Name == track
+		return t.ID == trackID
 	})
 
 	if i < 0 {
-		return nil, fmt.Errorf("%w: %s", ErrNotFound, track)
+		return nil, fmt.Errorf("%w: %s", ErrNotFound, trackID)
 	}
 
 	return list.Tracks[i].CollidesWith, nil
 }
 
-func GetOpenTracks(list *TrackList, track string) ([]string, error) {
+func GetOpenTracks(list *TrackList, trackID string) ([]string, error) {
 	i := slices.IndexFunc(list.Tracks, func(t Track) bool {
-		return t.Name == track
+		return t.ID == trackID
 	})
 
 	if i < 0 {
-		return nil, fmt.Errorf("%w: %s", ErrNotFound, track)
+		return nil, fmt.Errorf("%w: %s", ErrNotFound, trackID)
 	}
 
 	return slices.Collect(func(yield func(t string) bool) {
 		for idx := range list.Tracks {
-			if i != idx && !slices.Contains(list.Tracks[i].CollidesWith, list.Tracks[idx].Name) {
-				yield(list.Tracks[idx].Name)
+			if i != idx && !slices.Contains(list.Tracks[i].CollidesWith, list.Tracks[idx].ID) {
+				yield(list.Tracks[idx].ID)
 			}
 		}
 	}), nil
