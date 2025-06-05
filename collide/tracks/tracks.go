@@ -55,7 +55,33 @@ func GetOpenTracks(list *TrackList, trackID string) ([]string, error) {
 
 	return slices.Collect(func(yield func(t string) bool) {
 		for idx := range list.Tracks {
-			if i != idx && !slices.Contains(list.Tracks[i].CollidesWith, list.Tracks[idx].ID) {
+			if i != idx &&
+				list.Tracks[idx].District == list.Tracks[i].District &&
+				!slices.Contains(list.Tracks[i].CollidesWith, list.Tracks[idx].ID) {
+				yield(list.Tracks[idx].ID)
+			}
+		}
+	}), nil
+}
+
+func GetDriftTracks(list *TrackList) ([]string, error) {
+	return slices.Collect(func(yield func(t string) bool) {
+		for idx := range list.Tracks {
+			if list.Tracks[idx].IsDriftTrack {
+				yield(list.Tracks[idx].ID)
+			}
+		}
+	}), nil
+}
+
+func GetTracksByDistrict(list *TrackList, district string, driftOnly bool) ([]string, error) {
+	return slices.Collect(func(yield func(t string) bool) {
+		for idx := range list.Tracks {
+			if list.Tracks[idx].District == district {
+				if driftOnly && !list.Tracks[idx].IsDriftTrack {
+					continue
+				}
+
 				yield(list.Tracks[idx].ID)
 			}
 		}

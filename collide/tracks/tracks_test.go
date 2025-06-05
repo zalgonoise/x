@@ -2,6 +2,7 @@ package tracks
 
 import (
 	_ "embed"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -50,6 +51,32 @@ var (
 					"FinFuckinW",
 				},
 			},
+			{
+				ID:           "WFHeysieGT",
+				Name:         "Heysie GT",
+				District:     "Waterfront",
+				IsDriftTrack: true,
+				CollidesWith: []string{
+					"WFBudgetCup",
+					"WFHeysieGTB",
+					"WFNALAT",
+					"WFNaimburgring",
+					"WFHelenSuperGT",
+				},
+			},
+			{
+				ID:           "WFSewers",
+				Name:         "Sewers",
+				District:     "Waterfront",
+				IsDriftTrack: false,
+				CollidesWith: []string{
+					"WFRailroads",
+					"WFBudgetCup",
+					"WFIcyGear",
+					"WFBaylanBash",
+					"WFNALAT",
+				},
+			},
 		},
 	}
 )
@@ -64,13 +91,23 @@ func TestTrackList_Read(t *testing.T) {
 			name: "Success",
 			buf:  trackBytes,
 		},
+		{
+			name: "Fail/yaml.Unmarshal",
+			buf:  []byte("tracks:\n\t- Construction:\n"),
+			err:  errors.New("yaml: line 2: found character that cannot start any token"),
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			trackList := &TrackList{}
 
 			_, err := trackList.Read(testcase.buf)
 			if err != nil {
-				require.ErrorIs(t, err, testcase.err)
+				if errors.Is(err, testcase.err) {
+					return
+				}
+
+				// yaml does not provide sentinel errors to match, needs to match an error string instead
+				require.Equal(t, err.Error(), testcase.err.Error())
 
 				return
 			}
@@ -146,6 +183,101 @@ func TestGetOpenTracks(t *testing.T) {
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			tracks, err := GetOpenTracks(testcase.list, testcase.track)
+			if err != nil {
+				require.ErrorIs(t, err, testcase.err)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, testcase.wants, tracks)
+		})
+	}
+}
+
+func TestGetDriftTracks(t *testing.T) {
+	for _, testcase := range []struct {
+		name  string
+		list  *TrackList
+		wants []string
+		err   error
+	}{
+		{
+			name: "Success",
+			list: testList,
+			wants: []string{
+				"FinConstruction",
+				"FinConstructionRev",
+				"FinXmasBash",
+				"WFHeysieGT",
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			tracks, err := GetDriftTracks(testcase.list)
+			if err != nil {
+				require.ErrorIs(t, err, testcase.err)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, testcase.wants, tracks)
+		})
+	}
+}
+
+func TestGetTracksByDistrict(t *testing.T) {
+	for _, testcase := range []struct {
+		name      string
+		district  string
+		driftOnly bool
+		list      *TrackList
+		wants     []string
+		err       error
+	}{
+		{
+			name:     "Success/All/Financial",
+			district: "Financial",
+			list:     testList,
+			wants: []string{
+				"FinConstruction",
+				"FinConstructionRev",
+				"FinXmasBash",
+			},
+		},
+		{
+			name:     "Success/All/Waterfront",
+			district: "Waterfront",
+			list:     testList,
+			wants: []string{
+				"WFHeysieGT",
+				"WFSewers",
+			},
+		},
+		{
+			name:      "Success/DriftOnly/Financial",
+			district:  "Financial",
+			driftOnly: true,
+			list:      testList,
+			wants: []string{
+				"FinConstruction",
+				"FinConstructionRev",
+				"FinXmasBash",
+			},
+		},
+		{
+			name:      "Success/DriftOnly/Waterfront",
+			district:  "Waterfront",
+			driftOnly: true,
+			list:      testList,
+			wants: []string{
+				"WFHeysieGT",
+			},
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			tracks, err := GetTracksByDistrict(testcase.list, testcase.district, testcase.driftOnly)
 			if err != nil {
 				require.ErrorIs(t, err, testcase.err)
 
