@@ -11,8 +11,6 @@ import (
 
 //go:generate go run github.com/zalgonoise/x/heap/scripts/build-testdata -n 500 -o testdata/int_500.json
 //go:generate go run github.com/zalgonoise/x/heap/scripts/build-testdata -n 10000 -o testdata/int_10000.json
-//go:generate go run github.com/zalgonoise/x/heap/scripts/build-testdata -n 10000000 -o testdata/int_10000000.json
-//go:generate go run github.com/zalgonoise/x/heap/scripts/build-testdata -n 100000000 -o testdata/int_100000000.json
 
 var (
 	//go:embed testdata/int_500.json
@@ -20,12 +18,6 @@ var (
 
 	//go:embed testdata/int_10000.json
 	int10000 []byte
-
-	//go:embed testdata/int_10000000.json
-	int10000000 []byte
-
-	//go:embed testdata/int_100000000.json
-	int100000000 []byte
 )
 
 func TestSort(t *testing.T) {
@@ -69,14 +61,6 @@ func BenchmarkSort(b *testing.B) {
 			name:  "10000Elements",
 			items: values[10000],
 		},
-		{
-			name:  "10000000Elements",
-			items: values[10000000],
-		},
-		{
-			name:  "100000000Elements",
-			items: values[100000000],
-		},
 	} {
 		b.Run(testcase.name, func(b *testing.B) {
 			for b.Loop() {
@@ -94,8 +78,6 @@ func BenchmarkSort(b *testing.B) {
 func loadValues() (map[int][]int, error) {
 	int500slice := make([]int, 0, 500)
 	int10000slice := make([]int, 0, 10000)
-	int10000000slice := make([]int, 0, 10000000)
-	int100000000slice := make([]int, 0, 100000000)
 
 	errs := make([]error, 0, 4)
 
@@ -106,21 +88,13 @@ func loadValues() (map[int][]int, error) {
 	if err := json.Unmarshal(int10000, &int10000slice); err != nil {
 		errs = append(errs, err)
 	}
-	if err := json.Unmarshal(int10000000, &int10000000slice); err != nil {
-		errs = append(errs, err)
-	}
-	if err := json.Unmarshal(int100000000, &int100000000slice); err != nil {
-		errs = append(errs, err)
-	}
 
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)
 	}
 
 	return map[int][]int{
-		500:       int500slice,
-		10000:     int10000slice,
-		10000000:  int10000000slice,
-		100000000: int100000000slice,
+		500:   int500slice,
+		10000: int10000slice,
 	}, nil
 }
