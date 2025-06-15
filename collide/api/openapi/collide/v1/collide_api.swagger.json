@@ -1,0 +1,264 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "validate/validate.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/collide/districts": {
+      "get": {
+        "summary": "List Districts",
+        "description": "Returns a list of all districts from the configured track list",
+        "operationId": "CollideService_ListDistricts",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListDistrictsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "Collide"
+        ]
+      }
+    },
+    "/v1/collide/districts/{district}/all": {
+      "get": {
+        "summary": "List All Tracks In A District",
+        "description": "Returns a list of all collide in a certain district, from the configured track list",
+        "operationId": "CollideService_ListAllTracksByDistrict",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListAllTracksByDistrictResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "district",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Collide"
+        ]
+      }
+    },
+    "/v1/collide/districts/{district}/drift": {
+      "get": {
+        "summary": "List Drift Tracks In A District",
+        "description": "Returns a list of drift collide in a certain district, from the configured track list",
+        "operationId": "CollideService_ListDriftTracksByDistrict",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListDriftTracksByDistrictResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "district",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Collide"
+        ]
+      }
+    },
+    "/v1/collide/districts/{district}/drift/{track}/alternatives": {
+      "get": {
+        "summary": "Get Alternatives By District And Track",
+        "description": "Returns a list of alternative drift collide in a certain district, which should not collide with the target, from the configured track list",
+        "operationId": "CollideService_GetAlternativesByDistrictAndTrack",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetAlternativesByDistrictAndTrackResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "district",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "track",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Collide"
+        ]
+      }
+    },
+    "/v1/collide/districts/{district}/drift/{track}/collisions": {
+      "get": {
+        "summary": "Get Alternatives By District And Track",
+        "description": "Returns a list of collide which would collide with the target in a certain district, from the configured track list",
+        "operationId": "CollideService_GetCollisionsByDistrictAndTrack",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetCollisionsByDistrictAndTrackResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "district",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "track",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Collide"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1GetAlternativesByDistrictAndTrackResponse": {
+      "type": "object",
+      "properties": {
+        "collide": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1GetCollisionsByDistrictAndTrackResponse": {
+      "type": "object",
+      "properties": {
+        "collide": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1ListAllTracksByDistrictResponse": {
+      "type": "object",
+      "properties": {
+        "collide": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1ListDistrictsResponse": {
+      "type": "object",
+      "properties": {
+        "districts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1ListDriftTracksByDistrictResponse": {
+      "type": "object",
+      "properties": {
+        "collide": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
