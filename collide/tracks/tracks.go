@@ -122,3 +122,21 @@ func GetDistricts(list *TrackList) ([]string, error) {
 		}
 	}), nil
 }
+
+func GetNamesFromIDs(list *TrackList, ids []string) ([]string, error) {
+	if list == nil {
+		return nil, ErrNilList
+	}
+
+	return slices.Collect(func(yield func(name string) bool) {
+		for i := range ids {
+			idx := slices.IndexFunc(list.Tracks, func(track Track) bool {
+				return track.ID == ids[i]
+			})
+
+			if idx >= 0 {
+				yield(list.Tracks[idx].Name)
+			}
+		}
+	}), nil
+}

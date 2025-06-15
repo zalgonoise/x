@@ -336,3 +336,42 @@ func TestGetDistricts(t *testing.T) {
 		})
 	}
 }
+
+func TestGetNamesFromIDs(t *testing.T) {
+	for _, testcase := range []struct {
+		name  string
+		list  *TrackList
+		ids   []string
+		wants []string
+		err   error
+	}{
+		{
+			name: "Success",
+			list: testList,
+			ids: []string{
+				"FinConstructionRev",
+				"WFHeysieGT",
+			},
+			wants: []string{
+				"Construction Rev",
+				"Heysie GT",
+			},
+		},
+		{
+			name: "Fail/ErrNilList",
+			err:  ErrNilList,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			names, err := GetNamesFromIDs(testcase.list, testcase.ids)
+			if err != nil {
+				require.ErrorIs(t, err, testcase.err)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, testcase.wants, names)
+		})
+	}
+}
