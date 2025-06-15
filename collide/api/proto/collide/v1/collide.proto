@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package collide.v1;
+
+option go_package = "github.com/zalgonoise/x/collide/pkg/pb";
+
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "validate/validate.proto";
+
+service CollideService {
+  rpc ListDistricts(ListDistrictsRequest) returns (ListDistrictsResponse) {
+    option (google.api.http) = {
+      get: "/v1/collide/districts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Districts"
+      description: "Returns a list of all districts from the configured track list"
+      tags: "Collide"
+    };
+  }
+
+  rpc ListAllTracksByDistrict(ListAllTracksByDistrictRequest) returns (ListAllTracksByDistrictResponse) {
+    option (google.api.http) = {
+      get: "/v1/collide/districts/{district}/all"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List All Tracks In A District"
+      description: "Returns a list of all collide in a certain district, from the configured track list"
+      tags: "Collide"
+    };
+  }
+
+  rpc ListDriftTracksByDistrict(ListDriftTracksByDistrictRequest) returns (ListDriftTracksByDistrictResponse) {
+    option (google.api.http) = {
+      get: "/v1/collide/districts/{district}/drift"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Drift Tracks In A District"
+      description: "Returns a list of drift collide in a certain district, from the configured track list"
+      tags: "Collide"
+    };
+  }
+
+  rpc GetAlternativesByDistrictAndTrack(GetAlternativesByDistrictAndTrackRequest) returns (GetAlternativesByDistrictAndTrackResponse) {
+    option (google.api.http) = {
+      get: "/v1/collide/districts/{district}/drift/{track}/alternatives"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Alternatives By District And Track"
+      description: "Returns a list of alternative drift collide in a certain district, which should not collide with the target, from the configured track list"
+      tags: "Collide"
+    };
+  }
+
+  rpc GetCollisionsByDistrictAndTrack(GetCollisionsByDistrictAndTrackRequest) returns (GetCollisionsByDistrictAndTrackResponse) {
+    option (google.api.http) = {
+      get: "/v1/collide/districts/{district}/drift/{track}/collisions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Alternatives By District And Track"
+      description: "Returns a list of collide which would collide with the target in a certain district, from the configured track list"
+      tags: "Collide"
+    };
+  }
+}
+
+
+message ListDistrictsRequest {}
+
+message ListDistrictsResponse {
+  repeated string districts = 1 [json_name = "districts"];
+}
+
+message ListAllTracksByDistrictRequest {
+  string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
+}
+
+message ListAllTracksByDistrictResponse {
+  repeated string tracks = 1 [json_name = "collide"];
+}
+
+message ListDriftTracksByDistrictRequest {
+  string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
+}
+
+message ListDriftTracksByDistrictResponse {
+  repeated string tracks = 1 [json_name = "collide"];
+}
+
+message GetAlternativesByDistrictAndTrackRequest {
+  string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
+  string track = 2 [json_name = "track", (validate.rules).string.min_len = 1];
+}
+
+message GetAlternativesByDistrictAndTrackResponse {
+  repeated string tracks = 1 [json_name = "collide"];
+}
+
+message GetCollisionsByDistrictAndTrackRequest {
+  string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
+  string track = 2 [json_name = "track", (validate.rules).string.min_len = 1];
+}
+
+message GetCollisionsByDistrictAndTrackResponse {
+  repeated string tracks = 1 [json_name = "collide"];
+}
