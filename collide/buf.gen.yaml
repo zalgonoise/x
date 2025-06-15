@@ -1,0 +1,21 @@
+version: v1
+plugins:
+  - name: go
+    out: pkg/api/pb
+    opt: paths=source_relative
+  - name: go-grpc
+    out: pkg/api/pb
+    opt: paths=source_relative,require_unimplemented_servers=true
+  - name: grpc-gateway
+    out: pkg/api/pb
+    opt: paths=source_relative
+  - name: openapiv2
+    out: api/openapi
+    opt:
+      - disable_service_tags=true
+      - allow_merge=true
+      - merge_file_name=collide/v1/collide_api
+    strategy: all
+  - name: validate
+    out: pkg/api/pb
+    opt: paths=source_relative,lang=go
