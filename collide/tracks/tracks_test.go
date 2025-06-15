@@ -143,6 +143,10 @@ func TestGetCollisions(t *testing.T) {
 			track: "FinBeaconMess",
 			err:   ErrNotFound,
 		},
+		{
+			name: "Fail/ErrNilList",
+			err:  ErrNilList,
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			tracks, err := GetCollisions(testcase.list, testcase.track)
@@ -180,6 +184,10 @@ func TestGetOpenTracks(t *testing.T) {
 			track: "FinBeaconMess",
 			err:   ErrNotFound,
 		},
+		{
+			name: "Fail/ErrNilList",
+			err:  ErrNilList,
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			tracks, err := GetOpenTracks(testcase.list, testcase.track)
@@ -211,6 +219,10 @@ func TestGetDriftTracks(t *testing.T) {
 				"FinXmasBash",
 				"WFHeysieGT",
 			},
+		},
+		{
+			name: "Fail/ErrNilList",
+			err:  ErrNilList,
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
@@ -275,6 +287,10 @@ func TestGetTracksByDistrict(t *testing.T) {
 				"WFHeysieGT",
 			},
 		},
+		{
+			name: "Fail/ErrNilList",
+			err:  ErrNilList,
+		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			tracks, err := GetTracksByDistrict(testcase.list, testcase.district, testcase.driftOnly)
@@ -286,6 +302,37 @@ func TestGetTracksByDistrict(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, testcase.wants, tracks)
+		})
+	}
+}
+
+func TestGetDistricts(t *testing.T) {
+	for _, testcase := range []struct {
+		name  string
+		list  *TrackList
+		wants []string
+		err   error
+	}{
+		{
+			name:  "Success",
+			list:  testList,
+			wants: []string{"Financial", "Waterfront"},
+		},
+		{
+			name: "Fail/ErrNilList",
+			err:  ErrNilList,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			districts, err := GetDistricts(testcase.list)
+			if err != nil {
+				require.ErrorIs(t, err, testcase.err)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, testcase.wants, districts)
 		})
 	}
 }

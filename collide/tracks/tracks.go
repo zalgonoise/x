@@ -10,6 +10,7 @@ import (
 
 var (
 	ErrNotFound = errors.New("track not found")
+	ErrNilList  = errors.New("list cannot be nil")
 )
 
 type Track struct {
@@ -33,6 +34,10 @@ func (t *TrackList) Read(b []byte) (n int, err error) {
 }
 
 func GetCollisions(list *TrackList, trackID string) ([]string, error) {
+	if list == nil {
+		return nil, ErrNilList
+	}
+
 	i := slices.IndexFunc(list.Tracks, func(t Track) bool {
 		return t.ID == trackID
 	})
@@ -45,6 +50,10 @@ func GetCollisions(list *TrackList, trackID string) ([]string, error) {
 }
 
 func GetOpenTracks(list *TrackList, trackID string) ([]string, error) {
+	if list == nil {
+		return nil, ErrNilList
+	}
+
 	i := slices.IndexFunc(list.Tracks, func(t Track) bool {
 		return t.ID == trackID
 	})
@@ -65,6 +74,10 @@ func GetOpenTracks(list *TrackList, trackID string) ([]string, error) {
 }
 
 func GetDriftTracks(list *TrackList) ([]string, error) {
+	if list == nil {
+		return nil, ErrNilList
+	}
+
 	return slices.Collect(func(yield func(t string) bool) {
 		for idx := range list.Tracks {
 			if list.Tracks[idx].IsDriftTrack {
@@ -75,6 +88,10 @@ func GetDriftTracks(list *TrackList) ([]string, error) {
 }
 
 func GetTracksByDistrict(list *TrackList, district string, driftOnly bool) ([]string, error) {
+	if list == nil {
+		return nil, ErrNilList
+	}
+
 	return slices.Collect(func(yield func(t string) bool) {
 		for idx := range list.Tracks {
 			if list.Tracks[idx].District == district {
@@ -83,6 +100,24 @@ func GetTracksByDistrict(list *TrackList, district string, driftOnly bool) ([]st
 				}
 
 				yield(list.Tracks[idx].ID)
+			}
+		}
+	}), nil
+}
+
+func GetDistricts(list *TrackList) ([]string, error) {
+	if list == nil {
+		return nil, ErrNilList
+	}
+
+	return slices.Collect(func(yield func(t string) bool) {
+		cache := map[string]struct{}{}
+
+		for idx := range list.Tracks {
+			if _, ok := cache[list.Tracks[idx].District]; !ok {
+				cache[list.Tracks[idx].District] = struct{}{}
+
+				yield(list.Tracks[idx].District)
 			}
 		}
 	}), nil
