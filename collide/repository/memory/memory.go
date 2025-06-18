@@ -89,7 +89,12 @@ func (r Repository) ListDriftTracksByDistrict(ctx context.Context, district stri
 	return tracks.GetNamesFromIDs(r.tracks, t)
 }
 
-func (r Repository) GetAlternativesByDistrictAndTrack(ctx context.Context, district, trackID string) ([]string, error) {
+func (r Repository) GetAlternativesByDistrictAndTrack(ctx context.Context, district, track string) ([]string, error) {
+	trackID, err := tracks.GetIDFromName(r.tracks, track)
+	if err != nil {
+		return nil, err
+	}
+
 	t, err := tracks.GetOpenTracks(r.tracks, trackID)
 	if err != nil {
 		return nil, err
@@ -111,7 +116,12 @@ func (r Repository) GetAlternativesByDistrictAndTrack(ctx context.Context, distr
 	return tracks.GetNamesFromIDs(r.tracks, t)
 }
 
-func (r Repository) GetCollisionsByDistrictAndTrack(ctx context.Context, district, trackID string) ([]string, error) {
+func (r Repository) GetCollisionsByDistrictAndTrack(ctx context.Context, district, track string) ([]string, error) {
+	trackID, err := tracks.GetIDFromName(r.tracks, track)
+	if err != nil {
+		return nil, err
+	}
+
 	t, err := tracks.GetCollisions(r.tracks, trackID)
 	if err != nil {
 		return nil, err
