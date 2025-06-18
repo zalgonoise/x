@@ -24,6 +24,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ListDistrictsRequest describes a call to fetch all districts.
 type ListDistrictsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -60,9 +61,11 @@ func (*ListDistrictsRequest) Descriptor() ([]byte, []int) {
 	return file_collide_v1_collide_proto_rawDescGZIP(), []int{0}
 }
 
+// ListDistrictsResponse returns a list of all districts.
 type ListDistrictsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Districts     []string               `protobuf:"bytes,1,rep,name=districts,proto3" json:"districts,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The available districts.
+	Districts     []string `protobuf:"bytes,1,rep,name=districts,proto3" json:"districts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -104,9 +107,11 @@ func (x *ListDistrictsResponse) GetDistricts() []string {
 	return nil
 }
 
+// ListAllTracksByDistrictRequest describes the target district to fetch all tracks in.
 type ListAllTracksByDistrictRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	District      string                 `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The target district to look up.
+	District      string `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -148,9 +153,11 @@ func (x *ListAllTracksByDistrictRequest) GetDistrict() string {
 	return ""
 }
 
+// ListAllTracksByDistrictResponse lists the available tracks in the target district.
 type ListAllTracksByDistrictResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tracks        []string               `protobuf:"bytes,1,rep,name=tracks,json=collide,proto3" json:"tracks,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The available tracks for the target district.
+	Tracks        []string `protobuf:"bytes,1,rep,name=tracks,json=collide,proto3" json:"tracks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -192,9 +199,11 @@ func (x *ListAllTracksByDistrictResponse) GetTracks() []string {
 	return nil
 }
 
+// ListDriftTracksByDistrictRequest describes the target district to fetch drift tracks in.
 type ListDriftTracksByDistrictRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	District      string                 `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The target district to look up.
+	District      string `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -236,9 +245,11 @@ func (x *ListDriftTracksByDistrictRequest) GetDistrict() string {
 	return ""
 }
 
+// ListDriftTracksByDistrictResponse lists the available drift tracks in the target district.
 type ListDriftTracksByDistrictResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tracks        []string               `protobuf:"bytes,1,rep,name=tracks,json=collide,proto3" json:"tracks,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The available drift tracks for the target district.
+	Tracks        []string `protobuf:"bytes,1,rep,name=tracks,proto3" json:"tracks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -280,10 +291,14 @@ func (x *ListDriftTracksByDistrictResponse) GetTracks() []string {
 	return nil
 }
 
+// GetAlternativesByDistrictAndTrackRequest describes the target district and current track to fetch
+// alternative, non-colliding tracks.
 type GetAlternativesByDistrictAndTrackRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	District      string                 `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
-	Track         string                 `protobuf:"bytes,2,opt,name=track,proto3" json:"track,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The target district to look up.
+	District string `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
+	// The current track as reference.
+	Track         string `protobuf:"bytes,2,opt,name=track,proto3" json:"track,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -332,9 +347,11 @@ func (x *GetAlternativesByDistrictAndTrackRequest) GetTrack() string {
 	return ""
 }
 
+// GetAlternativesByDistrictAndTrackResponse lists the available non-colliding tracks in the target district.
 type GetAlternativesByDistrictAndTrackResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tracks        []string               `protobuf:"bytes,1,rep,name=tracks,json=collide,proto3" json:"tracks,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The available non-colliding tracks for the target district.
+	Tracks        []string `protobuf:"bytes,1,rep,name=tracks,proto3" json:"tracks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -376,10 +393,14 @@ func (x *GetAlternativesByDistrictAndTrackResponse) GetTracks() []string {
 	return nil
 }
 
+// GetCollisionsByDistrictAndTrackRequest describes the target district and current track to fetch
+// colliding tracks.
 type GetCollisionsByDistrictAndTrackRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	District      string                 `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
-	Track         string                 `protobuf:"bytes,2,opt,name=track,proto3" json:"track,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The target district to look up.
+	District string `protobuf:"bytes,1,opt,name=district,proto3" json:"district,omitempty"`
+	// The current track as reference.
+	Track         string `protobuf:"bytes,2,opt,name=track,proto3" json:"track,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -428,9 +449,11 @@ func (x *GetCollisionsByDistrictAndTrackRequest) GetTrack() string {
 	return ""
 }
 
+// GetCollisionsByDistrictAndTrackResponse lists the available colliding tracks in the target district.
 type GetCollisionsByDistrictAndTrackResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Tracks        []string               `protobuf:"bytes,1,rep,name=tracks,json=collide,proto3" json:"tracks,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The available colliding tracks for the target district.
+	Tracks        []string `protobuf:"bytes,1,rep,name=tracks,proto3" json:"tracks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -486,30 +509,30 @@ const file_collide_v1_collide_proto_rawDesc = "" +
 	"\x1fListAllTracksByDistrictResponse\x12\x17\n" +
 	"\x06tracks\x18\x01 \x03(\tR\acollide\"G\n" +
 	" ListDriftTracksByDistrictRequest\x12#\n" +
-	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\"<\n" +
-	"!ListDriftTracksByDistrictResponse\x12\x17\n" +
-	"\x06tracks\x18\x01 \x03(\tR\acollide\"n\n" +
+	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\";\n" +
+	"!ListDriftTracksByDistrictResponse\x12\x16\n" +
+	"\x06tracks\x18\x01 \x03(\tR\x06tracks\"n\n" +
 	"(GetAlternativesByDistrictAndTrackRequest\x12#\n" +
 	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\x12\x1d\n" +
-	"\x05track\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05track\"D\n" +
-	")GetAlternativesByDistrictAndTrackResponse\x12\x17\n" +
-	"\x06tracks\x18\x01 \x03(\tR\acollide\"l\n" +
+	"\x05track\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05track\"C\n" +
+	")GetAlternativesByDistrictAndTrackResponse\x12\x16\n" +
+	"\x06tracks\x18\x01 \x03(\tR\x06tracks\"l\n" +
 	"&GetCollisionsByDistrictAndTrackRequest\x12#\n" +
 	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\x12\x1d\n" +
-	"\x05track\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05track\"B\n" +
-	"'GetCollisionsByDistrictAndTrackResponse\x12\x17\n" +
-	"\x06tracks\x18\x01 \x03(\tR\acollide2\xce\f\n" +
+	"\x05track\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05track\"A\n" +
+	"'GetCollisionsByDistrictAndTrackResponse\x12\x16\n" +
+	"\x06tracks\x18\x01 \x03(\tR\x06tracks2\xca\f\n" +
 	"\x0eCollideService\x12\xcf\x01\n" +
 	"\rListDistricts\x12 .collide.v1.ListDistrictsRequest\x1a!.collide.v1.ListDistrictsResponse\"y\x92AY\n" +
-	"\aCollide\x12\x0eList Districts\x1a>Returns a list of all districts from the configured track list\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/collide/districts\x12\xa1\x02\n" +
-	"\x17ListAllTracksByDistrict\x12*.collide.v1.ListAllTracksByDistrictRequest\x1a+.collide.v1.ListAllTracksByDistrictResponse\"\xac\x01\x92A}\n" +
-	"\aCollide\x12\x1dList All Tracks In A District\x1aSReturns a list of all collide in a certain district, from the configured track list\x82\xd3\xe4\x93\x02&\x12$/v1/collide/districts/{district}/all\x12\xae\x02\n" +
-	"\x19ListDriftTracksByDistrict\x12,.collide.v1.ListDriftTracksByDistrictRequest\x1a-.collide.v1.ListDriftTracksByDistrictResponse\"\xb3\x01\x92A\x81\x01\n" +
-	"\aCollide\x12\x1fList Drift Tracks In A District\x1aUReturns a list of drift collide in a certain district, from the configured track list\x82\xd3\xe4\x93\x02(\x12&/v1/collide/districts/{district}/drift\x12\x99\x03\n" +
-	"!GetAlternativesByDistrictAndTrack\x124.collide.v1.GetAlternativesByDistrictAndTrackRequest\x1a5.collide.v1.GetAlternativesByDistrictAndTrackResponse\"\x86\x02\x92A\xbf\x01\n" +
-	"\aCollide\x12&Get Alternatives By District And Track\x1a\x8b\x01Returns a list of alternative drift collide in a certain district, which should not collide with the target, from the configured track list\x82\xd3\xe4\x93\x02=\x12;/v1/collide/districts/{district}/drift/{track}/alternatives\x12\xf8\x02\n" +
-	"\x1fGetCollisionsByDistrictAndTrack\x122.collide.v1.GetCollisionsByDistrictAndTrackRequest\x1a3.collide.v1.GetCollisionsByDistrictAndTrackResponse\"\xeb\x01\x92A\xa6\x01\n" +
-	"\aCollide\x12&Get Alternatives By District And Track\x1asReturns a list of collide which would collide with the target in a certain district, from the configured track list\x82\xd3\xe4\x93\x02;\x129/v1/collide/districts/{district}/drift/{track}/collisionsB(Z&github.com/zalgonoise/x/collide/pkg/pbb\x06proto3"
+	"\aCollide\x12\x0eList Districts\x1a>Returns a list of all districts from the configured track list\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/collide/districts\x12\xa0\x02\n" +
+	"\x17ListAllTracksByDistrict\x12*.collide.v1.ListAllTracksByDistrictRequest\x1a+.collide.v1.ListAllTracksByDistrictResponse\"\xab\x01\x92A|\n" +
+	"\aCollide\x12\x1dList All Tracks In A District\x1aRReturns a list of all tracks in a certain district, from the configured track list\x82\xd3\xe4\x93\x02&\x12$/v1/collide/districts/{district}/all\x12\xad\x02\n" +
+	"\x19ListDriftTracksByDistrict\x12,.collide.v1.ListDriftTracksByDistrictRequest\x1a-.collide.v1.ListDriftTracksByDistrictResponse\"\xb2\x01\x92A\x80\x01\n" +
+	"\aCollide\x12\x1fList Drift Tracks In A District\x1aTReturns a list of drift tracks in a certain district, from the configured track list\x82\xd3\xe4\x93\x02(\x12&/v1/collide/districts/{district}/drift\x12\x98\x03\n" +
+	"!GetAlternativesByDistrictAndTrack\x124.collide.v1.GetAlternativesByDistrictAndTrackRequest\x1a5.collide.v1.GetAlternativesByDistrictAndTrackResponse\"\x85\x02\x92A\xbe\x01\n" +
+	"\aCollide\x12&Get Alternatives By District And Track\x1a\x8a\x01Returns a list of alternative drift tracks in a certain district, which should not collide with the target, from the configured track list\x82\xd3\xe4\x93\x02=\x12;/v1/collide/districts/{district}/drift/{track}/alternatives\x12\xf7\x02\n" +
+	"\x1fGetCollisionsByDistrictAndTrack\x122.collide.v1.GetCollisionsByDistrictAndTrackRequest\x1a3.collide.v1.GetCollisionsByDistrictAndTrackResponse\"\xea\x01\x92A\xa5\x01\n" +
+	"\aCollide\x12&Get Alternatives By District And Track\x1arReturns a list of tracks which would collide with the target in a certain district, from the configured track list\x82\xd3\xe4\x93\x02;\x129/v1/collide/districts/{district}/drift/{track}/collisionsB(Z&github.com/zalgonoise/x/collide/pkg/pbb\x06proto3"
 
 var (
 	file_collide_v1_collide_proto_rawDescOnce sync.Once

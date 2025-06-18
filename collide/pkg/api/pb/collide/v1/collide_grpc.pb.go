@@ -29,11 +29,20 @@ const (
 // CollideServiceClient is the client API for CollideService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// CollideService handles RPCs related to track listings and collisions, for different districts.
 type CollideServiceClient interface {
+	// ListDistricts fetches a list of configured districts in the CollideService.
 	ListDistricts(ctx context.Context, in *ListDistrictsRequest, opts ...grpc.CallOption) (*ListDistrictsResponse, error)
+	// ListAllTracksByDistrict fetches a list of every track within a certain district.
 	ListAllTracksByDistrict(ctx context.Context, in *ListAllTracksByDistrictRequest, opts ...grpc.CallOption) (*ListAllTracksByDistrictResponse, error)
+	// ListDriftTracksByDistrict fetches a list of drift tracks within a certain district.
 	ListDriftTracksByDistrict(ctx context.Context, in *ListDriftTracksByDistrictRequest, opts ...grpc.CallOption) (*ListDriftTracksByDistrictResponse, error)
+	// GetAlternativesByDistrictAndTrack returns a list of alternative tracks within a certain district, which will not
+	// collide with the target track.
 	GetAlternativesByDistrictAndTrack(ctx context.Context, in *GetAlternativesByDistrictAndTrackRequest, opts ...grpc.CallOption) (*GetAlternativesByDistrictAndTrackResponse, error)
+	// GetCollisionsByDistrictAndTrack returns a list of tracks within a certain district, which will collide with the
+	// target track.
 	GetCollisionsByDistrictAndTrack(ctx context.Context, in *GetCollisionsByDistrictAndTrackRequest, opts ...grpc.CallOption) (*GetCollisionsByDistrictAndTrackResponse, error)
 }
 
@@ -98,11 +107,20 @@ func (c *collideServiceClient) GetCollisionsByDistrictAndTrack(ctx context.Conte
 // CollideServiceServer is the server API for CollideService service.
 // All implementations must embed UnimplementedCollideServiceServer
 // for forward compatibility.
+//
+// CollideService handles RPCs related to track listings and collisions, for different districts.
 type CollideServiceServer interface {
+	// ListDistricts fetches a list of configured districts in the CollideService.
 	ListDistricts(context.Context, *ListDistrictsRequest) (*ListDistrictsResponse, error)
+	// ListAllTracksByDistrict fetches a list of every track within a certain district.
 	ListAllTracksByDistrict(context.Context, *ListAllTracksByDistrictRequest) (*ListAllTracksByDistrictResponse, error)
+	// ListDriftTracksByDistrict fetches a list of drift tracks within a certain district.
 	ListDriftTracksByDistrict(context.Context, *ListDriftTracksByDistrictRequest) (*ListDriftTracksByDistrictResponse, error)
+	// GetAlternativesByDistrictAndTrack returns a list of alternative tracks within a certain district, which will not
+	// collide with the target track.
 	GetAlternativesByDistrictAndTrack(context.Context, *GetAlternativesByDistrictAndTrackRequest) (*GetAlternativesByDistrictAndTrackResponse, error)
+	// GetCollisionsByDistrictAndTrack returns a list of tracks within a certain district, which will collide with the
+	// target track.
 	GetCollisionsByDistrictAndTrack(context.Context, *GetCollisionsByDistrictAndTrackRequest) (*GetCollisionsByDistrictAndTrackResponse, error)
 	mustEmbedUnimplementedCollideServiceServer()
 }
