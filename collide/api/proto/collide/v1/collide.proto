@@ -8,7 +8,9 @@ import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "validate/validate.proto";
 
+// CollideService handles RPCs related to track listings and collisions, for different districts.
 service CollideService {
+  // ListDistricts fetches a list of configured districts in the CollideService.
   rpc ListDistricts(ListDistrictsRequest) returns (ListDistrictsResponse) {
     option (google.api.http) = {
       get: "/v1/collide/districts"
@@ -20,88 +22,117 @@ service CollideService {
     };
   }
 
+  // ListAllTracksByDistrict fetches a list of every track within a certain district.
   rpc ListAllTracksByDistrict(ListAllTracksByDistrictRequest) returns (ListAllTracksByDistrictResponse) {
     option (google.api.http) = {
       get: "/v1/collide/districts/{district}/all"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List All Tracks In A District"
-      description: "Returns a list of all collide in a certain district, from the configured track list"
+      description: "Returns a list of all tracks in a certain district, from the configured track list"
       tags: "Collide"
     };
   }
 
+  // ListDriftTracksByDistrict fetches a list of drift tracks within a certain district.
   rpc ListDriftTracksByDistrict(ListDriftTracksByDistrictRequest) returns (ListDriftTracksByDistrictResponse) {
     option (google.api.http) = {
       get: "/v1/collide/districts/{district}/drift"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Drift Tracks In A District"
-      description: "Returns a list of drift collide in a certain district, from the configured track list"
+      description: "Returns a list of drift tracks in a certain district, from the configured track list"
       tags: "Collide"
     };
   }
 
+  // GetAlternativesByDistrictAndTrack returns a list of alternative tracks within a certain district, which will not
+  // collide with the target track.
   rpc GetAlternativesByDistrictAndTrack(GetAlternativesByDistrictAndTrackRequest) returns (GetAlternativesByDistrictAndTrackResponse) {
     option (google.api.http) = {
       get: "/v1/collide/districts/{district}/drift/{track}/alternatives"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Alternatives By District And Track"
-      description: "Returns a list of alternative drift collide in a certain district, which should not collide with the target, from the configured track list"
+      description: "Returns a list of alternative drift tracks in a certain district, which should not collide with the target, from the configured track list"
       tags: "Collide"
     };
   }
 
+  // GetCollisionsByDistrictAndTrack returns a list of tracks within a certain district, which will collide with the
+  // target track.
   rpc GetCollisionsByDistrictAndTrack(GetCollisionsByDistrictAndTrackRequest) returns (GetCollisionsByDistrictAndTrackResponse) {
     option (google.api.http) = {
       get: "/v1/collide/districts/{district}/drift/{track}/collisions"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Alternatives By District And Track"
-      description: "Returns a list of collide which would collide with the target in a certain district, from the configured track list"
+      description: "Returns a list of tracks which would collide with the target in a certain district, from the configured track list"
       tags: "Collide"
     };
   }
 }
 
-
+// ListDistrictsRequest describes a call to fetch all districts.
 message ListDistrictsRequest {}
 
+// ListDistrictsResponse returns a list of all districts.
 message ListDistrictsResponse {
+  // The available districts.
   repeated string districts = 1 [json_name = "districts"];
 }
 
+// ListAllTracksByDistrictRequest describes the target district to fetch all tracks in.
 message ListAllTracksByDistrictRequest {
+  // The target district to look up.
   string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
 }
 
+// ListAllTracksByDistrictResponse lists the available tracks in the target district.
 message ListAllTracksByDistrictResponse {
+  // The available tracks for the target district.
   repeated string tracks = 1 [json_name = "collide"];
 }
 
+// ListDriftTracksByDistrictRequest describes the target district to fetch drift tracks in.
 message ListDriftTracksByDistrictRequest {
+  // The target district to look up.
   string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
 }
 
+// ListDriftTracksByDistrictResponse lists the available drift tracks in the target district.
 message ListDriftTracksByDistrictResponse {
-  repeated string tracks = 1 [json_name = "collide"];
+  // The available drift tracks for the target district.
+  repeated string tracks = 1 [json_name = "tracks"];
 }
 
+// GetAlternativesByDistrictAndTrackRequest describes the target district and current track to fetch
+// alternative, non-colliding tracks.
 message GetAlternativesByDistrictAndTrackRequest {
+  // The target district to look up.
   string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
+  // The current track as reference.
   string track = 2 [json_name = "track", (validate.rules).string.min_len = 1];
 }
 
+// GetAlternativesByDistrictAndTrackResponse lists the available non-colliding tracks in the target district.
 message GetAlternativesByDistrictAndTrackResponse {
-  repeated string tracks = 1 [json_name = "collide"];
+  // The available non-colliding tracks for the target district.
+  repeated string tracks = 1 [json_name = "tracks"];
 }
 
+
+// GetCollisionsByDistrictAndTrackRequest describes the target district and current track to fetch
+// colliding tracks.
 message GetCollisionsByDistrictAndTrackRequest {
+  // The target district to look up.
   string district = 1 [json_name = "district", (validate.rules).string.min_len = 1];
+  // The current track as reference.
   string track = 2 [json_name = "track", (validate.rules).string.min_len = 1];
 }
 
+// GetCollisionsByDistrictAndTrackResponse lists the available colliding tracks in the target district.
 message GetCollisionsByDistrictAndTrackResponse {
-  repeated string tracks = 1 [json_name = "collide"];
+  // The available colliding tracks for the target district.
+  repeated string tracks = 1 [json_name = "tracks"];
 }
