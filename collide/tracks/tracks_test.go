@@ -375,3 +375,54 @@ func TestGetNamesFromIDs(t *testing.T) {
 		})
 	}
 }
+
+func TestGetIDFromName(t *testing.T) {
+	for _, testcase := range []struct {
+		name  string
+		list  *TrackList
+		track string
+		wants string
+		err   error
+	}{
+		{
+			name:  "Success",
+			list:  testList,
+			track: "Construction",
+			wants: "FinConstruction",
+		},
+		{
+			name:  "Success/WithSpace",
+			list:  testList,
+			track: "ConstructionRev",
+			wants: "FinConstructionRev",
+		},
+		{
+			name:  "Success/LowercaseNoSpace",
+			list:  testList,
+			track: "xmasbash",
+			wants: "FinXmasBash",
+		},
+		{
+			name:  "Fail/NotFound",
+			list:  testList,
+			track: "perrytheferry",
+			err:   ErrNotFound,
+		},
+		{
+			name: "Fail/ErrNilList",
+			err:  ErrNilList,
+		},
+	} {
+		t.Run(testcase.name, func(t *testing.T) {
+			track, err := GetIDFromName(testcase.list, testcase.track)
+			if err != nil {
+				require.ErrorIs(t, err, testcase.err)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, testcase.wants, track)
+		})
+	}
+}

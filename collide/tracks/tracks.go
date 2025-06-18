@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -139,4 +140,24 @@ func GetNamesFromIDs(list *TrackList, ids []string) ([]string, error) {
 			}
 		}
 	}), nil
+}
+
+func GetIDFromName(list *TrackList, name string) (string, error) {
+	if list == nil {
+		return "", ErrNilList
+	}
+
+	name = strings.TrimSpace(name)
+	name = strings.ReplaceAll(name, " ", "")
+	name = strings.ToLower(name)
+
+	idx := slices.IndexFunc(list.Tracks, func(track Track) bool {
+		return strings.ToLower(strings.ReplaceAll(track.Name, " ", "")) == name
+	})
+
+	if idx < 0 {
+		return "", fmt.Errorf("%w: %q", ErrNotFound, name)
+	}
+
+	return list.Tracks[idx].ID, nil
 }
