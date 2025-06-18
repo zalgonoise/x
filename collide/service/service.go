@@ -13,8 +13,8 @@ type Repository interface {
 	ListDistricts(ctx context.Context) ([]string, error)
 	ListAllTracksByDistrict(ctx context.Context, district string) ([]string, error)
 	ListDriftTracksByDistrict(ctx context.Context, district string) ([]string, error)
-	GetAlternativesByDistrictAndTrack(ctx context.Context, district string, trackID string) ([]string, error)
-	GetCollisionsByDistrictAndTrack(ctx context.Context, district string, trackID string) ([]string, error)
+	GetAlternativesByDistrictAndTrack(ctx context.Context, district string, track string) ([]string, error)
+	GetCollisionsByDistrictAndTrack(ctx context.Context, district string, track string) ([]string, error)
 }
 
 type Service struct {
