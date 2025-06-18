@@ -38,7 +38,7 @@
     "/v1/collide/districts/{district}/all": {
       "get": {
         "summary": "List All Tracks In A District",
-        "description": "Returns a list of all collide in a certain district, from the configured track list",
+        "description": "Returns a list of all tracks in a certain district, from the configured track list",
         "operationId": "CollideService_ListAllTracksByDistrict",
         "responses": {
           "200": {
@@ -57,6 +57,7 @@
         "parameters": [
           {
             "name": "district",
+            "description": "The target district to look up.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -70,7 +71,7 @@
     "/v1/collide/districts/{district}/drift": {
       "get": {
         "summary": "List Drift Tracks In A District",
-        "description": "Returns a list of drift collide in a certain district, from the configured track list",
+        "description": "Returns a list of drift tracks in a certain district, from the configured track list",
         "operationId": "CollideService_ListDriftTracksByDistrict",
         "responses": {
           "200": {
@@ -89,6 +90,7 @@
         "parameters": [
           {
             "name": "district",
+            "description": "The target district to look up.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -102,7 +104,7 @@
     "/v1/collide/districts/{district}/drift/{track}/alternatives": {
       "get": {
         "summary": "Get Alternatives By District And Track",
-        "description": "Returns a list of alternative drift collide in a certain district, which should not collide with the target, from the configured track list",
+        "description": "Returns a list of alternative drift tracks in a certain district, which should not collide with the target, from the configured track list",
         "operationId": "CollideService_GetAlternativesByDistrictAndTrack",
         "responses": {
           "200": {
@@ -121,12 +123,14 @@
         "parameters": [
           {
             "name": "district",
+            "description": "The target district to look up.",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
             "name": "track",
+            "description": "The current track as reference.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -140,7 +144,7 @@
     "/v1/collide/districts/{district}/drift/{track}/collisions": {
       "get": {
         "summary": "Get Alternatives By District And Track",
-        "description": "Returns a list of collide which would collide with the target in a certain district, from the configured track list",
+        "description": "Returns a list of tracks which would collide with the target in a certain district, from the configured track list",
         "operationId": "CollideService_GetCollisionsByDistrictAndTrack",
         "responses": {
           "200": {
@@ -159,12 +163,14 @@
         "parameters": [
           {
             "name": "district",
+            "description": "The target district to look up.",
             "in": "path",
             "required": true,
             "type": "string"
           },
           {
             "name": "track",
+            "description": "The current track as reference.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -208,24 +214,28 @@
     "v1GetAlternativesByDistrictAndTrackResponse": {
       "type": "object",
       "properties": {
-        "collide": {
+        "tracks": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The available non-colliding tracks for the target district."
         }
-      }
+      },
+      "description": "GetAlternativesByDistrictAndTrackResponse lists the available non-colliding tracks in the target district."
     },
     "v1GetCollisionsByDistrictAndTrackResponse": {
       "type": "object",
       "properties": {
-        "collide": {
+        "tracks": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The available colliding tracks for the target district."
         }
-      }
+      },
+      "description": "GetCollisionsByDistrictAndTrackResponse lists the available colliding tracks in the target district."
     },
     "v1ListAllTracksByDistrictResponse": {
       "type": "object",
@@ -234,9 +244,11 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The available tracks for the target district."
         }
-      }
+      },
+      "description": "ListAllTracksByDistrictResponse lists the available tracks in the target district."
     },
     "v1ListDistrictsResponse": {
       "type": "object",
@@ -245,20 +257,24 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The available districts."
         }
-      }
+      },
+      "description": "ListDistrictsResponse returns a list of all districts."
     },
     "v1ListDriftTracksByDistrictResponse": {
       "type": "object",
       "properties": {
-        "collide": {
+        "tracks": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The available drift tracks for the target district."
         }
-      }
+      },
+      "description": "ListDriftTracksByDistrictResponse lists the available drift tracks in the target district."
     }
   }
 }
