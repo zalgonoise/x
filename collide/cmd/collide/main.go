@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/zalgonoise/x/cli"
-	"github.com/zalgonoise/x/collide/log"
+	"github.com/zalgonoise/x/collide/internal/log"
 	"log/slog"
 	"os"
 )

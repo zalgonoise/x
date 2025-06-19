@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/zalgonoise/x/collide/internal/repository/memory"
 	pb "github.com/zalgonoise/x/collide/pkg/api/pb/collide/v1"
-	"github.com/zalgonoise/x/collide/repository/memory"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

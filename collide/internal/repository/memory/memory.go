@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zalgonoise/x/collide/tracks"
+	"github.com/zalgonoise/x/collide/internal/tracks"
 	"slices"
 )
 
