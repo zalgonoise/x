@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	disconnected = 0.0
-	connected    = 1.0
-
 	// traceIDKey is used as the trace ID key value in the prometheus.Labels in a prometheus.Exemplar.
 	//
 	// Its value of `trace_id` complies with the OpenTelemetry specification for metrics' exemplars, as seen in:
