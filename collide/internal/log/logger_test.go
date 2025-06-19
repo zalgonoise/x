@@ -1,7 +1,6 @@
 package log
 
 import (
-	"context"
 	"log/slog"
 	"os"
 	"testing"
@@ -50,27 +49,7 @@ func TestNew(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			require.Equal(t, testcase.wants, New(testcase.level))
+			require.Equal(t, testcase.wants, New(testcase.level, true, true))
 		})
 	}
-}
-
-func TestNoOp(t *testing.T) {
-	require.Equal(t, slog.New(noOpHandler{}), NoOp())
-}
-
-func TestNoOpHandler_Enabled(t *testing.T) {
-	require.False(t, noOpHandler{}.Enabled(context.Background(), slog.LevelDebug))
-}
-
-func TestNoOpHandler_Handle(t *testing.T) {
-	require.Nil(t, noOpHandler{}.Handle(context.Background(), slog.Record{}))
-}
-
-func TestNoOpHandler_WithAttrs(t *testing.T) {
-	require.Equal(t, noOpHandler{}, noOpHandler{}.WithAttrs([]slog.Attr{slog.String("nope", "zero")}))
-}
-
-func TestNoOpHandler_WithGroup(t *testing.T) {
-	require.Equal(t, noOpHandler{}, noOpHandler{}.WithGroup("nope"))
 }

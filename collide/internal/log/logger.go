@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func New(level string) *slog.Logger {
+func New(level string, withSource, withSpanID bool) *slog.Logger {
 	var logLevel slog.Level
 
 	err := logLevel.UnmarshalText([]byte(level))
@@ -17,10 +17,10 @@ func New(level string) *slog.Logger {
 	logger := slog.New(
 		NewSpanContextHandler(
 			slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
-				AddSource: true,
+				AddSource: withSource,
 				Level:     logLevel,
 			}),
-			true,
+			withSpanID,
 		),
 	)
 
@@ -28,6 +28,7 @@ func New(level string) *slog.Logger {
 		logger.WarnContext(context.Background(), "invalid log level string",
 			slog.String("input_level", level),
 			slog.String("error", err.Error()),
+			slog.String("defaulting_to", logLevel.String()),
 		)
 	}
 
