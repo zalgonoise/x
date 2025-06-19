@@ -2,56 +2,42 @@ package tracing
 
 import (
 	"context"
+	"github.com/zalgonoise/x/collide/internal/config"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zalgonoise/cfg"
 )
 
 func TestGRPCExporter(t *testing.T) {
-	testcases := []struct {
-		name      string
-		uri       string
-		cfg       []cfg.Option[Config]
-		errString string
+	for _, testcase := range []struct {
+		name string
+		cfg  config.Tracing
+		err  error
 	}{
 		{
-			name: "Success/ValidAddressButNoConnection",
-			uri:  "localhost:38088",
-			cfg: []cfg.Option[Config]{
-				WithTimeout(250 * time.Millisecond),
+			name: "Success",
+			cfg: config.Tracing{
+				URI: "localhost:38088",
 			},
 		},
 		{
-			name: "Success/ValidAddressButNoConnection/WithCredentials",
-			uri:  "localhost:38088",
-			cfg: []cfg.Option[Config]{
-				WithTimeout(250 * time.Millisecond),
-				WithCredentials("gopher", "goroutine"),
+			name: "Success/WithCredentials",
+			cfg: config.Tracing{
+				URI:      "localhost:38088",
+				Username: "gopher",
+				Password: "goroutine",
 			},
 		},
-		{
-			name: "Fail/NoAddress",
-			cfg: []cfg.Option[Config]{
-				WithTimeout(250 * time.Millisecond),
-			},
-			// from https://github.com/grpc/grpc-go/blob/master/internal/resolver/passthrough/passthrough.go#L35
-			errString: "passthrough: received empty target in Build()",
-		},
-	}
-
-	for i, testcase := range testcases {
+	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			_, err := GRPCExporter(context.Background(), testcase.uri, testcases[i].cfg...)
+			_, err := GRPCExporter(testcase.cfg)
 			if err != nil {
-				require.NotEmpty(t, testcase.errString, err)
-				require.Contains(t, err.Error(), testcase.errString)
+				require.ErrorIs(t, testcase.err, err)
 
 				return
 			}
 
-			require.Empty(t, testcase.errString)
+			require.NoError(t, err)
 		})
 	}
 }

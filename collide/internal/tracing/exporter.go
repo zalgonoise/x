@@ -6,12 +6,13 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/zalgonoise/cfg"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/zalgonoise/x/collide/internal/config"
 )
 
 const (
@@ -20,18 +21,11 @@ const (
 )
 
 // GRPCExporter creates a trace.SpanExporter using a gRPC connection to a tracing backend.
-func GRPCExporter(
-	ctx context.Context, url string, opts ...cfg.Option[Config],
-) (sdktrace.SpanExporter, error) {
-	config := cfg.Set(defaultConfig(), opts...)
-
-	ctx, cancel := context.WithTimeout(ctx, config.timeout)
-	defer cancel()
-
+func GRPCExporter(cfg config.Tracing) (sdktrace.SpanExporter, error) {
 	dialOpts := make([]grpc.DialOption, 0, totalDialOptions)
 
 	switch {
-	case config.username != "" && config.password != "":
+	case cfg.Username != "" && cfg.Password != "":
 		dialOpts = append(dialOpts,
 			// Disable "G402 (CWE-295): TLS MinVersion too low. (Confidence: HIGH, Severity: HIGH)":
 			// Go has a minimum TLS version 1.2 set. By creating an empty tls.Config we're following that minimum version.
@@ -43,15 +37,15 @@ func GRPCExporter(
 			// #nosec G402
 			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
 			grpc.WithPerRPCCredentials(basicAuth{
-				username: config.username,
-				password: config.password,
+				username: cfg.Username,
+				password: cfg.Password,
 			}),
 		)
 	default:
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	conn, err := grpc.DialContext(ctx, url, dialOpts...)
+	conn, err := grpc.NewClient(cfg.URI, dialOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gRPC connection to collector: %w", err)
 	}
