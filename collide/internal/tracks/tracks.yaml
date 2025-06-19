@@ -52,6 +52,7 @@ tracks:
     collides_with:
       - FinLAT
       - FinEvasLAT
+      - FinBorderRun
       - FinMikroTournament
       - FinFuckinW
   - name: Sk8 Fkn' Way
@@ -99,6 +100,7 @@ tracks:
     id: FinBorderRun
     district: Financial
     collides_with:
+      - FinTunnelOfDeath
       - FinSk8FknWay
       - FinMikroTournament
       - FinNewCrossGT
