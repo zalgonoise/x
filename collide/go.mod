@@ -11,13 +11,14 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/stretchr/testify v1.10.0
 	github.com/zalgonoise/x/authz v0.0.0-20250618162243-8e499f6678a6
-	github.com/zalgonoise/x/cli v0.0.0-20250619194109-8e1d7ae3fcbf
+	github.com/zalgonoise/x/cli v0.0.0-20250619201738-0bfcd420c3a1
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0
 	go.opentelemetry.io/otel v1.36.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.36.0
 	go.opentelemetry.io/otel/sdk v1.36.0
 	go.opentelemetry.io/otel/trace v1.36.0
+	go.uber.org/automaxprocs v1.6.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
@@ -40,7 +41,7 @@ require (
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/zalgonoise/cfg v1.0.0 // indirect
-	github.com/zalgonoise/x/errs v0.0.0-20250619194109-8e1d7ae3fcbf // indirect
+	github.com/zalgonoise/x/errs v0.0.0-20250619201738-0bfcd420c3a1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.36.0 // indirect
 	go.opentelemetry.io/otel/metric v1.36.0 // indirect
