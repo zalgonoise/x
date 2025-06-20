@@ -8,6 +8,68 @@ import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 import "validate/validate.proto";
 
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  swagger: "2.0"
+  info: {
+    title: "collide-api",
+    version: "1.0"
+    description: "Collide is an application which provides track alternatives and collisions within a certain district"
+  }
+  schemes: HTTP
+  host: "localhost:8080"
+  tags: [
+    {
+      name: "Collide"
+      description: "Service to list districts and tracks, as well as alternatives and collisions for the same"
+    }
+  ]
+  responses: {
+    key: "401"
+    value: {
+      description: "Unauthenticated"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+  responses: {
+    key: "403"
+    value: {
+      description: "Unauthorized"
+      schema: {
+        json_schema: {
+          ref: "#/definitions/rpcStatus"
+        }
+      }
+    }
+  }
+  extensions {
+    key: "x-google-endpoints"
+    value: {
+      list_value: {
+        values: [{
+          struct_value: {
+            fields: [{
+              key: "name"
+              value: {
+                string_value: "collide.api.fallenpetals.com"
+              }
+            },
+            {
+              key: "allow_cors"
+              value: {
+                bool_value: true
+              }
+            }]
+          }
+        }]
+      }
+    }
+  }
+};
+
 // CollideService handles RPCs related to track listings and collisions, for different districts.
 service CollideService {
   // ListDistricts fetches a list of configured districts in the CollideService.
