@@ -23,7 +23,7 @@ func Tracer(name string) trace.Tracer {
 
 type ShutdownFunc func(ctx context.Context) error
 
-func Init(ctx context.Context, name string, traceExporter sdktrace.SpanExporter) (ShutdownFunc, error) {
+func Init(ctx context.Context, traceExporter sdktrace.SpanExporter) (ShutdownFunc, error) {
 	if traceExporter == nil {
 		otel.SetTracerProvider(noop.NewTracerProvider())
 
@@ -31,7 +31,7 @@ func Init(ctx context.Context, name string, traceExporter sdktrace.SpanExporter)
 	}
 
 	res, err := resource.New(ctx,
-		resource.WithAttributes(semconv.ServiceName(name)), // the service name used to display traces in backends
+		resource.WithAttributes(semconv.ServiceName(ServiceName)), // the service name used to display traces in backends
 	)
 	if err != nil {
 		return nil, err
