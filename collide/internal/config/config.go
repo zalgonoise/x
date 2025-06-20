@@ -5,6 +5,7 @@ import (
 )
 
 type Config struct {
+	HTTP    HTTP
 	Tracks  Tracks
 	Logging Logging
 	Tracing Tracing
@@ -29,6 +30,6 @@ type Tracing struct {
 	Password string `env:"COLLIDE_TRACING_PASSWORD"`
 }
 
-func New() (*Config, error) {
-	return env.ParseAs[*Config]()
+func New() (Config, error) {
+	return env.ParseAs[Config]()
 }
