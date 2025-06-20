@@ -69,6 +69,8 @@ func (s *Server) RegisterHTTP(method, path string, handler http.Handler) error {
 }
 
 func (s *Server) ListenAndServe() error {
+	s.server.Handler = corsMiddleware(s.server.Handler)
+
 	return s.server.ListenAndServe()
 }
 
@@ -90,5 +92,29 @@ func urlAttributesMiddleware(h http.Handler) http.Handler {
 		}
 
 		h.ServeHTTP(writer, request)
+	})
+}
+
+// corsMiddleware adds the necessary CORS headers to the response.
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: limit to the actual target domain
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		// allow common methods
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+
+		// allow common headers
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// browsers sometimes send a pre-flight OPTIONS request to check
+		// if the server allows the actual request.
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// pass the request to the next handler in the chain
+		next.ServeHTTP(w, r)
 	})
 }
