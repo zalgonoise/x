@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collide API Frontend - Vanilla JS</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #1c1e21;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-top: 0;
+            font-size: 1.8em;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            background-color: #fff;
+            font-size: 1em;
+        }
+        select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        .loader {
+            display: none; /* Hidden by default */
+            margin-left: 10px;
+            font-size: 0.9em;
+            color: #007bff;
+            vertical-align: middle;
+        }
+        .actions-container {
+            margin-top: 25px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        button.action-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button.action-btn:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        button.action-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .section { /* For results area */
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            min-height: 50px;
+        }
+        .section h2 {
+            font-size: 1.2em;
+            color: #333;
+            margin-top: 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+        .section ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+        .section li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .section li:last-child {
+            border-bottom: none;
+        }
+        .section .track-name {
+            font-weight: 500;
+        }
+        .initial-message, .empty-message {
+            color: #606770;
+            font-style: italic;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Collide</h1>
+
+    <!-- District Selection -->
+    <div class="form-group">
+        <label for="district-select">1. Select District</label>
+        <div style="display: flex; align-items: center;">
+            <select id="district-select" name="district" disabled>
+                <option value="">Loading districts...</option>
+            </select>
+            <span id="district-loader" class="loader" style="display: inline-block;">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Track Selection -->
+    <div class="form-group">
+        <label for="track-select">2. Select Drift Track</label>
+        <div style="display: flex; align-items: center;">
+            <select id="track-select" name="track" disabled>
+                <option value="">-- Select a district first --</option>
+            </select>
+            <span id="track-loader" class="loader">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div id="actions-container" class="actions-container" style="display: none;">
+        <button id="get-alternatives-btn" class="action-btn" disabled>
+            Get Alternatives
+        </button>
+        <button id="get-collisions-btn" class="action-btn" disabled>
+            Get Collisions
+        </button>
+    </div>
+    <div style="text-align:center;"><span id="results-loader" class="loader">Fetching results...</span></div>
+
+    <!-- Results Section -->
+    <div id="results-section" class="section">
+        <p class="initial-message">Select a district and track, then an action.</p>
+    </div>
+</div>
+
+<script>
+    const API_BASE_URL = "http://localhost:8080"; // IMPORTANT: Change if your API is elsewhere
+
+    // DOM Elements
+    const districtSelect = document.getElementById('district-select');
+    const trackSelect = document.getElementById('track-select');
+    const getAlternativesBtn = document.getElementById('get-alternatives-btn');
+    const getCollisionsBtn = document.getElementById('get-collisions-btn');
+    const resultsSection = document.getElementById('results-section');
+
+    const districtLoader = document.getElementById('district-loader');
+    const trackLoader = document.getElementById('track-loader');
+    const resultsLoader = document.getElementById('results-loader');
+    const actionsContainer = document.getElementById('actions-container');
+
+    // --- Helper Functions ---
+    function showLoader(loaderElement) {
+        if (loaderElement) loaderElement.style.display = 'inline-block';
+    }
+
+    function hideLoader(loaderElement) {
+        if (loaderElement) loaderElement.style.display = 'none';
+    }
+
+    function updateResults(htmlContent) {
+        resultsSection.innerHTML = htmlContent;
+    }
+
+    function populateDropdown(selectElement, items, defaultOptionText, valueField = null) {
+        selectElement.innerHTML = ''; // Clear existing options
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = "";
+        defaultOpt.textContent = defaultOptionText;
+        selectElement.appendChild(defaultOpt);
+
+        if (items && items.length > 0) {
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = valueField ? item[valueField] : item;
+                option.textContent = valueField ? item[valueField] : item;
+                selectElement.appendChild(option);
+            });
+            selectElement.disabled = false;
+        } else {
+            defaultOpt.textContent = items ? `No ${selectElement.id.includes('district') ? 'districts' : 'tracks'} found` : `Error loading ${selectElement.id.includes('district') ? 'districts' : 'tracks'}`;
+            selectElement.disabled = true;
+        }
+    }
+
+    function displayError(message, targetElement = resultsSection) {
+        targetElement.innerHTML = `<p class="error-message">${message}</p>`;
+    }
+
+    // --- API Fetch Functions ---
+    async function fetchApi(endpoint, loaderElement) {
+        if (loaderElement) showLoader(loaderElement);
+        try {
+            const response = await fetch(`${API_BASE_URL}${endpoint}`);
+            if (!response.ok) {
+                // Try to parse error from rpcStatus if possible
+                try {
+                    const errorData = await response.json();
+                    if (errorData && errorData.rpcStatus && errorData.rpcStatus.message) {
+                        throw new Error(`API Error (${response.status}): ${errorData.rpcStatus.message}`);
+                    }
+                } catch (e) { /* Ignore if error response is not JSON */ }
+                throw new Error(`HTTP error ${response.status} for ${endpoint}`);
+            }
+            const data = await response.json();
+            if (data.rpcStatus && data.rpcStatus.message) { // Handle 200 OK with rpcStatus error
+                throw new Error(`API Operation Error: ${data.rpcStatus.message}`);
+            }
+            return data;
+        } catch (error) {
+            console.error('Fetch API Error:', error);
+            displayError(error.message, resultsSection); // Display error in results section by default
+            return null; // Or throw error to be caught by caller
+        } finally {
+            if (loaderElement) hideLoader(loaderElement);
+        }
+    }
+
+    // --- Core Logic Functions ---
+    async function loadDistricts() {
+        const data = await fetchApi("/v1/collide/districts", districtLoader);
+        if (data && data.districts) {
+            populateDropdown(districtSelect, data.districts, "-- Select District --");
+        } else {
+            populateDropdown(districtSelect, null, "Error loading districts");
+        }
+        // Reset subsequent UI elements
+        resetTrackSelect();
+        resetActionsAndResults();
+    }
+
+    async function loadTracks(district) {
+        if (!district) {
+            resetTrackSelect();
+            resetActionsAndResults();
+            return;
+        }
+        const data = await fetchApi(`/v1/collide/districts/${encodeURIComponent(district)}/drift`, trackLoader);
+        if (data && data.tracks) {
+            populateDropdown(trackSelect, data.tracks, "-- Select Drift Track --");
+        } else {
+            populateDropdown(trackSelect, null, `No drift tracks for ${district} or error`);
+        }
+        resetActionsAndResults(); // Reset actions when tracks are loaded/reloaded
+    }
+
+    async function fetchAndDisplayResults(actionType) {
+        const district = districtSelect.value;
+        const track = trackSelect.value;
+
+        if (!district || !track) {
+            updateResults('<p class="initial-message">Please select a district and a track.</p>');
+            return;
+        }
+
+        const endpoint = actionType === 'alternatives'
+            ? `/v1/collide/districts/${encodeURIComponent(district)}/drift/${encodeURIComponent(track)}/alternatives`
+            : `/v1/collide/districts/${encodeURIComponent(district)}/drift/${encodeURIComponent(track)}/collisions`;
+
+        const data = await fetchApi(endpoint, resultsLoader);
+
+        if (data && data.tracks) {
+            let html = `<h2>${actionType.charAt(0).toUpperCase() + actionType.slice(1)} for '${track}' (${district})</h2>`;
+            if (data.tracks.length > 0) {
+                html += '<ul>';
+                data.tracks.forEach(t => {
+                    html += `<li><span class="track-name">${t}</span></li>`;
+                });
+                html += '</ul>';
+            } else {
+                html += `<p class="empty-message">No ${actionType} found for '${track}'.</p>`;
+            }
+            updateResults(html);
+        } else if (data && data.rpcStatus && data.rpcStatus.message) {
+            // Error already handled by fetchApi and displayed
+        } else if (data && !data.tracks) { // API returned 200 OK, but no 'tracks' field or it's null
+            updateResults(`<p class="empty-message">No ${actionType} found or unexpected response for '${track}'.</p>`);
+        }
+        // If fetchApi returned null due to network/HTTP error, the error is already displayed.
+    }
+
+    // --- UI State Management ---
+    function resetTrackSelect() {
+        trackSelect.innerHTML = '<option value="">-- Select a district first --</option>';
+        trackSelect.disabled = true;
+    }
+
+    function resetActionsAndResults() {
+        actionsContainer.style.display = 'none';
+        getAlternativesBtn.disabled = true;
+        getCollisionsBtn.disabled = true;
+        updateResults('<p class="initial-message">Select a district and track, then an action.</p>');
+    }
+
+    function handleDistrictChange() {
+        const selectedDistrict = districtSelect.value;
+        resetTrackSelect(); // Clear previous tracks
+        resetActionsAndResults(); // Reset actions and results
+        if (selectedDistrict) {
+            loadTracks(selectedDistrict);
+        }
+    }
+
+    function handleTrackChange() {
+        const selectedTrack = trackSelect.value;
+        if (selectedTrack) {
+            actionsContainer.style.display = 'flex';
+            getAlternativesBtn.disabled = false;
+            getCollisionsBtn.disabled = false;
+            updateResults('<p class="initial-message">Select an action below.</p>');
+        } else {
+            resetActionsAndResults();
+        }
+    }
+
+    // --- Event Listeners ---
+    districtSelect.addEventListener('change', handleDistrictChange);
+    trackSelect.addEventListener('change', handleTrackChange);
+    getAlternativesBtn.addEventListener('click', () => fetchAndDisplayResults('alternatives'));
+    getCollisionsBtn.addEventListener('click', () => fetchAndDisplayResults('collisions'));
+
+    // --- Initial Load ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDistricts();
+    });
+
+</script>
+</body>
+</html>
