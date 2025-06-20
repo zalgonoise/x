@@ -1,9 +1,20 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "validate/validate.proto",
-    "version": "version not set"
+    "title": "collide-api",
+    "description": "Collide is an application which provides track alternatives and collisions within a certain district",
+    "version": "1.0"
   },
+  "tags": [
+    {
+      "name": "Collide",
+      "description": "Service to list districts and tracks, as well as alternatives and collisions for the same"
+    }
+  ],
+  "host": "localhost:8080",
+  "schemes": [
+    "http"
+  ],
   "consumes": [
     "application/json"
   ],
@@ -21,6 +32,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListDistrictsResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -45,6 +68,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1ListAllTracksByDistrictResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -80,6 +115,18 @@
               "$ref": "#/definitions/v1ListDriftTracksByDistrictResponse"
             }
           },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
           "default": {
             "description": "An unexpected error response.",
             "schema": {
@@ -111,6 +158,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetAlternativesByDistrictAndTrackResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -151,6 +210,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/v1GetCollisionsByDistrictAndTrackResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
             }
           },
           "default": {
@@ -276,5 +347,11 @@
       },
       "description": "ListDriftTracksByDistrictResponse lists the available drift tracks in the target district."
     }
-  }
+  },
+  "x-google-endpoints": [
+    {
+      "allow_cors": true,
+      "name": "collide.api.fallenpetals.com"
+    }
+  ]
 }
