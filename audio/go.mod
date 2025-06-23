@@ -16,9 +16,9 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250615224423-52cb82f674b2
-	github.com/zalgonoise/x/errs v0.0.0-20250615224423-52cb82f674b2
-	github.com/zalgonoise/x/ptr v0.0.0-20250615224423-52cb82f674b2
+	github.com/zalgonoise/x/cli v0.0.0-20250621201300-2b97f24a9b9b
+	github.com/zalgonoise/x/errs v0.0.0-20250621201300-2b97f24a9b9b
+	github.com/zalgonoise/x/ptr v0.0.0-20250621201300-2b97f24a9b9b
 	go.opentelemetry.io/otel/trace v1.36.0
 	modernc.org/sqlite v1.38.0
 )
@@ -138,7 +138,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polyfloyd/go-errorlint v1.5.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.64.0 // indirect
+	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.2 // indirect
 	github.com/quasilyte/go-ruleguard/dsl v0.3.22 // indirect
@@ -192,7 +192,7 @@ require (
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476 // indirect
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
