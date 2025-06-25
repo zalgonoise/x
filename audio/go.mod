@@ -16,10 +16,10 @@ require (
 	github.com/zalgonoise/gbuf v1.1.0
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
 	github.com/zalgonoise/valigator v1.0.0
-	github.com/zalgonoise/x/cli v0.0.0-20250623191154-22a00438de98
-	github.com/zalgonoise/x/errs v0.0.0-20250623191154-22a00438de98
-	github.com/zalgonoise/x/ptr v0.0.0-20250623191154-22a00438de98
-	go.opentelemetry.io/otel/trace v1.36.0
+	github.com/zalgonoise/x/cli v0.0.0-20250624210134-45cbcee906b3
+	github.com/zalgonoise/x/errs v0.0.0-20250624210134-45cbcee906b3
+	github.com/zalgonoise/x/ptr v0.0.0-20250624210134-45cbcee906b3
+	go.opentelemetry.io/otel/trace v1.37.0
 	modernc.org/sqlite v1.38.0
 )
 
@@ -187,7 +187,7 @@ require (
 	gitlab.com/bosi/decorder v0.4.2 // indirect
 	go-simpler.org/musttag v0.12.2 // indirect
 	go-simpler.org/sloglint v0.7.1 // indirect
-	go.opentelemetry.io/otel v1.36.0 // indirect
+	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
