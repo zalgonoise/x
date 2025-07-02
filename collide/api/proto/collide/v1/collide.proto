@@ -112,7 +112,7 @@ service CollideService {
   // collide with the target track.
   rpc GetAlternativesByDistrictAndTrack(GetAlternativesByDistrictAndTrackRequest) returns (GetAlternativesByDistrictAndTrackResponse) {
     option (google.api.http) = {
-      get: "/v1/collide/districts/{district}/drift/{track}/alternatives"
+      get: "/v1/collide/districts/{district}/all/{track}/alternatives"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Alternatives By District And Track"
@@ -125,7 +125,7 @@ service CollideService {
   // target track.
   rpc GetCollisionsByDistrictAndTrack(GetCollisionsByDistrictAndTrackRequest) returns (GetCollisionsByDistrictAndTrackResponse) {
     option (google.api.http) = {
-      get: "/v1/collide/districts/{district}/drift/{track}/collisions"
+      get: "/v1/collide/districts/{district}/all/{track}/collisions"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Alternatives By District And Track"
@@ -153,7 +153,7 @@ message ListAllTracksByDistrictRequest {
 // ListAllTracksByDistrictResponse lists the available tracks in the target district.
 message ListAllTracksByDistrictResponse {
   // The available tracks for the target district.
-  repeated string tracks = 1 [json_name = "collide"];
+  repeated string tracks = 1 [json_name = "tracks"];
 }
 
 // ListDriftTracksByDistrictRequest describes the target district to fetch drift tracks in.
