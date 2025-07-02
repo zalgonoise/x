@@ -157,7 +157,7 @@ func (x *ListAllTracksByDistrictRequest) GetDistrict() string {
 type ListAllTracksByDistrictResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The available tracks for the target district.
-	Tracks        []string `protobuf:"bytes,1,rep,name=tracks,json=collide,proto3" json:"tracks,omitempty"`
+	Tracks        []string `protobuf:"bytes,1,rep,name=tracks,proto3" json:"tracks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -505,9 +505,9 @@ const file_collide_v1_collide_proto_rawDesc = "" +
 	"\x15ListDistrictsResponse\x12\x1c\n" +
 	"\tdistricts\x18\x01 \x03(\tR\tdistricts\"E\n" +
 	"\x1eListAllTracksByDistrictRequest\x12#\n" +
-	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\":\n" +
-	"\x1fListAllTracksByDistrictResponse\x12\x17\n" +
-	"\x06tracks\x18\x01 \x03(\tR\acollide\"G\n" +
+	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\"9\n" +
+	"\x1fListAllTracksByDistrictResponse\x12\x16\n" +
+	"\x06tracks\x18\x01 \x03(\tR\x06tracks\"G\n" +
 	" ListDriftTracksByDistrictRequest\x12#\n" +
 	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\";\n" +
 	"!ListDriftTracksByDistrictResponse\x12\x16\n" +
@@ -521,18 +521,18 @@ const file_collide_v1_collide_proto_rawDesc = "" +
 	"\bdistrict\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\bdistrict\x12\x1d\n" +
 	"\x05track\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x10\x01R\x05track\"A\n" +
 	"'GetCollisionsByDistrictAndTrackResponse\x12\x16\n" +
-	"\x06tracks\x18\x01 \x03(\tR\x06tracks2\xca\f\n" +
+	"\x06tracks\x18\x01 \x03(\tR\x06tracks2\xc6\f\n" +
 	"\x0eCollideService\x12\xcf\x01\n" +
 	"\rListDistricts\x12 .collide.v1.ListDistrictsRequest\x1a!.collide.v1.ListDistrictsResponse\"y\x92AY\n" +
 	"\aCollide\x12\x0eList Districts\x1a>Returns a list of all districts from the configured track list\x82\xd3\xe4\x93\x02\x17\x12\x15/v1/collide/districts\x12\xa0\x02\n" +
 	"\x17ListAllTracksByDistrict\x12*.collide.v1.ListAllTracksByDistrictRequest\x1a+.collide.v1.ListAllTracksByDistrictResponse\"\xab\x01\x92A|\n" +
 	"\aCollide\x12\x1dList All Tracks In A District\x1aRReturns a list of all tracks in a certain district, from the configured track list\x82\xd3\xe4\x93\x02&\x12$/v1/collide/districts/{district}/all\x12\xad\x02\n" +
 	"\x19ListDriftTracksByDistrict\x12,.collide.v1.ListDriftTracksByDistrictRequest\x1a-.collide.v1.ListDriftTracksByDistrictResponse\"\xb2\x01\x92A\x80\x01\n" +
-	"\aCollide\x12\x1fList Drift Tracks In A District\x1aTReturns a list of drift tracks in a certain district, from the configured track list\x82\xd3\xe4\x93\x02(\x12&/v1/collide/districts/{district}/drift\x12\x98\x03\n" +
-	"!GetAlternativesByDistrictAndTrack\x124.collide.v1.GetAlternativesByDistrictAndTrackRequest\x1a5.collide.v1.GetAlternativesByDistrictAndTrackResponse\"\x85\x02\x92A\xbe\x01\n" +
-	"\aCollide\x12&Get Alternatives By District And Track\x1a\x8a\x01Returns a list of alternative drift tracks in a certain district, which should not collide with the target, from the configured track list\x82\xd3\xe4\x93\x02=\x12;/v1/collide/districts/{district}/drift/{track}/alternatives\x12\xf7\x02\n" +
-	"\x1fGetCollisionsByDistrictAndTrack\x122.collide.v1.GetCollisionsByDistrictAndTrackRequest\x1a3.collide.v1.GetCollisionsByDistrictAndTrackResponse\"\xea\x01\x92A\xa5\x01\n" +
-	"\aCollide\x12&Get Alternatives By District And Track\x1arReturns a list of tracks which would collide with the target in a certain district, from the configured track list\x82\xd3\xe4\x93\x02;\x129/v1/collide/districts/{district}/drift/{track}/collisionsB\xe7\x03\x92A\xbb\x03\n" +
+	"\aCollide\x12\x1fList Drift Tracks In A District\x1aTReturns a list of drift tracks in a certain district, from the configured track list\x82\xd3\xe4\x93\x02(\x12&/v1/collide/districts/{district}/drift\x12\x96\x03\n" +
+	"!GetAlternativesByDistrictAndTrack\x124.collide.v1.GetAlternativesByDistrictAndTrackRequest\x1a5.collide.v1.GetAlternativesByDistrictAndTrackResponse\"\x83\x02\x92A\xbe\x01\n" +
+	"\aCollide\x12&Get Alternatives By District And Track\x1a\x8a\x01Returns a list of alternative drift tracks in a certain district, which should not collide with the target, from the configured track list\x82\xd3\xe4\x93\x02;\x129/v1/collide/districts/{district}/all/{track}/alternatives\x12\xf5\x02\n" +
+	"\x1fGetCollisionsByDistrictAndTrack\x122.collide.v1.GetCollisionsByDistrictAndTrackRequest\x1a3.collide.v1.GetCollisionsByDistrictAndTrackResponse\"\xe8\x01\x92A\xa5\x01\n" +
+	"\aCollide\x12&Get Alternatives By District And Track\x1arReturns a list of tracks which would collide with the target in a certain district, from the configured track list\x82\xd3\xe4\x93\x029\x127/v1/collide/districts/{district}/all/{track}/collisionsB\xe7\x03\x92A\xbb\x03\n" +
 	"\x032.0\x12x\n" +
 	"\vcollide-api\x12dCollide is an application which provides track alternatives and collisions within a certain district2\x031.0\x1a\x0elocalhost:8080*\x01\x01R5\n" +
 	"\x03401\x12.\n" +

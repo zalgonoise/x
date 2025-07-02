@@ -306,7 +306,7 @@ func RegisterCollideServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/collide.v1.CollideService/GetAlternativesByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/drift/{track}/alternatives"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/collide.v1.CollideService/GetAlternativesByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/all/{track}/alternatives"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -326,7 +326,7 @@ func RegisterCollideServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/collide.v1.CollideService/GetCollisionsByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/drift/{track}/collisions"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/collide.v1.CollideService/GetCollisionsByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/all/{track}/collisions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -435,7 +435,7 @@ func RegisterCollideServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/collide.v1.CollideService/GetAlternativesByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/drift/{track}/alternatives"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/collide.v1.CollideService/GetAlternativesByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/all/{track}/alternatives"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -452,7 +452,7 @@ func RegisterCollideServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/collide.v1.CollideService/GetCollisionsByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/drift/{track}/collisions"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/collide.v1.CollideService/GetCollisionsByDistrictAndTrack", runtime.WithHTTPPathPattern("/v1/collide/districts/{district}/all/{track}/collisions"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -472,8 +472,8 @@ var (
 	pattern_CollideService_ListDistricts_0                     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "collide", "districts"}, ""))
 	pattern_CollideService_ListAllTracksByDistrict_0           = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v1", "collide", "districts", "district", "all"}, ""))
 	pattern_CollideService_ListDriftTracksByDistrict_0         = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"v1", "collide", "districts", "district", "drift"}, ""))
-	pattern_CollideService_GetAlternativesByDistrictAndTrack_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"v1", "collide", "districts", "district", "drift", "track", "alternatives"}, ""))
-	pattern_CollideService_GetCollisionsByDistrictAndTrack_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"v1", "collide", "districts", "district", "drift", "track", "collisions"}, ""))
+	pattern_CollideService_GetAlternativesByDistrictAndTrack_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"v1", "collide", "districts", "district", "all", "track", "alternatives"}, ""))
+	pattern_CollideService_GetCollisionsByDistrictAndTrack_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"v1", "collide", "districts", "district", "all", "track", "collisions"}, ""))
 )
 
 var (
