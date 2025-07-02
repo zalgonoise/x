@@ -103,52 +103,7 @@
         ]
       }
     },
-    "/v1/collide/districts/{district}/drift": {
-      "get": {
-        "summary": "List Drift Tracks In A District",
-        "description": "Returns a list of drift tracks in a certain district, from the configured track list",
-        "operationId": "CollideService_ListDriftTracksByDistrict",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1ListDriftTracksByDistrictResponse"
-            }
-          },
-          "401": {
-            "description": "Unauthenticated",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          },
-          "403": {
-            "description": "Unauthorized",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "district",
-            "description": "The target district to look up.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Collide"
-        ]
-      }
-    },
-    "/v1/collide/districts/{district}/drift/{track}/alternatives": {
+    "/v1/collide/districts/{district}/all/{track}/alternatives": {
       "get": {
         "summary": "Get Alternatives By District And Track",
         "description": "Returns a list of alternative drift tracks in a certain district, which should not collide with the target, from the configured track list",
@@ -200,7 +155,7 @@
         ]
       }
     },
-    "/v1/collide/districts/{district}/drift/{track}/collisions": {
+    "/v1/collide/districts/{district}/all/{track}/collisions": {
       "get": {
         "summary": "Get Alternatives By District And Track",
         "description": "Returns a list of tracks which would collide with the target in a certain district, from the configured track list",
@@ -242,6 +197,51 @@
           {
             "name": "track",
             "description": "The current track as reference.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Collide"
+        ]
+      }
+    },
+    "/v1/collide/districts/{district}/drift": {
+      "get": {
+        "summary": "List Drift Tracks In A District",
+        "description": "Returns a list of drift tracks in a certain district, from the configured track list",
+        "operationId": "CollideService_ListDriftTracksByDistrict",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListDriftTracksByDistrictResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthenticated",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "403": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "district",
+            "description": "The target district to look up.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -311,7 +311,7 @@
     "v1ListAllTracksByDistrictResponse": {
       "type": "object",
       "properties": {
-        "collide": {
+        "tracks": {
           "type": "array",
           "items": {
             "type": "string"
