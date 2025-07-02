@@ -275,11 +275,11 @@
             resetActionsAndResults();
             return;
         }
-        const data = await fetchApi(`/v1/collide/districts/${encodeURIComponent(district)}/drift`, trackLoader);
+        const data = await fetchApi(`/v1/collide/districts/${encodeURIComponent(district)}/all`, trackLoader);
         if (data && data.tracks) {
-            populateDropdown(trackSelect, data.tracks, "-- Select Drift Track --");
+            populateDropdown(trackSelect, data.tracks, "-- Select Track --");
         } else {
-            populateDropdown(trackSelect, null, `No drift tracks for ${district} or error`);
+            populateDropdown(trackSelect, null, `No tracks for ${district} or error`);
         }
         resetActionsAndResults(); // Reset actions when tracks are loaded/reloaded
     }
@@ -294,8 +294,8 @@
         }
 
         const endpoint = actionType === 'alternatives'
-            ? `/v1/collide/districts/${encodeURIComponent(district)}/drift/${encodeURIComponent(track)}/alternatives`
-            : `/v1/collide/districts/${encodeURIComponent(district)}/drift/${encodeURIComponent(track)}/collisions`;
+            ? `/v1/collide/districts/${encodeURIComponent(district)}/all/${encodeURIComponent(track)}/alternatives`
+            : `/v1/collide/districts/${encodeURIComponent(district)}/all/${encodeURIComponent(track)}/collisions`;
 
         const data = await fetchApi(endpoint, resultsLoader);
 
