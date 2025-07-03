@@ -1,0 +1,24 @@
+services:
+  collide:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    container_name: collide
+    restart: unless-stopped
+    volumes:
+      - ./internal/tracks/tracks.yaml:/tracks.yaml:ro
+    environment:
+      COLLIDE_TRACKS_PATH: /tracks.yaml
+      COLLIDE_LOG_LEVEL: DEBUG
+      COLLIDE_LOG_WITH_SOURCE: true
+      COLLIDE_LOG_WITH_SPAN_ID: true
+      COLLIDE_TRACING_URI: tempo:4317
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    command: "serve"
+    networks:
+      app-runtime:
+
+networks:
+  app-runtime:
