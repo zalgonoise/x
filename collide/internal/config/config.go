@@ -26,7 +26,7 @@ type Logging struct {
 	WithSpanID bool   `env:"COLLIDE_LOG_WITH_SPAN_ID" envDefault:"true"`
 }
 type Tracing struct {
-	URI      string `env:"COLLIDE_TRACING_URI"`
+	URI      string `env:"COLLIDE_TRACING_URI" envDefault:"tempo:4317"`
 	Username string `env:"COLLIDE_TRACING_USERNAME"`
 	Password string `env:"COLLIDE_TRACING_PASSWORD"`
 }

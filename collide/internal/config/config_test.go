@@ -27,7 +27,7 @@ func TestNew(t *testing.T) {
 					WithSpanID: true,
 				},
 				Tracing: Tracing{
-					URI:      "",
+					URI:      "tempo:4317",
 					Username: "",
 					Password: "",
 				},
