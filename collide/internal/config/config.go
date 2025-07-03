@@ -11,18 +11,19 @@ type Config struct {
 	Tracing Tracing
 }
 
+type HTTP struct {
+	Port     int `env:"COLLIDE_HTTP_PORT" envDefault:"8080"`
+	GRPCPort int `env:"COLLIDE_GRPC_PORT" envDefault:"8081"`
+}
+
 type Tracks struct {
 	Path string `env:"COLLIDE_TRACKS_PATH"`
 }
 
-type HTTP struct {
-	Port     int `env:"COLLIDE_HTTP_PORT"`
-	GRPCPort int `env:"COLLIDE_GRPC_PORT"`
-}
 type Logging struct {
-	Level      string `env:"COLLIDE_LOG_LEVEL"`
-	WithSource bool   `env:"COLLIDE_LOG_WITH_SOURCE"`
-	WithSpanID bool   `env:"COLLIDE_LOG_WITH_SPAN_ID"`
+	Level      string `env:"COLLIDE_LOG_LEVEL" envDefault:"INFO"`
+	WithSource bool   `env:"COLLIDE_LOG_WITH_SOURCE" envDefault:"true"`
+	WithSpanID bool   `env:"COLLIDE_LOG_WITH_SPAN_ID" envDefault:"true"`
 }
 type Tracing struct {
 	URI      string `env:"COLLIDE_TRACING_URI"`
