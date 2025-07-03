@@ -79,7 +79,6 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 	}
 
 	tracer := tracing.Tracer("collide-server")
-	_ = tracer // TODO: remove when used
 
 	promMetrics := metrics.NewMetrics()
 
@@ -102,7 +101,7 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 		return 1, err
 	}
 
-	collideService := service.New(repo)
+	collideService := service.New(repo, promMetrics, logger, tracer)
 
 	httpServer, err := httpserver.NewServer(fmt.Sprintf(":%d", cfg.HTTP.Port))
 	if err != nil {
