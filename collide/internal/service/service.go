@@ -5,8 +5,13 @@ import (
 	"errors"
 	"github.com/zalgonoise/x/collide/internal/repository/memory"
 	pb "github.com/zalgonoise/x/collide/pkg/api/pb/collide/v1"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"log/slog"
+	"time"
 )
 
 type Repository interface {
@@ -17,25 +22,79 @@ type Repository interface {
 	GetCollisionsByDistrictAndTrack(ctx context.Context, district string, track string) ([]string, error)
 }
 
+type Metrics interface {
+	IncListDistricts()
+	IncListDistrictsFailed()
+	ObserveListDistrictsLatency(context.Context, time.Duration)
+	IncListAllTracksByDistrict(string)
+	IncListAllTracksByDistrictFailed(string)
+	ObserveListAllTracksByDistrictLatency(context.Context, time.Duration, string)
+	IncListDriftTracksByDistrict(string)
+	IncListDriftTracksByDistrictFailed(string)
+	ObserveListDriftTracksByDistrictLatency(context.Context, time.Duration, string)
+	IncGetAlternativesByDistrictAndTrack(string, string)
+	IncGetAlternativesByDistrictAndTrackFailed(string, string)
+	ObserveGetAlternativesByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
+	IncGetCollisionsByDistrictAndTrack(string, string)
+	IncGetCollisionsByDistrictAndTrackFailed(string, string)
+	ObserveGetCollisionsByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
+}
+
 type Service struct {
 	pb.UnimplementedCollideServiceServer
 
 	repo Repository
+
+	metrics Metrics
+	logger  *slog.Logger
+	tracer  trace.Tracer
 }
 
-func New(repo Repository) *Service {
-	return &Service{repo: repo}
+func New(repo Repository, metrics Metrics, logger *slog.Logger, tracer trace.Tracer) *Service {
+	return &Service{
+		repo:    repo,
+		metrics: metrics,
+		logger:  logger,
+		tracer:  tracer,
+	}
 }
 
 func (s *Service) ListDistricts(ctx context.Context, _ *pb.ListDistrictsRequest) (*pb.ListDistrictsResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "ListDistricts")
+	defer span.End()
+
+	s.metrics.IncListDistricts()
+	start := time.Now()
+	defer func() {
+		s.metrics.ObserveListDistrictsLatency(ctx, time.Since(start))
+	}()
+
 	districts, err := s.repo.ListDistricts(ctx)
 
 	switch {
 	case errors.Is(err, memory.ErrNoDistricts):
+		s.metrics.IncListDistrictsFailed()
+		s.logger.ErrorContext(ctx, "listing districts got zero results", slog.String("error", err.Error()))
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("listing districts got zero results", trace.WithAttributes(
+			attribute.String("error", err.Error())))
+
 		return nil, status.Error(codes.NotFound, err.Error())
 	case err != nil:
+		s.metrics.IncListDistrictsFailed()
+		s.logger.ErrorContext(ctx, "listing districts", slog.String("error", err.Error()))
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("listing districts", trace.WithAttributes(
+			attribute.String("error", err.Error())))
+
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
+
+	s.logger.DebugContext(ctx, "listed districts successfully")
+	span.AddEvent("listed districts successfully")
+	span.SetStatus(otelcodes.Ok, "")
 
 	return &pb.ListDistrictsResponse{Districts: districts}, nil
 }
