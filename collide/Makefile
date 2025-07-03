@@ -1,3 +1,6 @@
+app:
+	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide
+
 .PHONY: dep-update
 dep-update:
 	go get -u ./...
