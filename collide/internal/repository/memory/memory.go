@@ -73,23 +73,61 @@ func (r *Repository) ListDistricts(ctx context.Context) ([]string, error) {
 }
 
 func (r *Repository) ListAllTracksByDistrict(ctx context.Context, district string) ([]string, error) {
+	ctx, span := r.tracer.Start(ctx, "Repository.ListDistricts", trace.WithAttributes(
+		attribute.Int("track_count", len(r.tracks.Tracks)),
+		attribute.String("district", district)))
+	defer span.End()
+
 	t, err := tracks.GetTracksByDistrict(r.tracks, district, false)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("fetching tracks by district", trace.WithAttributes(
+			attribute.String("error", err.Error())))
+
 		return nil, err
 	}
 
 	if len(t) == 0 {
+		span.AddEvent("fetching tracks by district yielded zero results", trace.WithAttributes(
+			attribute.String("district", district),
+			attribute.Int("track_count", 0)))
+
 		districts, err := r.ListDistricts(ctx)
 		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(otelcodes.Error, err.Error())
+			span.AddEvent("failed to fetch district list for verification", trace.WithAttributes(
+				attribute.String("district", district),
+				attribute.String("error", err.Error())))
+
 			return nil, fmt.Errorf("listing tracks by district %q: %w", district, err)
 		}
 
 		if !slices.Contains(districts, district) {
+			span.RecordError(ErrDistrictNotFound)
+			span.SetStatus(otelcodes.Error, ErrDistrictNotFound.Error())
+			span.AddEvent("district does not exist", trace.WithAttributes(
+				attribute.String("target_district", district),
+				attribute.StringSlice("districts", districts),
+				attribute.String("error", ErrDistrictNotFound.Error())))
+
 			return nil, ErrDistrictNotFound
 		}
 
+		span.RecordError(ErrNoTracks)
+		span.SetStatus(otelcodes.Error, ErrNoTracks.Error())
+		span.AddEvent("no tracks found for this district", trace.WithAttributes(
+			attribute.String("district", district),
+			attribute.String("error", ErrNoTracks.Error())))
+
 		return nil, ErrNoTracks
 	}
+
+	span.AddEvent("listed tracks in district successfully", trace.WithAttributes(
+		attribute.String("district", district),
+		attribute.Int("track_count", len(t))))
+	span.SetStatus(otelcodes.Ok, "")
 
 	return tracks.GetNamesFromIDs(r.tracks, t)
 }
