@@ -60,7 +60,7 @@ func New(repo Repository, metrics Metrics, logger *slog.Logger, tracer trace.Tra
 }
 
 func (s *Service) ListDistricts(ctx context.Context, _ *pb.ListDistrictsRequest) (*pb.ListDistrictsResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "ListDistricts")
+	ctx, span := s.tracer.Start(ctx, "Service.ListDistricts")
 	defer span.End()
 
 	s.metrics.IncListDistricts()
@@ -100,7 +100,7 @@ func (s *Service) ListDistricts(ctx context.Context, _ *pb.ListDistrictsRequest)
 }
 
 func (s *Service) ListAllTracksByDistrict(ctx context.Context, req *pb.ListAllTracksByDistrictRequest) (*pb.ListAllTracksByDistrictResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "ListAllTracksByDistrict", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "Service.ListAllTracksByDistrict", trace.WithAttributes(
 		attribute.String("district", req.GetDistrict()),
 		attribute.String("filter", "all")))
 	defer span.End()
@@ -161,7 +161,7 @@ func (s *Service) ListAllTracksByDistrict(ctx context.Context, req *pb.ListAllTr
 }
 
 func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDriftTracksByDistrictRequest) (*pb.ListDriftTracksByDistrictResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "ListDriftTracksByDistrict", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "Service.ListDriftTracksByDistrict", trace.WithAttributes(
 		attribute.String("district", req.GetDistrict()),
 		attribute.String("filter", "drift")))
 
@@ -223,7 +223,7 @@ func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDri
 }
 
 func (s *Service) GetAlternativesByDistrictAndTrack(ctx context.Context, req *pb.GetAlternativesByDistrictAndTrackRequest) (*pb.GetAlternativesByDistrictAndTrackResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "GetAlternativesByDistrictAndTrack", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "Service.GetAlternativesByDistrictAndTrack", trace.WithAttributes(
 		attribute.String("district", req.GetDistrict()),
 		attribute.String("track", req.GetTrack())))
 	defer span.End()
@@ -290,7 +290,7 @@ func (s *Service) GetAlternativesByDistrictAndTrack(ctx context.Context, req *pb
 }
 
 func (s *Service) GetCollisionsByDistrictAndTrack(ctx context.Context, req *pb.GetCollisionsByDistrictAndTrackRequest) (*pb.GetCollisionsByDistrictAndTrackResponse, error) {
-	ctx, span := s.tracer.Start(ctx, "GetCollisionsByDistrictAndTrack", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "Service.GetCollisionsByDistrictAndTrack", trace.WithAttributes(
 		attribute.String("district", req.GetDistrict()),
 		attribute.String("track", req.GetTrack())))
 	defer span.End()
