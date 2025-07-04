@@ -96,8 +96,9 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 		return 1, err
 	}
 
-	repo, err := memory.FromBytes(buf)
-	if err != nil {
+	repo := memory.New(logger, tracer)
+
+	if err := repo.FromBytes(buf); err != nil {
 		return 1, err
 	}
 
