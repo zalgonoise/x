@@ -100,16 +100,51 @@ func (s *Service) ListDistricts(ctx context.Context, _ *pb.ListDistrictsRequest)
 }
 
 func (s *Service) ListAllTracksByDistrict(ctx context.Context, req *pb.ListAllTracksByDistrictRequest) (*pb.ListAllTracksByDistrictResponse, error) {
-	tracks, err := s.repo.ListAllTracksByDistrict(ctx, req.GetDistrict())
+	ctx, span := s.tracer.Start(ctx, "ListDistricts")
+	defer span.End()
+
+	district := req.GetDistrict()
+
+	s.metrics.IncListAllTracksByDistrict(district)
+	start := time.Now()
+	defer func() {
+		s.metrics.ObserveListAllTracksByDistrictLatency(ctx, time.Since(start), district)
+	}()
+
+	tracks, err := s.repo.ListAllTracksByDistrict(ctx, district)
 
 	switch {
 	case errors.Is(err, memory.ErrNoTracks), errors.Is(err, memory.ErrNoDistricts):
+		s.metrics.IncListAllTracksByDistrictFailed(district)
+		s.logger.ErrorContext(ctx, "listing all tracks by district got zero results",
+			slog.String("error", err.Error()), slog.String("district", district))
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("listing all tracks by district got zero results", trace.WithAttributes(
+			attribute.String("error", err.Error()),
+			attribute.String("district", district)))
+
 		return nil, status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, memory.ErrDistrictNotFound):
+		s.metrics.IncListAllTracksByDistrictFailed(district)
+		s.logger.ErrorContext(ctx, "listing all tracks in unknown district",
+			slog.String("error", err.Error()), slog.String("district", district))
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("listing all tracks in unknown district", trace.WithAttributes(
+			attribute.String("error", err.Error()),
+			attribute.String("district", district)))
+
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case err != nil:
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
+
+	s.logger.DebugContext(ctx, "listed all tracks by district successfully",
+		slog.String("district", district), slog.Int("track_count", len(tracks)))
+	span.AddEvent("listed districts successfully", trace.WithAttributes(
+		attribute.String("district", district), attribute.Int("track_count", len(tracks))))
+	span.SetStatus(otelcodes.Ok, "")
 
 	return &pb.ListAllTracksByDistrictResponse{Tracks: tracks}, nil
 }
