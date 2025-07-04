@@ -73,23 +73,24 @@ func (r *Repository) ListDistricts(ctx context.Context) ([]string, error) {
 }
 
 func (r *Repository) ListAllTracksByDistrict(ctx context.Context, district string) ([]string, error) {
-	ctx, span := r.tracer.Start(ctx, "Repository.ListDistricts", trace.WithAttributes(
+	ctx, span := r.tracer.Start(ctx, "Repository.ListAllTracksByDistrict", trace.WithAttributes(
 		attribute.Int("track_count", len(r.tracks.Tracks)),
-		attribute.String("district", district)))
+		attribute.String("district", district),
+		attribute.Bool("drift_only", false)))
 	defer span.End()
 
 	t, err := tracks.GetTracksByDistrict(r.tracks, district, false)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(otelcodes.Error, err.Error())
-		span.AddEvent("fetching tracks by district", trace.WithAttributes(
+		span.AddEvent("fetching all tracks by district", trace.WithAttributes(
 			attribute.String("error", err.Error())))
 
 		return nil, err
 	}
 
 	if len(t) == 0 {
-		span.AddEvent("fetching tracks by district yielded zero results", trace.WithAttributes(
+		span.AddEvent("fetching all tracks by district yielded zero results", trace.WithAttributes(
 			attribute.String("district", district),
 			attribute.Int("track_count", 0)))
 
@@ -101,7 +102,7 @@ func (r *Repository) ListAllTracksByDistrict(ctx context.Context, district strin
 				attribute.String("district", district),
 				attribute.String("error", err.Error())))
 
-			return nil, fmt.Errorf("listing tracks by district %q: %w", district, err)
+			return nil, fmt.Errorf("listing all tracks by district %q: %w", district, err)
 		}
 
 		if !slices.Contains(districts, district) {
@@ -133,23 +134,57 @@ func (r *Repository) ListAllTracksByDistrict(ctx context.Context, district strin
 }
 
 func (r *Repository) ListDriftTracksByDistrict(ctx context.Context, district string) ([]string, error) {
+	ctx, span := r.tracer.Start(ctx, "Repository.ListDriftTracksByDistrict", trace.WithAttributes(
+		attribute.Int("track_count", len(r.tracks.Tracks)),
+		attribute.String("district", district),
+		attribute.Bool("drift_only", true)))
+	defer span.End()
+
 	t, err := tracks.GetTracksByDistrict(r.tracks, district, true)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("fetching drift tracks by district", trace.WithAttributes(
+			attribute.String("error", err.Error())))
+
 		return nil, err
 	}
 
 	if len(t) == 0 {
+		span.AddEvent("fetching drift tracks by district yielded zero results", trace.WithAttributes(
+			attribute.String("district", district),
+			attribute.Int("track_count", 0)))
+
 		districts, err := r.ListDistricts(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("listing tracks by district %q: %w", district, err)
+			span.RecordError(err)
+			span.SetStatus(otelcodes.Error, err.Error())
+			span.AddEvent("failed to fetch district list for verification", trace.WithAttributes(
+				attribute.String("district", district),
+				attribute.String("error", err.Error())))
+
+			return nil, fmt.Errorf("listing drift tracks by district %q: %w", district, err)
 		}
 
 		if !slices.Contains(districts, district) {
+			span.RecordError(ErrDistrictNotFound)
+			span.SetStatus(otelcodes.Error, ErrDistrictNotFound.Error())
+			span.AddEvent("district does not exist", trace.WithAttributes(
+				attribute.String("target_district", district),
+				attribute.StringSlice("districts", districts),
+				attribute.String("error", ErrDistrictNotFound.Error())))
+
 			return nil, ErrDistrictNotFound
 		}
 
 		return nil, ErrNoTracks
 	}
+
+	span.RecordError(ErrNoTracks)
+	span.SetStatus(otelcodes.Error, ErrNoTracks.Error())
+	span.AddEvent("no drift tracks found for this district", trace.WithAttributes(
+		attribute.String("district", district),
+		attribute.String("error", ErrNoTracks.Error())))
 
 	return tracks.GetNamesFromIDs(r.tracks, t)
 }
