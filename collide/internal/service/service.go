@@ -175,7 +175,7 @@ func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDri
 		s.metrics.ObserveListDriftTracksByDistrictLatency(ctx, time.Since(start), district)
 	}()
 
-	tracks, err := s.repo.ListDriftTracksByDistrict(ctx, req.GetDistrict())
+	tracks, err := s.repo.ListDriftTracksByDistrict(ctx, district)
 
 	switch {
 	case errors.Is(err, memory.ErrNoTracks), errors.Is(err, memory.ErrNoDistricts):
@@ -223,16 +223,68 @@ func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDri
 }
 
 func (s *Service) GetAlternativesByDistrictAndTrack(ctx context.Context, req *pb.GetAlternativesByDistrictAndTrackRequest) (*pb.GetAlternativesByDistrictAndTrackResponse, error) {
-	tracks, err := s.repo.GetAlternativesByDistrictAndTrack(ctx, req.GetDistrict(), req.GetTrack())
+	ctx, span := s.tracer.Start(ctx, "GetAlternativesByDistrictAndTrack", trace.WithAttributes(
+		attribute.String("district", req.GetDistrict()),
+		attribute.String("track", req.GetTrack())))
+	defer span.End()
+
+	district := req.GetDistrict()
+	track := req.GetTrack()
+
+	s.metrics.IncGetAlternativesByDistrictAndTrack(district, track)
+	start := time.Now()
+	defer func() {
+		s.metrics.ObserveGetAlternativesByDistrictAndTrackLatency(ctx, time.Since(start), district, track)
+	}()
+
+	tracks, err := s.repo.GetAlternativesByDistrictAndTrack(ctx, district, track)
 
 	switch {
 	case errors.Is(err, memory.ErrNoTracks), errors.Is(err, memory.ErrNoDistricts):
+		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(district, track)
+		s.logger.ErrorContext(ctx, "getting alternative tracks by track in district got zero results",
+			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("getting alternative tracks by track in district got zero results", trace.WithAttributes(
+			attribute.String("error", err.Error()),
+			attribute.String("district", district),
+			attribute.String("track", track)))
+
 		return nil, status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, memory.ErrDistrictNotFound):
+		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(district, track)
+		s.logger.ErrorContext(ctx, "getting alternative tracks by track in unknown district",
+			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("getting alternative tracks by track in unknown district", trace.WithAttributes(
+			attribute.String("error", err.Error()),
+			attribute.String("district", district),
+			attribute.String("track", track)))
+
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case err != nil:
+		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(district, track)
+		s.logger.ErrorContext(ctx, "getting alternative tracks by track in district",
+			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
+		span.RecordError(err)
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.AddEvent("getting alternative tracks by track in district", trace.WithAttributes(
+			attribute.String("error", err.Error()),
+			attribute.String("district", district),
+			attribute.String("track", track)))
+
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
+
+	s.logger.DebugContext(ctx, "fetched alternative tracks by track in district successfully",
+		slog.String("district", district), slog.String("track", track), slog.Int("track_count", len(tracks)))
+	span.AddEvent("fetched alternative tracks by track in district successfully", trace.WithAttributes(
+		attribute.String("district", district),
+		attribute.String("track", track),
+		attribute.Int("track_count", len(tracks))))
+	span.SetStatus(otelcodes.Ok, "")
 
 	return &pb.GetAlternativesByDistrictAndTrackResponse{Tracks: tracks}, nil
 }
