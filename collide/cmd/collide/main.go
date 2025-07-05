@@ -83,15 +83,19 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 
 	if cfg.Profiling.Enabled {
 		profiler, err := profiling.New(cfg.Profiling.Name, cfg.Profiling.URI, cfg.Profiling.Tags, logger)
-		if err != nil {
-			return 1, err
-		}
+		switch {
+		case err != nil:
+			logger.WarnContext(ctx, "starting profiler",
+				slog.String("error", err.Error()),
+				slog.String("profiler_uri", cfg.Profiling.URI))
 
-		defer func() {
-			if err := profiler.Stop(); err != nil {
-				logger.ErrorContext(ctx, "stopping profiler", slog.String("error", err.Error()))
-			}
-		}()
+		default:
+			defer func() {
+				if err := profiler.Stop(); err != nil {
+					logger.ErrorContext(ctx, "stopping profiler", slog.String("error", err.Error()))
+				}
+			}()
+		}
 	}
 
 	promMetrics := metrics.NewMetrics()
