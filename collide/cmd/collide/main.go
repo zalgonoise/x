@@ -79,7 +79,7 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 		return 1, err
 	}
 
-	tracer := tracing.Tracer("collide-server")
+	tracer := tracing.Tracer("collide")
 
 	if cfg.Profiling.Enabled {
 		profiler, err := profiling.New(cfg.Profiling.Name, cfg.Profiling.URI, cfg.Profiling.Tags, logger)
