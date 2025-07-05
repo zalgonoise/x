@@ -35,7 +35,7 @@ services:
     environment:
       GF_FEATURE_TOGGLES_ENABLE: traceqlEditor metricsSummary
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
-      GF_INSTALL_PLUGINS: https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app
+      GF_INSTALL_PLUGINS: https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app;grafana-pyroscope-app
     volumes:
       - ./provisioning/grafana/datasources:/etc/grafana/provisioning/datasources:ro
       - observability-grafana:/var/lib/grafana
@@ -98,10 +98,25 @@ services:
     networks:
       app-runtime:
 
+  pyroscope:
+    image: grafana/pyroscope:latest
+    ports:
+      - "4040:4040"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --noverbose --tries=1 --spider http://localhost:4040/ready || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - observability-pyroscope:/etc/pyroscope
+    networks:
+      app-runtime:
+
 volumes:
   observability-prom:
   observability-grafana:
   observability-tempo:
+  observability-pyroscope:
 
 networks:
   app-runtime:
