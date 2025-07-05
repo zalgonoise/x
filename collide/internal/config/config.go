@@ -34,7 +34,7 @@ type Tracing struct {
 
 type Profiling struct {
 	Enabled bool              `env:"COLLIDE_PROFILING_ENABLED" envDefailt:"true"`
-	Name    string            `env:"COLLIDE_PROFILING_NAME" envDefault:"collide.api.fallenpetals.com"`
+	Name    string            `env:"COLLIDE_PROFILING_NAME" envDefault:"collide"`
 	URI     string            `env:"COLLIDE_PROFILING_URI" envDefault:"http://pyroscope:4040"`
 	Tags    map[string]string `env:"COLLIDE_PROFILING_TAGS" envDefault:"{\"hostname\":\"api.fallenpetals.com\",\"service\":\"collide\",\"version\":\"v1\"}"`
 }
