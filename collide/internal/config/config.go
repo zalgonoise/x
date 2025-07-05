@@ -5,10 +5,11 @@ import (
 )
 
 type Config struct {
-	HTTP    HTTP
-	Tracks  Tracks
-	Logging Logging
-	Tracing Tracing
+	HTTP      HTTP
+	Tracks    Tracks
+	Logging   Logging
+	Tracing   Tracing
+	Profiling Profiling
 }
 
 type HTTP struct {
@@ -29,6 +30,13 @@ type Tracing struct {
 	URI      string `env:"COLLIDE_TRACING_URI" envDefault:"tempo:4317"`
 	Username string `env:"COLLIDE_TRACING_USERNAME"`
 	Password string `env:"COLLIDE_TRACING_PASSWORD"`
+}
+
+type Profiling struct {
+	Enabled bool              `env:"COLLIDE_PROFILING_ENABLED" envDefailt:"true"`
+	Name    string            `env:"COLLIDE_PROFILING_NAME" envDefault:"collide.api.fallenpetals.com"`
+	URI     string            `env:"COLLIDE_PROFILING_URI" envDefault:"http://pyroscope:4040"`
+	Tags    map[string]string `env:"COLLIDE_PROFILING_TAGS" envDefault:"{\"hostname\":\"api.fallenpetals.com\",\"service\":\"collide\",\"version\":\"v1\"}"`
 }
 
 func New() (Config, error) {
