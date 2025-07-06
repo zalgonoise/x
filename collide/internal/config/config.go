@@ -7,6 +7,7 @@ import (
 type Config struct {
 	HTTP      HTTP
 	Tracks    Tracks
+	Metrics   Metrics
 	Logging   Logging
 	Tracing   Tracing
 	Profiling Profiling
@@ -19,6 +20,10 @@ type HTTP struct {
 
 type Tracks struct {
 	Path string `env:"COLLIDE_TRACKS_PATH"`
+}
+
+type Metrics struct {
+	URI string `env:"COLLIDE_METRICS_URI" envDefault:"collector:4318"`
 }
 
 type Logging struct {
