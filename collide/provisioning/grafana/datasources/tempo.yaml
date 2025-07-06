@@ -9,21 +9,24 @@ datasources:
     basicAuth: false
     editable: true
     jsonData:
+      tlsSkipVerify: true
       tracesToLogsV2:
         # Field with an internal link pointing to a logs data source in Grafana.
         # datasourceUid value must match the uid value of the logs data source.
         datasourceUid: 'Loki'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-        tags: [{ key: 'service.name', value: 'container' }]
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        tags: [{ key: 'service.name', value: 'service' }]
+        mapTagNamesEnabled: true
         filterByTraceID: true
         filterBySpanID: false
-        customQuery: false
+        customQuery: true
+        query: "{service=\"collide\"} |= \"${__span.traceId}\""
       tracesToMetrics:
-        datasourceUid: 'Prometheus'
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
-        tags: [{ key: 'service.name', value: 'job' }]
+        datasourceUid: 'Mimir'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        tags: [{ key: 'service.name', value: 'service' }]
       serviceMap:
         datasourceUid: 'Prometheus'
       nodeGraph:
@@ -34,8 +37,12 @@ datasources:
         datasourceUid: 'Loki'
       traceQuery:
         timeShiftEnabled: true
-        spanStartTimeShift: '1h'
-        spanEndTimeShift: '-1h'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
       spanBar:
         type: 'Tag'
         tag: 'service.name'
+      tracesToProfiles:
+        datasourceUid: Pyroscope
+        profileTypeId: memory:alloc_objects:count:space:bytes
+        tags: [{ key: 'service.name', value: 'service' }]
