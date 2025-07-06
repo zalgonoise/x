@@ -22,24 +22,6 @@ type Repository interface {
 	GetCollisionsByDistrictAndTrack(ctx context.Context, district string, track string) ([]string, error)
 }
 
-//type Metrics interface {
-//	IncListDistricts()
-//	IncListDistrictsFailed()
-//	ObserveListDistrictsLatency(context.Context, time.Duration)
-//	IncListAllTracksByDistrict(string)
-//	IncListAllTracksByDistrictFailed(string)
-//	ObserveListAllTracksByDistrictLatency(context.Context, time.Duration, string)
-//	IncListDriftTracksByDistrict(string)
-//	IncListDriftTracksByDistrictFailed(string)
-//	ObserveListDriftTracksByDistrictLatency(context.Context, time.Duration, string)
-//	IncGetAlternativesByDistrictAndTrack(string, string)
-//	IncGetAlternativesByDistrictAndTrackFailed(string, string)
-//	ObserveGetAlternativesByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
-//	IncGetCollisionsByDistrictAndTrack(string, string)
-//	IncGetCollisionsByDistrictAndTrackFailed(string, string)
-//	ObserveGetCollisionsByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
-//}
-
 type Metrics interface {
 	IncListDistricts(ctx context.Context)
 	IncListDistrictsFailed(ctx context.Context)
