@@ -67,6 +67,8 @@ services:
       GF_INSTALL_PLUGINS: https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app;grafana-pyroscope-app
     volumes:
       - ./provisioning/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./provisioning/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./provisioning/grafana/collisionapi:/etc/dashboards:ro
       - observability-grafana:/var/lib/grafana
     healthcheck:
       test: [ "CMD-SHELL", "wget --noverbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
