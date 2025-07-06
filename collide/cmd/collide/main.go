@@ -98,7 +98,22 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 		}
 	}
 
-	promMetrics := metrics.NewMetrics()
+	metricsDone, err := metrics.Init(ctx, cfg.Metrics.URI)
+	if err != nil {
+		return 1, err
+	}
+
+	defer func() {
+		if err := metricsDone(ctx); err != nil {
+			logger.ErrorContext(ctx, "closing metrics exporter", slog.String("error", err.Error()))
+		}
+	}()
+
+	m, err := metrics.NewMetricsV2()
+	if err != nil {
+		return 1, err
+	}
+	//promMetrics := metrics.NewMetrics()
 
 	f, err := os.Open(cfg.Tracks.Path)
 	if err != nil {
@@ -120,21 +135,21 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 		return 1, err
 	}
 
-	collideService := service.New(repo, promMetrics, logger, tracer)
+	collideService := service.New(repo, m, logger, tracer)
 
 	httpServer, err := httpserver.NewServer(fmt.Sprintf(":%d", cfg.HTTP.Port))
 	if err != nil {
 		return 1, err
 	}
 
-	grpcServer, err := initGRPCServer(ctx, cfg.HTTP.GRPCPort, collideService, httpServer, logger, promMetrics)
+	grpcServer, err := initGRPCServer(ctx, cfg.HTTP.GRPCPort, collideService, httpServer, logger, m)
 	if err != nil {
 		return 1, err
 	}
 
-	if err := registerMetrics(httpServer, promMetrics); err != nil {
-		return 1, err
-	}
+	//if err := registerMetrics(httpServer, m); err != nil {
+	//	return 1, err
+	//}
 
 	go runHTTPServer(ctx, cfg.HTTP.Port, httpServer, logger)
 
@@ -147,13 +162,14 @@ func initGRPCServer(
 	collideService pb.CollideServiceServer,
 	httpServer *httpserver.Server,
 	logger *slog.Logger,
-	promMetrics *metrics.Metrics,
+	promMetrics *metrics.MetricsV2,
 ) (*grpcserver.Server, error) {
 	loggingOpts := []logging.Option{
 		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
 	}
 
-	grpcServer := grpcserver.NewServer(promMetrics,
+	grpcServer := grpcserver.NewServer(
+		//promMetrics,
 		[]grpc.UnaryServerInterceptor{
 			logging.UnaryServerInterceptor(log.InterceptorLogger(logger), loggingOpts...),
 		},
