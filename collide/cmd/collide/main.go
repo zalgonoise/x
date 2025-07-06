@@ -33,6 +33,26 @@ import (
 	pb "github.com/zalgonoise/x/collide/pkg/api/pb/collide/v1"
 )
 
+type Metrics interface {
+	IncListDistricts(ctx context.Context)
+	IncListDistrictsFailed(ctx context.Context)
+	ObserveListDistrictsLatency(ctx context.Context, duration time.Duration)
+	IncListAllTracksByDistrict(ctx context.Context, district string)
+	IncListAllTracksByDistrictFailed(ctx context.Context, district string)
+	ObserveListAllTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string)
+	IncListDriftTracksByDistrict(ctx context.Context, district string)
+	IncListDriftTracksByDistrictFailed(ctx context.Context, district string)
+	ObserveListDriftTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string)
+	IncGetAlternativesByDistrictAndTrack(ctx context.Context, district string, track string)
+	IncGetAlternativesByDistrictAndTrackFailed(ctx context.Context, district string, track string)
+	ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district string, track string)
+	IncGetCollisionsByDistrictAndTrack(ctx context.Context, district string, track string)
+	IncGetCollisionsByDistrictAndTrackFailed(ctx context.Context, district string, track string)
+	ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district string, track string)
+}
+
+var ErrInvalidMetricsType = errors.New("invalid metrics type")
+
 var modes = []string{"serve"}
 
 func main() {
@@ -54,6 +74,7 @@ func main() {
 }
 
 func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error) {
+	// init config
 	logger.InfoContext(ctx, "loading config")
 	cfg, err := config.New()
 	if err != nil {
@@ -67,6 +88,7 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 		return 1, err
 	}
 
+	// init tracing
 	traceExporter, err := tracing.GRPCExporter(cfg.Tracing)
 	if err != nil {
 		logger.WarnContext(ctx, "defaulting to using a no-op trace exporter", slog.String("error", err.Error()))
@@ -81,6 +103,7 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 
 	tracer := tracing.Tracer("collide")
 
+	// init profiling
 	if cfg.Profiling.Enabled {
 		profiler, err := profiling.New(cfg.Profiling.Name, cfg.Profiling.URI, cfg.Profiling.Tags, logger)
 		switch {
@@ -98,23 +121,40 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 		}
 	}
 
-	metricsDone, err := metrics.Init(ctx, cfg.Metrics.URI)
+	// init HTTP server
+	httpServer, err := httpserver.NewServer(fmt.Sprintf(":%d", cfg.HTTP.Port))
 	if err != nil {
 		return 1, err
 	}
 
-	defer func() {
-		if err := metricsDone(ctx); err != nil {
-			logger.ErrorContext(ctx, "closing metrics exporter", slog.String("error", err.Error()))
+	// init metrics
+	var m Metrics
+
+	switch cfg.Metrics.URI {
+	case "":
+		m = metrics.NewPrometheus()
+
+		if err := registerMetrics(httpServer, m); err != nil {
+			return 1, err
 		}
-	}()
+	default:
+		metricsDone, err := metrics.Init(ctx, cfg.Metrics.URI)
+		if err != nil {
+			return 1, err
+		}
 
-	m, err := metrics.NewMetricsV2()
-	if err != nil {
-		return 1, err
+		defer func() {
+			if err := metricsDone(ctx); err != nil {
+				logger.ErrorContext(ctx, "closing metrics exporter", slog.String("error", err.Error()))
+			}
+		}()
+
+		if m, err = metrics.NewOtel(); err != nil {
+			return 1, err
+		}
 	}
-	//promMetrics := metrics.NewMetrics()
 
+	// setup service
 	f, err := os.Open(cfg.Tracks.Path)
 	if err != nil {
 		return 1, err
@@ -137,22 +177,15 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 
 	collideService := service.New(repo, m, logger, tracer)
 
-	httpServer, err := httpserver.NewServer(fmt.Sprintf(":%d", cfg.HTTP.Port))
-	if err != nil {
-		return 1, err
-	}
-
+	// init gRPC server
 	grpcServer, err := initGRPCServer(ctx, cfg.HTTP.GRPCPort, collideService, httpServer, logger, m)
 	if err != nil {
 		return 1, err
 	}
 
-	//if err := registerMetrics(httpServer, m); err != nil {
-	//	return 1, err
-	//}
-
 	go runHTTPServer(ctx, cfg.HTTP.Port, httpServer, logger)
 
+	// handle graceful shutdown on exit signal
 	return handleGracefulShutdown(ctx, logger, httpServer, grpcServer, tracerDone, []context.CancelFunc{})
 }
 
@@ -162,20 +195,20 @@ func initGRPCServer(
 	collideService pb.CollideServiceServer,
 	httpServer *httpserver.Server,
 	logger *slog.Logger,
-	promMetrics *metrics.MetricsV2,
+	m Metrics,
 ) (*grpcserver.Server, error) {
 	loggingOpts := []logging.Option{
 		logging.WithLogOnEvents(logging.StartCall, logging.FinishCall),
 	}
 
 	grpcServer := grpcserver.NewServer(
-		//promMetrics,
 		[]grpc.UnaryServerInterceptor{
 			logging.UnaryServerInterceptor(log.InterceptorLogger(logger), loggingOpts...),
 		},
 		[]grpc.StreamServerInterceptor{
 			logging.StreamServerInterceptor(log.InterceptorLogger(logger), loggingOpts...),
 		},
+		m,
 	)
 
 	grpcServer.RegisterCollideServer(collideService)
@@ -214,9 +247,14 @@ func initGRPCServer(
 
 func registerMetrics(
 	httpServer *httpserver.Server,
-	promMetrics *metrics.Metrics,
+	m Metrics,
 ) error {
-	promRegistry, err := promMetrics.Registry()
+	promMetrics, ok := m.(*metrics.Prometheus)
+	if !ok {
+		return ErrInvalidMetricsType
+	}
+
+	promRegistry, err := metrics.Registry(promMetrics)
 	if err != nil {
 		return err
 	}
