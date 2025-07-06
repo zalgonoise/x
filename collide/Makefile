@@ -1,5 +1,29 @@
 app:
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide
+	docker compose -f docker-compose.yaml build
+
+up: app
+	docker compose -f docker-compose.yaml up -d --force-recreate
+
+up-observabilitiy:
+	docker compose -f docker-compose.observability.yaml up -d --force-recreate
+
+up-all: up-observabilitiy up
+
+down:
+	docker compose -f docker-compose.yaml down
+
+down-observabilitiy:
+	docker compose -f docker-compose.observability.yaml down
+
+down-all: down down-observabilitiy
+
+clean-observability:
+	docker compose -f docker-compose.observability.yaml down -v
+
+clean-all: clean-observability down
+
+new: clean-all up-all
 
 .PHONY: dep-update
 dep-update:
