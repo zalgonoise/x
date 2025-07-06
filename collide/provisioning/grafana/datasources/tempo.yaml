@@ -1,4 +1,14 @@
+# Configuration file version
 apiVersion: 1
+
+# List of data sources to delete from the database.
+deleteDatasources:
+  - name: Tempo
+    orgId: 1
+
+# Mark provisioned data sources for deletion if they are no longer in a provisioning file.
+# It takes no effect if data sources are already listed in the deleteDatasources section.
+prune: true
 
 datasources:
   - name: Tempo
@@ -17,18 +27,17 @@ datasources:
         spanStartTimeShift: '-1h'
         spanEndTimeShift: '1h'
         tags: [{ key: 'service.name', value: 'service' }]
-        mapTagNamesEnabled: true
-        filterByTraceID: true
+        filterByTraceID: false
         filterBySpanID: false
         customQuery: true
-        query: "{service=\"collide\"} |= \"${__span.traceId}\""
+        query: "{service=\"collide\"} |= \"$${__span.traceId}\""
       tracesToMetrics:
         datasourceUid: 'Mimir'
         spanStartTimeShift: '-1h'
         spanEndTimeShift: '1h'
         tags: [{ key: 'service.name', value: 'service' }]
       serviceMap:
-        datasourceUid: 'Prometheus'
+        datasourceUid: 'Mimir'
       nodeGraph:
         enabled: true
       search:
