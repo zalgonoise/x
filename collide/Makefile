@@ -23,7 +23,10 @@ clean-observability:
 
 clean-all: clean-observability down
 
-new: clean-all up-all
+dummy-load:
+	go run ./scripts/dummy load
+
+new: clean-all up-all dummy-load
 
 .PHONY: dep-update
 dep-update:
