@@ -3,8 +3,6 @@ package metrics
 import (
 	"context"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 func NoOp() noOp {
@@ -13,22 +11,20 @@ func NoOp() noOp {
 
 type noOp struct{}
 
-func (noOp) IncListDistricts()                                                              {}
-func (noOp) IncListDistrictsFailed()                                                        {}
+func (noOp) IncListDistricts(context.Context)                                               {}
+func (noOp) IncListDistrictsFailed(context.Context)                                         {}
 func (noOp) ObserveListDistrictsLatency(context.Context, time.Duration)                     {}
-func (noOp) IncListAllTracksByDistrict(string)                                              {}
-func (noOp) IncListAllTracksByDistrictFailed(string)                                        {}
+func (noOp) IncListAllTracksByDistrict(context.Context, string)                             {}
+func (noOp) IncListAllTracksByDistrictFailed(context.Context, string)                       {}
 func (noOp) ObserveListAllTracksByDistrictLatency(context.Context, time.Duration, string)   {}
-func (noOp) IncListDriftTracksByDistrict(string)                                            {}
-func (noOp) IncListDriftTracksByDistrictFailed(string)                                      {}
+func (noOp) IncListDriftTracksByDistrict(context.Context, string)                           {}
+func (noOp) IncListDriftTracksByDistrictFailed(context.Context, string)                     {}
 func (noOp) ObserveListDriftTracksByDistrictLatency(context.Context, time.Duration, string) {}
-func (noOp) IncGetAlternativesByDistrictAndTrack(string, string)                            {}
-func (noOp) IncGetAlternativesByDistrictAndTrackFailed(string, string)                      {}
+func (noOp) IncGetAlternativesByDistrictAndTrack(context.Context, string, string)           {}
+func (noOp) IncGetAlternativesByDistrictAndTrackFailed(context.Context, string, string)     {}
 func (noOp) ObserveGetAlternativesByDistrictAndTrackLatency(context.Context, time.Duration, string, string) {
 }
-func (noOp) IncGetCollisionsByDistrictAndTrack(string, string)       {}
-func (noOp) IncGetCollisionsByDistrictAndTrackFailed(string, string) {}
+func (noOp) IncGetCollisionsByDistrictAndTrack(context.Context, string, string)       {}
+func (noOp) IncGetCollisionsByDistrictAndTrackFailed(context.Context, string, string) {}
 func (noOp) ObserveGetCollisionsByDistrictAndTrackLatency(context.Context, time.Duration, string, string) {
 }
-func (noOp) RegisterCollector(prometheus.Collector)  {}
-func (noOp) Registry() (*prometheus.Registry, error) { return prometheus.NewRegistry(), nil }

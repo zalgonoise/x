@@ -17,7 +17,7 @@ const (
 	traceIDKey = "trace_id"
 )
 
-type Metrics struct {
+type Prometheus struct {
 	// CollideService metrics
 	listDistrictsTotal          prometheus.Counter
 	listDistrictsFailed         prometheus.Counter
@@ -43,8 +43,8 @@ type Metrics struct {
 	collectors []prometheus.Collector
 }
 
-func NewMetrics() *Metrics {
-	return &Metrics{
+func NewPrometheus() *Prometheus {
+	return &Prometheus{
 		listDistrictsTotal: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "list_districts_total",
 			Help: "Count of requests to list districts",
@@ -117,9 +117,9 @@ func NewMetrics() *Metrics {
 	}
 }
 
-func (m *Metrics) IncListDistricts()       { m.listDistrictsTotal.Inc() }
-func (m *Metrics) IncListDistrictsFailed() { m.listDistrictsFailed.Inc() }
-func (m *Metrics) ObserveListDistrictsLatency(ctx context.Context, duration time.Duration) {
+func (m *Prometheus) IncListDistricts(_ context.Context)       { m.listDistrictsTotal.Inc() }
+func (m *Prometheus) IncListDistrictsFailed(_ context.Context) { m.listDistrictsFailed.Inc() }
+func (m *Prometheus) ObserveListDistrictsLatency(ctx context.Context, duration time.Duration) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		if eo, ok := m.listDistrictsLatencySeconds.(prometheus.ExemplarObserver); ok {
 			eo.ObserveWithExemplar(duration.Seconds(), prometheus.Labels{
@@ -132,13 +132,13 @@ func (m *Metrics) ObserveListDistrictsLatency(ctx context.Context, duration time
 
 	m.listDistrictsLatencySeconds.Observe(duration.Seconds())
 }
-func (m *Metrics) IncListAllTracksByDistrict(district string) {
+func (m *Prometheus) IncListAllTracksByDistrict(_ context.Context, district string) {
 	m.listAllTracksByDistrictTotal.WithLabelValues(district).Inc()
 }
-func (m *Metrics) IncListAllTracksByDistrictFailed(district string) {
+func (m *Prometheus) IncListAllTracksByDistrictFailed(_ context.Context, district string) {
 	m.listAllTracksByDistrictFailed.WithLabelValues(district).Inc()
 }
-func (m *Metrics) ObserveListAllTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
+func (m *Prometheus) ObserveListAllTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		if eo, ok := m.listAllTracksByDistrictLatencySeconds.
 			WithLabelValues(district).(prometheus.ExemplarObserver); ok {
@@ -152,13 +152,13 @@ func (m *Metrics) ObserveListAllTracksByDistrictLatency(ctx context.Context, dur
 
 	m.listAllTracksByDistrictLatencySeconds.WithLabelValues(district).Observe(duration.Seconds())
 }
-func (m *Metrics) IncListDriftTracksByDistrict(district string) {
+func (m *Prometheus) IncListDriftTracksByDistrict(_ context.Context, district string) {
 	m.listDriftTracksByDistrictTotal.WithLabelValues(district).Inc()
 }
-func (m *Metrics) IncListDriftTracksByDistrictFailed(district string) {
+func (m *Prometheus) IncListDriftTracksByDistrictFailed(_ context.Context, district string) {
 	m.listDriftTracksByDistrictFailed.WithLabelValues(district).Inc()
 }
-func (m *Metrics) ObserveListDriftTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
+func (m *Prometheus) ObserveListDriftTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		if eo, ok := m.listDriftTracksByDistrictLatencySeconds.
 			WithLabelValues(district).(prometheus.ExemplarObserver); ok {
@@ -172,13 +172,13 @@ func (m *Metrics) ObserveListDriftTracksByDistrictLatency(ctx context.Context, d
 
 	m.listDriftTracksByDistrictLatencySeconds.WithLabelValues(district).Observe(duration.Seconds())
 }
-func (m *Metrics) IncGetAlternativesByDistrictAndTrack(district, track string) {
+func (m *Prometheus) IncGetAlternativesByDistrictAndTrack(_ context.Context, district, track string) {
 	m.getAlternativesByDistrictAndTrackTotal.WithLabelValues(district, track).Inc()
 }
-func (m *Metrics) IncGetAlternativesByDistrictAndTrackFailed(district, track string) {
+func (m *Prometheus) IncGetAlternativesByDistrictAndTrackFailed(_ context.Context, district, track string) {
 	m.getAlternativesByDistrictAndTrackFailed.WithLabelValues(district, track).Inc()
 }
-func (m *Metrics) ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
+func (m *Prometheus) ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		if eo, ok := m.getAlternativesByDistrictAndTrackLatencySeconds.
 			WithLabelValues(district, track).(prometheus.ExemplarObserver); ok {
@@ -192,13 +192,13 @@ func (m *Metrics) ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Co
 
 	m.getAlternativesByDistrictAndTrackLatencySeconds.WithLabelValues(district, track).Observe(duration.Seconds())
 }
-func (m *Metrics) IncGetCollisionsByDistrictAndTrack(district, track string) {
+func (m *Prometheus) IncGetCollisionsByDistrictAndTrack(_ context.Context, district, track string) {
 	m.getCollisionsByDistrictAndTrackTotal.WithLabelValues(district, track).Inc()
 }
-func (m *Metrics) IncGetCollisionsByDistrictAndTrackFailed(district, track string) {
+func (m *Prometheus) IncGetCollisionsByDistrictAndTrackFailed(_ context.Context, district, track string) {
 	m.getCollisionsByDistrictAndTrackFailed.WithLabelValues(district, track).Inc()
 }
-func (m *Metrics) ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
+func (m *Prometheus) ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		if eo, ok := m.getCollisionsByDistrictAndTrackLatencySeconds.
 			WithLabelValues(district, track).(prometheus.ExemplarObserver); ok {
@@ -213,11 +213,11 @@ func (m *Metrics) ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Cont
 	m.getCollisionsByDistrictAndTrackLatencySeconds.WithLabelValues(district, track).Observe(duration.Seconds())
 }
 
-func (m *Metrics) RegisterCollector(collector prometheus.Collector) {
+func RegisterCollector(m *Prometheus, collector prometheus.Collector) {
 	m.collectors = append(m.collectors, collector)
 }
 
-func (m *Metrics) Registry() (*prometheus.Registry, error) {
+func Registry(m *Prometheus) (*prometheus.Registry, error) {
 	reg := prometheus.NewRegistry()
 
 	for _, metric := range []prometheus.Collector{

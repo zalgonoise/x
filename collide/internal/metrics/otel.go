@@ -24,7 +24,7 @@ func Meter() metric.Meter {
 	return otel.GetMeterProvider().Meter(ServiceName)
 }
 
-type MetricsV2 struct {
+type Otel struct {
 	// CollideService metrics
 	listDistrictsTotal          metric.Int64Counter
 	listDistrictsFailed         metric.Int64Counter
@@ -50,7 +50,7 @@ type MetricsV2 struct {
 	collectors []prometheus.Collector
 }
 
-func NewMetricsV2() (*MetricsV2, error) {
+func NewOtel() (*Otel, error) {
 	listDistrictsTotal, err := Meter().Int64Counter(
 		"list_districts_total",
 		metric.WithUnit("req"),
@@ -186,7 +186,7 @@ func NewMetricsV2() (*MetricsV2, error) {
 		return nil, err
 	}
 
-	return &MetricsV2{
+	return &Otel{
 		listDistrictsTotal:          listDistrictsTotal,
 		listDistrictsFailed:         listDistrictsFailed,
 		listDistrictsLatencySeconds: listDistrictsLatencySeconds,
@@ -209,63 +209,63 @@ func NewMetricsV2() (*MetricsV2, error) {
 	}, nil
 }
 
-func (m *MetricsV2) IncListDistricts(ctx context.Context) {
+func (m *Otel) IncListDistricts(ctx context.Context) {
 	m.listDistrictsTotal.Add(ctx, 1)
 }
-func (m *MetricsV2) IncListDistrictsFailed(ctx context.Context) {
+func (m *Otel) IncListDistrictsFailed(ctx context.Context) {
 	m.listDistrictsFailed.Add(ctx, 1)
 }
-func (m *MetricsV2) ObserveListDistrictsLatency(ctx context.Context, duration time.Duration) {
+func (m *Otel) ObserveListDistrictsLatency(ctx context.Context, duration time.Duration) {
 	m.listDistrictsLatencySeconds.Record(ctx, duration.Seconds())
 }
-func (m *MetricsV2) IncListAllTracksByDistrict(ctx context.Context, district string) {
+func (m *Otel) IncListAllTracksByDistrict(ctx context.Context, district string) {
 	m.listAllTracksByDistrictTotal.Add(ctx, 1, metric.WithAttributes(attribute.String("district", district)))
 }
-func (m *MetricsV2) IncListAllTracksByDistrictFailed(ctx context.Context, district string) {
+func (m *Otel) IncListAllTracksByDistrictFailed(ctx context.Context, district string) {
 	m.listAllTracksByDistrictFailed.Add(ctx, 1, metric.WithAttributes(attribute.String("district", district)))
 }
-func (m *MetricsV2) ObserveListAllTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
+func (m *Otel) ObserveListAllTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
 	m.listAllTracksByDistrictLatencySeconds.Record(ctx, duration.Seconds())
 }
-func (m *MetricsV2) IncListDriftTracksByDistrict(ctx context.Context, district string) {
+func (m *Otel) IncListDriftTracksByDistrict(ctx context.Context, district string) {
 	m.listDriftTracksByDistrictTotal.Add(ctx, 1, metric.WithAttributes(attribute.String("district", district)))
 }
 
-func (m *MetricsV2) IncListDriftTracksByDistrictFailed(ctx context.Context, district string) {
+func (m *Otel) IncListDriftTracksByDistrictFailed(ctx context.Context, district string) {
 	m.listDriftTracksByDistrictFailed.Add(ctx, 1, metric.WithAttributes(attribute.String("district", district)))
 }
 
-func (m *MetricsV2) ObserveListDriftTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
+func (m *Otel) ObserveListDriftTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
 	m.listDriftTracksByDistrictLatencySeconds.Record(ctx, duration.Seconds())
 }
-func (m *MetricsV2) IncGetAlternativesByDistrictAndTrack(ctx context.Context, district, track string) {
+func (m *Otel) IncGetAlternativesByDistrictAndTrack(ctx context.Context, district, track string) {
 	m.getAlternativesByDistrictAndTrackTotal.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("district", district),
 		attribute.String("track", track),
 	))
 }
-func (m *MetricsV2) IncGetAlternativesByDistrictAndTrackFailed(ctx context.Context, district, track string) {
+func (m *Otel) IncGetAlternativesByDistrictAndTrackFailed(ctx context.Context, district, track string) {
 	m.getAlternativesByDistrictAndTrackFailed.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("district", district),
 		attribute.String("track", track),
 	))
 }
-func (m *MetricsV2) ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
+func (m *Otel) ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
 	m.getAlternativesByDistrictAndTrackLatencySeconds.Record(ctx, duration.Seconds())
 }
-func (m *MetricsV2) IncGetCollisionsByDistrictAndTrack(ctx context.Context, district, track string) {
+func (m *Otel) IncGetCollisionsByDistrictAndTrack(ctx context.Context, district, track string) {
 	m.getCollisionsByDistrictAndTrackTotal.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("district", district),
 		attribute.String("track", track),
 	))
 }
-func (m *MetricsV2) IncGetCollisionsByDistrictAndTrackFailed(ctx context.Context, district, track string) {
+func (m *Otel) IncGetCollisionsByDistrictAndTrackFailed(ctx context.Context, district, track string) {
 	m.getCollisionsByDistrictAndTrackFailed.Add(ctx, 1, metric.WithAttributes(
 		attribute.String("district", district),
 		attribute.String("track", track),
 	))
 }
-func (m *MetricsV2) ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
+func (m *Otel) ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
 	m.getCollisionsByDistrictAndTrackLatencySeconds.Record(ctx, duration.Seconds())
 }
 
