@@ -22,22 +22,40 @@ type Repository interface {
 	GetCollisionsByDistrictAndTrack(ctx context.Context, district string, track string) ([]string, error)
 }
 
+//type Metrics interface {
+//	IncListDistricts()
+//	IncListDistrictsFailed()
+//	ObserveListDistrictsLatency(context.Context, time.Duration)
+//	IncListAllTracksByDistrict(string)
+//	IncListAllTracksByDistrictFailed(string)
+//	ObserveListAllTracksByDistrictLatency(context.Context, time.Duration, string)
+//	IncListDriftTracksByDistrict(string)
+//	IncListDriftTracksByDistrictFailed(string)
+//	ObserveListDriftTracksByDistrictLatency(context.Context, time.Duration, string)
+//	IncGetAlternativesByDistrictAndTrack(string, string)
+//	IncGetAlternativesByDistrictAndTrackFailed(string, string)
+//	ObserveGetAlternativesByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
+//	IncGetCollisionsByDistrictAndTrack(string, string)
+//	IncGetCollisionsByDistrictAndTrackFailed(string, string)
+//	ObserveGetCollisionsByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
+//}
+
 type Metrics interface {
-	IncListDistricts()
-	IncListDistrictsFailed()
-	ObserveListDistrictsLatency(context.Context, time.Duration)
-	IncListAllTracksByDistrict(string)
-	IncListAllTracksByDistrictFailed(string)
-	ObserveListAllTracksByDistrictLatency(context.Context, time.Duration, string)
-	IncListDriftTracksByDistrict(string)
-	IncListDriftTracksByDistrictFailed(string)
-	ObserveListDriftTracksByDistrictLatency(context.Context, time.Duration, string)
-	IncGetAlternativesByDistrictAndTrack(string, string)
-	IncGetAlternativesByDistrictAndTrackFailed(string, string)
-	ObserveGetAlternativesByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
-	IncGetCollisionsByDistrictAndTrack(string, string)
-	IncGetCollisionsByDistrictAndTrackFailed(string, string)
-	ObserveGetCollisionsByDistrictAndTrackLatency(context.Context, time.Duration, string, string)
+	IncListDistricts(ctx context.Context)
+	IncListDistrictsFailed(ctx context.Context)
+	ObserveListDistrictsLatency(ctx context.Context, duration time.Duration)
+	IncListAllTracksByDistrict(ctx context.Context, district string)
+	IncListAllTracksByDistrictFailed(ctx context.Context, district string)
+	ObserveListAllTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string)
+	IncListDriftTracksByDistrict(ctx context.Context, district string)
+	IncListDriftTracksByDistrictFailed(ctx context.Context, district string)
+	ObserveListDriftTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string)
+	IncGetAlternativesByDistrictAndTrack(ctx context.Context, district string, track string)
+	IncGetAlternativesByDistrictAndTrackFailed(ctx context.Context, district string, track string)
+	ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district string, track string)
+	IncGetCollisionsByDistrictAndTrack(ctx context.Context, district string, track string)
+	IncGetCollisionsByDistrictAndTrackFailed(ctx context.Context, district string, track string)
+	ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district string, track string)
 }
 
 type Service struct {
@@ -63,7 +81,7 @@ func (s *Service) ListDistricts(ctx context.Context, _ *pb.ListDistrictsRequest)
 	ctx, span := s.tracer.Start(ctx, "Service.ListDistricts")
 	defer span.End()
 
-	s.metrics.IncListDistricts()
+	s.metrics.IncListDistricts(ctx)
 	start := time.Now()
 	defer func() {
 		s.metrics.ObserveListDistrictsLatency(ctx, time.Since(start))
@@ -73,7 +91,7 @@ func (s *Service) ListDistricts(ctx context.Context, _ *pb.ListDistrictsRequest)
 
 	switch {
 	case errors.Is(err, memory.ErrNoDistricts):
-		s.metrics.IncListDistrictsFailed()
+		s.metrics.IncListDistrictsFailed(ctx)
 		s.logger.ErrorContext(ctx, "listing districts got zero results", slog.String("error", err.Error()))
 		span.RecordError(err)
 		span.SetStatus(otelcodes.Error, err.Error())
@@ -82,7 +100,7 @@ func (s *Service) ListDistricts(ctx context.Context, _ *pb.ListDistrictsRequest)
 
 		return nil, status.Error(codes.NotFound, err.Error())
 	case err != nil:
-		s.metrics.IncListDistrictsFailed()
+		s.metrics.IncListDistrictsFailed(ctx)
 		s.logger.ErrorContext(ctx, "listing districts", slog.String("error", err.Error()))
 		span.RecordError(err)
 		span.SetStatus(otelcodes.Error, err.Error())
@@ -107,7 +125,7 @@ func (s *Service) ListAllTracksByDistrict(ctx context.Context, req *pb.ListAllTr
 
 	district := req.GetDistrict()
 
-	s.metrics.IncListAllTracksByDistrict(district)
+	s.metrics.IncListAllTracksByDistrict(ctx, district)
 	start := time.Now()
 	defer func() {
 		s.metrics.ObserveListAllTracksByDistrictLatency(ctx, time.Since(start), district)
@@ -117,7 +135,7 @@ func (s *Service) ListAllTracksByDistrict(ctx context.Context, req *pb.ListAllTr
 
 	switch {
 	case errors.Is(err, memory.ErrNoTracks), errors.Is(err, memory.ErrNoDistricts):
-		s.metrics.IncListAllTracksByDistrictFailed(district)
+		s.metrics.IncListAllTracksByDistrictFailed(ctx, district)
 		s.logger.ErrorContext(ctx, "listing all tracks by district got zero results",
 			slog.String("error", err.Error()), slog.String("district", district))
 		span.RecordError(err)
@@ -128,7 +146,7 @@ func (s *Service) ListAllTracksByDistrict(ctx context.Context, req *pb.ListAllTr
 
 		return nil, status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, memory.ErrDistrictNotFound):
-		s.metrics.IncListAllTracksByDistrictFailed(district)
+		s.metrics.IncListAllTracksByDistrictFailed(ctx, district)
 		s.logger.ErrorContext(ctx, "listing all tracks in unknown district",
 			slog.String("error", err.Error()), slog.String("district", district))
 		span.RecordError(err)
@@ -139,7 +157,7 @@ func (s *Service) ListAllTracksByDistrict(ctx context.Context, req *pb.ListAllTr
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case err != nil:
-		s.metrics.IncListAllTracksByDistrictFailed(district)
+		s.metrics.IncListAllTracksByDistrictFailed(ctx, district)
 		s.logger.ErrorContext(ctx, "listing all tracks in district",
 			slog.String("error", err.Error()), slog.String("district", district))
 		span.RecordError(err)
@@ -169,7 +187,7 @@ func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDri
 
 	district := req.GetDistrict()
 
-	s.metrics.IncListDriftTracksByDistrict(district)
+	s.metrics.IncListDriftTracksByDistrict(ctx, district)
 	start := time.Now()
 	defer func() {
 		s.metrics.ObserveListDriftTracksByDistrictLatency(ctx, time.Since(start), district)
@@ -179,7 +197,7 @@ func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDri
 
 	switch {
 	case errors.Is(err, memory.ErrNoTracks), errors.Is(err, memory.ErrNoDistricts):
-		s.metrics.IncListDriftTracksByDistrictFailed(district)
+		s.metrics.IncListDriftTracksByDistrictFailed(ctx, district)
 		s.logger.ErrorContext(ctx, "listing drift tracks by district got zero results",
 			slog.String("error", err.Error()), slog.String("district", district))
 		span.RecordError(err)
@@ -190,7 +208,7 @@ func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDri
 
 		return nil, status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, memory.ErrDistrictNotFound):
-		s.metrics.IncListDriftTracksByDistrictFailed(district)
+		s.metrics.IncListDriftTracksByDistrictFailed(ctx, district)
 		s.logger.ErrorContext(ctx, "listing drift tracks in unknown district",
 			slog.String("error", err.Error()), slog.String("district", district))
 		span.RecordError(err)
@@ -201,7 +219,7 @@ func (s *Service) ListDriftTracksByDistrict(ctx context.Context, req *pb.ListDri
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case err != nil:
-		s.metrics.IncListDriftTracksByDistrictFailed(district)
+		s.metrics.IncListDriftTracksByDistrictFailed(ctx, district)
 		s.logger.ErrorContext(ctx, "listing drift tracks in district",
 			slog.String("error", err.Error()), slog.String("district", district))
 		span.RecordError(err)
@@ -231,7 +249,7 @@ func (s *Service) GetAlternativesByDistrictAndTrack(ctx context.Context, req *pb
 	district := req.GetDistrict()
 	track := req.GetTrack()
 
-	s.metrics.IncGetAlternativesByDistrictAndTrack(district, track)
+	s.metrics.IncGetAlternativesByDistrictAndTrack(ctx, district, track)
 	start := time.Now()
 	defer func() {
 		s.metrics.ObserveGetAlternativesByDistrictAndTrackLatency(ctx, time.Since(start), district, track)
@@ -241,7 +259,7 @@ func (s *Service) GetAlternativesByDistrictAndTrack(ctx context.Context, req *pb
 
 	switch {
 	case errors.Is(err, memory.ErrNoTracks), errors.Is(err, memory.ErrNoDistricts):
-		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(district, track)
+		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(ctx, district, track)
 		s.logger.ErrorContext(ctx, "getting alternative tracks by track in district got zero results",
 			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
 		span.RecordError(err)
@@ -253,7 +271,7 @@ func (s *Service) GetAlternativesByDistrictAndTrack(ctx context.Context, req *pb
 
 		return nil, status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, memory.ErrDistrictNotFound):
-		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(district, track)
+		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(ctx, district, track)
 		s.logger.ErrorContext(ctx, "getting alternative tracks by track in unknown district",
 			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
 		span.RecordError(err)
@@ -265,7 +283,7 @@ func (s *Service) GetAlternativesByDistrictAndTrack(ctx context.Context, req *pb
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case err != nil:
-		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(district, track)
+		s.metrics.IncGetAlternativesByDistrictAndTrackFailed(ctx, district, track)
 		s.logger.ErrorContext(ctx, "getting alternative tracks by track in district",
 			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
 		span.RecordError(err)
@@ -298,7 +316,7 @@ func (s *Service) GetCollisionsByDistrictAndTrack(ctx context.Context, req *pb.G
 	district := req.GetDistrict()
 	track := req.GetTrack()
 
-	s.metrics.IncGetCollisionsByDistrictAndTrack(district, track)
+	s.metrics.IncGetCollisionsByDistrictAndTrack(ctx, district, track)
 	start := time.Now()
 	defer func() {
 		s.metrics.ObserveGetCollisionsByDistrictAndTrackLatency(ctx, time.Since(start), district, track)
@@ -308,7 +326,7 @@ func (s *Service) GetCollisionsByDistrictAndTrack(ctx context.Context, req *pb.G
 
 	switch {
 	case errors.Is(err, memory.ErrNoTracks), errors.Is(err, memory.ErrNoDistricts):
-		s.metrics.IncGetCollisionsByDistrictAndTrackFailed(district, track)
+		s.metrics.IncGetCollisionsByDistrictAndTrackFailed(ctx, district, track)
 		s.logger.ErrorContext(ctx, "getting colliding tracks by track in district got zero results",
 			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
 		span.RecordError(err)
@@ -320,7 +338,7 @@ func (s *Service) GetCollisionsByDistrictAndTrack(ctx context.Context, req *pb.G
 
 		return nil, status.Error(codes.NotFound, err.Error())
 	case errors.Is(err, memory.ErrDistrictNotFound):
-		s.metrics.IncGetCollisionsByDistrictAndTrackFailed(district, track)
+		s.metrics.IncGetCollisionsByDistrictAndTrackFailed(ctx, district, track)
 		s.logger.ErrorContext(ctx, "getting colliding tracks by track in unknown district",
 			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
 		span.RecordError(err)
@@ -332,7 +350,7 @@ func (s *Service) GetCollisionsByDistrictAndTrack(ctx context.Context, req *pb.G
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	case err != nil:
-		s.metrics.IncGetCollisionsByDistrictAndTrackFailed(district, track)
+		s.metrics.IncGetCollisionsByDistrictAndTrackFailed(ctx, district, track)
 		s.logger.ErrorContext(ctx, "getting colliding tracks by track in district",
 			slog.String("error", err.Error()), slog.String("district", district), slog.String("track", track))
 		span.RecordError(err)
