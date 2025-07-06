@@ -1,28 +1,81 @@
 services:
-  prom:
-    image: prom/prometheus
-    container_name: prom
+#  prom:
+#    image: prom/prometheus:latest
+#    container_name: prom
+#    restart: unless-stopped
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./provisioning/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
+#      - observability-prom:/prometheus
+#    command:
+#      - "--config.file=/etc/prometheus/prometheus.yaml"
+#      - "--storage.tsdb.path=/prometheus"
+#      - "--storage.tsdb.retention.time=730d"
+#      - "--web.console.libraries=/etc/prometheus/console_libraries"
+#      - "--web.console.templates=/etc/prometheus/consoles"
+#      - "--web.enable-lifecycle"
+#      - "--enable-feature=exemplar-storage"
+#      - "--enable-feature=memory-snapshot-on-shutdown"
+#      - "--enable-feature=traceToMetrics"
+#    healthcheck:
+#      test: [ "CMD-SHELL", "wget --noverbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    networks:
+#      app-runtime:
+
+  mimir-1:
+    image: grafana/mimir:latest
+    command: [ "-config.file=/etc/mimir.yaml" ]
+    container_name: mimir-1
+    hostname: mimir-1
     restart: unless-stopped
-    ports:
-      - "9090:9090"
     volumes:
-      - ./provisioning/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
-      - observability-prom:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yaml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=730d"
-      - "--web.console.libraries=/etc/prometheus/console_libraries"
-      - "--web.console.templates=/etc/prometheus/consoles"
-      - "--web.enable-lifecycle"
-      - "--enable-feature=exemplar-storage"
-      - "--enable-feature=memory-snapshot-on-shutdown"
-      - "--enable-feature=traceToMetrics"
-    healthcheck:
-      test: [ "CMD-SHELL", "wget --noverbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./provisioning/mimir/mimir.yaml:/etc/mimir.yaml
+      - ./provisioning/mimir/alertmanager-fallback-config.yaml:/etc/alertmanager-fallback-config.yaml
+      - observability-mimir-1:/data
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=mimir-1
+    depends_on:
+      - minio
+    networks:
+      app-runtime:
+
+  mimir-2:
+    image: grafana/mimir:latest
+    command: [ "-config.file=/etc/mimir.yaml" ]
+    container_name: mimir-2
+    hostname: mimir-2
+    restart: unless-stopped
+    volumes:
+      - ./provisioning/mimir/mimir.yaml:/etc/mimir.yaml
+      - ./provisioning/mimir/alertmanager-fallback-config.yaml:/etc/alertmanager-fallback-config.yaml
+      - observability-mimir-2:/data
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=mimir-2
+    depends_on:
+      - minio
+    networks:
+      app-runtime:
+
+  mimir-lb:
+    image: nginx:latest
+    container_name: mimir-lb
+    volumes:
+      - ./provisioning/mimir/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - "mimir-1"
+      - "mimir-2"
+    ports:
+      - "9009:9009"
     networks:
       app-runtime:
 
@@ -33,6 +86,8 @@ services:
     ports:
       - "3000:3000"
     environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-admin}"
       GF_FEATURE_TOGGLES_ENABLE: traceqlEditor metricsSummary
       GF_PATHS_PROVISIONING: /etc/grafana/provisioning
       GF_INSTALL_PLUGINS: https://storage.googleapis.com/integration-artifacts/grafana-exploretraces-app/grafana-exploretraces-app-latest.zip;grafana-traces-app;grafana-pyroscope-app
@@ -44,6 +99,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=grafana
     networks:
       app-runtime:
 
@@ -62,6 +122,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=tempo
+    depends_on:
+      - minio
     networks:
       app-runtime:
 
@@ -78,28 +145,36 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=loki
+    depends_on:
+      - minio
     networks:
       app-runtime:
 
-  promtail:
-    image: grafana/promtail:2.8.3
-    container_name: promtail
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./provisioning/promtail/promtail.yaml:/etc/promtail/config.yaml:ro
-    command: [ "-config.file=/etc/promtail/config.yaml" ]
-    ports:
-      - "9080:9080"
-    healthcheck:
-      test: [ "CMD-SHELL", "wget --noverbose --tries=1 --spider http://localhost:9080/ready || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      app-runtime:
+#  promtail:
+#    image: grafana/promtail:2.8.3
+#    container_name: promtail
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - ./provisioning/promtail/promtail.yaml:/etc/promtail/config.yaml:ro
+#    command: [ "-config.file=/etc/promtail/config.yaml" ]
+#    ports:
+#      - "9080:9080"
+#    healthcheck:
+#      test: [ "CMD-SHELL", "wget --noverbose --tries=1 --spider http://localhost:9080/ready || exit 1" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    networks:
+#      app-runtime:
 
   pyroscope:
     image: grafana/pyroscope:latest
+    container_name: pyroscope
     ports:
       - "4040:4040"
     healthcheck:
@@ -109,14 +184,75 @@ services:
       retries: 5
     volumes:
       - observability-pyroscope:/etc/pyroscope
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=pyroscope
+    networks:
+      app-runtime:
+
+  collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: collector
+    deploy:
+      resources:
+        limits:
+          memory: 125M
+    restart: unless-stopped
+    command: [ "--config=/etc/otelcol-config.yml" ]
+    volumes:
+      - ./provisioning/collector/collector.yaml:/etc/otelcol-config.yml
+    ports:
+      - "4318:4318"     # OTLP over HTTP receiver
+      - "9464"          # Prometheus exporter
+      - "8888"          # metrics endpoint
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=collector
+    networks:
+      app-runtime:
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: accesskey
+      MINIO_ROOT_PASSWORD: accesssecret
+    ports:
+      - "9000:9000"
+      - "9091:9091"
+    volumes:
+      - observability-minio:/data
+    entrypoint:
+      - sh
+      - -euc
+      - mkdir -p /data/{mimir,tempo,loki} && /bin/minio server /data --console-address ":9091"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=dockerlogs,environment=observability,service=minio
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9000/minio/health/ready || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       app-runtime:
 
 volumes:
-  observability-prom:
+#  observability-prom:
   observability-grafana:
   observability-tempo:
   observability-pyroscope:
+  observability-mimir-1:
+  observability-mimir-2:
+  observability-minio:
+
 
 networks:
   app-runtime:
