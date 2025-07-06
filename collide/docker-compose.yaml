@@ -13,6 +13,7 @@ services:
       COLLIDE_LOG_WITH_SOURCE: true
       COLLIDE_LOG_WITH_SPAN_ID: true
       COLLIDE_TRACING_URI: tempo:4317
+      COLLIDE_METRICS_URI: collector:4318
     ports:
       - "8080:8080"
       - "8081:8081"
