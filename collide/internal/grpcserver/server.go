@@ -23,35 +23,36 @@ type Metrics interface {
 }
 
 func NewServer(
-	metrics Metrics,
+	//metrics Metrics,
 	unaryInterceptors []grpc.UnaryServerInterceptor,
 	streamInterceptors []grpc.StreamServerInterceptor,
 ) *Server {
-	serverMetrics := grpc_prometheus.NewServerMetrics(grpc_prometheus.WithServerHandlingTimeHistogram())
+	//serverMetrics := grpc_prometheus.NewServerMetrics(grpc_prometheus.WithServerHandlingTimeHistogram())
 
 	s := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler(
 			otelgrpc.WithMessageEvents(otelgrpc.SentEvents, otelgrpc.ReceivedEvents),
 		)),
-		grpc.ChainUnaryInterceptor(
-			append([]grpc.UnaryServerInterceptor{serverMetrics.UnaryServerInterceptor()}, unaryInterceptors...)...,
-		),
-		grpc.ChainStreamInterceptor(
-			append([]grpc.StreamServerInterceptor{serverMetrics.StreamServerInterceptor()}, streamInterceptors...)...,
-		),
+		grpc.ChainUnaryInterceptor(unaryInterceptors...), grpc.ChainStreamInterceptor(streamInterceptors...),
+		//grpc.ChainUnaryInterceptor(
+		//	append([]grpc.UnaryServerInterceptor{serverMetrics.UnaryServerInterceptor()}, unaryInterceptors...)...,
+		//),
+		//grpc.ChainStreamInterceptor(
+		//	append([]grpc.StreamServerInterceptor{serverMetrics.StreamServerInterceptor()}, streamInterceptors...)...,
+		//),
 	)
 
 	reflection.Register(s)
-	metrics.RegisterCollector(serverMetrics)
+	//metrics.RegisterCollector(serverMetrics)
 
 	return &Server{
-		server:        s,
-		serverMetrics: serverMetrics,
+		server: s,
+		//serverMetrics: serverMetrics,
 	}
 }
 
 func (s *Server) Serve(l net.Listener) error {
-	s.serverMetrics.InitializeMetrics(s.server)
+	//s.serverMetrics.InitializeMetrics(s.server)
 
 	return s.server.Serve(l)
 }
