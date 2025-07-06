@@ -1,18 +1,17 @@
-apiVersion: 1
-
 datasources:
-  - name: Prometheus
+  - name: Mimir
     type: prometheus
-    uid: Prometheus
+    uid: Mimir
     access: proxy
     # Access mode - proxy (server in the UI) or direct (browser in the UI).
-    url: http://prom:9090
+    url: http://mimir-lb:9009/prometheus
+    version: 1
     editable: true
     jsonData:
       httpMethod: POST
-      manageAlerts: true
-      prometheusType: Prometheus
-      prometheusVersion: 2.44.0
+      httpHeaderName1: "X-Scope-OrgID"
+      alertmanagerUid: "alertmanager"
+      prometheusType: Mimir
       cacheLevel: 'High'
       disableRecordingRules: false
       incrementalQueryOverlapWindow: 10m
@@ -20,4 +19,19 @@ datasources:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.
         - datasourceUid: Tempo
-          name: trace_id
+          name: TraceID
+    secureJsonData:
+      httpHeaderValue1: "anonymous"
+  - name: "Mimir Alertmanager"
+    uid: "Alert Manager"
+    type: alertmanager
+    access: proxy
+    orgId: 1
+    url: http://mimir-lb:9009/
+    version: 1
+    editable: true
+    jsonData:
+      httpHeaderName1: "X-Scope-OrgID"
+      implementation: "cortex"
+    secureJsonData:
+      httpHeaderValue1: "anonymous"
