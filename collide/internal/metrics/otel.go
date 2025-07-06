@@ -24,6 +24,10 @@ func Meter() metric.Meter {
 	return otel.GetMeterProvider().Meter(ServiceName)
 }
 
+var bucketBoundaries = []float64{
+	.00001, .00005, .0001, .0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10,
+}
+
 type Otel struct {
 	// CollideService metrics
 	listDistrictsTotal          metric.Int64Counter
@@ -73,7 +77,7 @@ func NewOtel() (*Otel, error) {
 		"list_districts_latency_seconds",
 		metric.WithUnit("s"),
 		metric.WithDescription("Latency of requests to list districts"),
-	)
+		metric.WithExplicitBucketBoundaries(bucketBoundaries...))
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +104,7 @@ func NewOtel() (*Otel, error) {
 		"list_all_tracks_by_district_latency_seconds",
 		metric.WithUnit("s"),
 		metric.WithDescription("Latency of requests to list all tracks within a certain district"),
-	)
+		metric.WithExplicitBucketBoundaries(bucketBoundaries...))
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +131,7 @@ func NewOtel() (*Otel, error) {
 		"list_drift_tracks_by_district_latency_seconds",
 		metric.WithUnit("s"),
 		metric.WithDescription("Latency of requests to list drift tracks within a certain district"),
-	)
+		metric.WithExplicitBucketBoundaries(bucketBoundaries...))
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +158,7 @@ func NewOtel() (*Otel, error) {
 		"get_alternatives_by_district_and_track_latency_seconds",
 		metric.WithUnit("s"),
 		metric.WithDescription("Latency of request to get alternatives for a certain district, with a target track"),
-	)
+		metric.WithExplicitBucketBoundaries(bucketBoundaries...))
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +185,7 @@ func NewOtel() (*Otel, error) {
 		"get_collisions_by_district_and_track_latency_seconds",
 		metric.WithUnit("s"),
 		metric.WithDescription("Latency of request to get collisions for a certain district, with a target track"),
-	)
+		metric.WithExplicitBucketBoundaries(bucketBoundaries...))
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +229,8 @@ func (m *Otel) IncListAllTracksByDistrictFailed(ctx context.Context, district st
 	m.listAllTracksByDistrictFailed.Add(ctx, 1, metric.WithAttributes(attribute.String("district", district)))
 }
 func (m *Otel) ObserveListAllTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
-	m.listAllTracksByDistrictLatencySeconds.Record(ctx, duration.Seconds())
+	m.listAllTracksByDistrictLatencySeconds.Record(ctx, duration.Seconds(), metric.WithAttributes(
+		attribute.String("district", district)))
 }
 func (m *Otel) IncListDriftTracksByDistrict(ctx context.Context, district string) {
 	m.listDriftTracksByDistrictTotal.Add(ctx, 1, metric.WithAttributes(attribute.String("district", district)))
@@ -236,7 +241,8 @@ func (m *Otel) IncListDriftTracksByDistrictFailed(ctx context.Context, district 
 }
 
 func (m *Otel) ObserveListDriftTracksByDistrictLatency(ctx context.Context, duration time.Duration, district string) {
-	m.listDriftTracksByDistrictLatencySeconds.Record(ctx, duration.Seconds())
+	m.listDriftTracksByDistrictLatencySeconds.Record(ctx, duration.Seconds(), metric.WithAttributes(
+		attribute.String("district", district)))
 }
 func (m *Otel) IncGetAlternativesByDistrictAndTrack(ctx context.Context, district, track string) {
 	m.getAlternativesByDistrictAndTrackTotal.Add(ctx, 1, metric.WithAttributes(
@@ -251,7 +257,10 @@ func (m *Otel) IncGetAlternativesByDistrictAndTrackFailed(ctx context.Context, d
 	))
 }
 func (m *Otel) ObserveGetAlternativesByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
-	m.getAlternativesByDistrictAndTrackLatencySeconds.Record(ctx, duration.Seconds())
+	m.getAlternativesByDistrictAndTrackLatencySeconds.Record(ctx, duration.Seconds(), metric.WithAttributes(
+		attribute.String("district", district),
+		attribute.String("track", track),
+	))
 }
 func (m *Otel) IncGetCollisionsByDistrictAndTrack(ctx context.Context, district, track string) {
 	m.getCollisionsByDistrictAndTrackTotal.Add(ctx, 1, metric.WithAttributes(
@@ -266,7 +275,10 @@ func (m *Otel) IncGetCollisionsByDistrictAndTrackFailed(ctx context.Context, dis
 	))
 }
 func (m *Otel) ObserveGetCollisionsByDistrictAndTrackLatency(ctx context.Context, duration time.Duration, district, track string) {
-	m.getCollisionsByDistrictAndTrackLatencySeconds.Record(ctx, duration.Seconds())
+	m.getCollisionsByDistrictAndTrackLatencySeconds.Record(ctx, duration.Seconds(), metric.WithAttributes(
+		attribute.String("district", district),
+		attribute.String("track", track),
+	))
 }
 
 func Init(ctx context.Context, uri string) (ShutdownFunc, error) {
