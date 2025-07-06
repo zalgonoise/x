@@ -2,18 +2,16 @@ package grpcserver
 
 import (
 	"context"
+	"github.com/zalgonoise/x/collide/internal/metrics"
 	"net"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/zalgonoise/x/authz/grpcserver/mocks"
 )
 
 func TestServer_Serve(t *testing.T) {
@@ -47,10 +45,8 @@ func TestServer_Serve(t *testing.T) {
 }
 
 func TestNewServer(t *testing.T) {
-	metrics := mocks.NewMetrics(t)
+	m := metrics.NoOp()
 
-	metrics.EXPECT().RegisterCollector(mock.Anything).Return()
-
-	s := NewServer(metrics, nil, nil)
+	s := NewServer(nil, nil, m)
 	require.NotNil(t, s.server)
 }
