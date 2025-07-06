@@ -5,6 +5,8 @@ global:
 scrape_configs:
   - job_name: 'collide'
     scrape_interval: 500ms
+    params:
+      headers: [ 'Accept: application/openmetrics-text' ]
     static_configs:
       - targets: ['collide:8080']
 
