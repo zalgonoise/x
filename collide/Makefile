@@ -28,6 +28,14 @@ dummy-load:
 
 new: clean-all up-all dummy-load
 
+generate:
+	go generate ./...
+	rm -rf ./diagrams && \
+		mkdir -p ./diagrams && \
+		go run ./scripts/diagrams generate && \
+		docker run --rm -ti -v ./diagrams:/diagrams -w /diagrams docker.io/zalgonoise/graphviz:ubuntu sh -c \
+			'dot -Tpng collide_api.dot > collide_api.png'
+
 .PHONY: dep-update
 dep-update:
 	go get -u ./...
