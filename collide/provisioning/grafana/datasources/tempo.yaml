@@ -30,7 +30,7 @@ datasources:
         filterByTraceID: false
         filterBySpanID: false
         customQuery: true
-        query: "{service=\"collide\"} |= \"$${__span.traceId}\""
+        query: "$${__tags} |= \"$${__span.traceId}\""
       tracesToMetrics:
         datasourceUid: 'Mimir'
         spanStartTimeShift: '-1h'
