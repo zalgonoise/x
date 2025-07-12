@@ -16,7 +16,7 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     description: "Collide is an application which provides track alternatives and collisions within a certain district"
   }
   schemes: HTTP
-  host: "localhost:8080"
+  host: "api.fallenpetals.com:8083"
   tags: [
     {
       name: "Collide"
