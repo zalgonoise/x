@@ -532,9 +532,9 @@ const file_collide_v1_collide_proto_rawDesc = "" +
 	"!GetAlternativesByDistrictAndTrack\x124.collide.v1.GetAlternativesByDistrictAndTrackRequest\x1a5.collide.v1.GetAlternativesByDistrictAndTrackResponse\"\x83\x02\x92A\xbe\x01\n" +
 	"\aCollide\x12&Get Alternatives By District And Track\x1a\x8a\x01Returns a list of alternative drift tracks in a certain district, which should not collide with the target, from the configured track list\x82\xd3\xe4\x93\x02;\x129/v1/collide/districts/{district}/all/{track}/alternatives\x12\xf5\x02\n" +
 	"\x1fGetCollisionsByDistrictAndTrack\x122.collide.v1.GetCollisionsByDistrictAndTrackRequest\x1a3.collide.v1.GetCollisionsByDistrictAndTrackResponse\"\xe8\x01\x92A\xa5\x01\n" +
-	"\aCollide\x12&Get Alternatives By District And Track\x1arReturns a list of tracks which would collide with the target in a certain district, from the configured track list\x82\xd3\xe4\x93\x029\x127/v1/collide/districts/{district}/all/{track}/collisionsB\xe7\x03\x92A\xbb\x03\n" +
+	"\aCollide\x12&Get Alternatives By District And Track\x1arReturns a list of tracks which would collide with the target in a certain district, from the configured track list\x82\xd3\xe4\x93\x029\x127/v1/collide/districts/{district}/all/{track}/collisionsB\xf2\x03\x92A\xc6\x03\n" +
 	"\x032.0\x12x\n" +
-	"\vcollide-api\x12dCollide is an application which provides track alternatives and collisions within a certain district2\x031.0\x1a\x0elocalhost:8080*\x01\x01R5\n" +
+	"\vcollide-api\x12dCollide is an application which provides track alternatives and collisions within a certain district2\x031.0\x1a\x19api.fallenpetals.com:8083*\x01\x01R5\n" +
 	"\x03401\x12.\n" +
 	"\x0fUnauthenticated\x12\x1b\n" +
 	"\x19\x1a\x17#/definitions/rpcStatusR2\n" +
