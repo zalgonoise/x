@@ -6,7 +6,7 @@ services:
     container_name: collide-fe
     restart: unless-stopped
     ports:
-      - "80:8082"
+      - "8082:8082"
     command: "serve"
     logging:
       driver: loki
