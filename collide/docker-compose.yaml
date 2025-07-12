@@ -8,6 +8,7 @@ services:
     volumes:
       - ./internal/tracks/tracks.yaml:/tracks.yaml:ro
     environment:
+      COLLIDE_HTTP_PORT: 8083
       COLLIDE_TRACKS_PATH: /tracks.yaml
       COLLIDE_LOG_LEVEL: DEBUG
       COLLIDE_LOG_WITH_SOURCE: true
@@ -15,7 +16,7 @@ services:
       COLLIDE_TRACING_URI: tempo:4317
       COLLIDE_METRICS_URI: collector:4318
     ports:
-      - "8080:8080"
+      - "8083:8083"
       - "8081:8081"
     command: "serve"
     logging:
