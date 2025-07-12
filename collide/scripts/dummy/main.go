@@ -42,11 +42,11 @@ func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, err
 	}
 
 	endpoints := []string{
-		"http://localhost:8080/v1/collide/districts",
-		"http://localhost:8080/v1/collide/districts/Waterfront/all",
-		"http://localhost:8080/v1/collide/districts/Waterfront/drift",
-		"http://localhost:8080/v1/collide/districts/Waterfront/all/Container/alternatives",
-		"http://localhost:8080/v1/collide/districts/Waterfront/all/Container/collisions",
+		"http://localhost:8083/v1/collide/districts",
+		"http://localhost:8083/v1/collide/districts/Waterfront/all",
+		"http://localhost:8083/v1/collide/districts/Waterfront/drift",
+		"http://localhost:8083/v1/collide/districts/Waterfront/all/Container/alternatives",
+		"http://localhost:8083/v1/collide/districts/Waterfront/all/Container/collisions",
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, *dur)
