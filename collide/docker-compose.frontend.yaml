@@ -1,0 +1,20 @@
+services:
+  collide-fe:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    container_name: collide-fe
+    restart: unless-stopped
+    ports:
+      - "80:8082"
+    command: "serve"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=collide,environment=demo,service=collide-fe
+    networks:
+      app-runtime:
+
+networks:
+  app-runtime:
