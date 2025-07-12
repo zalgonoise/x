@@ -11,7 +11,7 @@
       "description": "Service to list districts and tracks, as well as alternatives and collisions for the same"
     }
   ],
-  "host": "localhost:8080",
+  "host": "api.fallenpetals.com:8083",
   "schemes": [
     "http"
   ],
