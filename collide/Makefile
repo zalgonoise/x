@@ -2,26 +2,37 @@ app:
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide
 	docker compose -f docker-compose.yaml build
 
+fe-app:
+	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide-fe
+	docker compose -f docker-compose.frontend.yaml build
+
+
 up: app
 	docker compose -f docker-compose.yaml up -d --force-recreate
+
+up-fe: fe-app
+	docker compose -f docker-compose.frontend.yaml up -d --force-recreate
 
 up-observabilitiy:
 	docker compose -f docker-compose.observability.yaml up -d --force-recreate
 
-up-all: up-observabilitiy up
+up-all: up-observabilitiy up up-fe
 
 down:
 	docker compose -f docker-compose.yaml down
 
+down-fe:
+	docker compose -f docker-compose.frontend.yaml down
+
 down-observabilitiy:
 	docker compose -f docker-compose.observability.yaml down
 
-down-all: down down-observabilitiy
+down-all: down-fe down down-observabilitiy
 
 clean-observability:
 	docker compose -f docker-compose.observability.yaml down -v
 
-clean-all: clean-observability down
+clean-all: down-fe down clean-observability
 
 dummy-load:
 	go run ./scripts/dummy load
