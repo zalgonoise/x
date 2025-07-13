@@ -56,7 +56,7 @@ func defaultConfig[T FlagType]() Config[T] {
 
 func noOpIsValid[T FlagType](*T) error { return nil }
 
-func WithFlag[T FlagType](flag string, zero T, description string) cfg.Option[Config[T]] {
+func WithFlag[T FlagType](flag string, zero T, description string, executor Executor) cfg.Option[Config[T]] {
 	if flag == "" {
 		return cfg.NoOp[Config[T]]{}
 	}
@@ -65,6 +65,12 @@ func WithFlag[T FlagType](flag string, zero T, description string) cfg.Option[Co
 		c.flag = flag
 		c.zero = zero
 		c.description = description
+
+		if c.executors == nil {
+			c.executors = make(map[T]Executor)
+		}
+
+		c.executors[zero] = executor
 
 		return c
 	})
@@ -107,6 +113,19 @@ func WithExecutors[T FlagType](executors map[T]Executor) cfg.Option[Config[T]] {
 
 	return cfg.Register[Config[T]](func(c Config[T]) Config[T] {
 		c.executors = executors
+
+		selectors := make([]T, 0, len(executors))
+		for item := range executors {
+			selectors = append(selectors, item)
+		}
+
+		c.isValid = func(value *T) error {
+			if value == nil || !slices.Contains(selectors, *value) {
+				return ErrUnsupportedParameter
+			}
+
+			return nil
+		}
 
 		return c
 	})
