@@ -19,6 +19,20 @@ var (
 	ErrUnsupportedOption = errors.New("unsupported option")
 )
 
+type Executor interface {
+	Exec(ctx context.Context, logger *slog.Logger, args []string) (int, error)
+}
+
+type Runner interface {
+	Run(*slog.Logger) (int, error)
+}
+
+type FlagType interface {
+	bool | string | int | int64 | uint | uint64 | float64 | time.Duration
+}
+
+type Valuer[T FlagType] func(*flag.FlagSet, string, T, string) *T
+
 func Run(runner Runner) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
@@ -35,16 +49,6 @@ func Run(runner Runner) {
 
 	os.Exit(code)
 }
-
-type Runner interface {
-	Run(*slog.Logger) (int, error)
-}
-
-type FlagType interface {
-	bool | string | int | int64 | uint | uint64 | float64 | time.Duration
-}
-
-type Valuer[T FlagType] func(*flag.FlagSet, string, T, string) *T
 
 func NewRunner[T FlagType](name string, opts ...cfg.Option[Config[T]]) Runner {
 	config := cfg.Set(defaultConfig[T](), opts...)
