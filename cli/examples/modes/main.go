@@ -8,11 +8,8 @@ import (
 	"github.com/zalgonoise/x/cli"
 )
 
-var modes = []string{"print", "newline"}
-
 func main() {
 	runner := cli.NewRunner("printer",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"print":   cli.Executable(ExecPrint),
 			"newline": cli.Executable(ExecNewline),
