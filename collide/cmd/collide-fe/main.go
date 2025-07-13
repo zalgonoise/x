@@ -12,18 +12,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zalgonoise/x/cli"
+	"github.com/zalgonoise/x/cli/v2"
 
 	"github.com/zalgonoise/x/collide/internal/log"
 )
-
-var modes = []string{"serve"}
 
 func main() {
 	logger := log.New("debug", true, true)
 
 	runner := cli.NewRunner("collide-fe",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"serve": cli.Executable(ExecServe),
 		}),
