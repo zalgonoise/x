@@ -3,32 +3,23 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/zalgonoise/x/cli"
-	"github.com/zalgonoise/x/collide/internal/log"
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
+
+	"github.com/zalgonoise/x/cli/v2"
+
+	"github.com/zalgonoise/x/collide/internal/log"
 )
 
-var modes = []string{"load"}
-
 func main() {
-	logger := log.New("debug", true, true)
-
 	runner := cli.NewRunner("dummy",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"load": cli.Executable(ExecLoad),
 		}),
 	)
 
-	code, err := runner.Run(logger)
-	if err != nil {
-		logger.ErrorContext(context.Background(), "runtime error", slog.String("error", err.Error()))
-	}
-
-	os.Exit(code)
+	cli.Run(runner, log.New("debug", true, false))
 }
 
 func ExecLoad(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
