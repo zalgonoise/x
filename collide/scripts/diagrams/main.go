@@ -7,21 +7,19 @@ import (
 	"github.com/zalgonoise/go-diagrams/diagram"
 	"github.com/zalgonoise/go-diagrams/nodes/apps"
 	"github.com/zalgonoise/go-diagrams/nodes/oci"
-	"github.com/zalgonoise/x/cli"
-)
+	"github.com/zalgonoise/x/cli/v2"
 
-//nolint:gochecknoglobals // immutable, private set of supported modes
-var modes = []string{"generate"}
+	"github.com/zalgonoise/x/collide/internal/log"
+)
 
 func main() {
 	runner := cli.NewRunner("diagrams",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"generate": cli.Executable(ExecGenerate),
 		}),
 	)
 
-	cli.Run(runner)
+	cli.Run(runner, log.New("debug", true, false))
 }
 
 func ExecGenerate(_ context.Context, _ *slog.Logger, _ []string) (int, error) {
