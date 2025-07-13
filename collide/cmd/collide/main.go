@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zalgonoise/x/collide/internal/profiling"
 	"io"
 	"log/slog"
 	"net"
@@ -20,13 +19,14 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/zalgonoise/x/cli"
+	"github.com/zalgonoise/x/cli/v2"
 
 	"github.com/zalgonoise/x/collide/internal/config"
 	"github.com/zalgonoise/x/collide/internal/grpcserver"
 	"github.com/zalgonoise/x/collide/internal/httpserver"
 	"github.com/zalgonoise/x/collide/internal/log"
 	"github.com/zalgonoise/x/collide/internal/metrics"
+	"github.com/zalgonoise/x/collide/internal/profiling"
 	"github.com/zalgonoise/x/collide/internal/repository/memory"
 	"github.com/zalgonoise/x/collide/internal/service"
 	"github.com/zalgonoise/x/collide/internal/tracing"
@@ -53,13 +53,10 @@ type Metrics interface {
 
 var ErrInvalidMetricsType = errors.New("invalid metrics type")
 
-var modes = []string{"serve"}
-
 func main() {
 	logger := log.New("debug", true, true)
 
 	runner := cli.NewRunner("collide",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"serve": cli.Executable(ExecServe),
 		}),
