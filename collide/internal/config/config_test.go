@@ -19,7 +19,8 @@ func TestNew(t *testing.T) {
 					GRPCPort: 8081,
 				},
 				Frontend: Frontend{
-					Port: 8082,
+					Port:       8082,
+					BackendURI: "http://api.fallenpetals.com:8083",
 				},
 				Tracks: Tracks{
 					Path: "",
@@ -55,6 +56,7 @@ func TestNew(t *testing.T) {
 				"COLLIDE_HTTP_PORT":        "8088",
 				"COLLIDE_GRPC_PORT":        "8089",
 				"COLLIDE_FE_HTTP_PORT":     "8090",
+				"COLLIDE_BE_URI":           "http://localhost:8084",
 				"COLLIDE_TRACKS_PATH":      "tracks.yaml",
 				"COLLIDE_METRICS_URI":      "collector:14318",
 				"COLLIDE_LOG_LEVEL":        "DEBUG",
@@ -73,7 +75,8 @@ func TestNew(t *testing.T) {
 					GRPCPort: 8089,
 				},
 				Frontend: Frontend{
-					Port: 8090,
+					Port:       8090,
+					BackendURI: "http://localhost:8084",
 				},
 				Tracks: Tracks{
 					Path: "tracks.yaml",
