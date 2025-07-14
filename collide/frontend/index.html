@@ -175,7 +175,7 @@
 </div>
 
 <script>
-    const API_BASE_URL = "http://api.fallenpetals.com:8083"; // IMPORTANT: Change if your API is elsewhere
+    const API_BASE_URL = "{{ .BackendURI }}";
 
     // DOM Elements
     const districtSelect = document.getElementById('district-select');
