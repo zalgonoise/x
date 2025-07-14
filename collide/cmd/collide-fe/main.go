@@ -52,7 +52,7 @@ func ExecServe(ctx context.Context, logger *slog.Logger, _ []string) (int, error
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
 
-	serverShutdown := frontend.NewServer(ctx, cfg.Frontend.Port, logger)
+	serverShutdown := frontend.NewServer(ctx, cfg.Frontend.BackendURI, cfg.Frontend.Port, logger)
 
 	<-signalChannel
 
