@@ -2,22 +2,19 @@ app:
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide
 	docker compose -f docker-compose.yaml build
 
-fe-app:
+app-fe:
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide-fe
-	docker compose -f docker-compose.frontend.yaml build
+	docker compose -f docker-compose.frontend.yaml build collidefe
 
-localfe-app:
+app-localfe:
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide-fe
-	docker compose -f docker-compose.frontend.local.yaml build
+	docker compose -f docker-compose.frontend.yaml build collidefe-local
 
 up: app
 	docker compose -f docker-compose.yaml up -d --force-recreate
 
-up-fe: fe-app
+up-fe: app-fe app-localfe
 	docker compose -f docker-compose.frontend.yaml up -d --force-recreate
-
-up-localfe:
-	docker compose -f docker-compose.frontend.local.yaml up -d --force-recreate
 
 up-observabilitiy:
 	docker compose -f docker-compose.observability.yaml up -d --force-recreate
