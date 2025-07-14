@@ -1,12 +1,33 @@
 services:
-  collide-fe:
+  collidefe:
     build:
       context: ./
       dockerfile: ./Dockerfile
-    container_name: collide-fe
+    container_name: collidefe
     restart: unless-stopped
     ports:
       - "8082:8082"
+    environment:
+      COLLIDE_BE_URI: http://api.fallenpetals.com:8083
+    command: "serve"
+    logging:
+      driver: loki
+      options:
+        loki-url: http://localhost:3100/loki/api/v1/push
+        loki-external-labels: job=collide,environment=demo,service=collide-fe
+    networks:
+      app-runtime:
+
+  collidefe-local:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    container_name: collidefe-local
+    restart: unless-stopped
+    ports:
+      - "8084:8082"
+    environment:
+      COLLIDE_BE_URI: http://localhost:8083
     command: "serve"
     logging:
       driver: loki
