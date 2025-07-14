@@ -13,14 +13,18 @@ import (
 	"time"
 )
 
-//go:embed index.html
+//go:embed static/index.html
+//go:embed static/collide_api.swagger.json
+//go:embed static/swagger-ui.html
 var staticFS embed.FS
 
 type ShutdownFunc func(context.Context) error
 
 func NewServer(ctx context.Context, backendURI string, port int, logger *slog.Logger) ShutdownFunc {
 	mux := http.NewServeMux()
-	mux.Handle("/collide", NewCollisionsHandler(backendURI, logger))
+	mux.HandleFunc("/static/collide_api.swagger.json", serveFile("static/collide_api.swagger.json", "application/json", logger))
+	mux.HandleFunc("/explore", serveFile("static/swagger-ui.html", "text/html; charset=utf-8", logger))
+	mux.HandleFunc("/collide", NewCollisionsHandler(backendURI, logger))
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
@@ -47,7 +51,12 @@ func NewServer(ctx context.Context, backendURI string, port int, logger *slog.Lo
 
 func NewCollisionsHandler(uri string, logger *slog.Logger) http.HandlerFunc {
 	// read the template content of the embedded file.
-	htmlBytes, err := staticFS.ReadFile("index.html")
+	htmlBytes, err := staticFS.ReadFile("static/index.html")
+	if err != nil {
+		logger.ErrorContext(context.Background(), "reading template file", slog.String("err", err.Error()))
+
+		os.Exit(1)
+	}
 
 	// prepare HTML template
 	tmpl, err := template.New("collide-fe").Parse(string(htmlBytes))
@@ -79,5 +88,19 @@ func NewCollisionsHandler(uri string, logger *slog.Logger) http.HandlerFunc {
 			logger.ErrorContext(r.Context(), "writing bytes to response", slog.String("error", err.Error()))
 			http.Error(w, "Internal Server Error: failed to write response.", http.StatusInternalServerError)
 		}
+	}
+}
+
+func serveFile(filePath, contentType string, logger *slog.Logger) http.HandlerFunc {
+	buf, err := staticFS.ReadFile(filePath)
+	if err != nil {
+		logger.ErrorContext(context.Background(), "reading embedded file", slog.String("err", err.Error()))
+
+		os.Exit(1)
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", contentType)
+		w.Write(buf)
 	}
 }
