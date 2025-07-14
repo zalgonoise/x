@@ -20,7 +20,8 @@ type HTTP struct {
 }
 
 type Frontend struct {
-	Port int `env:"COLLIDE_FE_HTTP_PORT" envDefault:"8082"`
+	Port       int    `env:"COLLIDE_FE_HTTP_PORT" envDefault:"8082"`
+	BackendURI string `env:"COLLIDE_BE_URI" envDefault:"http://api.fallenpetals.com:8083"`
 }
 
 type Tracks struct {
