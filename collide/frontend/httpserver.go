@@ -1,28 +1,26 @@
 package frontend
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"errors"
 	"fmt"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 )
 
-// The go:embed directive tells the Go compiler to embed the index.html file
-// into the 'staticFS' variable. This creates a self-contained binary.
-// It's required that the file exists in the same directory or a subdirectory.
-//
 //go:embed index.html
 var staticFS embed.FS
 
 type ShutdownFunc func(context.Context) error
 
-func NewServer(ctx context.Context, port int, logger *slog.Logger) ShutdownFunc {
+func NewServer(ctx context.Context, backendURI string, port int, logger *slog.Logger) ShutdownFunc {
 	mux := http.NewServeMux()
-	mux.Handle("/collide", NewCollisionsHandler(logger))
+	mux.Handle("/collide", NewCollisionsHandler(backendURI, logger))
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
@@ -47,23 +45,38 @@ func NewServer(ctx context.Context, port int, logger *slog.Logger) ShutdownFunc 
 	return server.Shutdown
 }
 
-func NewCollisionsHandler(logger *slog.Logger) http.HandlerFunc {
+func NewCollisionsHandler(uri string, logger *slog.Logger) http.HandlerFunc {
+	// read the template content of the embedded file.
+	htmlBytes, err := staticFS.ReadFile("index.html")
+
+	// prepare HTML template
+	tmpl, err := template.New("collide-fe").Parse(string(htmlBytes))
+	if err != nil {
+		logger.ErrorContext(context.Background(), "parsing template", slog.String("err", err.Error()))
+
+		os.Exit(1)
+	}
+
+	uriData := struct {
+		BackendURI string
+	}{
+		BackendURI: uri,
+	}
+
+	buf := bytes.NewBuffer(make([]byte, 0, len(htmlBytes)+len(uri)))
+
+	// apply URI to template HTML
+	if err := tmpl.Execute(buf, uriData); err != nil {
+		logger.ErrorContext(context.Background(), "preparing HTML from template", slog.String("error", err.Error()))
+
+		os.Exit(1)
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Read the content of the embedded file.
-		htmlBytes, err := staticFS.ReadFile("index.html")
-		if err != nil {
-			// This should not happen if the file is embedded correctly at compile time.
-			logger.ErrorContext(context.Background(), "serving HTML file", slog.String("error", err.Error()))
-			http.Error(w, "Internal Server Error: could not serve page.", http.StatusInternalServerError)
-
-			return
-		}
-
-		// Set the correct Content-Type header so the browser renders it as HTML.
+		// set the correct Content-Type header so the browser renders it as HTML.
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		// Write the file content to the response body.
-		if _, err := w.Write(htmlBytes); err != nil {
-			logger.ErrorContext(context.Background(), "writing bytes to response", slog.String("error", err.Error()))
+		if _, err := w.Write(buf.Bytes()); err != nil {
+			logger.ErrorContext(r.Context(), "writing bytes to response", slog.String("error", err.Error()))
 			http.Error(w, "Internal Server Error: failed to write response.", http.StatusInternalServerError)
 		}
 	}
