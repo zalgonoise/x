@@ -3,10 +3,12 @@ app:
 	docker compose -f docker-compose.yaml build
 
 app-fe:
+	cp api/openapi/collide/v1/collide_api.swagger.json frontend/static/collide_api.swagger.json
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide-fe
 	docker compose -f docker-compose.frontend.yaml build collidefe
 
 app-localfe:
+	cp api/openapi/collide/v1/collide_api.swagger.json frontend/static/collide_api.swagger.json
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide-fe
 	docker compose -f docker-compose.frontend.yaml build collidefe-local
 
