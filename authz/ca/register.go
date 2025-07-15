@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/authz/repository"
+	"github.com/zalgonoise/x/reg"
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -34,54 +35,54 @@ func (ca *CertificateAuthority) RegisterService(
 		slog.String("service", req.Service), slog.Bool("with_csr", req.SigningRequest != nil))
 
 	if err := req.ValidateAll(); err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		ca.metrics.IncServiceRegistryFailed()
-
-		ca.logger.WarnContext(ctx, "invalid request",
-			slog.Any("request", req), slog.String("error", err.Error()))
+		ca.r.Event(ctx, "invalid request",
+			reg.WithError(err),
+			reg.WithLogLevel(slog.LevelWarn),
+			reg.WithLogAttributes(slog.Any("request", req)),
+			reg.WithSpan(span),
+			reg.WithMetric(ca.metrics.IncServiceRegistryFailed),
+		)
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	err := ca.validatePublicKeys(ctx, req.Service, req.PublicKey)
-	if err != nil {
-		switch {
-		// create the service if not exists
-		case errors.Is(err, repository.ErrNotFound):
-			if err := ca.repository.CreateService(ctx, req.Service, req.PublicKey); err != nil {
-				span.SetStatus(otelcodes.Error, err.Error())
-				span.RecordError(err)
-				ca.metrics.IncServiceRegistryFailed()
-
-				ca.logger.ErrorContext(ctx, "failed to write service to DB",
-					slog.String("service", req.Service), slog.String("error", err.Error()))
-
-				return nil, status.Error(codes.Internal, err.Error())
-			}
-
-		// service exists, invalid public keys
-		case errors.Is(err, ErrInvalidPublicKey):
-			span.SetStatus(otelcodes.Error, err.Error())
-			span.RecordError(err)
-			ca.metrics.IncServiceRegistryFailed()
-
-			ca.logger.WarnContext(ctx, "mismatching public keys",
-				slog.String("service", req.Service), slog.String("error", err.Error()))
-
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-
-		// internal error
-		default:
-			span.SetStatus(otelcodes.Error, err.Error())
-			span.RecordError(err)
-			ca.metrics.IncServiceRegistryFailed()
-
-			ca.logger.ErrorContext(ctx, "failed to validate public keys",
-				slog.String("service", req.Service), slog.String("error", err.Error()))
+	switch err := ca.validatePublicKeys(ctx, req.Service, req.PublicKey); {
+	// create the service if not exists
+	case errors.Is(err, repository.ErrNotFound):
+		if err := ca.repository.CreateService(ctx, req.Service, req.PublicKey); err != nil {
+			ca.r.Event(ctx, "failed to write service to DB",
+				reg.WithError(err),
+				reg.WithLogAttributes(slog.String("service", req.Service)),
+				reg.WithSpan(span),
+				reg.WithMetric(ca.metrics.IncServiceRegistryFailed),
+			)
 
 			return nil, status.Error(codes.Internal, err.Error())
 		}
+
+	// service exists, invalid public keys
+	case errors.Is(err, ErrInvalidPublicKey):
+		ca.r.Event(ctx, "mismatching public keys",
+			reg.WithError(err),
+			reg.WithLogLevel(slog.LevelWarn),
+			reg.WithLogAttributes(slog.String("service", req.Service)),
+			reg.WithSpan(span),
+			reg.WithMetric(ca.metrics.IncServiceRegistryFailed),
+		)
+
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+
+	// internal error
+	case err != nil:
+		ca.r.Event(ctx, "failed to validate public keys",
+			reg.WithError(err),
+			reg.WithLogAttributes(slog.String("service", req.Service)),
+			reg.WithSpan(span),
+			reg.WithMetric(ca.metrics.IncServiceRegistryFailed),
+		)
+
+		return nil, status.Error(codes.Internal, err.Error())
+	default:
 	}
 
 	return ca.CreateCertificate(ctx, req)
@@ -104,23 +105,25 @@ func (ca *CertificateAuthority) DeleteService(ctx context.Context, req *pb.Delet
 		slog.String("service", req.Service))
 
 	if err := req.ValidateAll(); err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		ca.metrics.IncServiceDeletionFailed()
-
-		ca.logger.ErrorContext(ctx, "invalid request",
-			slog.Any("request", req), slog.String("error", err.Error()))
+		ca.r.Event(ctx, "invalid request",
+			reg.WithError(err),
+			reg.WithLogLevel(slog.LevelWarn),
+			reg.WithLogAttributes(slog.Any("request", req)),
+			reg.WithSpan(span),
+			reg.WithMetric(ca.metrics.IncServiceDeletionFailed),
+		)
 
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	if err := ca.validatePublicKeys(ctx, req.Service, req.PublicKey); err != nil {
-		span.SetStatus(otelcodes.Error, err.Error())
-		span.RecordError(err)
-		ca.metrics.IncServiceDeletionFailed()
-
-		ca.logger.WarnContext(ctx, "mismatching public keys",
-			slog.String("service", req.Service), slog.String("error", err.Error()))
+		ca.r.Event(ctx, "mismatching public keys",
+			reg.WithError(err),
+			reg.WithLogLevel(slog.LevelWarn),
+			reg.WithLogAttributes(slog.String("service", req.Service)),
+			reg.WithSpan(span),
+			reg.WithMetric(ca.metrics.IncServiceDeletionFailed),
+		)
 
 		return nil, status.Error(codes.PermissionDenied, ErrInvalidPublicKey.Error())
 	}

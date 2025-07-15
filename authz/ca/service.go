@@ -12,6 +12,9 @@ import (
 	"github.com/zalgonoise/x/authz/keygen"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 	"github.com/zalgonoise/x/errs"
+	"github.com/zalgonoise/x/reg"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -82,6 +85,7 @@ type CertificateAuthority struct {
 
 	repository Repository
 
+	r       *reg.Registrar
 	logger  *slog.Logger
 	tracer  trace.Tracer
 	metrics Metrics
@@ -117,15 +121,20 @@ func NewCertificateAuthority(
 		return nil, err
 	}
 
+	logger := slog.New(config.logHandler)
+
 	return &CertificateAuthority{
 		privateKey: privateKey,
 		ca:         ca,
 		raw:        cert,
 		durMonth:   template.DurMonth,
 		repository: repo,
-		logger:     slog.New(config.logHandler),
-		tracer:     config.tracer,
-		metrics:    config.metrics,
+		r: reg.New(logger,
+			[]attribute.KeyValue{attribute.Int("dur_months", template.DurMonth)},
+			[]any{slog.Int("dur_months", template.DurMonth)}),
+		logger:  logger,
+		tracer:  config.tracer,
+		metrics: config.metrics,
 	}, nil
 }
 
@@ -154,4 +163,19 @@ func (ca *CertificateAuthority) validatePublicKeys(ctx context.Context, service 
 	}
 
 	return nil
+}
+
+func recordError(
+	ctx context.Context, err error, message string,
+	span trace.Span, traceAttrs []attribute.KeyValue,
+	logger *slog.Logger, level slog.Level, logAttrs []any,
+) {
+	traceAttrs = append(traceAttrs, attribute.String("error", err.Error()))
+	logAttrs = append(logAttrs, attribute.String("error", err.Error()))
+
+	span.SetStatus(otelcodes.Error, err.Error())
+	span.RecordError(err)
+	span.AddEvent(message, trace.WithAttributes(traceAttrs...))
+
+	logger.Log(ctx, level, message, logAttrs...)
 }
