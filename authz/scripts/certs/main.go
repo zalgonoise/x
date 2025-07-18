@@ -17,21 +17,22 @@ import (
 
 	"github.com/zalgonoise/x/authz/certs"
 	"github.com/zalgonoise/x/authz/keygen"
-	"github.com/zalgonoise/x/cli"
+	"github.com/zalgonoise/x/cli/v2"
 )
 
-var modes = []string{"new", "verify"}
-
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	}))
+
 	runner := cli.NewRunner("keygen",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"new":    cli.Executable(ExecNew),
 			"verify": cli.Executable(ExecVerify),
 		}),
 	)
 
-	cli.Run(runner)
+	cli.Run(runner, logger)
 }
 
 func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
@@ -75,6 +76,7 @@ func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 		*filename = "cert.pem"
 	}
 
+	logger.InfoContext(ctx, "generating new certificate file")
 	certFile, err := createCertFile(*output, *filename)
 	if err != nil {
 		return 1, err
@@ -82,6 +84,7 @@ func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 
 	defer certFile.Close()
 
+	logger.InfoContext(ctx, "opening public and private key files")
 	pub, priv, err := openKeys(*pubPath, *privPath)
 	if err != nil {
 		return 1, err
@@ -89,6 +92,7 @@ func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 
 	var parentCert *x509.Certificate
 	if *parent != "" {
+		logger.InfoContext(ctx, "opening parent certificate")
 		parentCert, err = openCertificate(*parent)
 	}
 
@@ -96,6 +100,8 @@ func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 	if err != nil {
 		return 1, err
 	}
+
+	logger.InfoContext(ctx, "generating serial", slog.Int64("serial", serial.Int64()))
 
 	cn := pkix.Name{
 		SerialNumber: serial.String(),
@@ -133,11 +139,13 @@ func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 		parentCert = tmpl
 	}
 
+	logger.InfoContext(ctx, "encoding certificate")
 	certificate, err := certs.Encode(tmpl, parentCert, pub, priv)
 	if err != nil {
 		return 1, err
 	}
 
+	logger.InfoContext(ctx, "writing certificate to file")
 	if _, err = certFile.Write(certificate); err != nil {
 		return 1, err
 	}
@@ -146,6 +154,7 @@ func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 		return 1, err
 	}
 
+	logger.InfoContext(ctx, "generated certificate successfully")
 	return 0, nil
 }
 
@@ -174,6 +183,10 @@ func ExecVerify(ctx context.Context, logger *slog.Logger, args []string) (int, e
 	if *inter != "" {
 		split := strings.Split(*inter, ",")
 
+		logger.InfoContext(ctx, "parsing intermediate certificates",
+			slog.Int("num_certificates", len(split)),
+			slog.Any("certificates", split))
+
 		intermediateCerts := make([]*x509.Certificate, 0, len(split))
 
 		for i := range split {
@@ -196,27 +209,36 @@ func ExecVerify(ctx context.Context, logger *slog.Logger, args []string) (int, e
 			for i := range intermediateCerts {
 				intermediates.AddCert(intermediateCerts[i])
 			}
+
+			logger.InfoContext(ctx, "added certificates to the pool",
+				slog.Int("num_certificates", len(intermediateCerts)))
 		}
 	}
 
+	logger.InfoContext(ctx, "reading target PEM")
 	targetPEM, err := os.ReadFile(*target)
 	if err != nil {
 		return 1, err
 	}
 
+	logger.InfoContext(ctx, "reading root PEM")
 	rootPEM, err := os.ReadFile(*root)
 	if err != nil {
 		return 1, err
 	}
 
+	logger.InfoContext(ctx, "decoding root PEM")
 	rootCert, err := certs.Decode(rootPEM)
 	if err != nil {
 		return 1, err
 	}
 
+	logger.InfoContext(ctx, "verifying target PEM against root PEM (and intermediates)")
 	if err = certs.Verify(targetPEM, rootCert, intermediates); err != nil {
 		return 1, err
 	}
+
+	logger.InfoContext(ctx, "verified target certificate successfully")
 
 	return 0, nil
 }
