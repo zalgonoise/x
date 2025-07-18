@@ -12,7 +12,7 @@ import (
 
 	"github.com/zalgonoise/x/cli/v2"
 
-	"github.com/zalgonoise/x/authz/keygen"
+	"github.com/zalgonoise/x/authz/internal/keygen"
 )
 
 func main() {
