@@ -18,9 +18,9 @@ require (
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/micron v1.1.0
 	github.com/zalgonoise/x/cli v0.0.0-20250715131416-00fa5fb2d673
-	github.com/zalgonoise/x/cli/v2 v2.0.0-20250717195813-9d8d4926d25b
-	github.com/zalgonoise/x/errs v0.0.0-20250717195813-9d8d4926d25b
-	github.com/zalgonoise/x/reg v0.0.0-20250717195813-9d8d4926d25b
+	github.com/zalgonoise/x/cli/v2 v2.0.0-20250718021259-c2bada168df6
+	github.com/zalgonoise/x/errs v0.0.0-20250718021259-c2bada168df6
+	github.com/zalgonoise/x/reg v0.0.0-20250718023355-e3ac8257b207
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 	go.opentelemetry.io/otel v1.37.0
@@ -336,4 +336,16 @@ require (
 	mvdan.cc/gofumpt v0.8.0 // indirect
 	mvdan.cc/unparam v0.0.0-20250301125049-0df0534333a4 // indirect
 	pluginrpc.com/pluginrpc v0.5.0 // indirect
+)
+
+tool (
+	github.com/bufbuild/buf/cmd/buf
+	github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking
+	github.com/bufbuild/buf/cmd/protoc-gen-buf-lint
+	github.com/envoyproxy/protoc-gen-validate
+	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway
+	github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
+	github.com/vektra/mockery/v2
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	google.golang.org/protobuf/cmd/protoc-gen-go
 )
