@@ -15,9 +15,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zalgonoise/x/authz/certs"
-	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/cli/v2"
+
+	"github.com/zalgonoise/x/authz/internal/certs"
+	"github.com/zalgonoise/x/authz/internal/keygen"
 )
 
 func main() {
