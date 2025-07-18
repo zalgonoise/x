@@ -14,36 +14,29 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/zalgonoise/x/cli/v2"
+
+	"github.com/zalgonoise/x/authz/grpcserver"
+	"github.com/zalgonoise/x/authz/httpserver"
 	"github.com/zalgonoise/x/authz/keygen"
 	"github.com/zalgonoise/x/authz/log"
 	"github.com/zalgonoise/x/authz/metrics"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
-	"github.com/zalgonoise/x/cli"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
-	"github.com/zalgonoise/x/authz/grpcserver"
-	"github.com/zalgonoise/x/authz/httpserver"
 )
-
-var modes = []string{"ca", "authz"}
 
 func main() {
 	logger := log.New("debug")
 	runner := cli.NewRunner("authz",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"ca":    cli.Executable(ExecCertificateAuthority),
 			"authz": cli.Executable(ExecAuthz),
 		}),
 	)
 
-	code, err := runner.Run(logger)
-	if err != nil {
-		logger.ErrorContext(context.Background(), "runtime error", slog.String("error", err.Error()))
-	}
-
-	os.Exit(code)
+	cli.Run(runner, logger)
 }
 
 const (
