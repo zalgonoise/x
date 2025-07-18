@@ -9,15 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/zalgonoise/x/authz/ca"
-	"github.com/zalgonoise/x/authz/certs"
-	"github.com/zalgonoise/x/authz/config"
-	"github.com/zalgonoise/x/authz/database"
-	"github.com/zalgonoise/x/authz/httpserver"
-	"github.com/zalgonoise/x/authz/metrics"
-	"github.com/zalgonoise/x/authz/repository"
-	"github.com/zalgonoise/x/authz/tracing"
 	"go.opentelemetry.io/otel/trace/noop"
+
+	"github.com/zalgonoise/x/authz/internal/ca"
+	"github.com/zalgonoise/x/authz/internal/certs"
+	"github.com/zalgonoise/x/authz/internal/config"
+	"github.com/zalgonoise/x/authz/internal/database"
+	"github.com/zalgonoise/x/authz/internal/httpserver"
+	"github.com/zalgonoise/x/authz/internal/metrics"
+	"github.com/zalgonoise/x/authz/internal/repository"
+	"github.com/zalgonoise/x/authz/internal/tracing"
 )
 
 func ExecCertificateAuthority(ctx context.Context, logger *slog.Logger, args []string) (int, error) {

@@ -8,16 +8,17 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/zalgonoise/x/authz/authz"
-	"github.com/zalgonoise/x/authz/config"
-	"github.com/zalgonoise/x/authz/database"
-	"github.com/zalgonoise/x/authz/httpserver"
-	"github.com/zalgonoise/x/authz/metrics"
-	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
-	"github.com/zalgonoise/x/authz/randomizer"
-	"github.com/zalgonoise/x/authz/repository"
-	"github.com/zalgonoise/x/authz/tracing"
 	"go.opentelemetry.io/otel/trace/noop"
+
+	"github.com/zalgonoise/x/authz/internal/authz"
+	"github.com/zalgonoise/x/authz/internal/config"
+	"github.com/zalgonoise/x/authz/internal/database"
+	"github.com/zalgonoise/x/authz/internal/httpserver"
+	"github.com/zalgonoise/x/authz/internal/metrics"
+	"github.com/zalgonoise/x/authz/internal/randomizer"
+	"github.com/zalgonoise/x/authz/internal/repository"
+	"github.com/zalgonoise/x/authz/internal/tracing"
+	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 )
 
 func ExecAuthz(ctx context.Context, logger *slog.Logger, args []string) (int, error) {

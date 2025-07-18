@@ -19,11 +19,11 @@ import (
 
 	"github.com/zalgonoise/x/cli/v2"
 
-	"github.com/zalgonoise/x/authz/grpcserver"
-	"github.com/zalgonoise/x/authz/httpserver"
-	"github.com/zalgonoise/x/authz/keygen"
-	"github.com/zalgonoise/x/authz/log"
-	"github.com/zalgonoise/x/authz/metrics"
+	"github.com/zalgonoise/x/authz/internal/grpcserver"
+	"github.com/zalgonoise/x/authz/internal/httpserver"
+	"github.com/zalgonoise/x/authz/internal/keygen"
+	"github.com/zalgonoise/x/authz/internal/log"
+	"github.com/zalgonoise/x/authz/internal/metrics"
 	pb "github.com/zalgonoise/x/authz/pb/authz/v1"
 )
 
