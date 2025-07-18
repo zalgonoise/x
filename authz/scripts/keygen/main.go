@@ -10,16 +10,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zalgonoise/x/cli"
+	"github.com/zalgonoise/x/cli/v2"
 
 	"github.com/zalgonoise/x/authz/keygen"
 )
 
-var modes = []string{"new", "sign", "verify"}
-
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	}))
+
 	runner := cli.NewRunner("keygen",
-		cli.WithOneOf(modes...),
 		cli.WithExecutors(map[string]cli.Executor{
 			"new":    cli.Executable(ExecNew),
 			"sign":   cli.Executable(ExecSign),
@@ -27,7 +28,7 @@ func main() {
 		}),
 	)
 
-	cli.Run(runner)
+	cli.Run(runner, logger)
 }
 
 func ExecNew(ctx context.Context, logger *slog.Logger, args []string) (int, error) {
