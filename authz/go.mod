@@ -18,9 +18,9 @@ require (
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/micron v1.1.0
 	github.com/zalgonoise/x/cli v0.0.0-20250715131416-00fa5fb2d673
-	github.com/zalgonoise/x/cli/v2 v2.0.0-20250727193901-82d4d2c86b03
-	github.com/zalgonoise/x/errs v0.0.0-20250727193901-82d4d2c86b03
-	github.com/zalgonoise/x/reg v0.0.0-20250727193901-82d4d2c86b03
+	github.com/zalgonoise/x/cli/v2 v2.0.0-20250728212021-60d1226d21cd
+	github.com/zalgonoise/x/errs v0.0.0-20250728212021-60d1226d21cd
+	github.com/zalgonoise/x/reg v0.0.0-20250728212021-60d1226d21cd
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 	go.opentelemetry.io/otel v1.37.0
@@ -31,7 +31,7 @@ require (
 	google.golang.org/grpc v1.74.2
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
 	google.golang.org/protobuf v1.36.6
-	modernc.org/sqlite v1.38.1
+	modernc.org/sqlite v1.38.2
 )
 
 require (
@@ -248,7 +248,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryancurrah/gomodguard v1.4.1 // indirect
 	github.com/ryanrolds/sqlclosecheck v0.5.1 // indirect
-	github.com/sagikazarmark/locafero v0.9.0 // indirect
+	github.com/sagikazarmark/locafero v0.10.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sanposhiho/wastedassign/v2 v2.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
@@ -263,7 +263,7 @@ require (
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/sivchari/tenv v1.12.1 // indirect
 	github.com/sonatard/noctx v0.4.0 // indirect
-	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/sourcegraph/go-diff v0.7.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
