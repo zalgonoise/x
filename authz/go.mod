@@ -12,20 +12,23 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.1.6
-	github.com/prometheus/client_golang v1.22.0
+	github.com/prometheus/client_golang v1.23.0
 	github.com/stretchr/testify v1.10.0
 	github.com/vektra/mockery/v2 v2.53.4
 	github.com/zalgonoise/cfg v1.0.0
 	github.com/zalgonoise/micron v1.1.0
 	github.com/zalgonoise/x/cli v0.0.0-20250715131416-00fa5fb2d673
-	github.com/zalgonoise/x/cli/v2 v2.0.0-20250729212159-d1912832a145
-	github.com/zalgonoise/x/errs v0.0.0-20250729212159-d1912832a145
-	github.com/zalgonoise/x/reg v0.0.0-20250729212159-d1912832a145
+	github.com/zalgonoise/x/cli/v2 v2.0.0-20250730144942-0a3f29238ff3
+	github.com/zalgonoise/x/errs v0.0.0-20250730144942-0a3f29238ff3
+	github.com/zalgonoise/x/reg v0.0.0-20250730144942-0a3f29238ff3
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
 	go.opentelemetry.io/otel v1.37.0
+	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.37.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.37.0
+	go.opentelemetry.io/otel/metric v1.37.0
 	go.opentelemetry.io/otel/sdk v1.37.0
+	go.opentelemetry.io/otel/sdk/metric v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0
 	google.golang.org/grpc v1.74.2
@@ -305,8 +308,7 @@ require (
 	go.lsp.dev/uri v0.3.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.37.0 // indirect
-	go.opentelemetry.io/otel/metric v1.37.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/mock v0.5.2 // indirect
