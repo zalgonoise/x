@@ -307,6 +307,8 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 h1:NMZiJj8QnKe1LgsbDayM4UoHwbvw
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0/go.mod h1:ZXNYxsqcloTdSy/rNShjYzMhyjf0LaoftYK0p+A3h40=
 github.com/denis-tingaikin/go-header v0.5.0 h1:SRdnP5ZKvcO9KKRP1KJrhFR3RrlGuD+42t4429eC9k8=
 github.com/denis-tingaikin/go-header v0.5.0/go.mod h1:mMenU5bWrok6Wl2UsZjy+1okegmwQ3UgWl4V1D8gjlY=
+github.com/denis-tingaikin/go-header v1.0.0 h1:QIwZWb3jLC6pOp9NEFldiD8raqRmCE/n0VUdZKW32x8=
+github.com/denis-tingaikin/go-header v1.0.0/go.mod h1:NT3qKwqsXQYp8WHVgkwxL49qB5jsRmdr9dGQCDfpmZ0=
 github.com/distribution/reference v0.6.0 h1:0IXCQ5g4/QMHHkarYzh5l+u8T3t73zM5QvfrDyIgxBk=
 github.com/distribution/reference v0.6.0/go.mod h1:BbU0aIcezP1/5jX/8MP0YiH4SdvB5Y4f/wlDRiLyi3E=
 github.com/docker/cli v26.0.0+incompatible h1:90BKrx1a1HKYpSnnBFR6AgDq/FqkHxwlUyzJVPxD30I=
@@ -808,6 +810,7 @@ github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/olekukonko/tablewriter v1.0.8 h1:f6wJzHg4QUtJdvrVPKco4QTrAylgaU0+b9br/lJxEiQ=
 github.com/olekukonko/tablewriter v1.0.8/go.mod h1:H428M+HzoUXC6JU2Abj9IT9ooRmdq9CxuDmKMtrOCMs=
+github.com/olekukonko/tablewriter v1.0.9/go.mod h1:5c+EBPeSqvXnLLgkm9isDdzR3wjfBkHR9Nhfp3NWrzo=
 github.com/onsi/ginkgo/v2 v2.15.0 h1:79HwNRBAZHOEwrczrgSOPy+eFTTlIGELKy5as+ClttY=
 github.com/onsi/ginkgo/v2 v2.15.0/go.mod h1:HlxMHtYF57y6Dpf+mc5529KKmSq9h2FpCF+/ZkwUxKM=
 github.com/onsi/ginkgo/v2 v2.23.4 h1:ktYTpKJAVZnDT4VjxSbiBenUjmlL/5QkBEocaWXiQus=
@@ -1131,6 +1134,8 @@ github.com/zalgonoise/micron v1.0.2 h1:5K5XrPAvx8U/143pOgJbjrIKwwvZRVlAWvfkRu/Uw
 github.com/zalgonoise/micron v1.0.2/go.mod h1:sHc5Z9ZIIK2Z61PrIsV1btAwpBBQTx7GYqJ6Kj8eP3I=
 github.com/zalgonoise/micron v1.1.0 h1:Xz6BEEFG9N0TV2KkHg/3PVQBHEvcw/6mU1Q9Z0pkAGI=
 github.com/zalgonoise/micron v1.1.0/go.mod h1:dXvoGSWQuoq1ADAbn2zgejsx8xak5p0b1YJnFlbnw1U=
+github.com/zalgonoise/micron/v3 v3.0.2 h1:x6N54VxaPE1M9PMErceNzKxIhR+Nx8iv6V9HLqIxHAs=
+github.com/zalgonoise/micron/v3 v3.0.2/go.mod h1:ubZ1OVnufsYJo51uHqa87nHICJXiv7gnFYHCeEpCaZk=
 github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5 h1:EBgljXGafLZA4PqRdmtHBzSlShSXp/XizEqBfFOEbSM=
 github.com/zalgonoise/parse v0.0.0-20230210135117-8caf35dfc5d5/go.mod h1:gN5pXQ+VmE3Jmy4/gPhgD+4gEisXfMpuDrjHb1eertI=
 github.com/zalgonoise/x/cli v0.0.0-20240327165859-989080ccd24e h1:USWTmS7zfx/+mKTKY3kRWUT5l3X0ZqiSS96cxb3+tUo=
@@ -1149,6 +1154,10 @@ github.com/zalgonoise/x/cli/v2 v2.0.0-20250729212159-d1912832a145 h1:ApdpSSZ4zi2
 github.com/zalgonoise/x/cli/v2 v2.0.0-20250729212159-d1912832a145/go.mod h1:OSilIrbLnEYbeex4J6J4AeWEGI508Rta7fWBXO78Vvk=
 github.com/zalgonoise/x/cli/v2 v2.0.0-20250730144942-0a3f29238ff3 h1:HRPJadY/6CuumXGINRlkcuLJ94G7WBJOYNCAh1O1MYc=
 github.com/zalgonoise/x/cli/v2 v2.0.0-20250730144942-0a3f29238ff3/go.mod h1:OSilIrbLnEYbeex4J6J4AeWEGI508Rta7fWBXO78Vvk=
+github.com/zalgonoise/x/cli/v2 v2.0.0-20250731203359-5753aa3ae6cc h1:pC94myGXvsclzSAcMUKW1AgfUNDVj1puqqsBEATz5dU=
+github.com/zalgonoise/x/cli/v2 v2.0.0-20250731203359-5753aa3ae6cc/go.mod h1:OSilIrbLnEYbeex4J6J4AeWEGI508Rta7fWBXO78Vvk=
+github.com/zalgonoise/x/cli/v2 v2.0.0-20250803133832-511d5492772a h1:Nfk80KMZ4NFFQI1KZ/2ShXs82r6OhCYPCc+ze9EZAqc=
+github.com/zalgonoise/x/cli/v2 v2.0.0-20250803133832-511d5492772a/go.mod h1:OSilIrbLnEYbeex4J6J4AeWEGI508Rta7fWBXO78Vvk=
 github.com/zalgonoise/x/errs v0.0.0-20240327165859-989080ccd24e h1:maUMxLZyY6aua7bAHljUIfOOYwKXurphvLMtmT+N3qs=
 github.com/zalgonoise/x/errs v0.0.0-20240327165859-989080ccd24e/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/errs v0.0.0-20250715131416-00fa5fb2d673 h1:UY+tGKDkXRb/Sv0Nh+VtS2mBeoxHeIO5ibfHSRfY09E=
@@ -1165,6 +1174,10 @@ github.com/zalgonoise/x/errs v0.0.0-20250729212159-d1912832a145 h1:+44BREYcwSfaH
 github.com/zalgonoise/x/errs v0.0.0-20250729212159-d1912832a145/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/errs v0.0.0-20250730144942-0a3f29238ff3 h1:vOEcx7HmY2xJGENc+QFvVuWXhzpUHxmnrTGkvzFVzao=
 github.com/zalgonoise/x/errs v0.0.0-20250730144942-0a3f29238ff3/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
+github.com/zalgonoise/x/errs v0.0.0-20250731203359-5753aa3ae6cc h1:0vT4ajnn7eNmHpeLqs/Iol6+J34a0cCJk2OgGoCNEpc=
+github.com/zalgonoise/x/errs v0.0.0-20250731203359-5753aa3ae6cc/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
+github.com/zalgonoise/x/errs v0.0.0-20250803133832-511d5492772a h1:ONlj+sLz0ovD0ePc0sXNVPw1YHZ0iSALFv0cU0UzcvY=
+github.com/zalgonoise/x/errs v0.0.0-20250803133832-511d5492772a/go.mod h1:4sQ1JRAlCcFLA+uinQlBZIpdA+oN1zuusKW6iDdxDws=
 github.com/zalgonoise/x/is v0.0.0-20231111152101-e78dd34855c9 h1:T5vOvDU82/a9YvwWFjWqRLK9pXNIm09sPa1Gu5higuA=
 github.com/zalgonoise/x/is v0.0.0-20231111152101-e78dd34855c9/go.mod h1:WvtGhofqpjEMLhn+qkpHVcBPBuIrC5vx6nwsa7mEqTU=
 github.com/zalgonoise/x/reg v0.0.0-20250715131416-00fa5fb2d673 h1:zPgLDofHYqrtUmH/h/ZNJgrb6C42GPdjVDBd4LvYSVk=
@@ -1181,6 +1194,10 @@ github.com/zalgonoise/x/reg v0.0.0-20250729212159-d1912832a145 h1:D3/09id9CX99kp
 github.com/zalgonoise/x/reg v0.0.0-20250729212159-d1912832a145/go.mod h1:utf96HUJEYr6nxo02vqZ4mwKEZxarHTHJcSmosxprlw=
 github.com/zalgonoise/x/reg v0.0.0-20250730144942-0a3f29238ff3 h1:M9WwmojcbUhKtL4zrbYPkTqla0KkOHnGXSmYqFndSQk=
 github.com/zalgonoise/x/reg v0.0.0-20250730144942-0a3f29238ff3/go.mod h1:utf96HUJEYr6nxo02vqZ4mwKEZxarHTHJcSmosxprlw=
+github.com/zalgonoise/x/reg v0.0.0-20250731203359-5753aa3ae6cc h1:Llo5U2K5fTsJDRxCmQF8q7BL55SGR6gnHn/5mRutbmo=
+github.com/zalgonoise/x/reg v0.0.0-20250731203359-5753aa3ae6cc/go.mod h1:utf96HUJEYr6nxo02vqZ4mwKEZxarHTHJcSmosxprlw=
+github.com/zalgonoise/x/reg v0.0.0-20250803133832-511d5492772a h1:vnjxr9bnPH45L9hiig2xjHOA0BjTun6DYeOMVlDXFaA=
+github.com/zalgonoise/x/reg v0.0.0-20250803133832-511d5492772a/go.mod h1:utf96HUJEYr6nxo02vqZ4mwKEZxarHTHJcSmosxprlw=
 gitlab.com/bosi/decorder v0.4.1 h1:VdsdfxhstabyhZovHafFw+9eJ6eU0d2CkFNJcZz/NU4=
 gitlab.com/bosi/decorder v0.4.1/go.mod h1:jecSqWUew6Yle1pCr2eLWTensJMmsxHsBwt+PVbkAqA=
 gitlab.com/bosi/decorder v0.4.2 h1:qbQaV3zgwnBZ4zPMhGLW4KZe7A7NwxEhJx39R3shffo=
@@ -1654,6 +1671,8 @@ google.golang.org/genproto/googleapis/api v0.0.0-20250715232539-7130f93afb79 h1:
 google.golang.org/genproto/googleapis/api v0.0.0-20250715232539-7130f93afb79/go.mod h1:HKJDgKsFUnv5VAGeQjz8kxcgDP0HoE0iZNp0OdZNlhE=
 google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0 h1:0UOBWO4dC+e51ui0NFKSPbkHHiQ4TmrEfEZMLDyRmY8=
 google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0/go.mod h1:8ytArBbtOy2xfht+y2fqKd5DRDJRUQhqbyEnQ4bDChs=
+google.golang.org/genproto/googleapis/api v0.0.0-20250804133106-a7a43d27e69b h1:ULiyYQ0FdsJhwwZUwbaXpZF5yUE3h+RA+gxvBu37ucc=
+google.golang.org/genproto/googleapis/api v0.0.0-20250804133106-a7a43d27e69b/go.mod h1:oDOGiMSXHL4sDTJvFvIB9nRQCGdLP1o/iVaqQK8zB+M=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa h1:RBgMaUMP+6soRkik4VoN8ojR2nex2TqZwjSSogic+eo=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 h1:pFyd6EwwL2TqFf8emdthzeX+gZE1ElRq3iM8pui4KBY=
@@ -1662,6 +1681,8 @@ google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79 h1:
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250715232539-7130f93afb79/go.mod h1:qQ0YXyHHx3XkvlzUtpXDkS29lDSafHMZBAZDc03LQ3A=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0 h1:MAKi5q709QWfnkkpNQ0M12hYJ1+e8qYVDyowc4U1XZM=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0/go.mod h1:qQ0YXyHHx3XkvlzUtpXDkS29lDSafHMZBAZDc03LQ3A=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b h1:zPKJod4w6F1+nRGDI9ubnXYhU9NSWoFAijkHkUXeTK8=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20250804133106-a7a43d27e69b/go.mod h1:qQ0YXyHHx3XkvlzUtpXDkS29lDSafHMZBAZDc03LQ3A=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.1/go.mod h1:10oTOabMzJvdu6/UiuZezV6QK5dSlG84ov/aaiqXj38=
 google.golang.org/grpc v1.21.1/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=
