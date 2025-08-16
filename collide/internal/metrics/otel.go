@@ -8,7 +8,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 
@@ -49,9 +48,6 @@ type Otel struct {
 	getCollisionsByDistrictAndTrackTotal          metric.Int64Counter
 	getCollisionsByDistrictAndTrackFailed         metric.Int64Counter
 	getCollisionsByDistrictAndTrackLatencySeconds metric.Float64Histogram
-
-	// Third party metrics
-	collectors []prometheus.Collector
 }
 
 func NewOtel() (*Otel, error) {
