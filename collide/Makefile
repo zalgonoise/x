@@ -12,6 +12,12 @@ app-localfe:
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide-fe
 	docker compose -f docker-compose.frontend.yaml build collidefe-local
 
+merged-container:
+	cp api/openapi/collide/v1/collide_api.swagger.json frontend/static/collide_api.swagger.json
+	GOOS=linux go build -ldflags="-s -w" -o "out/app-fe" ./cmd/collide-fe
+	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide
+	docker build -f ./merged.Dockerfile -t collide:1.0.0 .
+
 up: app
 	docker compose -f docker-compose.yaml up -d --force-recreate
 
