@@ -18,7 +18,6 @@ func NewExhaustedVar[T any](value *T, limit uint64) *Exhausted[T] {
 	}
 
 	count := &atomic.Uint64{}
-	count.Store(1)
 
 	return &Exhausted[T]{
 		value: value,
@@ -28,9 +27,9 @@ func NewExhaustedVar[T any](value *T, limit uint64) *Exhausted[T] {
 }
 
 func (v *Exhausted[T]) Value() *T {
-	if v.count.Load() <= v.limit {
-		v.count.Add(1)
+	v.count.Add(1)
 
+	if v.count.Load() <= v.limit {
 		return v.value
 	}
 
