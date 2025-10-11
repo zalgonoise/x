@@ -4,7 +4,9 @@ import (
 	"sync/atomic"
 )
 
-const minLimit uint64 = 1
+const (
+	minLimit uint64 = 1
+)
 
 type Exhausted[T any] struct {
 	value *T
