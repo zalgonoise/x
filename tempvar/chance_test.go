@@ -50,7 +50,7 @@ func TestChance(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			v, err := NewChance(&u, testcase.max, testcase.thresh)
+			v, err := NewChance(u, testcase.max, testcase.thresh)
 			if err != nil {
 				is.True(t, errors.Is(err, testcase.err))
 

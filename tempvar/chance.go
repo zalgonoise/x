@@ -19,7 +19,7 @@ type Chance[T any] struct {
 	value  *T
 }
 
-func NewChance[T any](value *T, max uint, thresh uint) (*Chance[T], error) {
+func NewChance[T any](value T, max uint, thresh uint) (*Chance[T], error) {
 	if max == 0 {
 		return nil, ErrMaxMustNotBeZero
 	}
@@ -32,7 +32,7 @@ func NewChance[T any](value *T, max uint, thresh uint) (*Chance[T], error) {
 		rng:    setupRNG(),
 		max:    max,
 		thresh: thresh,
-		value:  value,
+		value:  &value,
 	}, nil
 }
 
