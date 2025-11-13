@@ -35,7 +35,7 @@ func TestExhausted_Value(t *testing.T) {
 		},
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
-			v := NewExhaustedVar(&testcase.data, testcase.limit)
+			v := NewExhaustedVar(testcase.data, testcase.limit)
 
 			limit := testcase.limit
 			if limit < minLimit {

@@ -14,24 +14,22 @@ type Exhausted[T any] struct {
 	count *atomic.Uint64
 }
 
-func NewExhaustedVar[T any](value *T, limit uint64) *Exhausted[T] {
+func NewExhaustedVar[T any](value T, limit uint64) *Exhausted[T] {
 	if limit < minLimit {
 		limit = minLimit
 	}
 
-	count := &atomic.Uint64{}
-
 	return &Exhausted[T]{
-		value: value,
+		value: &value,
 		limit: limit,
-		count: count,
+		count: &atomic.Uint64{},
 	}
 }
 
 func (v *Exhausted[T]) Value() *T {
-	v.count.Add(1)
+	if v.count.Load() < v.limit {
+		v.count.Add(1)
 
-	if v.count.Load() <= v.limit {
 		return v.value
 	}
 
