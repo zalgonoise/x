@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const minTimeBasedDuration = time.Second
+
 var (
 	ErrZeroStart     = errors.New("start is zero")
 	ErrZeroEnd       = errors.New("end is zero")
@@ -19,7 +21,7 @@ type Clock interface {
 type TimeBased[T any] struct {
 	clock      Clock
 	start, end time.Time
-	value      *atomic.Pointer[T]
+	value      *T
 }
 
 func NewTimeBased[T any](clock Clock, start, end time.Time, value T) (*TimeBased[T], error) {
@@ -35,6 +37,10 @@ func NewTimeBased[T any](clock Clock, start, end time.Time, value T) (*TimeBased
 		return nil, ErrStartAfterEnd
 	}
 
+	if end.Sub(start) < minTimeBasedDuration {
+		end = start.Add(minTimeBasedDuration)
+	}
+
 	if clock == nil {
 		clock = RealClock{}
 	}
@@ -46,7 +52,7 @@ func NewTimeBased[T any](clock Clock, start, end time.Time, value T) (*TimeBased
 		clock: clock,
 		start: start,
 		end:   end,
-		value: v,
+		value: &value,
 	}, nil
 }
 
@@ -57,7 +63,7 @@ func (v *TimeBased[T]) Value() *T {
 		return nil
 	}
 
-	return v.value.Load()
+	return v.value
 }
 
 type RealClock struct{}
