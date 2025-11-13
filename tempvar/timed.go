@@ -13,9 +13,9 @@ type Timed[T any] struct {
 	isExpired *atomic.Bool
 }
 
-func NewTimedVar[T any](ctx context.Context, value *T, dur time.Duration) *Timed[T] {
-	v := &Timed[T]{
-		value:     value,
+func NewTimedVar[T any](ctx context.Context, value T, dur time.Duration) *Timed[T] {
+	timed := &Timed[T]{
+		value:     &value,
 		isExpired: &atomic.Bool{},
 	}
 
@@ -23,9 +23,9 @@ func NewTimedVar[T any](ctx context.Context, value *T, dur time.Duration) *Timed
 		dur = minDuration
 	}
 
-	go expireTimedVar(ctx, v, dur)
+	go expireTimedVar(ctx, timed, dur)
 
-	return v
+	return timed
 }
 
 func (v *Timed[T]) Value() *T {
