@@ -1,3 +1,6 @@
+test:
+	go test ./...
+
 app:
 	GOOS=linux go build -ldflags="-s -w" -o "out/app" ./cmd/collide
 	docker compose -f docker-compose.yaml build
