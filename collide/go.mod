@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/envoyproxy/protoc-gen-validate v1.2.1
+	github.com/envoyproxy/protoc-gen-validate v1.3.0
 	github.com/grafana/pyroscope-go v1.2.7
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
@@ -12,7 +12,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
 	github.com/zalgonoise/go-diagrams v0.0.0-20240406105327-6525f015ad8f
-	github.com/zalgonoise/x/cli/v2 v2.0.0-20251202220600-2ce770d34b8c
+	github.com/zalgonoise/x/cli/v2 v2.0.0-20251203224021-313a08111840
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	go.opentelemetry.io/otel v1.38.0
@@ -48,7 +48,7 @@ require (
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/zalgonoise/cfg v1.0.0 // indirect
-	github.com/zalgonoise/x/errs v0.0.0-20251202220600-2ce770d34b8c // indirect
+	github.com/zalgonoise/x/errs v0.0.0-20251203224021-313a08111840 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
