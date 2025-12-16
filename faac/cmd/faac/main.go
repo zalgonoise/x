@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -50,6 +51,7 @@ func ExecBot(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 	token := fs.String("token", "", "bot token")
 	logChannelID := fs.String("chan", "", "log channel id")
 	daysAge := fs.Int("days", defaultDaysAge, "min days age")
+	allowedUsers := fs.String("allowlist", "", "comma-separated list of user IDs that should bypass this rule")
 
 	if err := fs.Parse(args); err != nil {
 		return 1, err
@@ -73,6 +75,12 @@ func ExecBot(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 		return 1, ErrDaysAgeTooLow
 	}
 
+	var allowList []string
+
+	if *allowedUsers != "" {
+		allowList = strings.Split(*allowedUsers, ",")
+	}
+
 	dg, err := discordgo.New("Bot " + *token)
 	if err != nil {
 		logger.ErrorContext(ctx, "error creating Discord session", slog.String("error", err.Error()))
@@ -81,7 +89,7 @@ func ExecBot(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 	}
 
 	// register the handler for when a new user joins
-	dg.AddHandler(faac.MemberAccountAgeFilter(logger, *daysAge, *logChannelID))
+	dg.AddHandler(faac.MemberAccountAgeFilter(logger, *daysAge, *logChannelID, allowList...))
 
 	// intents: we need GuildMembers to detect joins
 	dg.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMembers
