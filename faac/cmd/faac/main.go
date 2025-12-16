@@ -79,6 +79,9 @@ func ExecBot(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 
 	if *allowedUsers != "" {
 		allowList = strings.Split(*allowedUsers, ",")
+
+		logger.InfoContext(ctx, "allowlist is set",
+			slog.Any("allowed_users", allowList))
 	}
 
 	dg, err := discordgo.New("Bot " + *token)
