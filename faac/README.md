@@ -34,16 +34,17 @@ go build -o out/faac ./cmd/faac
 
 3. Prepare your configuration:
 
-|   Flag   |  Type  |                                           Description                                           |
-|:--------:|:------:|:-----------------------------------------------------------------------------------------------:|
-| `-token` | string |          The access token for the bot, as retrieved in _Creating your bot_, in step 2.          |
-|  `chan`  | string |        The target channel ID where the bot should post notifications about its removals.        |
-|  `days`  |  int   | The minimum account age in days to serve as threshold for deletion. Default: `30`. Minimum: `7` |
+|    Flag     |  Type  |                                           Description                                           |
+|:-----------:|:------:|:-----------------------------------------------------------------------------------------------:|
+|  `-token`   | string |          The access token for the bot, as retrieved in _Creating your bot_, in step 2.          |
+|   `chan`    | string |        The target channel ID where the bot should post notifications about its removals.        |
+|   `days`    |  int   | The minimum account age in days to serve as threshold for deletion. Default: `30`. Minimum: `7` |
+| `allowlist` | string |                A comma-separated list of user IDs that should bypass this rule.                 |
 
 4. Run the app with the `bot` subcommand alongside the appropriate flags. Example:
 
 ```bash
-./out/faac bot -days 365 -chan 1234567890123456789 -token="MTQ0O..."
+./out/faac bot -days 365 -chan 1234567890123456789 -allowlist 123456789012345670,123456789012345671 -token="MTQ0O..."
 ```
 
 5. When starting, the app will print a log message confirming that it has connected to Discord successfully, and also 
