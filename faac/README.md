@@ -7,7 +7,7 @@ _________
 from a certain server whose account age is younger than _N_ days.
 
 This serves as a basic floodgate for suspicious accounts joining your server (such as phishing, malware, scamming,
-sockpuppet / burner-account users and bots).
+sock-puppet / burner-account users and bots).
 
 _________
 
@@ -34,12 +34,12 @@ go build -o out/faac ./cmd/faac
 
 3. Prepare your configuration:
 
-|    Flag     |  Type  |                                           Description                                           |
-|:-----------:|:------:|:-----------------------------------------------------------------------------------------------:|
-|  `-token`   | string |          The access token for the bot, as retrieved in _Creating your bot_, in step 2.          |
-|   `chan`    | string |        The target channel ID where the bot should post notifications about its removals.        |
-|   `days`    |  int   | The minimum account age in days to serve as threshold for deletion. Default: `30`. Minimum: `7` |
-| `allowlist` | string |                A comma-separated list of user IDs that should bypass this rule.                 |
+|    Flag     | Required |  Type  |                                           Description                                           |
+|:-----------:|:--------:|:------:|:-----------------------------------------------------------------------------------------------:|
+|  `-token`   |   yes    | string |          The access token for the bot, as retrieved in _Creating your bot_, in step 2.          |
+|   `chan`    |   yes    | string |        The target channel ID where the bot should post notifications about its removals.        |
+|   `days`    |    no    |  int   | The minimum account age in days to serve as threshold for deletion. Default: `30`. Minimum: `7` |
+| `allowlist` |    no    | string |                A comma-separated list of user IDs that should bypass this rule.                 |
 
 4. Run the app with the `bot` subcommand alongside the appropriate flags. Example:
 
