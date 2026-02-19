@@ -1,0 +1,1 @@
+A character class is a choice for an instance of a character, allowing them to pick different paths with different strategies, skillsets and approaches to the [[Discord Cookies App]] game.
