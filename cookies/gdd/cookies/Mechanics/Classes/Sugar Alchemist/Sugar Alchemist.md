@@ -1,0 +1,1 @@
+Sugar Alchemist is a [[Class]].
