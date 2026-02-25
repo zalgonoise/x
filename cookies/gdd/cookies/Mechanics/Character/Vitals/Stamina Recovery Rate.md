@@ -1,0 +1,1 @@
+`int`: the amount of Stamina recovered per [[Tick]]

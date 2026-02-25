@@ -1,0 +1,1 @@
+`int`: the amount of HP recovered per [[Tick]].

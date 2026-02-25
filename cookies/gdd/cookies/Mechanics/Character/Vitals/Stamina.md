@@ -1,0 +1,1 @@
+`int`: indicates the ability to perform different actions and use different skills. It regenerates over time with consumables or with a given recovery rate.

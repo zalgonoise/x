@@ -1,0 +1,1 @@
+`int`: Health points, indicating the survival rate for this character. Going down to zero puts them in a *fainted* state which they can recover from with consumables.
