@@ -1,0 +1,1 @@
+`int`: An attribute that improves dodge % and crafting success rate (?)

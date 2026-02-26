@@ -1,0 +1,1 @@
+`int`: An attribute that improves critical % and stamina regeneration (?)

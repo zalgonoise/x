@@ -1,0 +1,1 @@
+`int`: An attribute that allows a user to escape a hit without taking any damage

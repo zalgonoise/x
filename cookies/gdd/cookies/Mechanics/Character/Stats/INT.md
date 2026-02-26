@@ -1,0 +1,1 @@
+`int`: An attribute that improves passive cookies generation and total stamina (?) 

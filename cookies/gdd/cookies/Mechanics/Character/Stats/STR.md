@@ -1,0 +1,1 @@
+`int`: An attribute that improves overall attack and health regeneration (?)

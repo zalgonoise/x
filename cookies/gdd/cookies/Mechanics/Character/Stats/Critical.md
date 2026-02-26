@@ -1,0 +1,1 @@
+`int`: An attribute that improves the overall attack of a skill, by a certain percentage.
