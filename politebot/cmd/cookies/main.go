@@ -148,6 +148,7 @@ func ExecBot(ctx context.Context, logger *slog.Logger, args []string) (int, erro
 		politebot.NewAddCommand(adminList, *logChannelID, *role, *nonAdminMaxAngyPoints, *thresh, repo, realClock{}, logger),
 		politebot.NewGetCommand(adminList, *logChannelID, repo, logger),
 		politebot.NewListCommand(adminList, *logChannelID, repo, logger),
+		politebot.NewRegisterCommand(adminList, *logChannelID, repo, logger),
 	}
 
 	cmds := make([]*discordgo.ApplicationCommand, 0, len(commands))

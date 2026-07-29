@@ -22,11 +22,17 @@ const (
 	applyPragma   = `PRAGMA %s;`
 	applyPragmaKV = `PRAGMA %s = %s;`
 
-	createTableQuery = `
+	createAngyQuery = `
 	CREATE TABLE angy (
     user_id TEXT PRIMARY KEY NOT NULL,
     angy_points INTEGER NOT NULL,
 	last_punishment INTEGER NOT NULL
+	) STRICT;
+`
+
+	createRegistryQuery = `
+	CREATE TABLE registry (
+    user_id TEXT PRIMARY KEY NOT NULL UNIQUE
 	) STRICT;
 `
 

@@ -38,6 +38,7 @@ type Repository interface {
 	GetAngyPoints(ctx context.Context, user string) (int, time.Time, error)
 	ListAngyPoints(ctx context.Context) (map[string]int, error)
 	AddAngyPoints(ctx context.Context, user string, n int) (int, error)
+	RegisterUser(ctx context.Context, user string) error
 }
 
 type Clock interface {
@@ -375,6 +376,65 @@ func (c *ListCommand) Elements() []ApplicationCommandOpts {
 	return nil
 }
 
+type RegisterCommand struct {
+	adminList    []string
+	logChannelID string
+
+	repo   Repository
+	logger *slog.Logger
+}
+
+func (c *RegisterCommand) Callback(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) (*discordgo.InteractionResponse, error) {
+	// get requester's user and if they have a role enabling them to give angy points
+	requester, _, err := getUser(i.Interaction, "")
+	if err != nil {
+		c.logger.ErrorContext(ctx, "getting requester context", slog.String("error", err.Error()))
+
+		return nil, err
+	}
+
+	// check if this user ID is a set angy points admin
+	isAdmin := slices.Contains(c.adminList, requester.ID)
+	c.logger.DebugContext(ctx, "admin check", slog.Bool("is_admin", isAdmin))
+
+	c.logger.DebugContext(ctx, "registering user", slog.String("user_id", requester.ID))
+
+	if err := c.repo.RegisterUser(ctx, requester.ID); err != nil {
+		c.logger.ErrorContext(ctx, "failed to register user", slog.String("error", err.Error()))
+
+		if _, err := s.ChannelMessageSendEmbed(c.logChannelID, EmbedFailedToRegisterUser(requester.ID)); err != nil {
+			c.logger.ErrorContext(ctx, "sending message",
+				slog.String("action", c.Name()),
+				slog.String("log_channel_id", c.logChannelID),
+				slog.String("error", err.Error()))
+		}
+
+		return &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{Content: "failed to register user", Flags: discordgo.MessageFlagsEphemeral},
+		}, nil
+	}
+
+	if _, err := s.ChannelMessageSendEmbed(c.logChannelID, EmbedRegisteredUser(requester.ID)); err != nil {
+		c.logger.ErrorContext(ctx, "sending message",
+			slog.String("action", c.Name()),
+			slog.String("log_channel_id", c.logChannelID),
+			slog.String("error", err.Error()))
+	}
+
+	return &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{Content: "registered user", Flags: discordgo.MessageFlagsEphemeral},
+	}, nil
+}
+
+func (c *RegisterCommand) Name() string {
+	return commandList
+}
+func (c *RegisterCommand) Elements() []ApplicationCommandOpts {
+	return nil
+}
+
 func NewAddCommand(
 	adminList []string, logChannelID string, giverRole string,
 	nonAdminMaxPoints int, thresh time.Duration,
@@ -402,6 +462,10 @@ func NewGetCommand(adminList []string, logChannelID string, repo Repository, log
 
 func NewListCommand(adminList []string, logChannelID string, repo Repository, logger *slog.Logger) *ListCommand {
 	return &ListCommand{adminList: adminList, logChannelID: logChannelID, repo: repo, logger: logger}
+}
+
+func NewRegisterCommand(adminList []string, logChannelID string, repo Repository, logger *slog.Logger) *RegisterCommand {
+	return &RegisterCommand{adminList: adminList, logChannelID: logChannelID, repo: repo, logger: logger}
 }
 
 func CommandWithElement(name, desc string, typ discordgo.ApplicationCommandOptionType, req bool) ApplicationCommandOpts {

@@ -157,3 +157,31 @@ func EmbedListCookiesForUser(label, user string, cookies int) *discordgo.Message
 		},
 	}
 }
+
+func EmbedFailedToRegisterUser(user string) *discordgo.MessageEmbed {
+	return &discordgo.MessageEmbed{
+		Title: "⚠️ Failed to register user",
+		Color: 0xff0000, // red
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "User",
+				Value:  fmt.Sprintf("<@%s> (`%s`)", user, user),
+				Inline: false,
+			},
+		},
+	}
+}
+
+func EmbedRegisteredUser(user string) *discordgo.MessageEmbed {
+	return &discordgo.MessageEmbed{
+		Title: "🤬 Registered user",
+		Color: 0xaa7733, // https://www.color-hex.com/color-palette/9176
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   "User",
+				Value:  fmt.Sprintf("<@%s> (`%s`)", user, user),
+				Inline: false,
+			},
+		},
+	}
+}

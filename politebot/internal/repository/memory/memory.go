@@ -16,6 +16,9 @@ type InMemory struct {
 	mu                *sync.RWMutex
 	userAngyPointsMap map[string]Entry
 
+	regmu       *sync.RWMutex
+	registryMap map[string]struct{}
+
 	clock Clock
 }
 
@@ -65,6 +68,19 @@ func (m *InMemory) AddAngyPoints(_ context.Context, user string, n int) (int, er
 	m.mu.Unlock()
 
 	return entry.angyPoints, nil
+}
+
+func (m *InMemory) RegisterUser(_ context.Context, userID string) error {
+	m.regmu.Lock()
+	_, ok := m.registryMap[userID]
+
+	if !ok {
+		m.registryMap[userID] = struct{}{}
+	}
+
+	m.regmu.Unlock()
+
+	return nil
 }
 
 func NewInMemory(clock Clock) *InMemory {

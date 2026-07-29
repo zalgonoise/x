@@ -17,7 +17,8 @@ func MigrateSQLite(ctx context.Context, db *sql.DB, logger *slog.Logger) error {
 	start := time.Now()
 
 	if err := runMigrations(ctx, db,
-		migration{table: "angy", create: createTableQuery},
+		migration{table: "angy", create: createAngyQuery},
+		migration{table: "registry", create: createRegistryQuery},
 	); err != nil {
 		return err
 	}

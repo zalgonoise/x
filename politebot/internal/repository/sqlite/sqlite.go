@@ -16,6 +16,7 @@ const (
 	listAngyPointsQuery   = `SELECT user_id, angy_points FROM angy`
 	addAngyPointsQuery    = `UPDATE angy SET angy_points = ?, last_punishment = ? WHERE user_id = ?`
 	insertAngyPointsQuery = `INSERT INTO angy (user_id, angy_points, last_punishment) VALUES (?, ?, ?)`
+	registerUserQuery     = `INSERT INTO registry (user_id) VALUES (?)`
 )
 
 var ErrUnexpectedRowsAffected = errors.New("unexpected number of rows affected")
@@ -136,6 +137,24 @@ func (r *SQLite) AddAngyPoints(ctx context.Context, user string, n int) (int, er
 	}
 
 	return current, nil
+}
+
+func (r *SQLite) RegisterUser(ctx context.Context, userID string) error {
+	res, err := r.db.ExecContext(ctx, registerUserQuery, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected != 1 {
+		return ErrUnexpectedRowsAffected
+	}
+
+	return nil
 }
 
 func NewSQLite(db *sql.DB, clock Clock) *SQLite {
