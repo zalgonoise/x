@@ -126,6 +126,7 @@ func BenchmarkFFT(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			spectrumA = fft.FFT(data)
 		}
+
 		b.StopTimer()
 
 		_ = spectrumA
@@ -137,6 +138,7 @@ func BenchmarkFFT(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			spectrumB = dspfft.FFT(data)
 		}
+
 		b.StopTimer()
 
 		_ = spectrumB

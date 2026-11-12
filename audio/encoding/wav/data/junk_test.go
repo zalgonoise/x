@@ -169,10 +169,8 @@ func TestJunkChunk(t *testing.T) {
 				orig := make([]byte, len(chunk.Data))
 				copy(orig, chunk.Data)
 
-				chunk.Apply(
-					filters.PhaseFlip(),
-					filters.PhaseFlip(),
-				)
+				flip := filters.PhaseFlip()
+				chunk.Apply(flip, flip) //nolint:gocritic // dupOption: two flips cancel out, which the test checks
 
 				require.Equal(t, orig, chunk.Data)
 			},

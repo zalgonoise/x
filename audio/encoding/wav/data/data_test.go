@@ -199,10 +199,8 @@ func TestDataChunk(t *testing.T) {
 						orig := make([]float64, len(chunk.Data))
 						copy(orig, chunk.Data)
 
-						chunk.Apply(
-							filters.PhaseFlip(),
-							filters.PhaseFlip(),
-						)
+						flip := filters.PhaseFlip()
+						chunk.Apply(flip, flip) //nolint:gocritic // dupOption: two flips cancel out, which the test checks
 
 						require.Equal(t, orig, chunk.Data)
 					},
@@ -402,10 +400,8 @@ func TestDataRing(t *testing.T) {
 						orig := make([]float64, chunk.Data.Cap())
 						copy(orig, chunk.Data.Value())
 
-						chunk.Apply(
-							filters.PhaseFlip(),
-							filters.PhaseFlip(),
-						)
+						flip := filters.PhaseFlip()
+						chunk.Apply(flip, flip) //nolint:gocritic // dupOption: two flips cancel out, which the test checks
 
 						require.Equal(t, orig, chunk.Data.Value())
 					},

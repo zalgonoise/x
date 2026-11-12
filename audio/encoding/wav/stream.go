@@ -3,10 +3,13 @@ package wav
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/zalgonoise/cfg"
+
 	"github.com/zalgonoise/x/audio/encoding/wav/data"
 )
 
@@ -15,25 +18,30 @@ func ByteRate(sampleRate uint32, bitDepth, numChannels uint16) uint32 {
 	return sampleRate * uint32(numChannels) * (uint32(bitDepth) / byteSize)
 }
 
-// TimeToBufferSize calculates the number of samples that are in a certain `dur` time.Duration,
-// in the context of a byte-rate of `byteRate`.
+// minStreamSize is the smallest Stream buffer, in bytes; it matches the smallest ring the data package allocates.
+const minStreamSize = 64
+
+// TimeToBufferSize calculates the number of bytes in `dur` of audio at a byte-rate of `byteRate` (bytes per second).
+// A non-positive duration returns 0.
 func TimeToBufferSize(byteRate uint32, dur time.Duration) (size int) {
-	rate := int(time.Second) / int(byteRate)
-
-	return int(dur) / rate
-}
-
-// RatioToBufferSize calculates the number of samples that are in a buffer,
-// when a byte-rate of `byteRate` (that is equivalent to one second of audio) is multiplied by
-// float64 `ratio`.
-func RatioToBufferSize(byteRate uint32, ratio float64) (size int) {
-	rate := int(time.Second) / int(byteRate)
-
-	if ratio <= 0.0 {
-		return rate
+	if dur <= 0 {
+		return 0
 	}
 
-	return int(float64(rate) * ratio)
+	// split into whole seconds and the remainder so that long durations cannot overflow int64 nanoseconds * rate
+	secs, frac := int64(dur/time.Second), int64(dur%time.Second)
+
+	return int(int64(byteRate)*secs + int64(byteRate)*frac/int64(time.Second))
+}
+
+// RatioToBufferSize calculates the number of bytes in `ratio` seconds of audio at a byte-rate of `byteRate` (bytes per
+// second): 1.0 is one second. A non-positive ratio returns one second's worth of bytes.
+func RatioToBufferSize(byteRate uint32, ratio float64) (size int) {
+	if ratio <= 0.0 {
+		return int(byteRate)
+	}
+
+	return int(float64(byteRate) * ratio)
 }
 
 // Stream wraps a Wav type with custom functionality, allowing a ring-buffer approach
@@ -74,25 +82,50 @@ func NewStreamContext(proc ProcessContextFunc, opts ...cfg.Option[Config]) *Stre
 	}
 }
 
-// Stream reads the audio data in the io.Reader `r`, with the input context.
+// Stream reads the audio data in the io.Reader `r`, with the input context, until the input is exhausted, a read or
+// processing error occurs, or ctx is done. It blocks until then.
 //
-// Any errors raised either during reading the data or processing it are piped to the input
-// errors channel `errCh`.
+// The processor receives ctx (with a stream ID added, see GetID), so values and cancellation set by the caller reach
+// it; once ctx is done, processing stops at the next frame. At most one error is sent to `errCh`, which is owned by
+// the caller and never closed; the send is abandoned if ctx is done first.
+//
+// Reading happens in a background goroutine so that Stream can return as soon as ctx is done even while the reader is
+// blocked; that goroutine exits when the pending Read returns (close the reader, e.g. the HTTP response body, to
+// unblock it).
 func (w *Stream) Stream(ctx context.Context, r io.Reader, errCh chan<- error) {
-	w.proc = ErrorPipeContext(w.proc, errCh)
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	var (
+		guard = new(procGuard)
+		done  = make(chan error, 1)
+	)
+
 	go func() {
-		if _, readErr := w.ReadFrom(r); readErr != nil {
-			errCh <- readErr
-			close(errCh)
-			cancel()
-		}
+		_, err := w.readFrom(ctx, r, guard)
+		done <- err
 	}()
 
-	<-ctx.Done()
+	var err error
+
+	select {
+	case err = <-done:
+	case <-ctx.Done():
+		// wait for a processor call already in flight (so the caller can safely shut its exporters down), but not
+		// for a Read blocked on the source
+		guard.stop()
+
+		return
+	}
+
+	if err == nil || errCh == nil {
+		return
+	}
+
+	select {
+	case errCh <- err:
+	case <-ctx.Done():
+	}
 }
 
 // Write implements the io.Writer interface.
@@ -104,22 +137,7 @@ func (w *Stream) Stream(ctx context.Context, r io.Reader, errCh chan<- error) {
 // The method returns the number of bytes read by the buffer, and an error if the
 // data is invalid (or too short).
 func (w *Stream) Write(buf []byte) (n int, err error) {
-	if w.readOnly.Load() {
-		w.buf.Reset()
-		w.readOnly.Store(false)
-	}
-
-	if w.buf == nil {
-		w.buf = bytes.NewBuffer(buf)
-
-		return w.decode()
-	}
-
-	if n, err = w.buf.Write(buf); err != nil {
-		return n, err
-	}
-
-	return w.decode()
+	return w.write(buf, w.decode)
 }
 
 // Head returns the Stream's Wav.Header, or it will set it from consuming the first header.Size bytes
@@ -146,51 +164,104 @@ func (w *Stream) Head(r io.Reader) (*Header, error) {
 // would scope the stored PCM data in a ring buffer, both to save on storage / memory, and
 // to only keep the last X bits of an audio stream (usually for analysis).
 func (w *Stream) ReadFrom(r io.Reader) (n int64, err error) {
+	return w.readFrom(context.Background(), r, nil)
+}
+
+// procGuard serialises processor calls with Stream's return: once stopped, no processor call is running or will run.
+type procGuard struct {
+	mu      sync.Mutex
+	stopped bool
+}
+
+func (g *procGuard) run(fn func() error) error {
+	if g == nil {
+		return fn()
+	}
+
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	if g.stopped {
+		return context.Canceled
+	}
+
+	return fn()
+}
+
+// stop waits for any processor call in flight and prevents further ones.
+func (g *procGuard) stop() {
+	g.mu.Lock()
+	g.stopped = true
+	g.mu.Unlock()
+}
+
+// readFrom implements ReadFrom with a context: the processor receives ctx (with a stream ID), and processing stops with
+// ctx.Err() once ctx is done. Processor calls go through guard, when set.
+func (w *Stream) readFrom(parent context.Context, r io.Reader, guard *procGuard) (n int64, err error) {
 	var num int64
 
-	if w.Header == nil {
-		w.Header = new(Header)
+	ctx := WithID(parent)
 
-		if num, err = w.Header.ReadFrom(r); err != nil {
+	if w.Header == nil {
+		header := new(Header)
+
+		// the hook wraps the reader once, before anything is read, so it sees every byte exactly once
+		if w.cfg.hook != nil {
+			r = NewReaderContextHook(ctx, header, r, w.cfg.hook)
+		}
+
+		num, err = header.ReadFrom(r)
+		n += num
+
+		if err != nil {
+			// never keep a half-decoded header: a retry would trust it
 			return n, err
 		}
 
-		n += num
+		w.Header = header
+	} else if w.cfg.hook != nil {
+		r = NewReaderContextHook(ctx, w.Header, r, w.cfg.hook)
 	}
 
-	// correct Stream.Size if it is off with the bit-depth in the signal
+	// correct Stream.Size if it is off with the frame size in the signal
 	w.checkSize()
-
-	ctx := WithID(context.Background())
 
 	for w.Data == nil {
 		h := new(data.Header)
 
-		if num, err = h.ReadFrom(r); err != nil {
+		num, err = h.ReadFrom(r)
+		n += num
+
+		if err != nil {
 			return n, err
 		}
 
-		n += num
-
 		chunk := NewRingChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
-			return w.proc(ctx, w.Header, data)
-		})
+			return guard.run(func() error {
+				if ctxErr := ctx.Err(); ctxErr != nil {
+					return ctxErr
+				}
 
+				return w.proc(ctx, w.Header, data)
+			})
+		})
+		if chunk == nil {
+			return n, fmt.Errorf("%w: BitsPerSample %d", ErrInvalidBitDepth, w.Header.BitsPerSample)
+		}
+
+		alignFrames(chunk, w.Header.BlockAlign)
 		w.Chunks = append(w.Chunks, chunk)
 
 		if chunk.BitDepth() > 0 {
 			w.Data = chunk
 		}
 
-		if w.cfg.hook != nil {
-			r = NewReaderContextHook(ctx, w.Header, r, w.cfg.hook)
-		}
+		num, err = chunk.ReadFrom(r)
+		n += num
 
-		if num, err = chunk.ReadFrom(r); err != nil {
+		if err != nil {
 			return n, err
 		}
-
-		n += num
 	}
 
 	return n, nil
@@ -218,12 +289,13 @@ func (w *Stream) checkSize() {
 		))
 	}
 
-	if w.Size < int(w.Header.BitsPerSample) {
-		w.Size = int(w.Header.BitsPerSample)
-	}
+	// the buffer holds whole frames: round up to a multiple of BlockAlign (a validated header never has 0)
+	align := max(int(w.Header.BlockAlign), 1)
 
-	if offset := w.Size % int(w.Header.BitsPerSample); offset > 0 {
-		w.Size += int(w.Header.BitsPerSample) - offset
+	w.Size = max(w.Size, minStreamSize, align)
+
+	if offset := w.Size % align; offset > 0 {
+		w.Size += align - offset
 	}
 }
 
@@ -240,91 +312,16 @@ func (w *Stream) decode() (n int, err error) {
 		}
 	}
 
-	// correct Stream.Size if it is off with the bit-depth in the signal
+	// correct Stream.Size if it is off with the frame size in the signal
 	w.checkSize()
 
-	for w.buf.Len() > 0 {
-		if w.Data != nil {
-			return w.decodeIntoData(n)
-		}
+	ctx := WithID(context.Background())
 
-		n, err = w.decodeNewSubChunk(n)
-		if err != nil {
-			return n, err
-		}
-	}
-
-	return n, nil
-}
-
-func (w *Stream) decodeNewSubChunk(n int) (int, error) {
-	// try to read subchunk headers
-	if w.buf.Len() < data.Size {
-		return 0, ErrShortDataBuffer
-	}
-
-	var (
-		err            error
-		subchunk       *data.Header
-		subchunkBuffer = make([]byte, data.Size)
-		ctx            = WithID(context.Background())
-	)
-
-	if _, err = w.buf.Read(subchunkBuffer); err != nil {
-		return n, err
-	}
-
-	if subchunk, err = data.From(subchunkBuffer); err == nil {
-		n += data.Size
-
-		chunk := NewRingChunk(subchunk, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
+	return w.decodeChunks(n, func(h *data.Header) Chunk {
+		return NewRingChunk(h, w.Header.BitsPerSample, w.Header.AudioFormat, w.Size, func(data []float64) error {
 			return w.proc(ctx, w.Header, data)
 		})
-
-		if string(subchunk.Subchunk2ID[:]) == dataSubchunkID {
-			w.Data = chunk
-		}
-
-		end := int(subchunk.Subchunk2Size)
-		ln := w.buf.Len()
-		// grab remaining bytes if the byte slice isn't long enough
-		// for a subchunk read
-		if end > 0 && end > ln {
-			end = ln - (ln % int(w.Header.BlockAlign))
-		}
-
-		chunkBuffer := make([]byte, end)
-		if _, err = w.buf.Read(chunkBuffer); err != nil {
-			return n, err
-		}
-
-		chunk.Parse(chunkBuffer)
-		w.Chunks = append(w.Chunks, chunk)
-		n += end
-	}
-
-	return n, nil
-}
-
-func (w *Stream) decodeIntoData(n int) (int, error) {
-	var (
-		err error
-		end = int(w.Data.Header().Subchunk2Size)
-		ln  = w.buf.Len()
-	)
-
-	if end > 0 && end > ln {
-		ln -= ln % int(w.Header.BlockAlign)
-	}
-
-	chunkBuffer := make([]byte, ln)
-	if _, err = w.buf.Read(chunkBuffer); err != nil {
-		return n, err
-	}
-
-	w.Data.Parse(chunkBuffer)
-
-	return n + ln, nil
+	})
 }
 
 // Read implements the io.Reader interface.
@@ -340,7 +337,7 @@ func (w *Stream) Read(buf []byte) (n int, err error) {
 		w.readOnly.Store(true)
 	}
 
-	return w.buf.Read(buf)
+	return w.out.Read(buf)
 }
 
 // Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding.
@@ -350,7 +347,7 @@ func (w *Stream) Bytes() []byte {
 		w.readOnly.Store(true)
 	}
 
-	return w.buf.Bytes()
+	return w.out.Bytes()
 }
 
 func (w *Stream) encode() {
@@ -360,17 +357,18 @@ func (w *Stream) encode() {
 	)
 
 	for i := range w.Chunks {
-		if w.Chunks[i].Header().Subchunk2ID == data.JunkID {
-			size += data.Size + int(w.Chunks[i].Header().Subchunk2Size)
+		if w.Chunks[i].Header().Subchunk2ID != data.DataID {
+			chunkSize := int(w.Chunks[i].Header().Subchunk2Size)
+			size += data.Size + chunkSize + chunkSize&1 // odd-sized chunks are followed by a pad byte
+
 			continue
 		}
 
-		size += data.Size + w.Size
+		size += data.Size + w.Size + w.Size&1 // odd-sized chunks are followed by a pad byte
 	}
 
-	if w.Header.ChunkSize == 0 {
-		w.Header.ChunkSize = uint32(size)
-	}
+	// the RIFF size counts everything after the "RIFF" ID and the size field itself
+	w.Header.ChunkSize = uint32(size - riffHeaderSize)
 
 	buf := make([]byte, size)
 
@@ -394,9 +392,9 @@ func (w *Stream) encode() {
 
 		//nolint:errcheck // reading from the chunk should not raise any errors, and can be safely ignored.
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
-		n += chunkSize
+		n += chunkSize + chunkSize&1 // the pad byte is already zero
 	}
 
 	w.readOnly.Store(true)
-	w.buf = bytes.NewBuffer(buf)
+	w.out = bytes.NewBuffer(buf)
 }

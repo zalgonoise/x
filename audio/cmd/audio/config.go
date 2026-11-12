@@ -1,336 +1,259 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
-	"github.com/kelseyhightower/envconfig"
-	"github.com/zalgonoise/x/errs"
+	"github.com/zalgonoise/x/audio/dsp/spectral"
+	"github.com/zalgonoise/x/audio/sdk"
+	"github.com/zalgonoise/x/audio/sdk/recorder"
 )
 
-const (
-	errDomain = errs.Domain("x/audio")
-
-	ErrEmpty   = errs.Kind("empty")
-	ErrInvalid = errs.Kind("invalid")
-
-	ErrInput      = errs.Entity("input")
-	ErrHTTPURL    = errs.Entity("HTTP or HTTPS URL")
-	ErrHost       = errs.Entity("host")
-	ErrPort       = errs.Entity("port")
-	ErrOutputType = errs.Entity("output type")
-	ErrMode       = errs.Entity("mode")
-	ErrCompactor  = errs.Entity("compactor")
-)
-
+// Errors returned when parsing the configuration; all of them are usage errors.
 var (
-	ErrEmptyInput        = errs.WithDomain(errDomain, ErrEmpty, ErrInput)
-	ErrInvalidHTTPURL    = errs.WithDomain(errDomain, ErrInvalid, ErrHTTPURL)
-	ErrInvalidHost       = errs.WithDomain(errDomain, ErrInvalid, ErrHost)
-	ErrInvalidPort       = errs.WithDomain(errDomain, ErrInvalid, ErrPort)
-	ErrInvalidOutputType = errs.WithDomain(errDomain, ErrInvalid, ErrOutputType)
-	ErrInvalidMode       = errs.WithDomain(errDomain, ErrInvalid, ErrMode)
-	ErrInvalidCompactor  = errs.WithDomain(errDomain, ErrInvalid, ErrCompactor)
+	ErrMissingInput  = errors.New("audio: -input is required")
+	ErrInvalidInput  = errors.New("audio: invalid -input")
+	ErrInvalidValue  = errors.New("audio: invalid value")
+	ErrInvalidEnv    = errors.New("audio: invalid environment variable")
+	ErrUnexpectedArg = errors.New("audio: unexpected argument")
 )
 
+// Destinations of the metrics (-metrics).
 const (
-	minBucketSize         = 8
-	defaultBucketSize     = 64
-	minBatchSize          = 8
-	defaultBatchSize      = 64
-	minBatchFrequency     = 20 * time.Millisecond
-	maxBatchFrequency     = 5 * time.Minute
-	defaultBatchFrequency = 200 * time.Millisecond
-	minDuration           = 15 * time.Second
-	maxDuration           = 365 * 24 * time.Hour
-	defaultDuration       = 4 * time.Hour
-	defaultPort           = 13088
-
-	urlSchemeHTTP  = "http"
-	urlSchemeHTTPS = "https"
-
-	outputToLog        = "log"
-	outputToLogger     = "logger"
-	outputToProm       = "prom"
-	outputToPrometheus = "prometheus"
-
-	modePeaks    = "peaks"
-	modeSpectrum = "spectrum"
-	modeCombined = "combined"
-
-	batchMax     = "max"
-	batchMaximum = "maximum"
+	metricsLog        = "log"
+	metricsPrometheus = "prometheus"
+	metricsNone       = "none"
 )
 
-//nolint:gochecknoglobals // immutable object used in comparisons when creating Config
-var emptyConfig = Config{}
+// Spectrum layouts (-metrics.spectrum): fractional-octave bands, every FFT bin, or no spectrum.
+const (
+	spectrumNone        = "none"
+	spectrumOctave      = "octave"
+	spectrumThirdOctave = "third-octave"
+	spectrumFull        = "full"
+)
 
-func DefaultConfig() *Config {
-	return &Config{
-		OutputType: outputToLogger,
-		BucketSize: defaultBucketSize,
-		Mode:       modeCombined,
-		Duration:   defaultDuration,
-	}
+const defaultSpectrumSize = 4096 // 93 ms at 44.1 kHz, bins 10.8 Hz apart: enough for the 31.5 Hz third octave
+
+// Reconnect waits: the first wait doubles after each failed attempt, up to the maximum.
+const (
+	defaultMinWait = time.Second
+	defaultMaxWait = 30 * time.Second
+	backoffFactor  = 2
+)
+
+// envPrefix prefixes the environment variable of every flag: -metrics.interval reads AUDIO_METRICS_INTERVAL.
+const envPrefix = "AUDIO_"
+
+// config is the command's configuration. Every flag falls back to its environment variable when it is not on the
+// command line.
+type config struct {
+	input     string
+	duration  time.Duration
+	buffer    time.Duration
+	metrics   string
+	interval  time.Duration
+	spectrum  string
+	specSize  int
+	promAddr  string
+	recordDir string
+	segment   time.Duration
+	queue     int
+	reconnect bool
+	minWait   time.Duration
+	maxWait   time.Duration
+	logLevel  slog.Level
+	logJSON   bool
 }
 
-type Config struct {
-	// BufferSize defines the audio stream's buffer size in bytes.
-	BufferSize int `envconfig:"X_AUDIO_BUFFER_SIZE"`
-	// BufferDur defines the audio stream's buffer size as a duration.
-	BufferDur time.Duration `envconfig:"X_AUDIO_BUFFER_DURATION"`
-	// BufferRatio defines the audio stream's buffer size as a ratio to one second (1.0 is one second).
-	BufferRatio float64 `envconfig:"X_AUDIO_BUFFER_RATIO"`
-
-	// Input points to an audio stream source (URL)
-	Input string `envconfig:"X_AUDIO_INPUT"`
-
-	// OutputType sets the type of exporter for the processor
-	OutputType string `envconfig:"X_AUDIO_OUTPUT_TYPE"`
-	// Output describes the path (or URL) for the set Output if applicable
-	Output string `envconfig:"X_AUDIO_OUTPUT"`
-
-	// Mode sets the operation mode for the processor
-	Mode string `envconfig:"X_AUDIO_MODE"`
-
-	// BucketSize defines the number of frequencies in a bucket, when analyzing a signal's spectrum
-	BucketSize int `envconfig:"X_AUDIO_BUCKET_SIZE"`
-	// Batch defines if the collector batches the values or if it constantly registers them
-	Batch bool `envconfig:"X_AUDIO_BATCH"`
-	// BatchSize defines the size of each batching pass
-	BatchSize int `envconfig:"X_AUDIO_BATCH_SIZE"`
-	// BatchFrequency defines how often the batched values are flushed
-	BatchFrequency time.Duration `envconfig:"X_AUDIO_BATCH_FREQUENCY"`
-	// BatchCompactor defines the compactor (reduce) strategy when batching
-	BatchCompactor string `envconfig:"X_AUDIO_BATCH_COMPACTOR"`
-
-	// Duration delimits a stream's runtime duration
-	Duration time.Duration `envconfig:"X_AUDIO_DURATION"`
-	// ExitCode forces a custom exit code on the processor when done or errored
-	ExitCode int `envconfig:"X_AUDIO_EXIT_CODE"`
-
-	StorageURI string `envconfig:"X_AUDIO_SQLITE_URI"`
+func envName(flagName string) string {
+	return envPrefix + strings.ToUpper(strings.NewReplacer(".", "_", "-", "_").Replace(flagName))
 }
 
-func NewConfig() (*Config, error) {
-	config := merge(
-		merge(DefaultConfig(), newEnvConfig()),
-		newFlagsConfig(),
+// parseConfig parses args, filling flags not given on the command line from getenv. It returns flag.ErrHelp for -h.
+func parseConfig(args []string, getenv func(string) string, stderr io.Writer) (config, error) {
+	fs := flag.NewFlagSet("audio", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+
+	usage := func(name, text string) string { return text + " (env " + envName(name) + ")" }
+
+	var (
+		c         config
+		logLevel  string
+		logFormat string
 	)
 
-	return config, validate(config)
+	fs.StringVar(&c.input, "input", "", usage("input",
+		"audio to analyse: an http(s) URL, a file path, a file:// URL, or - for stdin"))
+	fs.DurationVar(&c.duration, "duration", 0, usage("duration",
+		"stop after this long; 0 runs until the input ends or a signal arrives"))
+	fs.DurationVar(&c.buffer, "buffer", sdk.DefaultBufferDuration, usage("buffer", "audio carried by each buffer"))
+	fs.StringVar(&c.metrics, "metrics", metricsLog, usage("metrics",
+		"where per-channel level and spectrum metrics go: log (JSON lines on stdout), prometheus, or none"))
+	fs.DurationVar(&c.interval, "metrics.interval", time.Second, usage("metrics.interval",
+		"how often logged metrics are emitted"))
+	fs.StringVar(&c.spectrum, "metrics.spectrum", spectrumThirdOctave, usage("metrics.spectrum",
+		"per-channel spectrum (peak hold and mean): third-octave or octave bands from 20 Hz to 20 kHz, full (every FFT "+
+			"bin; too many series for prometheus), or none"))
+	fs.IntVar(&c.specSize, "metrics.spectrum.size", defaultSpectrumSize, usage("metrics.spectrum.size",
+		"samples per analysed frame: a power of two; larger frames resolve lower bands"))
+	fs.StringVar(&c.promAddr, "prometheus.addr", ":13088", usage("prometheus.addr",
+		"listen address of the /metrics endpoint, with -metrics prometheus"))
+	fs.StringVar(&c.recordDir, "record.dir", "", usage("record.dir",
+		"record the audio as WAV segments in this directory (off when empty)"))
+	fs.DurationVar(&c.segment, "record.segment", recorder.DefaultSegmentDuration, usage("record.segment",
+		"duration of each recorded segment"))
+	fs.IntVar(&c.queue, "queue", sdk.DefaultQueueSize, usage("queue", "buffers queued in front of each exporter"))
+	fs.BoolVar(&c.reconnect, "reconnect", false, usage("reconnect",
+		"for an http(s) input, reconnect when the stream ends or fails, until -duration or a signal"))
+	fs.DurationVar(&c.minWait, "reconnect.min-wait", defaultMinWait, usage("reconnect.min-wait",
+		"first wait before reconnecting; it doubles after each failed attempt"))
+	fs.DurationVar(&c.maxWait, "reconnect.max-wait", defaultMaxWait, usage("reconnect.max-wait",
+		"longest wait before reconnecting; a run longer than this resets the wait"))
+	fs.StringVar(&logLevel, "log.level", "info", usage("log.level", "debug, info, warn or error"))
+	fs.StringVar(&logFormat, "log.format", "text", usage("log.format", "text or json"))
+
+	if err := fs.Parse(args); err != nil {
+		return config{}, err
+	}
+
+	if fs.NArg() > 0 {
+		return config{}, fmt.Errorf("%w: %q", ErrUnexpectedArg, fs.Arg(0))
+	}
+
+	if err := applyEnv(fs, getenv); err != nil {
+		return config{}, err
+	}
+
+	if err := c.logLevel.UnmarshalText([]byte(logLevel)); err != nil {
+		return config{}, fmt.Errorf("%w: -log.level %q", ErrInvalidValue, logLevel)
+	}
+
+	switch logFormat {
+	case "text":
+	case "json":
+		c.logJSON = true
+	default:
+		return config{}, fmt.Errorf("%w: -log.format %q", ErrInvalidValue, logFormat)
+	}
+
+	if err := c.validate(); err != nil {
+		return config{}, err
+	}
+
+	return c, nil
 }
 
-func newEnvConfig() *Config {
-	config := new(Config)
+// applyEnv sets every flag that was not given on the command line from its environment variable, if set.
+func applyEnv(fs *flag.FlagSet, getenv func(string) string) error {
+	given := map[string]bool{}
 
-	if err := envconfig.Process("", config); err != nil {
-		return nil
-	}
+	fs.Visit(func(f *flag.Flag) { given[f.Name] = true })
 
-	if *config == emptyConfig {
-		return nil
-	}
+	var errs []error
 
-	return config
+	fs.VisitAll(func(f *flag.Flag) {
+		if given[f.Name] {
+			return
+		}
+
+		name := envName(f.Name)
+		if v := getenv(name); v != "" {
+			if err := fs.Set(f.Name, v); err != nil {
+				errs = append(errs, fmt.Errorf("%w: %s=%q: %w", ErrInvalidEnv, name, v, err))
+			}
+		}
+	})
+
+	return errors.Join(errs...)
 }
 
-func newFlagsConfig() *Config {
-	bufferSize := flag.Int("buffer-size", 0, "defines the audio stream's buffer size in bytes")
-	bufferDur := flag.Duration("buffer-dur", 0, "defines the audio stream's buffer size as a duration")
-	bufferRatio := flag.Float64("buffer-ratio", 0,
-		"defines the audio stream's buffer size as a ratio to one second (1.0 is one second)")
-
-	input := flag.String("input", "", "")
-
-	outputType := flag.String("output-type", "", "")
-	output := flag.String("output", "", "")
-
-	mode := flag.String("mode", "", "")
-
-	bucketSize := flag.Int("bucket-size", 0, "")
-	batch := flag.Bool("batch", false, "")
-	batchSize := flag.Int("batch-size", 0, "")
-	batchFrequency := flag.Duration("batch-freq", 0, "")
-	batchCompactor := flag.String("batch-compactor", "", "")
-
-	duration := flag.Duration("dur", 0, "")
-	exitCode := flag.Int("exit", 0, "")
-
-	storageURI := flag.String("db.uri", "", "path to the SQLite instance to persist audio data")
-
-	flag.Parse()
-
-	config := &Config{
-		BufferSize:     *bufferSize,
-		BufferDur:      *bufferDur,
-		BufferRatio:    *bufferRatio,
-		Input:          *input,
-		OutputType:     *outputType,
-		Output:         *output,
-		Mode:           *mode,
-		BucketSize:     *bucketSize,
-		Batch:          *batch,
-		BatchSize:      *batchSize,
-		BatchFrequency: *batchFrequency,
-		BatchCompactor: *batchCompactor,
-		Duration:       *duration,
-		ExitCode:       *exitCode,
-		StorageURI:     *storageURI,
-	}
-
-	if *config == emptyConfig {
-		return nil
-	}
-
-	return config
-}
-
-func merge(base, input *Config) *Config {
+func (c *config) validate() error {
 	switch {
-	case base == nil && input == nil:
-		return DefaultConfig()
-	case input == nil:
-		return base
-	case base == nil:
-		return input
+	case c.input == "":
+		return ErrMissingInput
+	case c.duration < 0:
+		return fmt.Errorf("%w: -duration %s", ErrInvalidValue, c.duration)
+	case c.buffer <= 0:
+		return fmt.Errorf("%w: -buffer %s", ErrInvalidValue, c.buffer)
+	case c.interval <= 0:
+		return fmt.Errorf("%w: -metrics.interval %s", ErrInvalidValue, c.interval)
+	case c.segment <= 0:
+		return fmt.Errorf("%w: -record.segment %s", ErrInvalidValue, c.segment)
+	case c.queue < 1:
+		return fmt.Errorf("%w: -queue %d", ErrInvalidValue, c.queue)
+	case c.minWait <= 0 || c.maxWait < c.minWait:
+		return fmt.Errorf("%w: -reconnect.min-wait %s, -reconnect.max-wait %s", ErrInvalidValue, c.minWait, c.maxWait)
 	}
 
-	if input.BufferSize != 0 {
-		base.BufferSize = input.BufferSize
+	switch c.metrics {
+	case metricsLog, metricsPrometheus, metricsNone:
+	default:
+		return fmt.Errorf("%w: -metrics %q (want log, prometheus or none)", ErrInvalidValue, c.metrics)
 	}
 
-	if input.BufferDur != 0 {
-		base.BufferDur = input.BufferDur
+	switch c.spectrum {
+	case spectrumNone, spectrumOctave, spectrumThirdOctave, spectrumFull:
+	default:
+		return fmt.Errorf("%w: -metrics.spectrum %q (want third-octave, octave, full or none)", ErrInvalidValue,
+			c.spectrum)
 	}
 
-	if input.BufferRatio != 0 {
-		base.BufferRatio = input.BufferRatio
+	if n := c.specSize; n < spectral.MinSize || n > spectral.MaxSize || n&(n-1) != 0 {
+		return fmt.Errorf("%w: -metrics.spectrum.size %d (want a power of two in [%d, %d])", ErrInvalidValue, n,
+			spectral.MinSize, spectral.MaxSize)
 	}
 
-	if input.Input != "" {
-		base.Input = input.Input
-	}
+	_, err := parseInput(c.input)
 
-	if input.OutputType != "" {
-		base.OutputType = input.OutputType
-	}
-
-	if input.Output != "" {
-		base.Output = input.Output
-	}
-
-	if input.Mode != "" {
-		base.Mode = input.Mode
-	}
-
-	if input.BucketSize > 0 {
-		base.BucketSize = input.BucketSize
-	}
-
-	if input.Batch {
-		base.Batch = input.Batch
-	}
-
-	if input.BatchSize > 0 {
-		base.BatchSize = input.BatchSize
-	}
-
-	if input.BatchFrequency > 0 {
-		base.BatchFrequency = input.BatchFrequency
-	}
-
-	if input.BatchCompactor != "" {
-		base.BatchCompactor = input.BatchCompactor
-	}
-
-	if input.Duration > 0 {
-		base.Duration = input.Duration
-	}
-
-	if input.ExitCode > 0 {
-		base.ExitCode = input.ExitCode
-	}
-
-	if input.StorageURI != "" {
-		base.StorageURI = input.StorageURI
-	}
-
-	return base
+	return err
 }
 
-//nolint:cyclop // validate needs to perform several checks against the input *Config
-func validate(config *Config) error {
-	// validate input
-	if config.Input == "" {
-		return ErrEmptyInput
+// input is where the audio comes from: exactly one of the fields is set.
+type input struct {
+	stdin bool
+	url   string
+	path  string
+}
+
+// parseInput classifies -input: "-" is stdin, http(s) URLs are fetched, file:// URLs and anything else are local paths,
+// which must exist.
+func parseInput(raw string) (input, error) {
+	if raw == "-" {
+		return input{stdin: true}, nil
 	}
 
-	// currently there is only one (HTTP) consumer. We can try to
-	// parse input as URL and default to OS Path if failed
-	parsedURL, err := url.Parse(config.Input)
-	if err != nil {
-		return err
-	}
+	if u, err := url.Parse(raw); err == nil {
+		switch u.Scheme {
+		case "http", "https":
+			if u.Host == "" {
+				return input{}, fmt.Errorf("%w: %q has no host", ErrInvalidInput, raw)
+			}
 
-	if parsedURL.Scheme != urlSchemeHTTP && parsedURL.Scheme != urlSchemeHTTPS {
-		return fmt.Errorf("%w: %s", ErrInvalidHTTPURL, config.Input)
-	}
-
-	if parsedURL.Host == "" {
-		return fmt.Errorf("%w: %s", ErrInvalidHost, config.Input)
-	}
-
-	// validate output
-	switch strings.ToLower(config.OutputType) {
-	case outputToLogger, outputToLog:
-
-	case outputToProm, outputToPrometheus:
-		if _, err = getPort(config.Output); err != nil {
-			return fmt.Errorf("%w: %w", ErrInvalidPort, err)
-		}
-	default:
-		return fmt.Errorf("%w: %s", ErrInvalidOutputType, config.OutputType)
-	}
-
-	// validate mode
-	switch config.Mode {
-	case modePeaks, modeSpectrum, modeCombined, "":
-		// OK state
-	default:
-		return fmt.Errorf("%w: %s", ErrInvalidMode, config.Mode)
-	}
-
-	// validate spectrum bucket size
-	if config.BucketSize < minBucketSize {
-		config.BucketSize = defaultBucketSize
-	}
-
-	// validate batching config
-	if config.Batch {
-		if config.BatchSize < minBatchSize {
-			config.BatchSize = defaultBatchSize
-		}
-
-		if config.BatchFrequency < minBatchFrequency || config.BatchFrequency > maxBatchFrequency {
-			config.BatchFrequency = defaultBatchFrequency
-		}
-
-		switch config.BatchCompactor {
-		case batchMax, batchMaximum, "":
-		// OK state
+			return input{url: raw}, nil
+		case "file":
+			raw = u.Path
+		case "":
 		default:
-			return fmt.Errorf("%w: %s", ErrInvalidCompactor, config.BatchCompactor)
+			return input{}, fmt.Errorf("%w: unsupported scheme %q", ErrInvalidInput, u.Scheme)
 		}
 	}
 
-	// validate runtime duration
-	if config.Duration < minDuration || config.Duration > maxDuration {
-		config.Duration = defaultDuration
+	info, err := os.Stat(raw) //nolint:gosec // the path comes from the operator, who may read any file they choose
+
+	switch {
+	case err != nil:
+		return input{}, fmt.Errorf("%w: %w", ErrInvalidInput, err)
+	case info.IsDir():
+		return input{}, fmt.Errorf("%w: %q is a directory", ErrInvalidInput, raw)
 	}
 
-	return nil
+	return input{path: raw}, nil
 }

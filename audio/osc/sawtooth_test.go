@@ -143,7 +143,7 @@ func BenchmarkSawtoothCompare(b *testing.B) {
 			b.Run(
 				"sawtooth_23_3_23", func(b *testing.B) {
 					fn := func(buffer []int16, halfPeriod int, sampleInt int16, increment, depth float64) {
-						for i := 0; i < len(buffer); i++ {
+						for i := range buffer {
 							if i%halfPeriod == 0 {
 								sampleInt = -int16(math.Pow(2.0, depth-1) - 1.0)
 							} else {
@@ -177,7 +177,7 @@ func BenchmarkSawtoothCompare(b *testing.B) {
 							inc        = int16(increment * float64(^base))
 						)
 
-						for i := 0; i < len(buffer); i++ {
+						for i := range buffer {
 							if i%halfPeriod == 0 {
 								sampleInt = base
 							} else {

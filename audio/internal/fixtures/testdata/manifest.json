@@ -1,0 +1,233 @@
+[
+  {
+    "name": "amen_kick/amen_kick_mono_16bit_44100hz.wav",
+    "sha256": "8aecc7dfd7b7f30b3937e7edd04d39bd36042e098d90a96b7f0dd6409f94fd58",
+    "format": 1,
+    "extensible": false,
+    "channels": 1,
+    "sample_rate": 44100,
+    "bits_per_sample": 16,
+    "valid_bits": 16,
+    "data_size": 18696,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_mono_24bit_44100hz.wav",
+    "sha256": "df87849c98a823a834ab51c133fe379c199ed73f1bb33379969b8fe82ef3cf34",
+    "format": 1,
+    "extensible": false,
+    "channels": 1,
+    "sample_rate": 44100,
+    "bits_per_sample": 24,
+    "valid_bits": 24,
+    "data_size": 28044,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_mono_32bit_192000hz.wav",
+    "sha256": "ec9de61358e92956a0071e77ef67918fb047321d2cfb4d81a2eec0762272b0e7",
+    "format": 1,
+    "extensible": false,
+    "channels": 1,
+    "sample_rate": 192000,
+    "bits_per_sample": 32,
+    "valid_bits": 32,
+    "data_size": 162800,
+    "frames": 40700,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_mono_32bit_44100hz.wav",
+    "sha256": "9b01e681c7c37881017ca01285671803d9699f92c0d75f90567e21fa92d9a520",
+    "format": 1,
+    "extensible": false,
+    "channels": 1,
+    "sample_rate": 44100,
+    "bits_per_sample": 32,
+    "valid_bits": 32,
+    "data_size": 37392,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_mono_32bit_96000hz.wav",
+    "sha256": "b4aca05d8f7446137ff37ae662394b10e8bf217c81f856e31ef3f66898638b1c",
+    "format": 1,
+    "extensible": false,
+    "channels": 1,
+    "sample_rate": 96000,
+    "bits_per_sample": 32,
+    "valid_bits": 32,
+    "data_size": 81400,
+    "frames": 20350,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_mono_8bit_176400hz.wav",
+    "sha256": "cc551aded4f351acf991f4b9cc64dcba3895c7bf7c846f99aac2d0717587c96f",
+    "format": 1,
+    "extensible": false,
+    "channels": 1,
+    "sample_rate": 176400,
+    "bits_per_sample": 8,
+    "valid_bits": 8,
+    "data_size": 37393,
+    "frames": 37393,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_mono_8bit_44100hz.wav",
+    "sha256": "5dfe22fb843eea27357fe2e808c804b0fa4781d9fefd37125cd465dd71c02fb9",
+    "format": 1,
+    "extensible": false,
+    "channels": 1,
+    "sample_rate": 44100,
+    "bits_per_sample": 8,
+    "valid_bits": 8,
+    "data_size": 9348,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_stereo_16bit_44100hz.wav",
+    "sha256": "712bff88b5dab3081cd6a73e7d7d9828ca81c1c219a9cddd6142f869a54f3ecd",
+    "format": 1,
+    "extensible": false,
+    "channels": 2,
+    "sample_rate": 44100,
+    "bits_per_sample": 16,
+    "valid_bits": 16,
+    "data_size": 37392,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_stereo_24bit_44100hz.wav",
+    "sha256": "a33feeb3c0be78549d9532a58f1ca6bf708f60a38633b2a3477e9637d970a155",
+    "format": 1,
+    "extensible": false,
+    "channels": 2,
+    "sample_rate": 44100,
+    "bits_per_sample": 24,
+    "valid_bits": 24,
+    "data_size": 56088,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_stereo_32bit_44100hz.wav",
+    "sha256": "f13f7e06dfc3d6aaa8bb5dc2ad9f368afea057a7eea262a30ccd15318b3b33f8",
+    "format": 1,
+    "extensible": false,
+    "channels": 2,
+    "sample_rate": 44100,
+    "bits_per_sample": 32,
+    "valid_bits": 32,
+    "data_size": 74784,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  },
+  {
+    "name": "amen_kick/amen_kick_stereo_8bit_44100hz.wav",
+    "sha256": "8dc0731e8dd7bf0bb601e4428935b528b793d263468f2d09d1393d21db1c5602",
+    "format": 1,
+    "extensible": false,
+    "channels": 2,
+    "sample_rate": 44100,
+    "bits_per_sample": 8,
+    "valid_bits": 8,
+    "data_size": 18696,
+    "frames": 9348,
+    "chunks": [
+      "fmt ",
+      "junk",
+      "data"
+    ],
+    "distinct_channels": false,
+    "source": "unknown (ask the author)",
+    "tool": "unknown (ask the author)",
+    "license": "unknown (ask the author)"
+  }
+]

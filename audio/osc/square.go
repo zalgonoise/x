@@ -1,4 +1,4 @@
-//nolint:gomnd // contains hardcoded constants, would be less readable to declare these values as such
+//nolint:mnd // contains hardcoded constants, would be less readable to declare these values as such
 package osc
 
 // Square is an oscillator that writes a square wave of frequency `freq`, bit-depth `depth`,
@@ -17,7 +17,7 @@ func square1Hz(sampleRate int) []float64 {
 		halfCycle = sampleRate / 2
 	)
 
-	for i := 0; i < halfCycle; i++ {
+	for i := range halfCycle {
 		buffer[i] = 1.0
 	}
 

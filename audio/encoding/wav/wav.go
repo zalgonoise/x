@@ -19,13 +19,23 @@ type Wav struct {
 	Chunks []Chunk
 	Data   Chunk
 
-	readOnly atomic.Bool
-	buf      *bytes.Buffer
+	readOnly atomic.Bool   // out holds an up-to-date encoding
+	buf      *bytes.Buffer // Write-path input not decoded yet (partial frames, headers, chunks)
+	out      *bytes.Buffer // encoded output served by Read and Bytes
+
+	// Write-path decoding state for the data chunk
+	dataBounded bool  // the data chunk declared its size; otherwise it runs to the end of the input
+	dataLeft    int64 // bytes of a bounded data chunk still to decode
+	dataDone    bool  // the data chunk is complete: later chunks are kept as opaque chunks
+	dataOdd     bool  // the data chunk declares an odd size, so a RIFF pad byte follows it
+	padLeft     bool  // a RIFF pad byte follows the data chunk and has not been consumed yet
+	trailing    bool  // bytes that are not RIFF chunks followed the data chunk: further input is ignored
+	err         error // a permanent decoding error, returned by every later Write
 }
 
 // New creates a new Wav, configured with the input sample rate `sampleRate`
 // (44100, 48000, etc), bit depth `bitDepth` (8, 16, 24 or 32), and a number of
-// channels `numChannels` (either 1 or 2, for mono and stereo).
+// channels `numChannels` (1 to MaxChannels).
 //
 // This call returns a pointer to a Wav, and an error which is raised if the input
 // data is invalid or unsupported.
@@ -85,4 +95,7 @@ func (w *Wav) Generate(waveType osc.Type, freq int, dur time.Duration) {
 	}
 
 	w.Data.Generate(waveType, freq, int(w.Header.SampleRate), dur)
+
+	// the cached encoding (Read / Bytes) no longer reflects the data
+	w.readOnly.Store(false)
 }

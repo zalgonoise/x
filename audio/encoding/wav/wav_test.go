@@ -2,7 +2,6 @@ package wav_test
 
 import (
 	"bytes"
-	"embed"
 	"reflect"
 	"testing"
 
@@ -11,10 +10,9 @@ import (
 	"github.com/zalgonoise/x/audio/encoding/wav"
 	"github.com/zalgonoise/x/audio/encoding/wav/data"
 	"github.com/zalgonoise/x/audio/encoding/wav/data/filters"
+	"github.com/zalgonoise/x/audio/internal/fixtures"
+	"github.com/zalgonoise/x/audio/internal/testutil"
 )
-
-//go:embed data/internal/testdata/amen_kick/*
-var testdataFS embed.FS
 
 type testdata struct {
 	data        []byte
@@ -39,47 +37,47 @@ func load() ([]testdata, error) {
 		stereo32bit44100 []byte
 	)
 
-	if mono8bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_8bit_44100hz.wav"); err != nil {
+	if mono8bit44100, err = fixtures.Read("amen_kick/amen_kick_mono_8bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if mono16bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_16bit_44100hz.wav"); err != nil {
+	if mono16bit44100, err = fixtures.Read("amen_kick/amen_kick_mono_16bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if mono24bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_24bit_44100hz.wav"); err != nil {
+	if mono24bit44100, err = fixtures.Read("amen_kick/amen_kick_mono_24bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if mono32bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_32bit_44100hz.wav"); err != nil {
+	if mono32bit44100, err = fixtures.Read("amen_kick/amen_kick_mono_32bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if mono32bit96000, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_32bit_96000hz.wav"); err != nil {
+	if mono32bit96000, err = fixtures.Read("amen_kick/amen_kick_mono_32bit_96000hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if mono32bit192000, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_32bit_192000hz.wav"); err != nil {
+	if mono32bit192000, err = fixtures.Read("amen_kick/amen_kick_mono_32bit_192000hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if mono8bit176400, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_mono_8bit_176400hz.wav"); err != nil {
+	if mono8bit176400, err = fixtures.Read("amen_kick/amen_kick_mono_8bit_176400hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if stereo8bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_8bit_44100hz.wav"); err != nil {
+	if stereo8bit44100, err = fixtures.Read("amen_kick/amen_kick_stereo_8bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if stereo16bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_16bit_44100hz.wav"); err != nil {
+	if stereo16bit44100, err = fixtures.Read("amen_kick/amen_kick_stereo_16bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if stereo24bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_24bit_44100hz.wav"); err != nil {
+	if stereo24bit44100, err = fixtures.Read("amen_kick/amen_kick_stereo_24bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
-	if stereo32bit44100, err = testdataFS.ReadFile("data/internal/testdata/amen_kick/amen_kick_stereo_32bit_44100hz.wav"); err != nil {
+	if stereo32bit44100, err = fixtures.Read("amen_kick/amen_kick_stereo_32bit_44100hz.wav"); err != nil {
 		return nil, err
 	}
 
@@ -102,7 +100,7 @@ func load() ([]testdata, error) {
 		{mono32bit44100, 32, 44100, 1},
 		{mono32bit96000, 32, 96000, 1},
 		{mono32bit192000, 32, 192000, 1},
-		{mono8bit176400[:len(mono8bit176400)-1], 8, 176400, 1}, // remove a useless nullbyte in the end
+		{mono8bit176400, 8, 176400, 1}, // odd-sized data chunk: the trailing byte is the RIFF pad byte
 		{stereo8bit44100, 8, 44100, 2},
 		{stereo16bit44100, 16, 44100, 2},
 		{stereo24bit44100, 24, 44100, 2},
@@ -259,7 +257,7 @@ func TestWavDecodeEncode(t *testing.T) {
 			t.Errorf("output length mismatch error on index %d: wanted %d ; got %d", idx, len(test.data), len(buf))
 		}
 
-		for i := 0; i < len(buf); i++ {
+		for i := range buf {
 			if buf[i] != test.data[i] {
 				t.Errorf("byte mismatch on index %d: #%d wanted %d; got %d -- total len: %d", idx, i, test.data[i], buf[i], len(buf))
 				break
@@ -280,7 +278,8 @@ func TestWavDecodeEncode(t *testing.T) {
 			continue
 		}
 
-		if !reflect.DeepEqual(w, newWav) {
+		if !reflect.DeepEqual(w.Header, newWav.Header) || !reflect.DeepEqual(w.Chunks, newWav.Chunks) ||
+			!reflect.DeepEqual(w.Data, newWav.Data) {
 			t.Errorf("output object mismatch error: wanted %v ; got %v", w, newWav)
 			continue
 		}
@@ -368,7 +367,8 @@ func TestWavWriteRead(t *testing.T) {
 			continue
 		}
 
-		if !reflect.DeepEqual(w, newWav) {
+		if !reflect.DeepEqual(w.Header, newWav.Header) || !reflect.DeepEqual(w.Chunks, newWav.Chunks) ||
+			!reflect.DeepEqual(w.Data, newWav.Data) {
 			t.Errorf("output object mismatch error: wanted %v ; got %v", w, newWav)
 			continue
 		}
@@ -436,10 +436,8 @@ func TestWav_WriteProcessRead(t *testing.T) {
 		require.NoError(t, err)
 
 		// Process
-		w.Data.Apply(
-			filters.PhaseFlip(),
-			filters.PhaseFlip(),
-		)
+		flip := filters.PhaseFlip()
+		w.Data.Apply(flip, flip) //nolint:gocritic // dupOption: two flips cancel out, which the test checks
 
 		// Read
 		buf := make([]byte, len(test.data))
@@ -483,7 +481,8 @@ func BenchmarkWav_WriteProcessRead(b *testing.B) {
 				}
 
 				// Process
-				w.Data.Apply(filters.PhaseFlip(), filters.PhaseFlip())
+				flip := filters.PhaseFlip()
+				w.Data.Apply(flip, flip) //nolint:gocritic // dupOption: two flips cancel out, which the test checks
 
 				// Read
 				if _, err = w.Read(buf); err != nil {
@@ -577,7 +576,9 @@ func TestStream(t *testing.T) {
 
 			_, err = w.Read(buf)
 			require.NoError(t, err, "index", idx)
-			require.Equal(t, test.data[len(test.data)-size:], buf[headerBytes:], "index", idx)
+
+			pcm := pcmPayload(t, test.data)
+			require.Equal(t, pcm[len(pcm)-size:], buf[headerBytes:], "index", idx)
 		}
 	})
 
@@ -611,7 +612,19 @@ func TestStream(t *testing.T) {
 			require.NoError(t, err, "index", idx)
 
 			// compare last `size` bytes of the PCM data from input and data buffer
-			require.Equal(t, test.data[len(test.data)-size:], buf[headerBytes:], "index", idx, "size", size)
+			pcm := pcmPayload(t, test.data)
+			require.Equal(t, pcm[len(pcm)-size:], buf[headerBytes:], "index", idx, "size", size)
 		}
 	})
+}
+
+// pcmPayload returns the file up to the end of its data chunk payload, without the RIFF pad byte that follows an
+// odd-sized data chunk (the fixtures end with their data chunk).
+func pcmPayload(t *testing.T, file []byte) []byte {
+	t.Helper()
+
+	ref, err := testutil.DecodeRef(file)
+	require.NoError(t, err)
+
+	return file[:len(file)-int(ref.DataSize%2)]
 }

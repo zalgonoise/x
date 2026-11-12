@@ -1,23 +1,23 @@
-//nolint:gomnd // package contains a modified port of the standard library logic
+//nolint:mnd // package contains a modified port of the standard library logic
 package trig
 
 import (
+	"math"
 	"unsafe"
-
-	"github.com/zalgonoise/x/ptr"
 )
 
-// Cos is an attempt to improve the performance of the math.Cos implementation.
-//
-// It will skip the checks for NaN and -/+Inf, so it should be perceived as an unsafe Sin / Cos approach.
-// So far, I couldn't find an issue with this approach in digital signal processing; although it would be
-// no longer used for audio DSP if that were to be the case.
+// Cos is an attempt to improve the performance of the math.Cos implementation. It returns the same values as
+// math.Cos, special cases included: Cos(±Inf) = NaN and Cos(NaN) = NaN.
 func Cos(x float64) float64 {
+	if math.IsNaN(x) || math.IsInf(x, 0) {
+		return math.NaN()
+	}
+
 	// make argument positive
 	sign := false
 
 	// raw math.Abs(x)
-	x = *(*float64)(unsafe.Pointer(ptr.To(*(*uint64)(unsafe.Pointer(&x)) &^ (1 << 63))))
+	x = *(*float64)(unsafe.Pointer(new(*(*uint64)(unsafe.Pointer(&x)) &^ (1 << 63))))
 
 	var (
 		j    uint64
@@ -27,8 +27,8 @@ func Cos(x float64) float64 {
 	if x >= reduceThreshold {
 		j, z = trigReduce(x)
 	} else {
-		j = uint64(x * (PI4)) // integer part of x/(Pi/4), as integer for tests on the phase angle
-		y = float64(j)        // integer part of x/(Pi/4), as float
+		j = uint64(x * PI4) // integer part of x/(Pi/4), as integer for tests on the phase angle
+		y = float64(j)      // integer part of x/(Pi/4), as float
 
 		// map zeros to origin
 		if j&1 == 1 {

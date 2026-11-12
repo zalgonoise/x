@@ -2,106 +2,24 @@ digraph root {
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=13;
-	label="Audio API - encoding";
+	label="Audio API: formats and sample codecs";
 	nodesep=0.6;
 	pad=2;
 	rankdir=LR;
 	ranksep=0.75;
 	splines=ortho;
-	tpwfewod->actjokfm[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	yqgzpmhy->wjeyfaex[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	vmeiqkpi->wjeyfaex[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	pwejanem->yrnjmkqo[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	pwejanem->bpzrghpg[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	bpzrghpg->vmeiqkpi[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	zgqfiera->lantraxy[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	aubrzlam->lantraxy[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	wjeyfaex->tpwfewod[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	tpwfewod->wkemqqzt[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	tpwfewod->oxqjplky[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	yrnjmkqo->yqgzpmhy[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	wkemqqzt->zgqfiera[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	oxqjplky->aubrzlam[ color="#7B8894", dir=both, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lantraxy->ikhwgqbv[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lantraxy->rwupzicb[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lantraxy->rxgtbzte[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lantraxy->jfrdkiim[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lantraxy->cbwuyhgl[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	lantraxy->qmjeihka[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
-	subgraph cluster_chunks {
-	bgcolor="#E5F5FD";
-	fontcolor="#2D3436";
-	fontname="Sans-Serif";
-	fontsize=12;
-	label=Chunks;
-	labeljust=l;
-	pencolor="#AEB6BE";
-	shape=box;
-	style=rounded;
-	subgraph clusterchunk {
-	bgcolor="#ECE8F6";
-	fontcolor="#2D3436";
-	fontname="Sans-Serif";
-	fontsize=12;
-	label="Data Chunk";
-	labeljust=l;
-	pencolor="#AEB6BE";
-	shape=box;
-	style=rounded;
-	mrukiezi [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/governance/audit.png", imagescale=true, label=Header, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	wkemqqzt [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/storage/block-storage.png", imagescale=true, label=Data, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	zgqfiera [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/science.png", imagescale=true, label=Converter, labelloc=b, shape=none, style=rounded, width=1.4 ];
-
-}
-;
-	subgraph clusterdata_chunks_recv {
-	bgcolor="#FDF7E3";
-	fontcolor="#2D3436";
-	fontname="Sans-Serif";
-	fontsize=12;
-	label="Data Chunks";
-	labeljust=l;
-	pencolor="#AEB6BE";
-	shape=box;
-	style=rounded;
-	tpwfewod [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label="Data Chunk", labelloc=b, shape=none, style=rounded, width=1.4 ];
-
-}
-;
-	subgraph clusterjunk {
-	bgcolor="#ECE8F6";
-	fontcolor="#2D3436";
-	fontname="Sans-Serif";
-	fontsize=12;
-	label="Junk Chunk";
-	labeljust=l;
-	pencolor="#AEB6BE";
-	shape=box;
-	style=rounded;
-	actjokfm [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/storage/block-storage.png", imagescale=true, label=Data, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	kmnoqhnr [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/governance/audit.png", imagescale=true, label=Header, labelloc=b, shape=none, style=rounded, width=1.4 ];
-
-}
-;
-	subgraph clusterring_chunk {
-	bgcolor="#ECE8F6";
-	fontcolor="#2D3436";
-	fontname="Sans-Serif";
-	fontsize=12;
-	label="Ring-buffer Data Chunk";
-	labeljust=l;
-	pencolor="#AEB6BE";
-	shape=box;
-	style=rounded;
-	aubrzlam [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/science.png", imagescale=true, label=Converter, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	oxqjplky [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/storage/block-storage.png", imagescale=true, label=Data, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	vijrdgpw [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/governance/audit.png", imagescale=true, label=Header, labelloc=b, shape=none, style=rounded, width=1.4 ];
-
-}
-;
-
-}
-;
+	qvlshjns->eztvsuod[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	hmzklvjj->fbkfgkee[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	bjkjqpmd->lxektcdq[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	bjkjqpmd->carjhvog[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	bjkjqpmd->vzioqgfr[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	bjkjqpmd->cabbzejl[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	xiwqissv->icsaxzkt[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	eztvsuod->bjkjqpmd[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	bjkjqpmd->lcnywpgk[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	hmzklvjj->lxektcdq[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	bjkjqpmd->xiwqissv[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
+	xiwqissv->hmzklvjj[ color="#7B8894", dir=forward, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13 ];
 	subgraph cluster_client {
 	bgcolor="#E5F5FD";
 	fontcolor="#2D3436";
@@ -112,100 +30,99 @@ digraph root {
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	pwejanem [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/apps/client/client.png", imagescale=true, label="Audio source", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	qvlshjns [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/apps/client/client.png", imagescale=true, label="Audio stream or file", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
-	subgraph cluster_conv_group {
+	subgraph cluster_formats {
 	bgcolor="#E5F5FD";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
-	label="Audio Converters";
+	label=Formats;
 	labeljust=l;
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	subgraph clusterconv {
+	subgraph clusterriff {
 	bgcolor="#FDF7E3";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
-	label=Encodings;
+	label="encoding/riff";
 	labeljust=l;
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	cbwuyhgl [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label="32bit FPA", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	ikhwgqbv [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label="8bit PCM", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	jfrdkiim [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label="64bit PCM", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	qmjeihka [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label="64bit FPA", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	rwupzicb [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label="16bit PCM", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	rxgtbzte [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/database-service.png", imagescale=true, label="32bit PCM", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	fbkfgkee [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label="riff.Writer", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	lcnywpgk [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label="riff.Reader", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
-	subgraph clusterraw_converter {
+	subgraph clusterwav {
 	bgcolor="#ECE8F6";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
-	label="Audio Converter";
+	label="encoding/wav";
 	labeljust=l;
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	lantraxy [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/science.png", imagescale=true, label=Converter, labelloc=b, shape=none, style=rounded, width=1.4 ];
+	bjkjqpmd [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label="wav.Decoder", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	hmzklvjj [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label="wav.Encoder", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
 
 }
 ;
-	subgraph cluster_wav_group {
+	subgraph cluster_legacy {
+	bgcolor="#EBF3E7";
+	fontcolor="#2D3436";
+	fontname="Sans-Serif";
+	fontsize=12;
+	label="Old API (tests only)";
+	labeljust=l;
+	pencolor="#AEB6BE";
+	shape=box;
+	style=rounded;
+	ltviiqfu [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/governance/audit.png", imagescale=true, label="wav.Wav, wav.Stream, data chunks", labelloc=b, shape=none, style=rounded, width=1.4 ];
+
+}
+;
+	subgraph cluster_pcm {
 	bgcolor="#E5F5FD";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
-	label="WAV encoding";
+	label="encoding/pcm";
 	labeljust=l;
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	subgraph clusterwav {
-	bgcolor="#EBF3E7";
+	cabbzejl [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/database-service.png", imagescale=true, label="mu-law", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	carjhvog [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/database-service.png", imagescale=true, label="Float (32/64 bit)", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	lxektcdq [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/database-service.png", imagescale=true, label="Int (8-32 bit, either order)", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	vzioqgfr [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/database-service.png", imagescale=true, label="A-law", labelloc=b, shape=none, style=rounded, width=1.4 ];
+
+}
+;
+	subgraph cluster_root {
+	bgcolor="#E5F5FD";
 	fontcolor="#2D3436";
 	fontname="Sans-Serif";
 	fontsize=12;
-	label=WAV;
+	label=audio;
 	labeljust=l;
 	pencolor="#AEB6BE";
 	shape=box;
 	style=rounded;
-	ljhyhesu [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/governance/audit.png", imagescale=true, label=Header, labelloc=b, shape=none, style=rounded, width=1.4 ];
-	wjeyfaex [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/compartments.png", imagescale=true, label="Data Chunks", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	eztvsuod [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/governance/ocid.png", imagescale=true, label="audio.Decode (magic sniffing)", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	icsaxzkt [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/storage/block-storage.png", imagescale=true, label="audio.Buffer", labelloc=b, shape=none, style=rounded, width=1.4 ];
+	xiwqissv [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/stream.png", imagescale=true, label="SampleReader / SampleWriter", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }
 ;
-	subgraph clusterwav_io {
-	bgcolor="#EBF3E7";
-	fontcolor="#2D3436";
-	fontname="Sans-Serif";
-	fontsize=12;
-	label="I/O";
-	labeljust=l;
-	pencolor="#AEB6BE";
-	shape=box;
-	style=rounded;
-	vmeiqkpi [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label="WAV Stream I/O", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	yqgzpmhy [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=2.1999999999999997, image="assets/oci/database/dis.png", imagescale=true, label="WAV I/O", labelloc=b, shape=none, style=rounded, width=1.4 ];
-
-}
-;
-
-}
-;
-	bpzrghpg [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/database/stream.png", imagescale=true, label="Audio stream", labelloc=b, shape=none, style=rounded, width=1.4 ];
-	yrnjmkqo [ fixedsize=true, fontcolor="#2D3436", fontname="Sans-Serif", fontsize=13, height=1.7999999999999998, image="assets/oci/storage/file-storage.png", imagescale=true, label="Audio file or buffer", labelloc=b, shape=none, style=rounded, width=1.4 ];
 
 }

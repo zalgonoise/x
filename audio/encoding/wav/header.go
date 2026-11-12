@@ -2,8 +2,10 @@ package wav
 
 import (
 	"encoding/binary"
-	"errors"
+	"fmt"
 	"io"
+
+	"github.com/zalgonoise/x/audio/encoding/wav/data"
 )
 
 const (
@@ -13,6 +15,10 @@ const (
 	formatOffset         = 8
 	subChunkIDEnd        = 16
 	defaultSubChunk1Size = 16
+	// riffHeaderSize is the "RIFF" ID plus the RIFF size field, which the RIFF size does not count.
+	riffHeaderSize = 8
+	// maxSubChunk1Size bounds the fmt chunk size accepted from untrusted input (WAVE_FORMAT_EXTENSIBLE uses 40).
+	maxSubChunk1Size = 1 << 10
 )
 
 //nolint:gochecknoglobals // referenced directly for assignments and comparisons
@@ -97,6 +103,10 @@ func (h *Header) Write(buf []byte) (n int, err error) {
 	h.BlockAlign = binary.LittleEndian.Uint16(buf[32:34])
 	h.BitsPerSample = binary.LittleEndian.Uint16(buf[34:36])
 
+	if h.Subchunk1Size > maxSubChunk1Size {
+		return Size, fmt.Errorf("%w: Subchunk1Size %d", ErrInvalidHeader, h.Subchunk1Size)
+	}
+
 	return Size, ValidateHeader(h)
 }
 
@@ -106,24 +116,41 @@ func (h *Header) Write(buf []byte) (n int, err error) {
 // if the input data cannot be parsed, or if the resulting header is invalid.
 func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	if r == nil {
-		return 0, nil
+		return 0, fmt.Errorf("%w: %w", ErrShortDataBuffer, data.ErrNilReader)
 	}
 
-	// required as it cannot be just cast into the data type
 	buf := make([]byte, Size)
 
-	m, err := r.Read(buf)
-	if err != nil && !errors.Is(err, io.EOF) {
-		return n, err
+	// io.ReadFull reassembles short reads: network readers rarely return 36 bytes in one call
+	m, err := io.ReadFull(r, buf)
+	if err != nil {
+		return int64(m), fmt.Errorf("%w: %w", ErrShortDataBuffer, err)
 	}
 
-	if m != Size {
-		return n, ErrShortDataBuffer
+	if m, err = h.Write(buf); err != nil {
+		return int64(m), err
 	}
 
-	m, err = h.Write(buf)
+	// fmt chunks of 18 (cbSize) or 40 (WAVE_FORMAT_EXTENSIBLE) bytes carry extra fields after the 16 the Header
+	// models: skip them (and their pad byte) so the next read starts at the following chunk, and describe the header
+	// as the 16-byte fmt chunk it re-encodes to.
+	if h.Subchunk1Size > defaultSubChunk1Size {
+		if h.Subchunk1Size > maxSubChunk1Size {
+			return int64(m), fmt.Errorf("%w: Subchunk1Size %d", ErrInvalidHeader, h.Subchunk1Size)
+		}
 
-	return int64(m), err
+		ext := int64(h.Subchunk1Size-defaultSubChunk1Size) + int64(h.Subchunk1Size&1)
+
+		skipped, err := io.CopyN(io.Discard, r, ext)
+		if err != nil {
+			return int64(m) + skipped, fmt.Errorf("%w: fmt extension: %w", ErrShortDataBuffer, err)
+		}
+
+		h.Subchunk1Size = defaultSubChunk1Size
+		m += int(skipped)
+	}
+
+	return int64(m), nil
 }
 
 // Read implements the io.Reader interface.

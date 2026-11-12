@@ -2,8 +2,7 @@ package wav
 
 import (
 	"context"
-
-	"github.com/google/uuid"
+	"uuid"
 )
 
 type contextStreamID string

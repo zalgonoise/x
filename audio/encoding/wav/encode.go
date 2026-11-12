@@ -19,7 +19,7 @@ func (w *Wav) Read(buf []byte) (n int, err error) {
 		w.readOnly.Store(true)
 	}
 
-	return w.buf.Read(buf)
+	return w.out.Read(buf)
 }
 
 // Bytes casts the contents of the Wav `w` as a slice of bytes, with WAV file encoding.
@@ -29,7 +29,7 @@ func (w *Wav) Bytes() []byte {
 		w.readOnly.Store(true)
 	}
 
-	return w.buf.Bytes()
+	return w.out.Bytes()
 }
 
 func (w *Wav) encode() {
@@ -39,12 +39,12 @@ func (w *Wav) encode() {
 	)
 
 	for i := range w.Chunks {
-		size += data.Size + int(w.Chunks[i].Header().Subchunk2Size)
+		chunkSize := int(w.Chunks[i].Header().Subchunk2Size)
+		size += data.Size + chunkSize + chunkSize&1 // odd-sized chunks are followed by a pad byte
 	}
 
-	if w.Header.ChunkSize == 0 {
-		w.Header.ChunkSize = uint32(size)
-	}
+	// the RIFF size counts everything after the "RIFF" ID and the size field itself
+	w.Header.ChunkSize = uint32(size - riffHeaderSize)
 
 	buf := make([]byte, size)
 
@@ -64,9 +64,9 @@ func (w *Wav) encode() {
 
 		//nolint:errcheck // reading from the chunk should not raise any errors, and can be safely ignored.
 		_, _ = w.Chunks[i].Read(buf[n : n+chunkSize])
-		n += chunkSize
+		n += chunkSize + chunkSize&1 // the pad byte is already zero
 	}
 
 	w.readOnly.Store(true)
-	w.buf = bytes.NewBuffer(buf)
+	w.out = bytes.NewBuffer(buf)
 }

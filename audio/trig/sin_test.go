@@ -45,12 +45,21 @@ func BenchmarkSin(b *testing.B) {
 }
 
 func FuzzSin(f *testing.F) {
-	f.Fuzz(func(t *testing.T, a float64) {
-		resA := Sin(a)
-		resB := math.Sin(a)
+	for _, x := range specialInputs() {
+		f.Add(x)
+	}
 
-		if resA != resB {
-			t.Errorf("output mismatch error: A: %v ; B: %v", resA, resB)
+	f.Fuzz(func(t *testing.T, a float64) {
+		if got, want := Sin(a), math.Sin(a); !sameFloat(got, want) {
+			t.Errorf("Sin(%v) = %v, want %v", a, got, want)
 		}
 	})
+}
+
+func TestSinSpecialValues(t *testing.T) {
+	for _, x := range specialInputs() {
+		if got, want := Sin(x), math.Sin(x); !sameFloat(got, want) {
+			t.Errorf("Sin(%v) = %v, want %v", x, got, want)
+		}
+	}
 }

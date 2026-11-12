@@ -1,4 +1,4 @@
-//nolint:gomnd // hardcoded constant values, that are less readable if defined as constants
+//nolint:mnd // hardcoded constant values, that are less readable if defined as constants
 package fft
 
 import (
@@ -24,19 +24,33 @@ type FrequencyPower struct {
 
 // Apply applies a Fast Fourier Transform (FFT) on a slice of float64 `data`,
 // with sample rate `sampleRate`. It returns a slice of FrequencyPower.
+//
+// The window `w` is applied when its length matches the data's. The input `data` is never modified: the windowed
+// samples are written into the FFT's own buffer, so the same samples can safely be shared with other consumers.
+//
+// The data length must be a power of two of at least 4; other lengths return nil.
 func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
+	ln := len(data)
+	if ln < 4 || ln&(ln-1) != 0 {
+		return nil
+	}
+
 	var (
-		ln         = len(data)
 		magnitudes = make([]FrequencyPower, 0, (ln/2)-1)
+		windowed   = len(w) == ln
+		input      = make([]complex128, ln)
 	)
 
-	// apply a window function to the values
-	if w != nil && len(w) == ln {
-		w.Apply(data)
+	for i, v := range data {
+		if windowed {
+			v *= w[i]
+		}
+
+		input[i] = complex(v, 0)
 	}
 
 	// apply a fast Fourier transform on the data; exclude index 0, no 0Hz-freq results
-	spectrum := FFT(ToComplex(data))
+	spectrum := FFT(input)
 
 	for i := 1; i < ln/2; i++ {
 		freqReal := real(spectrum[i])
@@ -61,7 +75,7 @@ func Apply(sampleRate int, data []float64, w window.Window) []FrequencyPower {
 func FFT(value []complex128) []complex128 {
 	var (
 		valueLen = len(value)
-		factors  = GetRadix2Factors(valueLen)
+		factors  = radix2(valueLen)
 		temp     = make([]complex128, valueLen) // temp
 	)
 
@@ -88,7 +102,7 @@ func FFT(value []complex128) []complex128 {
 				continue
 			}
 
-			for iter := 0; iter < stage2Value; iter++ {
+			for iter := range stage2Value {
 				var (
 					idx        = iter + batchIdx
 					idx2       = idx + stage2Value

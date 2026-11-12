@@ -14,13 +14,19 @@ type ReaderHook struct {
 	fn HookFunc
 }
 
+// Read implements the io.Reader interface. The hook sees exactly the bytes read (p[:n]), including bytes returned
+// together with an error such as io.EOF; a hook error takes precedence over the read error.
 func (r ReaderHook) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	if err != nil {
-		return n, err
+	if r.Reader == nil {
+		return 0, io.EOF
 	}
 
-	err = r.fn(r.h, p)
+	n, err = r.Reader.Read(p)
+	if n > 0 && r.fn != nil {
+		if hookErr := r.fn(r.h, p[:n]); hookErr != nil {
+			return n, hookErr
+		}
+	}
 
 	return n, err
 }
@@ -43,13 +49,19 @@ type ReaderContextHook struct {
 	fn  HookContextFunc
 }
 
+// Read implements the io.Reader interface. The hook sees exactly the bytes read (p[:n]), including bytes returned
+// together with an error such as io.EOF; a hook error takes precedence over the read error.
 func (r ReaderContextHook) Read(p []byte) (n int, err error) {
-	n, err = r.Reader.Read(p)
-	if err != nil {
-		return n, err
+	if r.Reader == nil {
+		return 0, io.EOF
 	}
 
-	err = r.fn(r.ctx, r.h, p)
+	n, err = r.Reader.Read(p)
+	if n > 0 && r.fn != nil {
+		if hookErr := r.fn(r.ctx, r.h, p[:n]); hookErr != nil {
+			return n, hookErr
+		}
+	}
 
 	return n, err
 }

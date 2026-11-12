@@ -92,7 +92,7 @@ func BenchmarkSquareCompare(b *testing.B) {
 			b.Run(
 				"square_21_3_23", func(b *testing.B) {
 					fn := func(buffer []int16, halfPeriod int, sampleInt int16) {
-						for i := 0; i < len(buffer); i++ {
+						for i := range buffer {
 							if i%halfPeriod < halfPeriod/2 {
 								buffer[i] = sampleInt
 
@@ -124,7 +124,7 @@ func BenchmarkSquareCompare(b *testing.B) {
 						// avoid calculating the quarter period over and over again
 						quarterPeriod := halfPeriod / 2
 
-						for i := 0; i < len(buffer); i++ {
+						for i := range buffer {
 							if i%halfPeriod < quarterPeriod {
 								buffer[i] = sampleInt
 

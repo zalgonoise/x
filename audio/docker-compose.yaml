@@ -6,15 +6,14 @@ services:
       context: .
       dockerfile: ./Dockerfile
     restart: unless-stopped
+    # flags fall back to AUDIO_* variables (cmd/audio -h); the input (AUDIO_INPUT) comes from .env. The command
+    # reconnects to a live stream by itself; the restart policy covers crashes.
     environment:
-      - X_AUDIO_DURATION=4h
-      - X_AUDIO_OUTPUT_TYPE=prom
-      - X_AUDIO_OUTPUT=:13088
-      - X_AUDIO_MODE=combined
-      - X_AUDIO_BUCKET_SIZE=64
-      - X_AUDIO_BATCH=1
-      - X_AUDIO_BATCH_SIZE=64
-      - X_AUDIO_BATCH_FREQUENCY=200ms
+      - AUDIO_METRICS=prometheus
+      - AUDIO_METRICS_SPECTRUM=third-octave # the Grafana spectrum panels; octave, full or none also work
+      - AUDIO_RECONNECT=true
+      - AUDIO_PROMETHEUS_ADDR=:13088
+      - AUDIO_LOG_FORMAT=json
     env_file:
       - "./.env"
     volumes:

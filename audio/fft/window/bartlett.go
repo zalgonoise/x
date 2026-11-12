@@ -1,4 +1,4 @@
-//nolint:gomnd // contains hardcoded constants, it's less readable to make constants from them
+//nolint:mnd // contains hardcoded constants, it's less readable to make constants from them
 package window
 
 //nolint:gochecknoglobals // immutable map linking window sizes to its corresponding precomputed window slices

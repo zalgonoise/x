@@ -78,7 +78,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 2,
+        "h": 4,
         "w": 24,
         "x": 0,
         "y": 1
@@ -94,7 +94,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/^audio_peak_value$/",
+          "fields": "",
           "values": false
         },
         "showUnfilled": true
@@ -108,9 +108,9 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "audio_peak_value{job=\"audio\"}",
+          "expr": "audio_peak{job=\"audio\"}",
           "instant": true,
-          "legendFormat": "{{__name__}}",
+          "legendFormat": "channel {{channel}}",
           "range": false,
           "refId": "A"
         }
@@ -193,7 +193,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 3
+        "y": 5
       },
       "id": 4,
       "interval": "500ms",
@@ -219,10 +219,10 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "audio_peak_value{job=\"audio\"}",
+          "expr": "audio_peak{job=\"audio\"}",
           "format": "heatmap",
           "instant": false,
-          "legendFormat": "{{__name__}}",
+          "legendFormat": "channel {{channel}}",
           "range": true,
           "refId": "A"
         }
@@ -306,7 +306,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 3
+        "y": 5
       },
       "id": 5,
       "interval": "500ms",
@@ -332,10 +332,10 @@
           },
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "audio_peak_value{job=\"audio\"}",
+          "expr": "audio_peak{job=\"audio\"}",
           "format": "heatmap",
           "instant": false,
-          "legendFormat": "{{__name__}}",
+          "legendFormat": "channel {{channel}}",
           "range": true,
           "refId": "A"
         }
@@ -350,7 +350,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 13
       },
       "id": 9,
       "panels": [],
@@ -362,108 +362,279 @@
         "type": "prometheus",
         "uid": "Prometheus"
       },
-      "description": "",
+      "description": "Largest level of each band since the previous scrape, in dBFS (0 dBFS is a full-scale sine). Bars are labelled with the band centre in Hz.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "continuous-GrYlRd"
           },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisGridShow": true,
-            "axisLabel": "",
-            "axisPlacement": "left",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 22,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineStyle": {
-              "fill": "solid"
-            },
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": 3600000,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "decimals": 1,
           "mappings": [],
+          "min": -120,
+          "max": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
-          "unit": "none"
+          "unit": "dB"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 12
+        "y": 14
       },
       "id": 11,
-      "interval": "775ms",
       "options": {
+        "displayMode": "gradient",
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
+          "placement": "bottom",
+          "showLegend": false
         },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "vertical",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Value$/",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "hidden",
+        "text": {
+          "titleSize": 10
         }
       },
+      "pluginVersion": "12.2.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "editorMode": "builder",
-          "expr": "histogram_quantile(0.25, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__interval]))",
-          "format": "heatmap",
-          "legendFormat": "{{frequency}}Hz",
-          "range": true,
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "20 * log10(clamp_min(audio_spectrum_peak{job=\"audio\", channel=\"$channel\"}, 1e-6))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Frequencies - 775ms - P25 rate",
+      "title": "Spectrum - peak hold - channel $channel",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "number",
+                "targetField": "frequency"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "frequency"
+              }
+            ]
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "string",
+                "targetField": "frequency"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "channel": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {
+              "frequency": 0,
+              "Value": 1
+            },
+            "renameByName": {}
+          }
+        }
+      ],
       "transparent": true,
-      "type": "timeseries"
+      "type": "bargauge"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "Prometheus"
       },
-      "description": "",
+      "description": "Energy average of each band since the previous scrape, in dBFS (0 dBFS is a full-scale sine). Bars are labelled with the band centre in Hz.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "min": -120,
+          "max": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 12,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "vertical",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^Value$/",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "hidden",
+        "text": {
+          "titleSize": 10
+        }
+      },
+      "pluginVersion": "12.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "20 * log10(clamp_min(audio_spectrum_mean{job=\"audio\", channel=\"$channel\"}, 1e-6))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Spectrum - mean - channel $channel",
+      "transformations": [
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "number",
+                "targetField": "frequency"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "frequency"
+              }
+            ]
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "destinationType": "string",
+                "targetField": "frequency"
+              }
+            ],
+            "fields": {}
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "channel": true,
+              "instance": true,
+              "job": true
+            },
+            "indexByName": {
+              "frequency": 0,
+              "Value": 1
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "description": "Mean level of each band over time, in dBFS (0 dBFS is a full-scale sine).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -472,174 +643,69 @@
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
-            "axisGridShow": true,
-            "axisLabel": "",
-            "axisPlacement": "auto",
+            "axisLabel": "dBFS",
+            "axisPlacement": "left",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 22,
-            "gradientMode": "opacity",
+            "fillOpacity": 0,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "lineInterpolation": "smooth",
-            "lineStyle": {
-              "fill": "solid"
-            },
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "auto",
-            "spanNulls": 3600000,
+            "showPoints": "never",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
-            }
+            },
+            "axisSoftMax": 0
           },
           "mappings": [],
+          "min": -120,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
-          "unit": "none"
+          "unit": "dB"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 12
-      },
-      "id": 12,
-      "interval": "775ms",
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "builder",
-          "expr": "histogram_quantile(0.95, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__interval]))",
-          "format": "heatmap",
-          "legendFormat": "{{frequency}}Hz",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Frequencies - 775ms - P95 rate",
-      "transparent": true,
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "Prometheus"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisGridShow": true,
-            "axisLabel": "",
-            "axisPlacement": "left",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 66,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineStyle": {
-              "fill": "solid"
-            },
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": 3600000,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 20
+        "y": 30
       },
       "id": 13,
-      "interval": "775ms",
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
           "placement": "right",
           "showLegend": true
         },
         "tooltip": {
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -648,15 +714,14 @@
             "type": "prometheus",
             "uid": "Prometheus"
           },
-          "editorMode": "builder",
-          "expr": "histogram_quantile(0.75, rate(audio_spectrum_value_bucket{job=\"audio\"}[$__interval]))",
-          "format": "heatmap",
-          "legendFormat": "{{frequency}}Hz",
+          "editorMode": "code",
+          "expr": "20 * log10(clamp_min(audio_spectrum_mean{job=\"audio\", channel=\"$channel\"}, 1e-6))",
+          "legendFormat": "{{frequency}} Hz",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Frequencies - 775ms - P75 rate",
+      "title": "Spectrum - mean band levels over time - channel $channel",
       "transparent": true,
       "type": "timeseries"
     },
@@ -666,7 +731,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 38
       },
       "id": 17,
       "panels": [
@@ -772,7 +837,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 29
+            "y": 39
           },
           "id": 15,
           "interval": "1s",
@@ -875,7 +940,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 29
+            "y": 39
           },
           "id": 18,
           "interval": "5s",
@@ -994,7 +1059,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 37
+            "y": 47
           },
           "id": 20,
           "interval": "5s",
@@ -1086,7 +1151,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 37
+            "y": 47
           },
           "id": 19,
           "interval": "5s",
@@ -1203,7 +1268,35 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "0",
+          "value": "0"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "definition": "label_values(audio_spectrum_peak{job=\"audio\"}, channel)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Channel",
+        "multi": false,
+        "name": "channel",
+        "options": [],
+        "query": {
+          "query": "label_values(audio_spectrum_peak{job=\"audio\"}, channel)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 3,
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-15m",
@@ -1225,6 +1318,6 @@
   },
   "timezone": "",
   "title": "Audio",
-  "version": 10,
+  "version": 11,
   "weekStart": ""
 }

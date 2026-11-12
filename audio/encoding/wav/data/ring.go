@@ -4,7 +4,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/zalgonoise/gbuf"
+	"github.com/zalgonoise/gbuf/v2"
 
 	"github.com/zalgonoise/x/audio/encoding/wav/data/conv"
 	"github.com/zalgonoise/x/audio/osc"
@@ -19,7 +19,8 @@ type Ring struct {
 	Depth       uint16
 	Converter   Converter
 
-	byteSize int
+	byteSize   int
+	blockAlign int
 }
 
 func (d *Ring) Write(buf []byte) (n int, err error) {
@@ -30,16 +31,39 @@ func (d *Ring) Read(buf []byte) (n int, err error) {
 	return copy(buf, d.Converter.Bytes(d.Data.Value())), nil
 }
 
-func (d *Ring) ReadFrom(b io.Reader) (n int64, err error) {
-	buf := gbuf.NewRingFilter[byte](
-		d.Data.Cap()*int(d.Depth/byteSize),
-		func(data []byte) error {
-			_, err = d.Data.Write(d.Converter.Parse(data))
+// ReadFrom implements the io.ReaderFrom interface.
+//
+// It consumes the audio data from the input io.Reader in reads of at most the ring's capacity, until the chunk's
+// declared size or, for a size of 0 or 0xFFFFFFFF (live streams), until io.EOF. Every write to the ring (and so every
+// call to the processor) holds whole frames: short reads are reassembled and partial frames carried over. Bytes
+// returned together with io.EOF are processed, and the RIFF pad byte after an odd-sized chunk is skipped.
+func (d *Ring) ReadFrom(r io.Reader) (n int64, err error) {
+	limit := declaredSize(d.ChunkHeader)
 
-			return err
-		})
+	n, err = readFrames(r, d.frameSize(), d.Data.Cap()*d.byteSize, limit, func(b []byte) error {
+		_, writeErr := d.Data.Write(d.Converter.Parse(b))
 
-	return buf.ReadFrom(b)
+		return writeErr
+	})
+	if err != nil || limit == 0 {
+		return n, err
+	}
+
+	pad, err := skipPad(r, d.ChunkHeader)
+
+	return n + pad, err
+}
+
+// SetBlockAlign sets the frame size in bytes (the WAV header's BlockAlign), so ReadFrom delivers whole frames.
+// A zero value falls back to one sample.
+func (d *Ring) SetBlockAlign(blockAlign uint16) { d.blockAlign = int(blockAlign) }
+
+func (d *Ring) frameSize() int {
+	if d.blockAlign > 0 {
+		return d.blockAlign
+	}
+
+	return d.byteSize
 }
 
 func (d *Ring) Parse(buf []byte) {
@@ -57,7 +81,7 @@ func (d *Ring) Bytes() []byte {
 }
 
 func (d *Ring) Header() *Header {
-	d.ChunkHeader.Subchunk2Size = uint32(d.Data.Cap() * (int(d.Depth) / byteSize))
+	d.ChunkHeader.Subchunk2Size = chunkSize(d.Data.Cap() * (int(d.Depth) / byteSize))
 
 	return d.ChunkHeader
 }
@@ -80,11 +104,7 @@ func (d *Ring) Float() []float64 {
 
 func (d *Ring) Generate(waveType osc.Type, freq, sampleRate int, dur time.Duration) {
 	maximum := d.Data.Cap()
-	size := int(float64(sampleRate) * float64(dur) / float64(time.Second))
-
-	if size > maximum {
-		size = maximum
-	}
+	size := min(int(float64(sampleRate)*float64(dur)/float64(time.Second)), maximum)
 
 	buf := make([]float64, size)
 
@@ -93,7 +113,8 @@ func (d *Ring) Generate(waveType osc.Type, freq, sampleRate int, dur time.Durati
 		return
 	}
 
-	oscillator(buf, freq, int(d.Depth), sampleRate)
+	// samples are normalized floats: request a unit-amplitude wave rather than one scaled to the bit depth
+	oscillator(buf, freq, unitDepth, sampleRate)
 
 	//nolint:errcheck // writing to the in-memory RingFilter should not raise any errors, and can be safely ignored.
 	_, _ = d.Data.Write(buf)

@@ -1,4 +1,4 @@
-//nolint:gomnd // contains hardcoded return values for the fastest execution results
+//nolint:mnd // contains hardcoded return values for the fastest execution results
 package fft
 
 // Log2Types is a type constraint interface to scope the allowed types to

@@ -1,4 +1,4 @@
-//nolint:gomnd,gochecknoglobals // package contains a modified port of the standard library logic
+//nolint:mnd,gochecknoglobals // package contains a modified port of the standard library logic
 package trig
 
 import (
@@ -40,12 +40,16 @@ var _cos = [...]float64{
 	4.16666666666665929218e-2,   // 0x3fa555555555554b
 }
 
-// Sin is an attempt to improve the performance of the math.Sin implementation
-//
-// It will skip the checks for NaN and -/+Inf, so it should be perceived as an unsafe Sin / Cos approach.
-// So far, I couldn't find an issue with this approach in digital signal processing; although it would be
-// no longer used for audio DSP if that were to be the case.
+// Sin is an attempt to improve the performance of the math.Sin implementation. It returns the same values as
+// math.Sin, special cases included: Sin(±0) = ±0, Sin(±Inf) = NaN and Sin(NaN) = NaN.
 func Sin(x float64) float64 {
+	switch {
+	case x == 0 || math.IsNaN(x):
+		return x // ±0 keeps its sign
+	case math.IsInf(x, 0):
+		return math.NaN()
+	}
+
 	// make argument positive but save the sign
 	sign := false
 
@@ -62,8 +66,8 @@ func Sin(x float64) float64 {
 	if x >= reduceThreshold {
 		j, z = trigReduce(x)
 	} else {
-		j = uint64(x * (PI4)) // integer part of x/(Pi/4), as integer for tests on the phase angle
-		y = float64(j)        // integer part of x/(Pi/4), as float
+		j = uint64(x * PI4) // integer part of x/(Pi/4), as integer for tests on the phase angle
+		y = float64(j)      // integer part of x/(Pi/4), as float
 
 		// map zeros to origin
 		if j&1 == 1 {

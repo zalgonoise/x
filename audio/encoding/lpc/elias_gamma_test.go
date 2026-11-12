@@ -112,6 +112,7 @@ func TestEliasGammaUint8(t *testing.T) {
 			}
 
 			require.Equal(t, len(testcase.wants), len(code))
+
 			for i := range testcase.wants {
 				require.Equal(t, testcase.wants[i], code[i])
 			}

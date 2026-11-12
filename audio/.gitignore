@@ -15,3 +15,13 @@ provisioning/
 
 # exclude test coverage directory
 coverage/
+
+# exclude coverage reports written by the Makefile
+reports/
+
+# exclude the binary that go build ./cmd/audio writes
+/audio
+
+# exclude IDE settings and scratch output
+.idea/
+tmp/

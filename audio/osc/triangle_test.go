@@ -97,7 +97,7 @@ func BenchmarkTriangleCompare(b *testing.B) {
 					fn := func(buffer []int16, halfPeriod int, sampleInt int16, increment, depth float64) {
 						var swap bool
 
-						for i := 0; i < len(buffer); i++ {
+						for i := range buffer {
 							if i%(halfPeriod/2) == 0 {
 								swap = !swap
 							}
@@ -138,8 +138,8 @@ func BenchmarkTriangleCompare(b *testing.B) {
 							swap          bool
 						)
 
-						for i := 0; i < len(buffer); i++ {
-							if i%(quarterPeriod) == 0 {
+						for i := range buffer {
+							if i%quarterPeriod == 0 {
 								swap = !swap
 							}
 

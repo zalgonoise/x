@@ -23,7 +23,19 @@ func TestValidate(t *testing.T) {
 			input: &data.Header{Subchunk2ID: data.JunkID},
 		},
 		{
-			name:  "Invalid/UnsupportedID",
+			name:  "Valid/LIST",
+			input: &data.Header{Subchunk2ID: [4]byte{'L', 'I', 'S', 'T'}},
+		},
+		{
+			name:  "Valid/fact",
+			input: &data.Header{Subchunk2ID: [4]byte{'f', 'a', 'c', 't'}},
+		},
+		{
+			name:  "Valid/SpacePadded",
+			input: &data.Header{Subchunk2ID: [4]byte{'i', 'd', '3', ' '}},
+		},
+		{
+			name:  "Invalid/NotPrintable",
 			input: &data.Header{Subchunk2ID: [4]byte{0, 1, 2, 3}},
 			err:   data.ErrInvalidSubChunkHeader,
 		},

@@ -1,4 +1,4 @@
-//nolint:gomnd // contains hardcoded constants, would be less readable to declare these values as such
+//nolint:mnd // contains hardcoded constants, would be less readable to declare these values as such
 package osc
 
 import "github.com/zalgonoise/x/audio/trig"
@@ -21,7 +21,7 @@ func sine1Hz(sampleRate int) []float64 {
 	)
 
 	// gen first quadrant (Q1)
-	for i := 0; i < quarterCycle; i++ {
+	for i := range quarterCycle {
 		buffer[i] = trig.Sin(tau * float64(i) / float64(sampleRate))
 	}
 

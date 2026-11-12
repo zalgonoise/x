@@ -98,7 +98,7 @@ func BenchmarkSineCompare(b *testing.B) {
 			b.Run(
 				"sine_20_3_23", func(b *testing.B) {
 					fn := func(buffer []int16, freq, depth, sampleRate float64) {
-						for i := 0; i < len(buffer); i++ {
+						for i := range buffer {
 							sample := math.Sin(2.0 * math.Pi * freq * float64(i) / sampleRate)
 							buffer[i] = int16(sample * (math.Pow(2.0, depth)/2.0 - 1.0))
 						}
@@ -118,7 +118,7 @@ func BenchmarkSineCompare(b *testing.B) {
 				"sine_replacement", func(b *testing.B) {
 					// tau is now a constant in the package
 					fn := func(buffer []int16, freq, depth, sampleRate float64) {
-						for i := 0; i < len(buffer); i++ {
+						for i := range buffer {
 							// use tau here, no need to compute 2 * math.Pi
 							sample := trig.Sin(tau * freq * float64(i) / sampleRate)
 							// bit shift here, instead of math.Pow(2.0, depth); which is equivalent to 2 << (depth-1)

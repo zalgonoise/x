@@ -45,12 +45,21 @@ func BenchmarkCos(b *testing.B) {
 }
 
 func FuzzCos(f *testing.F) {
-	f.Fuzz(func(t *testing.T, a float64) {
-		resA := Cos(a)
-		resB := math.Cos(a)
+	for _, x := range specialInputs() {
+		f.Add(x)
+	}
 
-		if resA != resB {
-			t.Errorf("output mismatch error: A: %v ; B: %v", resA, resB)
+	f.Fuzz(func(t *testing.T, a float64) {
+		if got, want := Cos(a), math.Cos(a); !sameFloat(got, want) {
+			t.Errorf("Cos(%v) = %v, want %v", a, got, want)
 		}
 	})
+}
+
+func TestCosSpecialValues(t *testing.T) {
+	for _, x := range specialInputs() {
+		if got, want := Cos(x), math.Cos(x); !sameFloat(got, want) {
+			t.Errorf("Cos(%v) = %v, want %v", x, got, want)
+		}
+	}
 }

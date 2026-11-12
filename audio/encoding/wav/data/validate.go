@@ -28,13 +28,16 @@ var (
 //nolint:gochecknoglobals // is initialized in the background for performance during runtime, as it is never mutated.
 var headerValidator = valigator.New(validateHeaderSubChunkID)
 
+// validateHeaderSubChunkID accepts any RIFF FOURCC: four printable ASCII characters (space padded). Chunks other than
+// "data" (LIST, fact, JUNK, bext, cue, ...) are kept as opaque chunks.
 func validateHeaderSubChunkID(h *Header) error {
-	switch string(h.Subchunk2ID[:]) {
-	case JunkIDString, DataIDString:
-		return nil
-	default:
-		return ErrInvalidSubChunkHeader
+	for _, c := range h.Subchunk2ID {
+		if c < ' ' || c > '~' {
+			return ErrInvalidSubChunkHeader
+		}
 	}
+
+	return nil
 }
 
 // Validate verifies that the input Header `h` is not nil and that it is valid.

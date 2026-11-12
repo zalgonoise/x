@@ -63,7 +63,8 @@ type Chunk interface {
 // but I was getting nowhere meaningful; and ended up breaking at a certain point
 // due to the way that Go handles a slice of a type and its conversions to a different type.
 func NewChunk(h *data.Header, bitDepth, format uint16) Chunk {
-	if h != nil && string(h.Subchunk2ID[:]) == data.JunkIDString {
+	if h != nil && string(h.Subchunk2ID[:]) != data.DataIDString {
+		// any chunk other than "data" (junk, LIST, fact, ...) is kept as an opaque chunk
 		return data.NewJunk(h)
 	}
 
@@ -85,7 +86,8 @@ func NewChunk(h *data.Header, bitDepth, format uint16) Chunk {
 }
 
 func NewRingChunk(h *data.Header, bitDepth, format uint16, size int, proc func([]float64) error) Chunk {
-	if h != nil && string(h.Subchunk2ID[:]) == data.JunkIDString {
+	if h != nil && string(h.Subchunk2ID[:]) != data.DataIDString {
+		// any chunk other than "data" (junk, LIST, fact, ...) is kept as an opaque chunk
 		return data.NewJunk(h)
 	}
 
@@ -103,5 +105,17 @@ func NewRingChunk(h *data.Header, bitDepth, format uint16, size int, proc func([
 		return data.NewFloatRing(bitDepth, h, size, proc)
 	default:
 		return nil
+	}
+}
+
+// frameAligner is implemented by chunks that can deliver whole frames from ReadFrom.
+type frameAligner interface {
+	SetBlockAlign(blockAlign uint16)
+}
+
+// alignFrames tells a chunk the stream's frame size (BlockAlign), so ReadFrom never splits a frame between calls.
+func alignFrames(c Chunk, blockAlign uint16) {
+	if a, ok := c.(frameAligner); ok {
+		a.SetBlockAlign(blockAlign)
 	}
 }

@@ -25,8 +25,11 @@ func Amplify(ratio float64) func([]float64) {
 // Normalize amplifies the signal as much as possible before hitting
 // peak levels in the signal.
 //
-// This is done by measuring the peak value of the signal and amplifying it
-// by the ratio of (1.0 + 1 / maxValue).
+// This is done by measuring the peak absolute value of the signal and amplifying it by 1 / peak, so the loudest
+// sample lands exactly on full scale (±1.0). Silence (a peak of 0) is left untouched.
+//
+// Note that it normalizes each buffer it is applied to on its own: on a stream split into blocks, every block gets a
+// different gain.
 func Normalize() func([]float64) {
 	return func(buffer []float64) {
 		var maxValue float64
@@ -42,8 +45,12 @@ func Normalize() func([]float64) {
 			}
 		}
 
+		if maxValue == 0 {
+			return
+		}
+
 		// normalize the signal, amplifying it as much as possible
 		// before reaching peak levels
-		Amplify(1.0 + 1/maxValue)(buffer)
+		Amplify(1 / maxValue)(buffer)
 	}
 }

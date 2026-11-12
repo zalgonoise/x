@@ -1,4 +1,4 @@
-//nolint:gomnd // contains hardcoded constants, would be less readable to declare these values as such
+//nolint:mnd // contains hardcoded constants, would be less readable to declare these values as such
 package osc
 
 // Triangle is an oscillator that writes a triangle wave of frequency `freq`, bit-depth `depth`,

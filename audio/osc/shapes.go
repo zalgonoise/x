@@ -51,8 +51,8 @@ func buildFrom1Hz(size, sampleRate, freq int, oneHzFunc func(int) []float64) []f
 		base   = oneHzFunc(sampleRate)
 	)
 
-	for i, j := 0, 0; i < size; i, j = i+1, i*freq%sampleRate {
-		buffer[i] = base[j]
+	for i := range buffer {
+		buffer[i] = base[i*freq%sampleRate]
 	}
 
 	return buffer

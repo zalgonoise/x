@@ -120,6 +120,7 @@ func TestLeftRight_MidSide_FullCircle(t *testing.T) {
 	}
 
 	require.Equal(t, len(input), len(output))
+
 	for i := range input {
 		require.Equal(t, input[i], output[i])
 	}

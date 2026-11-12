@@ -4,8 +4,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/zalgonoise/gbuf"
-
 	"github.com/zalgonoise/x/audio/encoding/wav/data/conv"
 	"github.com/zalgonoise/x/audio/osc"
 )
@@ -20,6 +18,10 @@ const (
 	bitDepth64 uint16 = 64
 
 	byteSize = 8
+
+	// unitDepth is the bit depth for which the osc oscillators scale their output by 2^(depth-1)-1 = 1, producing the
+	// normalized [-1, 1] samples the Converters expect.
+	unitDepth = 2
 )
 
 // Converter describes the behavior that a bit-depth converter should expose -- that is to encode / decode a bytes
@@ -40,8 +42,8 @@ type Chunk struct {
 	Depth       uint16
 	Converter   Converter
 
-	byteSize  int
-	blockSize int
+	byteSize   int
+	blockAlign int
 }
 
 // FilterFunc is a function that applies a transformation to a floating-point audio buffer.
@@ -69,57 +71,42 @@ func (d *Chunk) Read(buf []byte) (n int, err error) {
 
 // ReadFrom implements the io.ReaderFrom interface.
 //
-// It consumes the audio data from the input io.Reader.
-func (d *Chunk) ReadFrom(b io.Reader) (n int64, err error) {
-	var (
-		floatSize int
-		size      int
-	)
+// It consumes the audio data from the input io.Reader, until the chunk's declared size or, for a size of 0 or
+// 0xFFFFFFFF (live streams), until io.EOF. Short reads are reassembled, so samples are always decoded from whole frames,
+// and the RIFF pad byte after an odd-sized chunk is consumed rather than decoded as audio.
+func (d *Chunk) ReadFrom(r io.Reader) (n int64, err error) {
+	limit := declaredSize(d.ChunkHeader)
 
-	switch {
-	case d.ChunkHeader == nil, d.ChunkHeader.Subchunk2Size == 0:
-		switch d.blockSize {
-		case 0:
-			floatSize = dataChunkBaseLen / d.byteSize
-		default:
-			floatSize = d.blockSize / d.byteSize
-		}
+	n, err = readFrames(r, d.frameSize(), defaultReadSize, limit, func(b []byte) error {
+		d.Data = append(d.Data, d.Converter.Parse(b)...)
 
-		size = d.byteSize
-	default:
-		size = int(d.ChunkHeader.Subchunk2Size)
-		floatSize = size / d.byteSize
+		return nil
+	})
+	if err != nil || limit == 0 {
+		return n, err
 	}
 
-	dataBuf := gbuf.NewRingFilter[float64](floatSize,
-		func(data []float64) error {
-			if d.Data == nil {
-				d.Data = data
+	pad, err := skipPad(r, d.ChunkHeader)
 
-				return nil
-			}
+	return n + pad, err
+}
 
-			d.Data = append(d.Data, data...)
+// SetBlockAlign sets the frame size in bytes (the WAV header's BlockAlign), so ReadFrom delivers whole frames.
+// A zero value falls back to one sample.
+func (d *Chunk) SetBlockAlign(blockAlign uint16) { d.blockAlign = int(blockAlign) }
 
-			return nil
-		},
-	)
+func (d *Chunk) frameSize() int {
+	if d.blockAlign > 0 {
+		return d.blockAlign
+	}
 
-	buf := gbuf.NewRingFilter[byte](size, func(data []byte) error {
-		_, err = dataBuf.Write(d.Converter.Parse(data))
-
-		return err
-	})
-
-	return buf.ReadFrom(b)
+	return d.byteSize
 }
 
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
 // from raw bytes.
 func (d *Chunk) Parse(buf []byte) {
-	ln := uint32(len(buf))
-
-	if ln == 0 {
+	if len(buf) == 0 {
 		return
 	}
 
@@ -152,11 +139,10 @@ func (d *Chunk) Bytes() []byte {
 	return d.Converter.Bytes(d.Data)
 }
 
-// Header returns the ChunkHeader of the Chunk.
+// Header returns the ChunkHeader of the Chunk, with Subchunk2Size set to the size of the samples it currently holds
+// (so a re-encode never declares more, or fewer, bytes than it writes).
 func (d *Chunk) Header() *Header {
-	if d.ChunkHeader.Subchunk2Size == 0 {
-		d.ChunkHeader.Subchunk2Size = uint32(len(d.Data) * (int(d.Depth) / byteSize))
-	}
+	d.ChunkHeader.Subchunk2Size = uint32(len(d.Data) * d.byteSize) //nolint:gosec // bounded by the decoded input
 
 	return d.ChunkHeader
 }
@@ -192,7 +178,8 @@ func (d *Chunk) Generate(waveType osc.Type, freq, sampleRate int, dur time.Durat
 		return
 	}
 
-	oscillator(buf, freq, int(d.Depth), sampleRate)
+	// samples are normalized floats: request a unit-amplitude wave rather than one scaled to the bit depth
+	oscillator(buf, freq, unitDepth, sampleRate)
 
 	if d.Data == nil {
 		d.Data = buf

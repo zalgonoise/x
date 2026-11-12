@@ -46,6 +46,7 @@ func TestBitWriter_WriteBits(t *testing.T) {
 			w.Flush()
 
 			require.Equal(t, len(testcase.wants), len(w.Buffer))
+
 			for i := range testcase.wants {
 				require.Equal(t, testcase.wants[i], w.Buffer[i],
 					"mismatching values",
@@ -132,6 +133,7 @@ func FuzzBitWriter_WriteBits(f *testing.F) {
 
 		valueString := strconv.FormatUint(uint64(n), 2)
 		input := make([]bool, 8)
+
 		for i, j := len(valueString)-1, 7; i >= 0; i, j = i-1, j-1 {
 			if valueString[i] == '1' {
 				input[j] = true
@@ -171,6 +173,7 @@ func FuzzBitBuffer_WriteBits(f *testing.F) {
 
 		valueString := strconv.FormatUint(uint64(n), 2)
 		input := make([]bool, 8)
+
 		for i, j := len(valueString)-1, 7; i >= 0; i, j = i-1, j-1 {
 			if valueString[i] == '1' {
 				input[j] = true

@@ -38,6 +38,7 @@ func TestValidate(t *testing.T) {
 				newHeader := *h
 
 				newHeader.ChunkID = [4]byte{0, 0, 0, 0}
+
 				return &newHeader
 			},
 			err: wav.ErrInvalidHeader,
@@ -48,16 +49,85 @@ func TestValidate(t *testing.T) {
 				newHeader := *h
 
 				newHeader.Format = [4]byte{0, 0, 0, 0}
+
 				return &newHeader
 			},
 			err: wav.ErrInvalidHeader,
 		},
 		{
-			name: "Invalid/SampleRate",
+			name: "Invalid/Subchunk1ID",
+			input: func() *wav.Header {
+				newHeader := *h
+
+				newHeader.Subchunk1ID = [4]byte{'L', 'I', 'S', 'T'}
+
+				return &newHeader
+			},
+			err: wav.ErrInvalidHeader,
+		},
+		{
+			name: "Invalid/BlockAlignZero",
+			input: func() *wav.Header {
+				newHeader := *h
+
+				newHeader.BlockAlign = 0
+
+				return &newHeader
+			},
+			err: wav.ErrInvalidHeader,
+		},
+		{
+			name: "Invalid/BlockAlignMismatch",
+			input: func() *wav.Header {
+				newHeader := *h
+
+				newHeader.BlockAlign = 7
+
+				return &newHeader
+			},
+			err: wav.ErrInvalidHeader,
+		},
+		{
+			name: "Invalid/Float16Bit",
+			input: func() *wav.Header {
+				newHeader := *h
+
+				newHeader.AudioFormat = wav.FloatFormat
+				newHeader.BitsPerSample = 16
+				newHeader.BlockAlign = 2 * newHeader.NumChannels
+
+				return &newHeader
+			},
+			err: wav.ErrInvalidBitDepth,
+		},
+		{
+			name: "Valid/UncommonSampleRate",
 			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.SampleRate = 3000
+
+				return &newHeader
+			},
+		},
+		{
+			name: "Invalid/SampleRateZero",
+			input: func() *wav.Header {
+				newHeader := *h
+
+				newHeader.SampleRate = 0
+
+				return &newHeader
+			},
+			err: wav.ErrInvalidSampleRate,
+		},
+		{
+			name: "Invalid/SampleRateTooHigh",
+			input: func() *wav.Header {
+				newHeader := *h
+
+				newHeader.SampleRate = 2_000_000
+
 				return &newHeader
 			},
 			err: wav.ErrInvalidSampleRate,
@@ -68,16 +138,29 @@ func TestValidate(t *testing.T) {
 				newHeader := *h
 
 				newHeader.BitsPerSample = 4
+
 				return &newHeader
 			},
 			err: wav.ErrInvalidBitDepth,
 		},
 		{
-			name: "Invalid/NumChannels",
+			name: "Valid/FiveChannels",
 			input: func() *wav.Header {
 				newHeader := *h
 
 				newHeader.NumChannels = 5
+				newHeader.BlockAlign = 5 * newHeader.BitsPerSample / 8
+
+				return &newHeader
+			},
+		},
+		{
+			name: "Invalid/NumChannelsZero",
+			input: func() *wav.Header {
+				newHeader := *h
+
+				newHeader.NumChannels = 0
+
 				return &newHeader
 			},
 			err: wav.ErrInvalidNumChannels,
@@ -88,6 +171,7 @@ func TestValidate(t *testing.T) {
 				newHeader := *h
 
 				newHeader.AudioFormat = 2
+
 				return &newHeader
 			},
 			err: wav.ErrInvalidAudioFormat,
@@ -95,6 +179,12 @@ func TestValidate(t *testing.T) {
 	} {
 		t.Run(testcase.name, func(t *testing.T) {
 			err = wav.ValidateHeader(testcase.input())
+
+			if testcase.err == nil {
+				require.NoError(t, err)
+
+				return
+			}
 
 			require.ErrorIs(t, err, testcase.err)
 		})

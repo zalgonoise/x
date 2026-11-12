@@ -27,8 +27,6 @@ func GolombEncode64(x, m uint64) (q, r uint64, ok bool) {
 
 func GolombDecode64(m, r uint64) (x uint64, ok bool) {
 	switch {
-	case m < 0:
-		return 0, false
 	case m > exp64:
 		return 0, false
 	case m == 0:
@@ -54,8 +52,6 @@ func GolombEncode32(x, m uint32) (q, r uint32, ok bool) {
 
 func GolombDecode32(m, r uint32) (x uint32, ok bool) {
 	switch {
-	case m < 0:
-		return 0, false
 	case m > exp32:
 		return 0, false
 	case m == 0:
@@ -81,8 +77,6 @@ func GolombEncode16(x, m uint16) (q, r uint16, ok bool) {
 
 func GolombDecode16(m, r uint16) (x uint16, ok bool) {
 	switch {
-	case m < 0:
-		return 0, false
 	case m > exp16:
 		return 0, false
 	case m == 0:
@@ -108,8 +102,6 @@ func GolombEncode8(x, m uint8) (q, r uint8, ok bool) {
 
 func GolombDecode8(m, r uint8) (x uint8, ok bool) {
 	switch {
-	case m < 0:
-		return 0, false
 	case m > exp8:
 		return 0, false
 	case m == 0:
@@ -148,7 +140,7 @@ func asBits(value uint8) (bits [8]bool) {
 func bitLength(value uint8) int {
 	bits := 8
 
-	for i := uint8(1 << 7); i > 0; i = i >> 1 {
+	for i := uint8(1 << 7); i > 0; i >>= 1 {
 		if i&value == 0 {
 			bits--
 

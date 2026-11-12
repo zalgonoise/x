@@ -1,6 +1,7 @@
 package data
 
 import (
+	"bytes"
 	"io"
 	"time"
 
@@ -34,30 +35,26 @@ func (d *Junk) Read(buf []byte) (n int, err error) {
 	return copy(buf, d.Data), nil
 }
 
-func (d *Junk) ReadFrom(p io.Reader) (n int64, err error) {
-	var size int
-
+// ReadFrom implements the io.ReaderFrom interface.
+//
+// It reads exactly the chunk's declared size (reassembling short reads, and growing the buffer as data arrives instead
+// of trusting the header for an allocation), then skips the RIFF pad byte of an odd-sized chunk. A chunk is read once:
+// later calls are no-ops.
+func (d *Junk) ReadFrom(r io.Reader) (n int64, err error) {
 	switch {
 	case d.ChunkHeader == nil:
 		return 0, ErrMissingHeader
-	case d.ChunkHeader.Subchunk2Size == 0:
-		return n, nil
-	default:
-		size = int(d.ChunkHeader.Subchunk2Size)
-	}
-
-	if d.written == size {
+	case d.ChunkHeader.Subchunk2Size == 0, d.written > 0:
 		return 0, nil
 	}
 
-	if d.Data == nil {
-		d.Data = make([]byte, size)
-	}
+	var buf bytes.Buffer
 
-	num, err := p.Read(d.Data[d.written:size])
-	d.written = num
+	n, err = readBounded(r, d.ChunkHeader, &buf)
+	d.Data = buf.Bytes()
+	d.written = len(d.Data)
 
-	return int64(num), err
+	return n, err
 }
 
 // Parse will consume the input byte slice `buf`, to extract the PCM audio buffer
@@ -67,7 +64,7 @@ func (d *Junk) Parse(buf []byte) {
 		d.Data = buf
 
 		if d.ChunkHeader.Subchunk2Size == 0 {
-			d.ChunkHeader.Subchunk2Size = uint32(len(buf))
+			d.ChunkHeader.Subchunk2Size = chunkSize(len(buf))
 		}
 
 		return
@@ -85,8 +82,15 @@ func (d *Junk) Bytes() []byte {
 	return d.Data
 }
 
-// Header returns the ChunkHeader of the Junk.
-func (d *Junk) Header() *Header { return d.ChunkHeader }
+// Header returns the ChunkHeader of the Junk, with Subchunk2Size set to the size of the data it holds once any data
+// was read or written (so a re-encode never declares more, or fewer, bytes than it writes).
+func (d *Junk) Header() *Header {
+	if d.Data != nil {
+		d.ChunkHeader.Subchunk2Size = uint32(len(d.Data)) //nolint:gosec // bounded by the decoded input
+	}
+
+	return d.ChunkHeader
+}
 
 // BitDepth returns the bit depth of the Junk.
 func (d *Junk) BitDepth() uint16 { return d.Depth }
